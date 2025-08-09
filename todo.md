@@ -2,7 +2,6 @@
 
 - proper cli logging and error handling
 - watch option for extract and compile commands
-- add more headers to the generated po files
 
 - readmes for each package
 - descriptions and keywords for each package

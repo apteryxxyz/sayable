@@ -92,6 +92,9 @@ importers:
       cosmiconfig:
         specifier: ^9.0.0
         version: 9.0.0(typescript@5.9.2)
+      date-fns:
+        specifier: ^4.1.0
+        version: 4.1.0
       neverthrow:
         specifier: ^8.2.0
         version: 8.2.0
@@ -1004,6 +1007,9 @@ packages:
     peerDependenciesMeta:
       typescript:
         optional: true
+
+  date-fns@4.1.0:
+    resolution: {integrity: sha512-Ukq0owbQXxa/U3EGtsdVBkR1w7KOQ5gIBqdH2hkvknzZPYvBxb/aa6E8L7tmjFtkwZBu3UXBbjIgPo/Ez4xaNg==}
 
   debug@4.4.1:
     resolution: {integrity: sha512-KcKCqiftBJcZr++7ykoDIEwSa3XWowTfNPo92BYxjXiyYEVrUQh2aLyhxBCwww+heortUFxEJYcRzosstTEBYQ==}
@@ -2369,6 +2375,8 @@ snapshots:
       parse-json: 5.2.0
     optionalDependencies:
       typescript: 5.9.2
+
+  date-fns@4.1.0: {}
 
   debug@4.4.1:
     dependencies:

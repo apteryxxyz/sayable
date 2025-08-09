@@ -24,13 +24,13 @@ export const Formatter = z.object({
   parse: z.custom<
     (
       content: string,
-      context: Formatter.Context,
+      context: { locale: string },
     ) => Awaitable<Record<string, Formatter.Message>>
   >((val) => typeof val === 'function'),
   stringify: z.custom<
     (
       messages: Record<string, Formatter.Message>,
-      context: Formatter.Context,
+      context: { locale: string; previousContent?: string },
     ) => Awaitable<string>
   >((val) => typeof val === 'function'),
 });
@@ -41,10 +41,6 @@ export namespace Formatter {
     translation?: string;
     comments?: string[];
     references?: `${string}:${number}:${number}`[];
-  }
-
-  export interface Context {
-    locale: string;
   }
 }
 

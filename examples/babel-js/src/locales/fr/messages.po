@@ -1,5 +1,8 @@
 msgid ""
 msgstr ""
+"POT-Creation-Date: 2025-08-10 03:14+1200\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
 "Language: fr\n"
 "X-Generator: sayable\n"
 
