@@ -17,7 +17,7 @@
     "sayable": "./dist/commands/sayable.js"
   },
   "dependencies": {
-    "@sayable/tsc-plugin": "workspace:^",
+    "@sayable/plugin": "workspace:^",
     "commander": "^14.0.0",
     "cosmiconfig": "^9.0.0",
     "date-fns": "^4.1.0",

@@ -1,4 +1,4 @@
-import { type CompositeMessage, createExtractor } from '@sayable/tsc-plugin';
+import { type CompositeMessage, createExtractor } from '@sayable/plugin';
 import * as z from 'zod';
 import { createFormatter } from './formatters/po.js';
 

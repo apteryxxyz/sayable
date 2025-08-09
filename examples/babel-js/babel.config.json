@@ -1,4 +1,4 @@
 {
   "presets": [["@babel/preset-env", { "modules": false }]],
-  "plugins": ["@sayable/babel-plugin"]
+  "plugins": ["@sayable/plugin/babel"]
 }

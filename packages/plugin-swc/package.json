@@ -1,5 +1,5 @@
 {
-  "name": "@sayable/swc-plugin",
+  "name": "@sayable/plugin-swc",
   "version": "0.0.0",
   "main": "./dist/sayable.wasm",
   "scripts": {

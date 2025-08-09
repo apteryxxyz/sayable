@@ -1,5 +1,5 @@
 {
-  "name": "@sayable/tsc-plugin",
+  "name": "@sayable/plugin",
   "version": "0.0.0",
   "type": "module",
   "scripts": {
@@ -11,12 +11,18 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./*": {
+      "types": "./dist/bundlers/*.d.ts",
+      "default": "./dist/bundlers/*.js"
     }
   },
   "dependencies": {
-    "js-sha256": "^0.11.1"
+    "js-sha256": "^0.11.1",
+    "unplugin": "^2.3.5"
   },
   "devDependencies": {
+    "@types/babel__core": "^7.20.5",
     "typescript": "^5.9.2"
   },
   "peerDependencies": {

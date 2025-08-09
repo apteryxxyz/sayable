@@ -14,6 +14,6 @@
     "@babel/core": "^7.28.0",
     "@babel/preset-env": "^7.28.0",
     "@sayable/config": "workspace:^",
-    "@sayable/babel-plugin": "workspace:^"
+    "@sayable/plugin": "workspace:^"
   }
 }

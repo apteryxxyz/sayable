@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 import {
   type CompositeMessage,
   generateIcuMessageFormat,
-} from '@sayable/tsc-plugin';
+} from '@sayable/plugin';
 import { Command } from 'commander';
 import type * as z from 'zod';
 import { loadConfig } from '~/load.js';

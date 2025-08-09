@@ -12,7 +12,7 @@
   },
   "devDependencies": {
     "@sayable/config": "workspace:^",
-    "@sayable/tsc-plugin": "workspace:^",
+    "@sayable/plugin": "workspace:^",
     "ts-patch": "^3.3.0"
   }
 }

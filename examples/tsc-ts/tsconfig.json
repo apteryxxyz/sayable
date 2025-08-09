@@ -1,6 +1,6 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "plugins": [{ "transform": "@sayable/tsc-plugin" }]
+    "plugins": [{ "transform": "@sayable/plugin/tsc" }]
   }
 }

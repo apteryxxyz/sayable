@@ -1,5 +1,5 @@
 import type * as babelCore from '@babel/core';
-import { createTransformer } from '@sayable/tsc-plugin';
+import { createTransformer } from '~/processors.js';
 
 export default function ({ parse }: typeof babelCore): babelCore.PluginObj {
   const { transform } = createTransformer();
