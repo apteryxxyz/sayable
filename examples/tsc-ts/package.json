@@ -1,0 +1,18 @@
+{
+  "name": "tsc-ts-example",
+  "type": "module",
+  "scripts": {
+    "extract": "sayable extract",
+    "compile": "sayable compile",
+    "build": "tsc",
+    "prepare": "ts-patch install"
+  },
+  "dependencies": {
+    "sayable": "workspace:^"
+  },
+  "devDependencies": {
+    "@sayable/config": "workspace:^",
+    "@sayable/tsc-plugin": "workspace:^",
+    "ts-patch": "^3.3.0"
+  }
+}

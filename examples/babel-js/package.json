@@ -1,0 +1,19 @@
+{
+  "name": "babel-js-example",
+  "type": "module",
+  "scripts": {
+    "extract": "sayable extract",
+    "compile": "sayable compile",
+    "build": "babel src -d dist -D"
+  },
+  "dependencies": {
+    "sayable": "workspace:^"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.28.0",
+    "@babel/core": "^7.28.0",
+    "@babel/preset-env": "^7.28.0",
+    "@sayable/config": "workspace:^",
+    "@sayable/babel-plugin": "workspace:^"
+  }
+}

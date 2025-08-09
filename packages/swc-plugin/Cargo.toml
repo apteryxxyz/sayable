@@ -1,0 +1,22 @@
+[package]
+name = "sayable"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[profile.release]
+# This removes more dead code
+codegen-units = 1
+lto = true
+# Optimize for size
+opt-level = "s"
+# Optimize for performance, this is default so you don't need to specify it
+# opt-level = "z"
+
+[dependencies]
+data-encoding = "2.9.0"
+serde = "1"
+sha2 = "0.10.9"
+swc_core = { version = "33.0.*", features = ["ecma_plugin_transform"] }

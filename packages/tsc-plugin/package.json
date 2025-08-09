@@ -1,0 +1,25 @@
+{
+  "name": "@sayable/tsc-plugin",
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "check": "tsc --noEmit",
+    "build": "tsc",
+    "prepack": "pnpm build"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "dependencies": {
+    "js-sha256": "^0.11.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.2"
+  },
+  "peerDependencies": {
+    "typescript": "^5.9.2"
+  }
+}

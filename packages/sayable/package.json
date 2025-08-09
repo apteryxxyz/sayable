@@ -1,0 +1,23 @@
+{
+  "name": "sayable",
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "check": "tsc --noEmit",
+    "build": "tsc",
+    "prepack": "pnpm build"
+  },
+  "dependencies": {
+    "intl-messageformat": "^10.7.16"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./macro": {
+      "types": "./dist/macro.d.ts",
+      "default": "./dist/macro.js"
+    }
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "name": "root",
+  "packageManager": "pnpm@10.14.0",
+  "workspaces": ["examples/*", "packages/*"],
+  "scripts": {
+    "check": "turbo run check",
+    "lint": "turbo run lint && biome lint .",
+    "format": "turbo run format && biome format . --write",
+    "build": "turbo run build --filter=\"./packages/*\"",
+    "dev": "turbo watch build --filter=\"./packages/*\"",
+    "prepare": "husky & ts-patch install"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.1.4",
+    "@types/node": "^24.2.0",
+    "husky": "^9.1.7",
+    "ts-patch": "^3.3.0",
+    "turbo": "^2.5.5",
+    "typescript": "^5.9.2",
+    "typescript-transform-paths": "^3.5.5"
+  }
+}
