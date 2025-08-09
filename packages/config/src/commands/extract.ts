@@ -92,12 +92,13 @@ async function writeLocaleFile(
       .stringify(source.messages, { locale });
     await writeFile(outputFile, content);
   } else {
+    let existingContent: string | undefined;
     let existingMessages: Record<string, Formatter.Message> = {};
 
     try {
-      const existing = await readFile(outputFile, 'utf8');
+      existingContent = await readFile(outputFile, 'utf8');
       existingMessages = await catalogue.formatter //
-        .parse(existing, { locale });
+        .parse(existingContent, { locale });
     } catch {}
 
     const mergedMessages: Record<string, Formatter.Message> = {};
@@ -111,7 +112,7 @@ async function writeLocaleFile(
     }
 
     const content = await catalogue.formatter //
-      .stringify(mergedMessages, { locale });
+      .stringify(mergedMessages, { locale, previousContent: existingContent });
     await writeFile(outputFile, content);
   }
 }
