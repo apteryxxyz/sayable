@@ -143,13 +143,54 @@ export function parseCallExpression(
   return null;
 }
 
+function getLeadingCommentsForNode(
+  node: t.Node,
+  sourceFile: t.SourceFile = node.getSourceFile(),
+): string[] {
+  const commentRanges = t.getLeadingCommentRanges(
+    sourceFile.getFullText(),
+    node.getFullStart(),
+  );
+
+  if (commentRanges)
+    return commentRanges.map((r) =>
+      sourceFile.getFullText().slice(r.pos, r.end),
+    );
+  return [];
+}
+
+function getLeadingCommentsForJsxNode(node: t.JsxExpression) {
+  // The first getChildren returns a sort of tuple, like [<h1>, [...children], </h1>]
+  const siblings = node.parent.getChildren()[1]?.getChildren();
+
+  // HACK: The actual previous sibling is typically just JsxText with a newline
+  const prevSibling = siblings?.[siblings.indexOf(node) - 2];
+  if (!prevSibling) return [];
+
+  const prevText = prevSibling.getText();
+  const match = prevText.match(/^\{\s*\/\*([\s\S]*?)\*\/\s*\}$/);
+  return match ? [`// ${match[1]!.trim()}`] : [];
+}
+
 /**
  * Extracts translator comments from the node text.
  */
-function extractTranslatorsComments(node: t.Node) {
-  const content = node.getFullText();
-  const match = content.match(/\/\/\s*TRANSLATORS:\s*(.*)/);
-  return match?.[1] ? [match[1]] : undefined;
+function extractTranslatorsComments(node: t.Node): string[] {
+  if (!node || t.isBlock(node) || t.isFunctionDeclaration(node)) return [];
+
+  const leadingComments = t.isJsxExpression(node)
+    ? getLeadingCommentsForJsxNode(node)
+    : getLeadingCommentsForNode(node);
+
+  const translatorComments = leadingComments.reduce((comments, c) => {
+    const match = c.match(/TRANSLATORS:\s*((?:(?!\*\/).)*)/);
+    if (match) comments.push(match[1]!);
+    return comments;
+  }, [] as string[]);
+
+  return translatorComments.length
+    ? translatorComments
+    : extractTranslatorsComments(node.parent);
 }
 
 /**

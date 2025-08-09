@@ -3,13 +3,15 @@ msgstr ""
 "Language: fr\n"
 "X-Generator: sayable\n"
 
+# Welcome message
 #. zoV7bP
-#: src/index.ts:9:23
+#: src/index.ts:10:23
 msgid "Welcome to our website!"
 msgstr "Bienvenue sur notre site web!"
 
+# Contestant ranking
 #. 7TkKKz
-#: src/index.ts:13:26
+#: src/index.ts:15:26
 msgid ""
 "{contestantPosition, selectordinal,\n"
 "  =1 {#er place}\n"
@@ -25,8 +27,9 @@ msgstr ""
 "  other {#e place}\n"
 "}"
 
+# Apple count
 #. Z0PvLq
-#: src/index.ts:22:26
+#: src/index.ts:25:26
 msgid ""
 "{appleCount, plural,\n"
 "  zero {No apples left}\n"
@@ -42,8 +45,9 @@ msgstr ""
 "  other {# pommes}\n"
 "}"
 
+# Pronoun usage
 #. 2hVsGr
-#: src/index.ts:31:27
+#: src/index.ts:35:27
 msgid ""
 "{userGender, select,\n"
 "  male {He has updated his profile.}\n"
@@ -57,8 +61,9 @@ msgstr ""
 "  other {Ils ont mis à jour leur profil.}\n"
 "}"
 
+# Cart checkout summary
 #. oJKKje
-#: src/index.ts:39:24
+#: src/index.ts:44:24
 msgid ""
 "You have {itemCount, plural,\n"
 "  zero {no items}\n"
@@ -72,8 +77,9 @@ msgstr ""
 "  other {# articles}\n"
 "} dans votre panier."
 
+# Notification message
 #. q8z/HG
-#: src/index.ts:48:28
+#: src/index.ts:54:28
 msgid ""
 "{viewerGender, select,\n"
 "  male {He}\n"
@@ -95,8 +101,9 @@ msgstr ""
 "  other {# nouveaux messages}\n"
 "}."
 
+# Winner announcement
 #. PoRzSf
-#: src/index.ts:61:27
+#: src/index.ts:68:27
 msgid ""
 "{winnerGender, select,\n"
 "  male {He}\n"
@@ -120,8 +127,9 @@ msgstr ""
 "  other {#e}\n"
 "}!"
 
+# Event status summary
 #. Wm8g59
-#: src/index.ts:75:20
+#: src/index.ts:83:20
 msgid ""
 "{speakerGender, select,\n"
 "  male {The speaker}\n"

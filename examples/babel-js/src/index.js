@@ -7,10 +7,12 @@ say.load('fr', fr);
 say.activate('fr');
 
 // Basic message
+// TRANSLATORS: Welcome message
 const welcomeMessage = say`Welcome to our website!`;
 
 // Ordinal example: ranking a contestant
 const contestantPosition = 2;
+// TRANSLATORS: Contestant ranking
 const contestantRanking = say.ordinal(contestantPosition, {
   1: '#st place',
   2: '#nd place',
@@ -20,6 +22,7 @@ const contestantRanking = say.ordinal(contestantPosition, {
 
 // Plural example: apple count
 const appleCount = 5;
+// TRANSLATORS: Apple count
 const appleCountMessage = say.plural(appleCount, {
   zero: 'No apples left',
   one: 'One apple left',
@@ -29,6 +32,7 @@ const appleCountMessage = say.plural(appleCount, {
 
 // Select example: pronoun usage
 const userGender = 'female';
+// TRANSLATORS: Pronoun usage
 const userPronounMessage = say.select(userGender, {
   male: 'He has updated his profile.',
   female: 'She has updated her profile.',
@@ -37,6 +41,7 @@ const userPronounMessage = say.select(userGender, {
 
 // Nested example: cart checkout summary
 const itemCount = 1;
+// TRANSLATORS: Cart checkout summary
 const checkoutSummary = say`You have ${say.plural(itemCount, {
   zero: 'no items',
   one: '1 item',
@@ -46,6 +51,7 @@ const checkoutSummary = say`You have ${say.plural(itemCount, {
 // Nested + select + plural: notification message
 const messagesCount = 3;
 const viewerGender = 'male';
+// TRANSLATORS: Notification message
 const notificationMessage = say`${say.select(viewerGender, {
   male: 'He',
   female: 'She',
@@ -59,6 +65,7 @@ const notificationMessage = say`${say.select(viewerGender, {
 // Ordinal + nested select
 const winnerGender = 'other';
 const place = 1;
+// TRANSLATORS: Winner announcement
 const winnerAnnouncement = say`${say.select(winnerGender, {
   male: 'He',
   female: 'She',
@@ -73,6 +80,7 @@ const winnerAnnouncement = say`${say.select(winnerGender, {
 // Complex: Event status summary
 const attendees = 0;
 const speakerGender = 'female';
+// TRANSLATORS: Event status summary
 const eventStatus = say`${say.select(speakerGender, {
   male: 'The speaker',
   female: 'The speaker',
