@@ -101,11 +101,12 @@ async function writeLocaleFile(
     } catch {}
 
     const mergedMessages: Record<string, Formatter.Message> = {};
-    for (const [id, message] of Object.entries(source.messages)) {
+    for (const [id, sourceMessage] of Object.entries(source.messages)) {
       mergedMessages[id] = {
-        ...message,
-        translation: undefined,
+        message: sourceMessage.message,
         ...(existingMessages[id] ?? {}),
+        comments: sourceMessage.comments,
+        references: sourceMessage.references,
       };
     }
 
