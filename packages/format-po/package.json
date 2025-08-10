@@ -1,5 +1,5 @@
 {
-  "name": "@sayable/config",
+  "name": "@sayable/format-po",
   "version": "0.0.0",
   "type": "module",
   "scripts": {
@@ -13,15 +13,8 @@
       "default": "./dist/index.js"
     }
   },
-  "bin": {
-    "sayable": "./dist/commands/sayable.js"
-  },
   "dependencies": {
-    "@sayable/format-po": "workspace:^",
-    "@sayable/plugin": "workspace:^",
-    "commander": "^14.0.0",
-    "cosmiconfig": "^9.0.0",
-    "neverthrow": "^8.2.0",
-    "zod": "^4.0.15"
+    "date-fns": "^4.1.0",
+    "pofile": "^1.1.4"
   }
 }

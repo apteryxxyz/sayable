@@ -46,9 +46,14 @@ export function createVisitor(onMessage?: (message: CompositeMessage) => void) {
 
 // ===== Transformer ===== //
 
+// TODO: Determine a way to avoid duplicating these types
+interface Transformer {
+  transform(module: { code: string; id: string }): string;
+}
+
 export function createTransformer() {
   return {
-    transform(module: { code: string; id: string }) {
+    transform(module) {
       const file = t.createSourceFile(
         module.id,
         module.code,
@@ -60,14 +65,22 @@ export function createTransformer() {
 
       return t.createPrinter().printFile(result.transformed[0]!);
     },
-  };
+  } satisfies Transformer;
 }
 
 // ===== Extractor ===== //
 
+// TODO: Determine a way to avoid duplicating these types
+interface Extractor {
+  extract(module: {
+    code: string;
+    id: string;
+  }): Record<string, CompositeMessage>;
+}
+
 export function createExtractor() {
   return {
-    extract(module: { code: string; id: string }) {
+    extract(module) {
       const file = t.createSourceFile(
         module.id,
         module.code,
@@ -91,5 +104,5 @@ export function createExtractor() {
 
       return Object.fromEntries(messages);
     },
-  };
+  } satisfies Extractor;
 }

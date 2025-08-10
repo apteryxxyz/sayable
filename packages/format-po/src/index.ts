@@ -1,13 +1,27 @@
 import { format as formatDate } from 'date-fns';
 import PO from 'pofile';
-import type { input } from 'zod';
-import type { Formatter } from '~/shapes.js';
+
+// TODO: Determine a way to avoid duplicating these types
+interface Message {
+  message: string;
+  translation?: string;
+  comments?: string[];
+  references?: `${string}:${number}:${number}`[];
+}
+interface Formatter {
+  extension: `.${string}`;
+  parse(content: string, context: { locale: string }): Record<string, Message>;
+  stringify(
+    messages: Record<string, Message>,
+    context: { locale: string; previousContent?: string },
+  ): string;
+}
 
 export function createFormatter() {
   return {
     extension: '.po',
 
-    parse(content, context) {
+    parse(content: string, context) {
       const po = PO.parse(content);
 
       if (!po.headers['X-Generator']?.startsWith('sayable'))
@@ -15,7 +29,7 @@ export function createFormatter() {
       if (po.headers.Language !== context.locale)
         throw new Error('PO file locale does not match the expected locale');
 
-      const messages: ReturnType<input<typeof Formatter>['parse']> = {};
+      const messages: ReturnType<Formatter['parse']> = {};
       for (const item of po.items) {
         messages[item.extractedComments[0]!] = {
           message: item.msgid,
@@ -56,7 +70,7 @@ export function createFormatter() {
 
       return po.toString();
     },
-  } satisfies input<typeof Formatter>;
+  } satisfies Formatter;
 }
 
 export default createFormatter;

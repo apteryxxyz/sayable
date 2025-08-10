@@ -1,6 +1,6 @@
+import { createFormatter } from '@sayable/format-po';
 import { type CompositeMessage, createExtractor } from '@sayable/plugin';
 import * as z from 'zod';
-import { createFormatter } from './formatters/po.js';
 
 type Awaitable<T> = T | Promise<T>;
 
