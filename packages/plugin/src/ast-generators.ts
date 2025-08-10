@@ -1,3 +1,9 @@
+/**
+ * KEEP IN SYNC:
+ * - `packages/plugin/src/ast-generator.ts`
+ * - `packages/swc-plugin/src/ast_generator.rs`
+ */
+
 import type t from 'typescript';
 import { factory as f } from 'typescript';
 import { generateHash } from './generate-hash.js';

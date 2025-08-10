@@ -1,7 +1,7 @@
 /**
  * KEEP IN SYNC:
+ * - `packages/plugin/src/message-types.ts`
  * - `packages/swc-plugin/src/message_types.rs`
- * - `packages/tsc-plugin/src/message-types.ts`
  */
 use std::collections::BTreeMap;
 use swc_core::ecma::ast::Expr;

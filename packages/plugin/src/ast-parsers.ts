@@ -1,3 +1,9 @@
+/**
+ * KEEP IN SYNC:
+ * - `packages/plugin/src/ast-parser.ts`
+ * - `packages/swc-plugin/src/ast_parser.rs`
+ */
+
 import t from 'typescript';
 import type { ChoiceMessage, CompositeMessage } from './message-types.js';
 

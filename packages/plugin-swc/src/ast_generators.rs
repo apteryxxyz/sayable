@@ -1,7 +1,7 @@
 /**
  * KEEP IN SYNC:
+ * - `packages/plugin/src/ast-generator.ts`
  * - `packages/swc-plugin/src/ast_generator.rs`
- * - `packages/tsc-plugin/src/ast-generator.ts`
  */
 use crate::{
   generate_hash::generate_hash,

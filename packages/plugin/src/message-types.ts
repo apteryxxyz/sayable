@@ -1,3 +1,9 @@
+/**
+ * KEEP IN SYNC:
+ * - `packages/plugin/src/message-types.ts`
+ * - `packages/swc-plugin/src/message_types.rs`
+ */
+
 import type t from 'typescript';
 
 /**

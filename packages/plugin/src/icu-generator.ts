@@ -1,3 +1,9 @@
+/**
+ * KEEP IN SYNC:
+ * - `packages/plugin/src/icu-generator.ts`
+ * - `packages/swc-plugin/src/icu_generator.rs`
+ */
+
 import type { Message } from './message-types.js';
 
 /**

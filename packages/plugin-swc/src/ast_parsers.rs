@@ -1,7 +1,7 @@
 /**
  * KEEP IN SYNC:
+ * - `packages/plugin/src/ast-parser.ts`
  * - `packages/swc-plugin/src/ast_parser.rs`
- * - `packages/tsc-plugin/src/ast-parser.ts`
  */
 use crate::message_types::{
   ArgumentMessage, ChoiceMessage, CompositeMessage, LiteralMessage, Message,
