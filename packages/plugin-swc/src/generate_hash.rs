@@ -1,6 +1,6 @@
 /**
  * KEEP IN SYNC:
- * - `packages/plugin/src/generate-hash.ts`
+ * - `packages/message-utils/src/generate-hash.ts`
  * - `packages/swc-plugin/src/generate_hash.rs`
  */
 use data_encoding::BASE64;

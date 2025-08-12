@@ -16,5 +16,8 @@
   "dependencies": {
     "date-fns": "^4.1.0",
     "pofile": "^1.1.4"
+  },
+  "devDependencies": {
+    "@sayable/config": "workspace:^"
   }
 }

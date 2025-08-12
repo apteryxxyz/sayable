@@ -1,3 +1,5 @@
+import type { Extractor, Transformer } from '@sayable/config';
+import { generateHash, generateIcuMessageFormat } from '@sayable/message-utils';
 import t from 'typescript';
 import { generateSayExpression } from './ast-generators.js';
 import {
@@ -5,8 +7,6 @@ import {
   parseTaggedTemplateExpression,
 } from './ast-parsers.js';
 import { transformImportDeclaration } from './ast-transformers.js';
-import { generateHash } from './generate-hash.js';
-import { generateIcuMessageFormat } from './icu-generator.js';
 import type { CompositeMessage } from './message-types.js';
 
 // ===== Visitor ===== //
@@ -46,11 +46,6 @@ export function createVisitor(onMessage?: (message: CompositeMessage) => void) {
 
 // ===== Transformer ===== //
 
-// TODO: Determine a way to avoid duplicating these types
-interface Transformer {
-  transform(module: { code: string; id: string }): string;
-}
-
 export function createTransformer() {
   return {
     transform(module) {
@@ -69,14 +64,6 @@ export function createTransformer() {
 }
 
 // ===== Extractor ===== //
-
-// TODO: Determine a way to avoid duplicating these types
-interface Extractor {
-  extract(module: {
-    code: string;
-    id: string;
-  }): Record<string, CompositeMessage>;
-}
 
 export function createExtractor() {
   return {

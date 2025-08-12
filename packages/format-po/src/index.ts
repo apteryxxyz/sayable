@@ -1,21 +1,6 @@
+import type { Formatter } from '@sayable/config';
 import { format as formatDate } from 'date-fns';
 import PO from 'pofile';
-
-// TODO: Determine a way to avoid duplicating these types
-interface Message {
-  message: string;
-  translation?: string;
-  comments?: string[];
-  references?: `${string}:${number}:${number}`[];
-}
-interface Formatter {
-  extension: `.${string}`;
-  parse(content: string, context: { locale: string }): Record<string, Message>;
-  stringify(
-    messages: Record<string, Message>,
-    context: { locale: string; previousContent?: string },
-  ): string;
-}
 
 export function createFormatter() {
   return {

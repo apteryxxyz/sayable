@@ -4,10 +4,9 @@
  * - `packages/swc-plugin/src/ast_generator.rs`
  */
 
+import { generateHash, generateIcuMessageFormat } from '@sayable/message-utils';
 import type t from 'typescript';
 import { factory as f } from 'typescript';
-import { generateHash } from './generate-hash.js';
-import { generateIcuMessageFormat } from './icu-generator.js';
 import type { ChoiceMessage, CompositeMessage } from './message-types.js';
 
 /**

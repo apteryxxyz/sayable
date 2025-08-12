@@ -1,6 +1,6 @@
 /**
  * KEEP IN SYNC:
- * - `packages/plugin/src/icu-generator.ts`
+ * - `packages/message-utils/src/icu-generator.ts`
  * - `packages/swc-plugin/src/icu_generator.rs`
  */
 use crate::message_types::Message;

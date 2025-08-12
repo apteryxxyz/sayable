@@ -1,9 +1,9 @@
 import { glob, mkdir, readFile, writeFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
+import { dirname, resolve } from 'node:path';
 import {
   type CompositeMessage,
   generateIcuMessageFormat,
-} from '@sayable/plugin';
+} from '@sayable/message-utils';
 import { Command } from 'commander';
 import type * as z from 'zod';
 import { loadConfig } from '~/load.js';
@@ -80,25 +80,29 @@ async function writeLocaleFile(
     locale: string;
   },
 ) {
-  const outputDir = resolve(catalogue.output.replace('{locale}', locale));
-  await mkdir(outputDir, { recursive: true });
   const outputFile = resolve(
-    outputDir,
-    `messages${catalogue.formatter.extension}`,
+    catalogue.output
+      .replace('{locale}', locale)
+      .replace('{extension}', catalogue.formatter.extension),
   );
+  await mkdir(dirname(outputFile), { recursive: true });
+
+  let existingContent: string | undefined;
+  try {
+    existingContent = await readFile(outputFile, 'utf8');
+  } catch {}
 
   if (locale === source.locale) {
-    const content = await catalogue.formatter //
-      .stringify(source.messages, { locale });
+    const content = await catalogue.formatter.stringify(source.messages, {
+      locale: locale,
+      previousContent: existingContent,
+    });
     await writeFile(outputFile, content);
   } else {
-    let existingContent: string | undefined;
     let existingMessages: Record<string, Formatter.Message> = {};
-
     try {
-      existingContent = await readFile(outputFile, 'utf8');
       existingMessages = await catalogue.formatter //
-        .parse(existingContent, { locale });
+        .parse(existingContent ?? '', { locale });
     } catch {}
 
     const mergedMessages: Record<string, Formatter.Message> = {};
@@ -111,8 +115,10 @@ async function writeLocaleFile(
       };
     }
 
-    const content = await catalogue.formatter //
-      .stringify(mergedMessages, { locale, previousContent: existingContent });
+    const content = await catalogue.formatter.stringify(mergedMessages, {
+      locale: locale,
+      previousContent: existingContent,
+    });
     await writeFile(outputFile, content);
   }
 }

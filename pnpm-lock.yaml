@@ -70,12 +70,9 @@ importers:
 
   packages/config:
     dependencies:
-      '@sayable/format-po':
+      '@sayable/message-utils':
         specifier: workspace:^
-        version: link:../format-po
-      '@sayable/plugin':
-        specifier: workspace:^
-        version: link:../plugin
+        version: link:../message-utils
       commander:
         specifier: ^14.0.0
         version: 14.0.0
@@ -97,9 +94,22 @@ importers:
       pofile:
         specifier: ^1.1.4
         version: 1.1.4
+    devDependencies:
+      '@sayable/config':
+        specifier: workspace:^
+        version: link:../config
+
+  packages/message-utils:
+    dependencies:
+      js-sha256:
+        specifier: ^0.11.1
+        version: 0.11.1
 
   packages/plugin:
     dependencies:
+      '@sayable/message-utils':
+        specifier: workspace:^
+        version: link:../message-utils
       js-sha256:
         specifier: ^0.11.1
         version: 0.11.1
@@ -107,6 +117,9 @@ importers:
         specifier: ^2.3.5
         version: 2.3.5
     devDependencies:
+      '@sayable/config':
+        specifier: workspace:^
+        version: link:../config
       '@types/babel__core':
         specifier: ^7.20.5
         version: 7.20.5

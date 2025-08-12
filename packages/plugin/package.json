@@ -18,10 +18,12 @@
     }
   },
   "dependencies": {
+    "@sayable/message-utils": "workspace:^",
     "js-sha256": "^0.11.1",
     "unplugin": "^2.3.5"
   },
   "devDependencies": {
+    "@sayable/config": "workspace:^",
     "@types/babel__core": "^7.20.5",
     "typescript": "^5.9.2"
   },
