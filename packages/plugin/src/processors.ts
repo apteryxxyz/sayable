@@ -21,7 +21,7 @@ export function createVisitor(onMessage?: (message: CompositeMessage) => void) {
         }
 
         if (t.isTaggedTemplateExpression(node)) {
-          const result = parseTaggedTemplateExpression(node);
+          const result = parseTaggedTemplateExpression(node, {});
           if (result) {
             if (onMessage) onMessage(result);
             return generateSayExpression(result);
@@ -29,7 +29,7 @@ export function createVisitor(onMessage?: (message: CompositeMessage) => void) {
         }
 
         if (t.isCallExpression(node)) {
-          const result = parseCallExpression(node);
+          const result = parseCallExpression(node, {});
           if (result) {
             if (onMessage) onMessage(result);
             return generateSayExpression(result);
@@ -78,18 +78,21 @@ export function createExtractor() {
       const messages = new Map<string, CompositeMessage>();
       t.transform(file, [
         createVisitor((message) => {
-          const hash = generateHash(generateIcuMessageFormat(message));
-          const existing = messages?.get(hash);
+          const hash = generateHash(
+            generateIcuMessageFormat(message),
+            message.context,
+          );
+          const existing = messages.get(hash);
           if (existing) {
             (existing.comments ??= []).push(...(message.comments ?? []));
             (existing.references ??= []).push(...(message.references ?? []));
           } else {
-            messages?.set(hash, message);
+            messages.set(hash, message);
           }
         }),
       ]);
 
-      return Object.fromEntries(messages);
+      return [...messages.values()];
     },
   } satisfies Extractor;
 }

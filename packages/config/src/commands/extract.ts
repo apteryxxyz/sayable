@@ -1,124 +1,155 @@
 import { glob, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
-import {
-  type CompositeMessage,
-  generateIcuMessageFormat,
-} from '@sayable/message-utils';
+import { generateHash, generateIcuMessageFormat } from '@sayable/message-utils';
 import { Command } from 'commander';
-import type * as z from 'zod';
-import { loadConfig } from '~/load.js';
+import type { output } from 'zod';
+import { resolveConfig } from '~/resolve.js';
 import type { Catalogue, Formatter } from '~/shapes.js';
 
 export default new Command()
   .name('extract')
-  .description(
-    'extracts messages from source code, formats them for translation, and writes locale-specific translation files',
-  )
+  .description('')
   .action(async () => {
-    const config = await loadConfig();
-    if (config.isErr()) return console.error(config.error);
+    const config = await resolveConfig();
 
-    for (const catalogue of config.value.catalogues) {
+    for (const catalogue of config.catalogues) {
       const paths = await globCatalogue(catalogue);
-      const sourceMessages = await collectMessages(catalogue, paths) //
-        .then((m) => toFormatMessages(m, true));
+      const sourceMessages = await extractCatalogueMessages(catalogue, paths);
 
-      for (const locale of config.value.locales) {
-        await writeLocaleFile(catalogue, locale, {
+      for (const locale of config.locales) {
+        await writeMessagesForLocale(catalogue, locale, {
+          locale: config.sourceLocale,
           messages: sourceMessages,
-          locale: config.value.sourceLocale,
         });
       }
     }
   });
 
-async function globCatalogue(catalogue: z.output<typeof Catalogue>) {
+async function globCatalogue(catalogue: output<typeof Catalogue>) {
   const paths: string[] = [];
   for await (const path of glob(catalogue.include, {
     exclude: catalogue.exclude,
   }))
-    paths.push(path);
+    paths.push(resolve(path));
   return paths;
 }
 
-async function collectMessages(
-  catalogue: z.output<typeof Catalogue>,
+async function extractCatalogueMessages(
+  catalogue: output<typeof Catalogue>,
   paths: string[],
 ) {
-  const messages: Record<string, CompositeMessage> = {};
-  for await (const maybeRelativePath of paths) {
-    const id = resolve(maybeRelativePath);
-    const code = await readFile(id, 'utf8');
-    const fileMessages = await catalogue.extractor.extract({ code, id });
-    Object.assign(messages, fileMessages);
-  }
-  return messages;
-}
-
-function toFormatMessages(
-  messages: Record<string, CompositeMessage>,
-  includeTranslation: boolean,
-) {
   const result: Record<string, Formatter.Message> = {};
-  for (const [id, message] of Object.entries(messages)) {
-    const icu = generateIcuMessageFormat(message);
-    result[id] = {
-      message: icu,
-      translation: includeTranslation ? icu : undefined,
-      comments: message.comments,
-      references: message.references,
-    };
+  for await (const id of paths) {
+    const code = await readFile(id, 'utf8');
+    const messages = await catalogue.extractor.extract({ id, code });
+    for (const message of messages) {
+      const icu = generateIcuMessageFormat(message);
+      const hash = generateHash(icu, message.context);
+      result[hash] = {
+        message: icu,
+        translation: icu,
+        context: message.context,
+        comments: message.comments,
+        references: message.references,
+      };
+    }
   }
   return result;
 }
 
-async function writeLocaleFile(
-  catalogue: z.output<typeof Catalogue>,
+function resolveLocaleFile(
+  catalogue: output<typeof Catalogue>,
   locale: string,
-  source: {
-    messages: Record<string, Formatter.Message>;
-    locale: string;
-  },
 ) {
-  const outputFile = resolve(
+  return resolve(
     catalogue.output
       .replace('{locale}', locale)
       .replace('{extension}', catalogue.formatter.extension),
   );
+}
+
+async function writeMessagesForLocale(
+  catalogue: output<typeof Catalogue>,
+  locale: string,
+  source: {
+    locale: string;
+    messages: Record<string, Formatter.Message>;
+  },
+) {
+  const outputFile = resolveLocaleFile(catalogue, locale);
   await mkdir(dirname(outputFile), { recursive: true });
 
-  let existingContent: string | undefined;
-  try {
-    existingContent = await readFile(outputFile, 'utf8');
-  } catch {}
-
-  if (locale === source.locale) {
-    const content = await catalogue.formatter.stringify(source.messages, {
-      locale: locale,
-      previousContent: existingContent,
-    });
-    await writeFile(outputFile, content);
-  } else {
-    let existingMessages: Record<string, Formatter.Message> = {};
-    try {
-      existingMessages = await catalogue.formatter //
-        .parse(existingContent ?? '', { locale });
-    } catch {}
+  const existingContent = await readFile(outputFile, 'utf8') //
+    .catch(() => undefined);
+  if (locale !== source.locale) {
+    const _existingMessages = existingContent
+      ? await catalogue.formatter //
+          .parse(existingContent, { locale })
+      : [];
+    const existingMessages = _existingMessages.reduce<
+      Record<string, Formatter.Message>
+    >((result, message) => {
+      const hash = generateHash(message.message, message.context);
+      result[hash] = message;
+      return result;
+    }, {});
 
     const mergedMessages: Record<string, Formatter.Message> = {};
     for (const [id, sourceMessage] of Object.entries(source.messages)) {
+      const existingMessage = existingMessages[id];
       mergedMessages[id] = {
         message: sourceMessage.message,
-        ...(existingMessages[id] ?? {}),
+        translation: undefined,
+        ...existingMessage,
+        context: sourceMessage.context,
         comments: sourceMessage.comments,
         references: sourceMessage.references,
       };
     }
-
-    const content = await catalogue.formatter.stringify(mergedMessages, {
-      locale: locale,
-      previousContent: existingContent,
-    });
-    await writeFile(outputFile, content);
+    source.messages = mergedMessages;
   }
+
+  const localeContent = await catalogue.formatter.stringify(
+    Object.values(source.messages),
+    {
+      locale,
+      previousContent: existingContent,
+    },
+  );
+  await writeFile(outputFile, localeContent);
+
+  /*
+  const outputFile = resolveLocaleFile(catalogue, locale);
+  await mkdir(dirname(outputFile), { recursive: true });
+
+  const existingContent = await readFile(outputFile, 'utf8') //
+    .catch(() => undefined);
+  if (locale !== source.locale) {
+    const existingMessages = existingContent
+      ? await catalogue.formatter //
+          .parse(existingContent, { locale })
+      : [];
+
+    const mergedMessages: Formatter.Message[] = [];
+
+    // const mergedMessages: Record<string, Formatter.Message> = {};
+    // for (const [id, sourceMessage] of Object.entries(source.messages)) {
+    //   const existingMessage = existingMessages[id];
+    //   mergedMessages[id] = {
+    //     message: sourceMessage.message,
+    //     translation: undefined,
+    //     ...existingMessage,
+    //     comments: sourceMessage.comments,
+    //     references: sourceMessage.references,
+    //   };
+    // }
+    // source.messages = mergedMessages;
+  }
+
+  const localeContent = await catalogue.formatter.stringify(source.messages, {
+    locale,
+    previousContent: existingContent,
+  });
+  await writeFile(outputFile, localeContent);
+*/
 }

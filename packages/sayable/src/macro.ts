@@ -5,7 +5,7 @@ type Disallow<K extends PropertyKey> = Partial<Record<K, never>>;
 
 declare interface MacroSayable extends Sayable {
   (strings: TemplateStringsArray, ...placeholders: unknown[]): string;
-  // (descriptor: { id?: string }): MacroSayable;
+  (descriptor: { context?: string }): MacroSayable;
 }
 
 declare class MacroSayable extends Sayable {
@@ -23,7 +23,11 @@ declare class MacroSayable extends Sayable {
   ): string;
 }
 
-throw new Error('Macro has been imported outside of macro context');
+throw new Error(
+  'You are importing "sayable/macro" directly. ' +
+    'This module is not meant to be used at runtime. ' +
+    'Instead, use a compiler and the sayable plugin to compile macros into executable code.',
+);
 declare const say: MacroSayable;
 export default say;
-export * from '.';
+export * from './index.js';

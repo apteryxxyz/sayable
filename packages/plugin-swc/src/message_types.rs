@@ -58,9 +58,10 @@ pub struct CompositeMessage {
   ///
   pub expression: Box<Expr>,
   pub children: BTreeMap<String, Message>,
-  // Comments and location are only ever used by the cli compiler, which the swc plugin does not support
-  // pub comment: None,
-  // pub location: None,
+  pub context: Option<String>,
+  // Comments and references are only ever used by the cli compiler, which the swc plugin does not support
+  // pub comments: None,
+  // pub references: None,
 }
 
 #[derive(Debug, Clone)]

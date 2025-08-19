@@ -28,7 +28,7 @@
   "typescript.inlayHints.variableTypes.suppressWhenTypeMatchesName": true,
 
   // Rust
-  "rust-analyzer.linkedProjects": ["packages/swc-plugin/Cargo.toml"],
+  "rust-analyzer.linkedProjects": ["packages/plugin-swc/Cargo.toml"],
 
   // Code Spell Checker
   "cSpell.language": "en-AU",

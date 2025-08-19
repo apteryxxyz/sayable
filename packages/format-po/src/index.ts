@@ -6,7 +6,7 @@ export function createFormatter() {
   return {
     extension: '.po',
 
-    parse(content: string, context) {
+    parse(content, context) {
       const po = PO.parse(content);
 
       if (!po.headers['X-Generator']?.startsWith('sayable'))
@@ -14,16 +14,13 @@ export function createFormatter() {
       if (po.headers.Language !== context.locale)
         throw new Error('PO file locale does not match the expected locale');
 
-      const messages: ReturnType<Formatter['parse']> = {};
-      for (const item of po.items) {
-        messages[item.extractedComments[0]!] = {
-          message: item.msgid,
-          translation: item.msgstr[0],
-          comments: item.comments,
-          references: item.references as never,
-        };
-      }
-      return messages;
+      return po.items.map((item) => ({
+        context: item.msgctxt,
+        message: item.msgid,
+        translation: item.msgstr[0],
+        comments: item.comments,
+        references: item.references as never,
+      }));
     },
 
     stringify(messages, context) {
@@ -43,13 +40,13 @@ export function createFormatter() {
       po.headers.Language = context.locale;
       po.headers['X-Generator'] = 'sayable';
 
-      for (const [id, message] of Object.entries(messages)) {
+      for (const message of messages) {
         const item = new PO.Item();
         item.msgid = message.message;
+        if (message.context) item.msgctxt = message.context;
         item.msgstr = [message.translation ?? ''];
         item.comments = message.comments ?? [];
         item.references = message.references ?? [];
-        item.extractedComments = [id];
         po.items.push(item);
       }
 

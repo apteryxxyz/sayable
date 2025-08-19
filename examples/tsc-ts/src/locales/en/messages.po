@@ -1,20 +1,46 @@
 msgid ""
 msgstr ""
-"POT-Creation-Date: 2025-08-10 03:14+1200\n"
+"POT-Creation-Date: 2025-08-19 15:33+1200\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Language: en\n"
 "X-Generator: sayable\n"
 
-# Welcome message
-#. zoV7bP
-#: src/index.ts:10:23
-msgid "Welcome to our website!"
-msgstr "Welcome to our website!"
+#: src/index.ts:9:14
+msgid "Hello world!"
+msgstr "Hello world!"
 
-# Contestant ranking
-#. 7TkKKz
-#: src/index.ts:15:26
+#: src/index.ts:13:17
+msgid "Hello {name}, welcome back!"
+msgstr "Hello {name}, welcome back!"
+
+# File menu action
+#: src/index.ts:17:17
+msgctxt "file menu"
+msgid "Open"
+msgstr "Open"
+
+# Physical door action
+#: src/index.ts:19:17
+msgctxt "physical door"
+msgid "Open"
+msgstr "Open"
+
+#: src/index.ts:23:15
+msgid ""
+"{appleCount, plural,\n"
+"  zero {No apples left}\n"
+"  one {One apple left}\n"
+"  other {# apples left}\n"
+"}"
+msgstr ""
+"{appleCount, plural,\n"
+"  zero {No apples left}\n"
+"  one {One apple left}\n"
+"  other {# apples left}\n"
+"}"
+
+#: src/index.ts:31:23
 msgid ""
 "{contestantPosition, selectordinal,\n"
 "  =1 {#st place}\n"
@@ -30,43 +56,21 @@ msgstr ""
 "  other {#th place}\n"
 "}"
 
-# Apple count
-#. Z0PvLq
-#: src/index.ts:25:26
-msgid ""
-"{appleCount, plural,\n"
-"  zero {No apples left}\n"
-"  one {One apple left}\n"
-"  many {# apples left}\n"
-"  other {# apples}\n"
-"}"
-msgstr ""
-"{appleCount, plural,\n"
-"  zero {No apples left}\n"
-"  one {One apple left}\n"
-"  many {# apples left}\n"
-"  other {# apples}\n"
-"}"
-
-# Pronoun usage
-#. 2hVsGr
-#: src/index.ts:35:27
+#: src/index.ts:40:23
 msgid ""
 "{userGender, select,\n"
-"  male {He has updated his profile.}\n"
-"  female {She has updated her profile.}\n"
-"  other {They have updated their profile.}\n"
+"  male {He updated his profile}\n"
+"  female {She updated her profile}\n"
+"  other {They updated their profile}\n"
 "}"
 msgstr ""
 "{userGender, select,\n"
-"  male {He has updated his profile.}\n"
-"  female {She has updated her profile.}\n"
-"  other {They have updated their profile.}\n"
+"  male {He updated his profile}\n"
+"  female {She updated her profile}\n"
+"  other {They updated their profile}\n"
 "}"
 
-# Cart checkout summary
-#. oJKKje
-#: src/index.ts:44:24
+#: src/index.ts:48:13
 msgid ""
 "You have {itemCount, plural,\n"
 "  zero {no items}\n"
@@ -80,9 +84,7 @@ msgstr ""
 "  other {# items}\n"
 "} in your cart."
 
-# Notification message
-#. q8z/HG
-#: src/index.ts:54:28
+#: src/index.ts:57:22
 msgid ""
 "{viewerGender, select,\n"
 "  male {He}\n"
@@ -104,52 +106,34 @@ msgstr ""
 "  other {# new messages}\n"
 "}."
 
-# Winner announcement
-#. PoRzSf
-#: src/index.ts:68:27
+# Number of items in the wishlist
+#: src/index.ts:72:22
+msgctxt "wishlist"
 msgid ""
-"{winnerGender, select,\n"
-"  male {He}\n"
-"  female {She}\n"
-"  other {They}\n"
-"} came in {place, selectordinal,\n"
-"  =1 {#st}\n"
-"  =2 {#nd}\n"
-"  =3 {#rd}\n"
-"  other {#th}\n"
-"} place!"
+"{itemCountWishlist, plural,\n"
+"  zero {No items}\n"
+"  one {1 item}\n"
+"  other {# items}\n"
+"}"
 msgstr ""
-"{winnerGender, select,\n"
-"  male {He}\n"
-"  female {She}\n"
-"  other {They}\n"
-"} came in {place, selectordinal,\n"
-"  =1 {#st}\n"
-"  =2 {#nd}\n"
-"  =3 {#rd}\n"
-"  other {#th}\n"
-"} place!"
+"{itemCountWishlist, plural,\n"
+"  zero {No items}\n"
+"  one {1 item}\n"
+"  other {# items}\n"
+"}"
 
-# Event status summary
-#. Wm8g59
-#: src/index.ts:83:20
+# Number of items in the cart
+#: src/index.ts:79:18
+msgctxt "cart"
 msgid ""
-"{speakerGender, select,\n"
-"  male {The speaker}\n"
-"  female {The speaker}\n"
-"  other {The speaker}\n"
-"} has {attendees, plural,\n"
-"  zero {no attendees registered}\n"
-"  one {1 attendee registered}\n"
-"  other {# attendees registered}\n"
-"} for her session."
+"{itemCountCart, plural,\n"
+"  zero {No items}\n"
+"  one {1 item}\n"
+"  other {# items}\n"
+"}"
 msgstr ""
-"{speakerGender, select,\n"
-"  male {The speaker}\n"
-"  female {The speaker}\n"
-"  other {The speaker}\n"
-"} has {attendees, plural,\n"
-"  zero {no attendees registered}\n"
-"  one {1 attendee registered}\n"
-"  other {# attendees registered}\n"
-"} for her session."
+"{itemCountCart, plural,\n"
+"  zero {No items}\n"
+"  one {1 item}\n"
+"  other {# items}\n"
+"}"

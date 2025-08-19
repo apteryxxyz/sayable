@@ -1,15 +1,9 @@
 use swc_core::{
-  common::comments::Comments,
   ecma::{
     ast::{self as t, Program},
     visit::{fold_pass, Fold, FoldWith},
   },
   plugin::{plugin_transform, proxies::TransformPluginProgramMetadata},
-};
-
-use crate::{
-  ast_generators::generate_say_expression,
-  ast_parsers::{parse_call_expression, parse_tagged_template_expression},
 };
 
 mod ast_generators;
@@ -18,11 +12,14 @@ mod generate_hash;
 mod icu_generator;
 mod message_types;
 
-pub struct Visitor<'a> {
-  pub comments: Option<&'a dyn Comments>,
-}
+use crate::{
+  ast_generators::generate_say_expression,
+  ast_parsers::{parse_call_expression, parse_tagged_template_expression, Extra},
+};
 
-impl<'a> Fold for Visitor<'a> {
+struct Visitor {}
+
+impl Fold for Visitor {
   fn fold_import_decl(&mut self, mut node: t::ImportDecl) -> t::ImportDecl {
     if node.src.value == *"sayable/macro" {
       node.src = Box::new(t::Str {
@@ -35,9 +32,14 @@ impl<'a> Fold for Visitor<'a> {
   }
 
   fn fold_expr(&mut self, expr: t::Expr) -> t::Expr {
+    let mut extra = Extra {
+      context: None,
+      key: None,
+    };
+
     match &expr {
       t::Expr::TaggedTpl(node) => {
-        if let Some(message) = parse_tagged_template_expression(node, &self.comments) {
+        if let Some(message) = parse_tagged_template_expression(node, &mut extra) {
           generate_say_expression(&message)
         } else {
           expr
@@ -45,7 +47,7 @@ impl<'a> Fold for Visitor<'a> {
       }
 
       t::Expr::Call(node) => {
-        if let Some(message) = parse_call_expression(node, &self.comments, "_".into()) {
+        if let Some(message) = parse_call_expression(node, &mut extra) {
           generate_say_expression(&message)
         } else {
           expr
@@ -58,10 +60,8 @@ impl<'a> Fold for Visitor<'a> {
 }
 
 #[plugin_transform]
-fn process_transform(program: Program, metadata: TransformPluginProgramMetadata) -> Program {
-  let mut visitor = Visitor {
-    comments: metadata.comments.as_ref().map(|rc| rc as &dyn Comments),
-  };
+fn process_transform(program: Program, _: TransformPluginProgramMetadata) -> Program {
+  let mut visitor = Visitor {};
   let transformer = fold_pass(&mut visitor);
   program.apply(transformer)
 }

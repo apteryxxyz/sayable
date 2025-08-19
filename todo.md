@@ -12,7 +12,6 @@
 - github labels
 - changeset
 
-- plugins for each framework that unplugin supports
 - bun plugin
 - more examples
 

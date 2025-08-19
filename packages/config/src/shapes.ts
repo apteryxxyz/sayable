@@ -15,10 +15,7 @@ export const Transformer = z.object({
 
 export const Extractor = z.object({
   extract: z.custom<
-    (module: {
-      code: string;
-      id: string;
-    }) => Awaitable<Record<string, CompositeMessage>>
+    (module: { code: string; id: string }) => Awaitable<CompositeMessage[]>
   >((val) => typeof val === 'function'),
 });
 
@@ -30,11 +27,11 @@ export const Formatter = z.object({
     (
       content: string,
       context: { locale: string },
-    ) => Awaitable<Record<string, Formatter.Message>>
+    ) => Awaitable<Formatter.Message[]>
   >((val) => typeof val === 'function'),
   stringify: z.custom<
     (
-      messages: Record<string, Formatter.Message>,
+      messages: Formatter.Message[],
       context: { locale: string; previousContent?: string },
     ) => Awaitable<string>
   >((val) => typeof val === 'function'),
@@ -44,6 +41,7 @@ export namespace Formatter {
   export interface Message {
     message: string;
     translation?: string;
+    context?: string;
     comments?: string[];
     references?: `${string}:${number}:${number}`[];
   }

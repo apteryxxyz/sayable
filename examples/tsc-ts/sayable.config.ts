@@ -6,7 +6,7 @@ export default defineConfig({
   catalogues: [
     {
       include: ['src/**/*.ts'],
-      output: 'src/locales/{locale}/',
+      output: `src/locales/{locale}/messages.{extension}`,
     },
   ],
 });

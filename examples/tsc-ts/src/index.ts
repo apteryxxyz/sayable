@@ -7,52 +7,55 @@ say.load('fr', fr);
 say.activate('fr');
 
 // Basic message
-// TRANSLATORS: Welcome message
-const welcomeMessage = say`Welcome to our website!`;
+const hello = say`Hello world!`;
 
-// Ordinal example: ranking a contestant
+// Parameter example: message with a name
+const name = 'John';
+const greeting = say`Hello ${name}, welcome back!`;
+
+// Context example: same text, different usage
+// TRANSLATORS: File menu action
+const openFile = say({ context: 'file menu' })`Open`;
+// TRANSLATORS: Physical door action
+const openDoor = say({ context: 'physical door' })`Open`;
+
+// Plural example: apples in basket
+const appleCount = 3;
+const apples = say.plural(appleCount, {
+  zero: 'No apples left',
+  one: 'One apple left',
+  other: '# apples left',
+});
+
+// Ordinal example: contestant ranking
 const contestantPosition = 2;
-// TRANSLATORS: Contestant ranking
-const contestantRanking = say.ordinal(contestantPosition, {
+const contestantRank = say.ordinal(contestantPosition, {
   1: '#st place',
   2: '#nd place',
   3: '#rd place',
   other: '#th place',
 });
 
-// Plural example: apple count
-const appleCount = 5;
-// TRANSLATORS: Apple count
-const appleCountMessage = say.plural(appleCount, {
-  zero: 'No apples left',
-  one: 'One apple left',
-  many: '# apples left',
-  other: '# apples',
-});
-
 // Select example: pronoun usage
 const userGender = 'female';
-// TRANSLATORS: Pronoun usage
-const userPronounMessage = say.select(userGender, {
-  male: 'He has updated his profile.',
-  female: 'She has updated her profile.',
-  other: 'They have updated their profile.',
+const profilePronoun = say.select(userGender, {
+  male: 'He updated his profile',
+  female: 'She updated her profile',
+  other: 'They updated their profile',
 });
 
-// Nested example: cart checkout summary
+// Nested example: cart summary with plural
 const itemCount = 1;
-// TRANSLATORS: Cart checkout summary
-const checkoutSummary = say`You have ${say.plural(itemCount, {
+const cart = say`You have ${say.plural(itemCount, {
   zero: 'no items',
   one: '1 item',
   other: '# items',
 })} in your cart.`;
 
-// Nested + select + plural: notification message
+// Nested example: notifications with select + plural
 const messagesCount = 3;
 const viewerGender = 'male';
-// TRANSLATORS: Notification message
-const notificationMessage = say`${say.select(viewerGender, {
+const notifications = say`${say.select(viewerGender, {
   male: 'He',
   female: 'She',
   other: 'They',
@@ -62,43 +65,34 @@ const notificationMessage = say`${say.select(viewerGender, {
   other: '# new messages',
 })}.`;
 
-// Ordinal + nested select
-const winnerGender = 'other';
-const place = 1;
-// TRANSLATORS: Winner announcement
-const winnerAnnouncement = say`${say.select(winnerGender, {
-  male: 'He',
-  female: 'She',
-  other: 'They',
-})} came in ${say.ordinal(place, {
-  1: '#st',
-  2: '#nd',
-  3: '#rd',
-  other: '#th',
-})} place!`;
+// **Context-sensitive plural examples: same text, different context**
+const itemCountWishlist = 2;
+const itemCountCart = 2;
 
-// Complex: Event status summary
-const attendees = 0;
-const speakerGender = 'female';
-// TRANSLATORS: Event status summary
-const eventStatus = say`${say.select(speakerGender, {
-  male: 'The speaker',
-  female: 'The speaker',
-  other: 'The speaker',
-})} has ${say.plural(attendees, {
-  zero: 'no attendees registered',
-  one: '1 attendee registered',
-  other: '# attendees registered',
-})} for her session.`;
+// TRANSLATORS: Number of items in the wishlist
+const itemsWishlist = say({ context: 'wishlist' }).plural(itemCountWishlist, {
+  zero: 'No items',
+  one: '1 item',
+  other: '# items',
+});
 
-// Logging all messages together
+// TRANSLATORS: Number of items in the cart
+const itemsCart = say({ context: 'cart' }).plural(itemCountCart, {
+  zero: 'No items',
+  one: '1 item',
+  other: '# items',
+});
+
 console.log({
-  welcomeMessage,
-  contestantRanking,
-  appleCountMessage,
-  userPronounMessage,
-  checkoutSummary,
-  notificationMessage,
-  winnerAnnouncement,
-  eventStatus,
+  hello,
+  greeting,
+  openFile,
+  openDoor,
+  apples,
+  contestantRank,
+  profilePronoun,
+  cart,
+  notifications,
+  itemsWishlist,
+  itemsCart,
 });

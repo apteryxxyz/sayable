@@ -25,9 +25,10 @@ pub fn generate_say_expression(message: &CompositeMessage) -> t::Expr {
     "id".to_string(),
     Box::new(t::Expr::Lit(t::Lit::Str(t::Str {
       span: DUMMY_SP,
-      value: generate_hash(generate_icu_message_format(&Message::Composite(
-        message.clone(),
-      )))
+      value: generate_hash(
+        generate_icu_message_format(&Message::Composite(message.clone())),
+        message.context.clone(),
+      )
       .into(),
       raw: None,
     }))),

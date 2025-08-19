@@ -9,93 +9,95 @@ import type { ChoiceMessage, CompositeMessage } from './message-types.js';
 
 /**
  * Parses a tagged template expression into a composite message.
- * @example say`Hello ${name}!`
- * @example object.say`Hello ${name}!`
+ * @param node The tagged template expression to parse.
+ * @param extra Extra information about the node.
+ * @returns The parsed composite message, or `null` if the node is not a valid message.
+ * @example say`<message>`
+ * @example <object>.say`<message>`
+ * @example say(<descriptor>)`<message>`
  */
 export function parseTaggedTemplateExpression(
   node: t.TaggedTemplateExpression,
-  extra: Partial<object> = {},
+  extra: Extra,
 ): CompositeMessage | null {
   if (
-    // say`...` & <object>.say`...`
-    node.tag.getText()?.split('.').at(-1) === 'say' &&
+    // identifier
+    (isSayIdentifier(node.tag) ||
+      (t.isCallExpression(node.tag) && isSayIdentifier(node.tag.expression))) &&
+    // template
     (t.isTemplateExpression(node.template) ||
       t.isNoSubstitutionTemplateLiteral(node.template))
   ) {
-    const segments =
-      'text' in node.template
-        ? [node.template]
-        : [
-            node.template.head,
-            ...node.template.templateSpans //
-              .flatMap((s) => [s.expression, s.literal]),
-          ];
+    const segments = [];
+    if ('text' in node.template) {
+      segments.push(node.template);
+    } else {
+      segments.push(node.template.head);
+      for (const s of node.template.templateSpans)
+        segments.push(s.expression, s.literal);
+    }
 
     const children: CompositeMessage['children'] = {};
     for (const [i, segment] of segments.entries()) {
       if (t.isTemplateLiteralToken(segment)) {
-        children[i] = {
-          type: 'literal',
-          text: segment.text,
-        };
+        children[i] = { type: 'literal', text: segment.text };
         continue;
       }
 
       if (t.isCallExpression(segment)) {
-        const message = parseCallExpression(segment, {
-          ...extra,
-          key: String(i),
-        })?.children?.[0];
+        extra.key = String(i);
+        const message = parseCallExpression(segment, extra)?.children?.[0];
         if (message) children[String(i)] = message;
         continue;
       }
 
+      const identifier = t.isIdentifier(segment)
+        ? segment.getText()
+        : String(i);
       children[String(i)] = {
         type: 'argument',
-        identifier: t.isIdentifier(segment) ? segment.getText() : String(i),
+        identifier,
         expression: segment,
       };
     }
 
+    const expression = t.isCallExpression(node.tag)
+      ? node.tag.expression
+      : node.tag;
+    populateExtra(node.tag, extra);
+
     return {
       type: 'composite',
-      expression: node.tag,
+      expression,
       children,
       comments: extractTranslatorsComments(node),
       references: extractNodeReferences(node),
-    };
+      context: extra.context,
+    } satisfies CompositeMessage;
   }
 
   return null;
 }
 
-/**
- * Parses a call expression into a composite message.
- * @example say.select(gender, { male: 'He', female: 'She', other: 'They' })
- * @example object.say.select(gender, { male: 'He', female: 'She', other: 'They' })
- */
 export function parseCallExpression(
   node: t.CallExpression,
-  extra: Partial<{ key: string }> = {},
+  extra: Extra,
 ): CompositeMessage | null {
   if (
+    // identifier
     t.isPropertyAccessExpression(node.expression) &&
-    t.isIdentifier(node.expression.name) &&
+    isSayIdentifier(node.expression.expression) &&
+    // member
     ['select', 'plural', 'ordinal'].includes(node.expression.name.text) &&
+    // arguments
     node.arguments.length === 2 &&
     t.isExpression(node.arguments[0]!) &&
     t.isObjectLiteralExpression(node.arguments[1]!)
   ) {
     const children: CompositeMessage['children'] = {};
-
     for (const property of node.arguments[1].properties) {
       if (!t.isPropertyAssignment(property)) continue;
-
-      let key: string | number;
-      if (t.isIdentifier(property.name)) key = property.name.text;
-      else if (t.isStringLiteral(property.name)) key = property.name.text;
-      else if (t.isNumericLiteral(property.name)) key = property.name.text;
-      else continue;
+      const key = getPropertyKey(property);
 
       if (
         t.isStringLiteral(property.initializer) ||
@@ -115,20 +117,21 @@ export function parseCallExpression(
           undefined,
           property.initializer,
         );
-        const message = parseTaggedTemplateExpression(fake);
+        const message = //
+          parseTaggedTemplateExpression(fake, extra);
         if (message) children[key] = message;
         continue;
       }
 
       if (t.isTaggedTemplateExpression(property.initializer)) {
-        const message = parseTaggedTemplateExpression(property.initializer);
+        const message = //
+          parseTaggedTemplateExpression(property.initializer, extra);
         if (message) children[key] = message;
       }
     }
 
     const property = node.expression.name;
     const value = node.arguments[0];
-
     const choice = {
       type: 'choice',
       kind: property.text as ChoiceMessage['kind'],
@@ -137,16 +140,65 @@ export function parseCallExpression(
       children,
     } satisfies ChoiceMessage;
 
+    const expression = t.isCallExpression(node.expression.expression)
+      ? node.expression.expression.expression
+      : node.expression.expression;
+    populateExtra(node.expression.expression, extra);
+
     return {
       type: 'composite',
-      expression: node.expression.expression,
+      expression: expression,
       children: { 0: choice },
       comments: extractTranslatorsComments(node),
       references: extractNodeReferences(node),
-    };
+      context: extra.context,
+    } satisfies CompositeMessage;
   }
 
   return null;
+}
+
+//
+
+interface Extra {
+  context?: string;
+  key?: string;
+}
+
+function populateExtra(node: t.Node, extra: Extra) {
+  if (
+    t.isCallExpression(node) &&
+    t.isObjectLiteralExpression(node.arguments[0]!)
+  ) {
+    for (const property of node.arguments[0].properties) {
+      if (!t.isPropertyAssignment(property)) continue;
+      const key = getPropertyKey(property);
+
+      if (t.isStringLiteral(property.initializer)) {
+        if (key === 'context') extra.context = property.initializer.text;
+      }
+    }
+  }
+}
+
+function isSayIdentifier(
+  node: t.LeftHandSideExpression,
+): node is t.Identifier | t.PropertyAccessExpression | t.CallExpression {
+  return (
+    // say
+    (t.isIdentifier(node) && node.text === 'say') ||
+    // object.say
+    (t.isPropertyAccessExpression(node) && isSayIdentifier(node.expression)) ||
+    // say()
+    (t.isCallExpression(node) && isSayIdentifier(node.expression))
+  );
+}
+
+function getPropertyKey(node: t.PropertyAssignment) {
+  if (t.isIdentifier(node.name)) return node.name.text;
+  if (t.isStringLiteral(node.name)) return node.name.text;
+  if (t.isNumericLiteral(node.name)) return node.name.text;
+  return node.name.getText();
 }
 
 function getLeadingCommentsForNode(

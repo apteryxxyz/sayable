@@ -8,32 +8,33 @@ use crate::message_types::{
 };
 use std::collections::BTreeMap;
 use swc_core::{
-  common::{comments::Comments, pass::Either, SyntaxContext},
+  common::{pass::Either, SyntaxContext},
   ecma::ast::{self as t},
 };
 
-///
 /// Parses a tagged template expression into a composite message.
-/// #### Example
-/// - say`Hello, world!`
-/// - <object>.say`Hello, world!`
 ///
+/// #### Arguments
+///
+/// * `node` - The tagged template expression to parse.
+/// * `extra` - Extra information about the node.
+///
+/// #### Returns
+///
+/// The parsed composite message, or `None` if the node is not a valid message.
+///
+/// #### Examples
+///
+/// ```ignore
+/// say`message`;
+/// object.say`message`;
+/// say({ ...descriptor })`message`;
+/// ```
 pub fn parse_tagged_template_expression(
   node: &t::TaggedTpl,
-  comments: &dyn Comments,
+  extra: &mut Extra,
 ) -> Option<CompositeMessage> {
-  let is_say_tag = match &node.tag.as_ref() {
-    // say`...`
-    t::Expr::Ident(t::Ident { sym, .. }) if sym == "say" => true,
-    // <object>.say`...`
-    t::Expr::Member(t::MemberExpr {
-      prop: t::MemberProp::Ident(t::IdentName { sym, .. }),
-      ..
-    }) if sym == "say" => true,
-    _ => false,
-  };
-
-  if is_say_tag {
+  if is_say_identifier(&node.tag) {
     let expressions = &node.tpl.exprs;
     let quasis = &node.tpl.quasis;
     let mut segments = Vec::new();
@@ -49,24 +50,26 @@ pub fn parse_tagged_template_expression(
       match segment {
         Either::Left(segment) => {
           let message = LiteralMessage {
-            text: segment.raw.as_str().into(),
+            text: segment.raw.to_string(),
           };
           children.insert(i.to_string(), Message::Literal(message));
         }
         Either::Right(segment) => match segment.as_ref() {
           t::Expr::Call(call) => {
-            let message = parse_call_expression(call, &comments, i.to_string())
-              .and_then(|m| m.children.get("0").cloned());
+            extra.key = Some(i.to_string());
+            let message =
+              parse_call_expression(call, extra).and_then(|m| m.children.get("0").cloned());
             if let Some(message) = message {
               children.insert(i.to_string(), message);
             }
           }
           _ => {
+            let identifier = match &segment.as_ref() {
+              t::Expr::Ident(ident) => ident.sym.to_string(),
+              _ => i.to_string(),
+            };
             let message = ArgumentMessage {
-              identifier: match &segment.as_ref() {
-                t::Expr::Ident(ident) => ident.sym.to_string(),
-                _ => i.to_string(),
-              },
+              identifier,
               expression: segment.clone(),
             };
             children.insert(i.to_string(), Message::Argument(message));
@@ -75,9 +78,16 @@ pub fn parse_tagged_template_expression(
       }
     }
 
-    return Option::Some(CompositeMessage {
-      expression: node.tag.clone(),
+    let expression = match &*node.tag {
+      t::Expr::Call(call) => call.callee.as_expr().unwrap(),
+      _ => &node.tag,
+    };
+    populate_extra(&node.tag, extra);
+
+    return Some(CompositeMessage {
+      expression: expression.clone(),
       children,
+      context: extra.context.clone(),
     });
   }
 
@@ -86,15 +96,29 @@ pub fn parse_tagged_template_expression(
 
 ///
 /// Parses a call expression into a composite message.
-/// #### Example
-/// - say.select(gender, { male: 'He', female: 'She', other: 'They' })
-/// - object.say.select(gender, { male: 'He', female: 'She', other: 'They' })
+///
+/// #### Arguments
+///
+/// * `node` - The call expression to parse.
+/// * `extra` - Extra information about the node.
+///
+/// #### Returns
+///
+/// The parsed composite message, or `None` if the node is not a valid message.
+///
+/// #### Examples
+/// ```ignore
+/// say.plural(value, { ...choices })
+/// object.say.plural(value, { ...choices })
+/// say({ ...descriptor }).plural(value, { ...choices })
+/// ```
 ///
 pub fn parse_call_expression(
-  node: &t::CallExpr,
-  comments: &dyn Comments,
-  default_key: String,
+  node: &t::CallExpr, //
+  extra: &mut Extra,
 ) -> Option<CompositeMessage> {
+  let is_say_callee = is_say_identifier(node.callee.as_expr().unwrap());
+
   let is_select_callee = match &node.callee {
     t::Callee::Expr(callee) => match &**callee {
       t::Expr::Member(t::MemberExpr {
@@ -110,7 +134,7 @@ pub fn parse_call_expression(
     && matches!(*node.args[0].expr, _)
     && matches!(*node.args[1].expr, t::Expr::Object(_));
 
-  if is_select_callee && is_select_args {
+  if is_say_callee && is_select_callee && is_select_args {
     let callee = node.callee.as_expr().unwrap().as_member().unwrap();
     let property = callee.prop.as_ident().unwrap();
 
@@ -125,13 +149,7 @@ pub fn parse_call_expression(
       let t::Prop::KeyValue(t::KeyValueProp { key, value }) = &**boxed_prop else {
         continue;
       };
-
-      let key_str = match key {
-        t::PropName::Str(t::Str { value, .. }) => value.to_string(),
-        t::PropName::Ident(t::IdentName { sym, .. }) => sym.to_string(),
-        t::PropName::Num(t::Number { value, .. }) => value.to_string(),
-        _ => continue,
-      };
+      let key = get_property_name(key);
 
       let child = match value.as_ref() {
         t::Expr::Lit(t::Lit::Str(t::Str { value, .. })) => {
@@ -160,22 +178,21 @@ pub fn parse_call_expression(
             type_params: None,
           };
           Some(Message::Composite(
-            parse_tagged_template_expression(&fake_tagged, &comments).unwrap(),
+            parse_tagged_template_expression(&fake_tagged, extra).unwrap(),
           ))
         }
         _ => None,
       };
 
       if let Some(child) = child {
-        children.insert(key_str, child);
+        children.insert(key, child);
       }
     }
 
     let key_ident = match &**key_expr {
       t::Expr::Ident(ident) => ident.sym.to_string(),
-      _ => default_key.to_string(),
+      _ => extra.key.as_ref().unwrap().to_string(),
     };
-
     let choice = Message::Choice(ChoiceMessage {
       kind: property.sym.to_string(),
       identifier: key_ident,
@@ -183,14 +200,86 @@ pub fn parse_call_expression(
       children,
     });
 
+    let expression = match &*callee.obj {
+      t::Expr::Call(call) => call.callee.as_expr().unwrap(),
+      _ => &callee.obj,
+    };
+    populate_extra(&callee.obj, extra);
+
     return Some(CompositeMessage {
-      expression: callee.obj.clone(),
+      expression: expression.clone(),
       children: BTreeMap::from_iter([("0".to_string(), choice)]),
+      context: extra.context.clone(),
     });
   }
 
   None
 }
 
-// Comments and location are only ever used by the cli compiler, which uses babel every time
-// So extractors for them are not implemented in the SWC plugin
+//
+
+pub struct Extra {
+  pub context: Option<String>,
+  pub key: Option<String>,
+}
+
+fn populate_extra(node: &t::Expr, extra: &mut Extra) {
+  let t::Expr::Call(t::CallExpr { args, .. }) = node else {
+    return;
+  };
+  let Some(first_arg) = args.first() else {
+    return;
+  };
+  let t::Expr::Object(t::ObjectLit { props, .. }) = &*first_arg.expr else {
+    return;
+  };
+
+  for prop in props {
+    let t::PropOrSpread::Prop(boxed_prop) = prop else {
+      continue;
+    };
+    let t::Prop::KeyValue(t::KeyValueProp { key, value }) = &**boxed_prop else {
+      continue;
+    };
+
+    let key = get_property_name(key);
+    let t::Expr::Lit(t::Lit::Str(t::Str { value, .. })) = &**value else {
+      continue;
+    };
+
+    // match key.as_str() {
+    //   "context" => extra.context = Some(value.to_string()),
+    //   _ => {}
+    // }
+    if key.as_str() == "context" {
+      extra.context = Some(value.to_string());
+    }
+  }
+}
+
+fn is_say_identifier(node: &t::Expr) -> bool {
+  match node {
+    // say
+    t::Expr::Ident(t::Ident { sym, .. }) => sym == "say",
+    // object.say
+    t::Expr::Member(t::MemberExpr {
+      prop: t::MemberProp::Ident(t::IdentName { sym, .. }),
+      ..
+    }) => sym == "say",
+    // say()
+    t::Expr::Call(t::CallExpr {
+      callee: t::Callee::Expr(callee),
+      ..
+    }) => is_say_identifier(callee),
+    _ => false,
+  }
+}
+
+fn get_property_name(node: &t::PropName) -> String {
+  match node {
+    t::PropName::Str(t::Str { value, .. }) => value.to_string(),
+    t::PropName::Ident(t::IdentName { sym, .. }) => sym.to_string(),
+    t::PropName::Num(t::Number { value, .. }) => value.to_string(),
+    _ => "".to_string(),
+  }
+}

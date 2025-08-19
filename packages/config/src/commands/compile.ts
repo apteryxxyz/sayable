@@ -1,72 +1,111 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
+import { dirname, resolve } from 'node:path';
+import { generateHash } from '@sayable/message-utils';
 import { Command } from 'commander';
-import type * as z from 'zod';
-import { loadConfig } from '~/load.js';
-import type { Catalogue, Configuration } from '~/shapes.js';
+import type { output } from 'zod';
+import { resolveConfig } from '~/resolve.js';
+import type { Catalogue, Configuration, Formatter } from '~/shapes.js';
 
 export default new Command()
   .name('compile')
-  .description(
-    'compiles and writes translated message files for each locale, applying fallbacks where necessary and ensuring proper formatting',
-  )
+  .description('')
   .action(async () => {
-    const config = await loadConfig();
-    if (config.isErr()) return console.error(config.error);
+    const config = await resolveConfig();
 
-    for (const catalogue of config.value.catalogues) {
+    for (const catalogue of config.catalogues) {
       const cache = new Map<string, Record<string, string>>();
-      for (const locale of config.value.locales) {
+      for (const locale of config.locales) {
         const messages = //
-          await readAndAssertMessages(cache, config.value, catalogue, locale);
-        await writeLocaleFile(catalogue, locale, messages);
+          await hydrateLocaleMessages(cache, config, catalogue, locale);
+        await writeMessagesForLocale(catalogue, locale, messages);
       }
     }
   });
 
-async function readAndAssertMessages(
-  cache: Map<string, Record<string, string>>,
-  config: z.output<typeof Configuration>,
-  catalogue: z.output<typeof Catalogue>,
+function resolveLocaleFile(
+  catalogue: output<typeof Catalogue>,
   locale: string,
 ) {
-  if (cache.has(locale)) return cache.get(locale)!;
+  return resolve(
+    catalogue.output
+      .replace('{locale}', locale)
+      .replace('{extension}', catalogue.formatter.extension),
+  );
+}
 
-  const outDir = resolve(catalogue.output.replace('{locale}', locale));
-  const outFile = resolve(outDir, `messages${catalogue.formatter.extension}`);
-  const content = await readFile(outFile, 'utf8');
+async function readLocaleFile(
+  catalogue: output<typeof Catalogue>,
+  locale: string,
+) {
+  const file = resolveLocaleFile(catalogue, locale);
+  const content = await readFile(file, 'utf8');
+  return catalogue.formatter.parse(content, { locale });
+}
 
-  const result = await catalogue.formatter.parse(content, { locale });
-  const messages: Record<string, string> = {};
-  for (const [id, message] of Object.entries(result)) {
+async function applyFallbacks(
+  cache: Map<string, Record<string, string>>,
+  config: output<typeof Configuration>,
+  catalogue: output<typeof Catalogue>,
+  locale: string,
+  messages: Formatter.Message[],
+): Promise<Record<string, string>> {
+  const result: Record<string, string> = {};
+
+  for (const message of messages) {
+    const hash = generateHash(message.message, message.context);
+
     if (message.translation) {
-      messages[id] = message.translation;
-    } else {
-      const fallbacks = [
-        ...(config.fallbackLocales?.[locale] ?? []),
-        config.sourceLocale,
-      ];
-      for (const fallback of fallbacks) {
-        const fallbackMessages = //
-          await readAndAssertMessages(cache, config, catalogue, fallback);
-        if (fallbackMessages[id]) {
-          messages[id] = fallbackMessages[id];
-          break;
-        }
+      result[hash] = message.translation;
+      continue;
+    }
+
+    const fallbacks = [
+      ...(config.fallbackLocales?.[locale] ?? []),
+      config.sourceLocale,
+    ];
+
+    for (const fallback of fallbacks) {
+      const fallbackMessages = //
+        await hydrateLocaleMessages(cache, config, catalogue, fallback);
+      if (fallbackMessages[hash]) {
+        result[hash] = fallbackMessages[hash];
+        break;
       }
     }
   }
+
+  return result;
+}
+
+async function hydrateLocaleMessages(
+  cache: Map<string, Record<string, string>>,
+  config: output<typeof Configuration>,
+  catalogue: output<typeof Catalogue>,
+  locale: string,
+): Promise<Record<string, string>> {
+  if (cache.has(locale)) return cache.get(locale)!;
+
+  const rawMessages = await readLocaleFile(catalogue, locale);
+  const messages = await applyFallbacks(
+    cache,
+    config,
+    catalogue,
+    locale,
+    rawMessages,
+  );
+
+  cache.set(locale, messages);
   return messages;
 }
 
-async function writeLocaleFile(
-  catalogue: z.output<typeof Catalogue>,
+async function writeMessagesForLocale(
+  catalogue: output<typeof Catalogue>,
   locale: string,
   messages: Record<string, string>,
 ) {
-  const outDir = resolve(catalogue.output.replace('{locale}', locale));
-  await mkdir(outDir, { recursive: true });
-
-  const outFile = resolve(outDir, 'messages.json');
-  await writeFile(outFile, JSON.stringify(messages, null, 2));
+  const outputFile = resolve(
+    catalogue.output.replace('{locale}', locale).replace('{extension}', 'json'),
+  );
+  await mkdir(dirname(outputFile), { recursive: true });
+  await writeFile(outputFile, JSON.stringify(messages, null, 2));
 }

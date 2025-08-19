@@ -43,6 +43,7 @@ export interface CompositeMessage {
   children: Record<string /*number*/, Message>;
   comments: string[] | undefined;
   references: `${string}:${number}:${number}`[] | undefined;
+  context: string | undefined;
 }
 
 export type Message =

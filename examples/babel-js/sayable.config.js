@@ -6,7 +6,7 @@ export default defineConfig({
   catalogues: [
     {
       include: ['src/**/*.js'],
-      output: 'src/locales/{locale}/',
+      output: 'src/locales/{locale}/messages.{extension}',
     },
   ],
 });
