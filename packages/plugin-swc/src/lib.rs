@@ -21,10 +21,10 @@ struct Visitor {}
 
 impl Fold for Visitor {
   fn fold_import_decl(&mut self, mut node: t::ImportDecl) -> t::ImportDecl {
-    if node.src.value == *"sayable/macro" {
+    if node.src.value == *"sayable" {
       node.src = Box::new(t::Str {
         span: node.src.span,
-        value: "sayable".into(),
+        value: "sayable/runtime".into(),
         raw: None,
       });
     }

@@ -3,7 +3,7 @@ import t, { factory as f } from 'typescript';
 export function transformImportDeclaration(node: t.ImportDeclaration) {
   if (
     t.isStringLiteral(node.moduleSpecifier) &&
-    node.moduleSpecifier.text === 'sayable/macro'
+    node.moduleSpecifier.text === 'sayable'
   ) {
     return transformMacroImportDeclaration(node);
   }
@@ -16,7 +16,7 @@ export function transformMacroImportDeclaration(node: t.ImportDeclaration) {
     node,
     node.modifiers,
     node.importClause,
-    f.createStringLiteral('sayable'),
+    f.createStringLiteral('sayable/runtime'),
     node.attributes,
   );
 }

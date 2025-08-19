@@ -1,10 +1,4 @@
-import say from 'sayable/macro';
-import en from './locales/en/messages.json' with { type: 'json' };
-import fr from './locales/fr/messages.json' with { type: 'json' };
-
-say.load('en', en);
-say.load('fr', fr);
-say.activate('fr');
+import say from './i18n.js';
 
 // Basic message
 const hello = say`Hello world!`;

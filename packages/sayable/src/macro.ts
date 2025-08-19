@@ -1,7 +1,5 @@
 import type { Sayable } from './class';
-import type { PluralOptions, SelectOptions } from './types.js';
-
-type Disallow<K extends PropertyKey> = Partial<Record<K, never>>;
+import type { Disallow, PluralOptions, SelectOptions } from './types.js';
 
 declare interface MacroSayable extends Sayable {
   (strings: TemplateStringsArray, ...placeholders: unknown[]): string;
@@ -28,6 +26,7 @@ throw new Error(
     'This module is not meant to be used at runtime. ' +
     'Instead, use a compiler and the sayable plugin to compile macros into executable code.',
 );
-declare const say: MacroSayable;
-export default say;
-export * from './index.js';
+
+export default MacroSayable;
+
+export * from './runtime.js';

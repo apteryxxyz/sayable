@@ -1,3 +1,5 @@
+export type Disallow<K extends PropertyKey> = Partial<Record<K, never>>;
+
 export interface PluralOptions {
   zero?: string;
   one?: string;

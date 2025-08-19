@@ -6,27 +6,27 @@ msgstr ""
 "Language: fr\n"
 "X-Generator: sayable\n"
 
-#: src/index.js:9:14
+#: src/index.js:3:14
 msgid "Hello world!"
 msgstr "Bonjour le monde !"
 
-#: src/index.js:13:17
+#: src/index.js:7:17
 msgid "Hello {name}, welcome back!"
 msgstr "Bonjour {name}, content de te revoir !"
 
 # File menu action
-#: src/index.js:17:17
+#: src/index.js:11:17
 msgctxt "file menu"
 msgid "Open"
 msgstr "Ouvrir"
 
 # Physical door action
-#: src/index.js:19:17
+#: src/index.js:13:17
 msgctxt "physical door"
 msgid "Open"
 msgstr "Ouvre"
 
-#: src/index.js:23:15
+#: src/index.js:17:15
 msgid ""
 "{appleCount, plural,\n"
 "  zero {No apples left}\n"
@@ -40,7 +40,7 @@ msgstr ""
 "  other {# pommes}\n"
 "}"
 
-#: src/index.js:31:23
+#: src/index.js:25:23
 msgid ""
 "{contestantPosition, selectordinal,\n"
 "  =1 {#st place}\n"
@@ -56,7 +56,7 @@ msgstr ""
 "  other {#e}\n"
 "}"
 
-#: src/index.js:40:23
+#: src/index.js:34:23
 msgid ""
 "{userGender, select,\n"
 "  male {He updated his profile}\n"
@@ -70,7 +70,7 @@ msgstr ""
 "  other {Ils ont mis à jour leur profil}\n"
 "}"
 
-#: src/index.js:48:13
+#: src/index.js:42:13
 msgid ""
 "You have {itemCount, plural,\n"
 "  zero {no items}\n"
@@ -84,7 +84,7 @@ msgstr ""
 "  other {# articles}\n"
 "} dans votre panier."
 
-#: src/index.js:57:22
+#: src/index.js:51:22
 msgid ""
 "{viewerGender, select,\n"
 "  male {He}\n"
@@ -107,7 +107,7 @@ msgstr ""
 "}."
 
 # Number of items in the wishlist
-#: src/index.js:72:22
+#: src/index.js:66:22
 msgctxt "wishlist"
 msgid ""
 "{itemCountWishlist, plural,\n"
@@ -123,7 +123,7 @@ msgstr ""
 "}"
 
 # Number of items in the cart
-#: src/index.js:79:18
+#: src/index.js:73:18
 msgctxt "cart"
 msgid ""
 "{itemCountCart, plural,\n"
