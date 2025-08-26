@@ -22,7 +22,7 @@ declare class MacroSayable extends Sayable {
 }
 
 throw new Error(
-  'You are importing "sayable/macro" directly. ' +
+  'You are importing "sayable" directly. ' +
     'This module is not meant to be used at runtime. ' +
     'Instead, use a compiler and the sayable plugin to compile macros into executable code.',
 );
