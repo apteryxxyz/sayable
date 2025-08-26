@@ -117,7 +117,10 @@ pub fn parse_call_expression(
   node: &t::CallExpr, //
   extra: &mut Extra,
 ) -> Option<CompositeMessage> {
-  let is_say_callee = is_say_identifier(node.callee.as_expr().unwrap());
+  let is_say_callee = match node.callee.as_expr() {
+    Some(expr) => is_say_identifier(expr),
+    None => false,
+  };
 
   let is_select_callee = match &node.callee {
     t::Callee::Expr(callee) => match &**callee {

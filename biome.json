@@ -3,10 +3,11 @@
   "files": {
     "includes": [
       "**",
-      "!**/.ignore/**/*",
       "!**/node_modules/**/*",
       "!**/dist/**/*",
       "!**/target/**/*",
+      "!**/.ignore/**/*",
+      "!**/.turbo/**/*",
       "!**/.next/**/*"
     ]
   },

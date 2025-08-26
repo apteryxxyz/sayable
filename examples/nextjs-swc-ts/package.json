@@ -1,0 +1,23 @@
+{
+  "name": "nextjs-swc-ts-example",
+  "scripts": {
+    "dev": "next dev --turbo",
+    "build": "next build --turbo",
+    "start": "next start",
+    "extract": "sayable extract",
+    "compile": "sayable compile"
+  },
+  "dependencies": {
+    "next": "^15.5.0",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "sayable": "workspace:^"
+  },
+  "devDependencies": {
+    "@sayable/config": "workspace:^",
+    "@sayable/plugin": "workspace:^",
+    "@sayable/plugin-swc": "workspace:^",
+    "@types/react": "^19.1.11",
+    "@types/react-dom": "^19.1.7"
+  }
+}

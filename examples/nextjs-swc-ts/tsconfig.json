@@ -1,0 +1,9 @@
+{
+  "extends": "../../tsconfig.react.json",
+  "include": ["${configDir}", ".next/types/**/*.ts"],
+  "compilerOptions": {
+    "allowJs": true,
+    "noEmit": true,
+    "incremental": true
+  }
+}
