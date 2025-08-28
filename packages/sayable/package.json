@@ -7,17 +7,17 @@
     "build": "tsc",
     "prepack": "pnpm build"
   },
-  "dependencies": {
-    "intl-messageformat": "^10.7.16"
-  },
   "exports": {
     ".": {
-      "types": "./dist/macro.d.ts",
-      "default": "./dist/macro.js"
+      "types": "./dist/runtime.macro.d.ts",
+      "default": "./dist/runtime.macro.js"
     },
     "./runtime": {
       "types": "./dist/runtime.d.ts",
       "default": "./dist/runtime.js"
     }
+  },
+  "dependencies": {
+    "intl-messageformat": "^10.7.16"
   }
 }
