@@ -15,12 +15,12 @@ class Sayable<Locale extends string> {
     throw new Error('No locale activated');
   }
 
-  get #locales() {
+  get locales() {
     return Object.keys(this.#loaders) as Locale[];
   }
 
   async load(...locales: Locale[]) {
-    if (locales.length === 0) locales = this.#locales;
+    if (locales.length === 0) locales = this.locales;
     for (const locale of locales) {
       if (this.#cache[locale]) continue;
       let messages = await this.#loaders[locale]();
@@ -43,22 +43,32 @@ class Sayable<Locale extends string> {
     if (!(locale in this.#loaders))
       throw new Error(`No loader for locale '${locale}'`);
     this.#active = locale;
+    return this;
   }
 
   clone(): this {
-    return new Sayable(this.#loaders) as this;
+    const cloned = new Sayable(this.#loaders) as this;
+    cloned.#active = this.#active;
+    cloned.#cache = this.#cache;
+    return cloned;
   }
 
   say(descriptor: Sayable.Descriptor) {
-    const messages = this.messages;
+    return this.#say(this.locale, this.messages, descriptor);
+  }
 
+  #say(
+    locale: Locale,
+    messages: Sayable.Messages,
+    descriptor: Sayable.Descriptor,
+  ) {
     const message = messages[descriptor.id];
     if (!message) throw new Error(`Descriptor '${descriptor.id}' not found`);
 
     if (typeof message !== 'string')
       throw new Error(`Descriptor '${descriptor.id}' is not a string`);
 
-    const format = new IntlMessageFormat(message, this.locale);
+    const format = new IntlMessageFormat(message, locale);
     return String(format.format(descriptor as never));
   }
 }
