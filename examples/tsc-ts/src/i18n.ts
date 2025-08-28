@@ -5,7 +5,7 @@ const say = new Sayable({
   fr: () => import('./locales/fr/messages.json', { with: { type: 'json' } }),
 });
 
-await say.preload('fr');
+await say.load();
 say.activate('fr');
 
 export default say;

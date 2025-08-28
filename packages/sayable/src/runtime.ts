@@ -1,74 +1,72 @@
 import { IntlMessageFormat } from 'intl-messageformat';
-import type { Awaitable, Resolvable } from './types.js';
-import { resolve } from './types.js';
+import type { Awaitable } from './types.js';
 
-class Sayable<Translations extends Sayable.Translations> {
-  #locale: keyof Translations | undefined;
-  #translations: Translations;
+class Sayable<Locale extends string> {
+  #loaders: Sayable.Loaders<Locale>;
+  #cache: Partial<Record<Locale, Sayable.Messages>> = {};
+  #active: Locale | undefined = undefined;
 
-  constructor(translations: NoInfer<Translations>) {
-    this.#locale = undefined;
-    this.#translations = translations;
+  constructor(loaders: Sayable.Loaders<Locale>) {
+    this.#loaders = loaders;
   }
 
   get locale() {
-    if (this.#locale) return this.#locale;
+    if (this.#active) return this.#active;
     throw new Error('No locale activated');
   }
 
-  messages(locale: keyof Translations) {
-    if (!this.#translations[locale])
-      throw new Error(`No messages for locale '${String(locale)}'`);
-
-    const messages = resolve(this.#translations[locale]);
-    Reflect.set(this.#translations, locale, messages);
-    return messages;
+  get #locales() {
+    return Object.keys(this.#loaders) as Locale[];
   }
 
-  preload(
-    locale: keyof Translations,
-    messages: Sayable.Messages,
-  ): Sayable.Messages;
-  preload(
-    locale: keyof Translations,
-    messages?: Promise<Sayable.Messages>,
-  ): Promise<Sayable.Messages>;
-  preload(
-    locale: keyof Translations,
-    messages = this.messages(locale),
-  ): Awaitable<Sayable.Messages> {
-    if (messages instanceof Promise) {
-      return messages.then((messages) => this.preload(locale, messages));
-    } else {
-      Reflect.set(this.#translations, locale, messages);
-      return messages;
+  async load(...locales: Locale[]) {
+    if (locales.length === 0) locales = this.#locales;
+    for (const locale of locales) {
+      if (this.#cache[locale]) continue;
+      let messages = await this.#loaders[locale]();
+      if ('default' in messages)
+        messages = messages.default as Sayable.Messages;
+      this.assign(locale, messages);
     }
   }
 
-  activate(locale: keyof Translations) {
-    this.preload(locale);
-    this.#locale = locale;
+  assign(locale: Locale, messages: Sayable.Messages) {
+    this.#cache[locale] = messages;
+  }
+
+  get messages() {
+    if (this.#cache[this.locale]) return this.#cache[this.locale]!;
+    throw new Error(`Messages for locale '${this.locale}' not loaded`);
+  }
+
+  activate(locale: Locale) {
+    if (!(locale in this.#loaders))
+      throw new Error(`No loader for locale '${locale}'`);
+    this.#active = locale;
+  }
+
+  clone(): this {
+    return new Sayable(this.#loaders) as this;
   }
 
   say(descriptor: Sayable.Descriptor) {
-    const messages = this.messages(this.locale);
-    if (messages instanceof Promise)
-      throw new Error(
-        `Messages for locale '${String(this.locale)}' not loaded`,
-      );
+    const messages = this.messages;
 
-    const message = (messages as Sayable.Messages)[descriptor.id];
-    if (message === undefined)
-      throw new Error(`Message '${String(descriptor.id)}' not found`);
+    const message = messages[descriptor.id];
+    if (!message) throw new Error(`Descriptor '${descriptor.id}' not found`);
 
-    const format = new IntlMessageFormat(message, String(this.locale));
+    if (typeof message !== 'string')
+      throw new Error(`Descriptor '${descriptor.id}' is not a string`);
+
+    const format = new IntlMessageFormat(message, this.locale);
     return String(format.format(descriptor as never));
   }
 }
 
 namespace Sayable {
-  export type Translations = Record<string, Resolvable<Messages>>;
   export type Messages = Record<string, string>;
+  export type Loaders<Locale extends string = string> = //
+    Record<Locale, () => Awaitable<Messages | { default: Messages }>>;
   export type Descriptor = import('./types.js').Descriptor;
 }
 

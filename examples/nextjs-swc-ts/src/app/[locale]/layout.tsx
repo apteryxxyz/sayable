@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import say from '../../sayable';
+import say from '../../i18n';
 import { SayableProvider } from './provider';
 
 export default async function RootLayout({
@@ -10,7 +10,7 @@ export default async function RootLayout({
 }>) {
   const { locale } = await params;
   try {
-    await say.preload(locale);
+    await say.load(locale);
     say.activate(locale);
   } catch {
     notFound();
@@ -19,10 +19,7 @@ export default async function RootLayout({
   return (
     <html lang={locale}>
       <body>
-        <SayableProvider
-          locale={say.locale}
-          messages={await say.messages(say.locale)}
-        >
+        <SayableProvider locale={say.locale} messages={say.messages}>
           {children}
         </SayableProvider>
       </body>

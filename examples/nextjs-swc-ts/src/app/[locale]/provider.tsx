@@ -1,6 +1,6 @@
 'use client';
 
-import say from '../../sayable';
+import say from '../../i18n';
 
 export function SayableProvider({
   children,
@@ -8,9 +8,9 @@ export function SayableProvider({
   messages,
 }: React.PropsWithChildren<{
   locale: typeof say.locale;
-  messages: Awaited<ReturnType<typeof say.messages>>;
+  messages: typeof say.messages;
 }>) {
-  say.preload(locale, messages);
+  say.assign(locale, messages);
   say.activate(locale);
   return children;
 }
