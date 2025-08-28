@@ -188,7 +188,7 @@ function isSayIdentifier(
     // say
     (t.isIdentifier(node) && node.text === 'say') ||
     // object.say
-    (t.isPropertyAccessExpression(node) && isSayIdentifier(node.expression)) ||
+    (t.isPropertyAccessExpression(node) && isSayIdentifier(node.name)) ||
     // say()
     (t.isCallExpression(node) && isSayIdentifier(node.expression))
   );
