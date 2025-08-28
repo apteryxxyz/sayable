@@ -3,7 +3,7 @@ import t, { factory as f } from 'typescript';
 export function transformImportDeclaration(node: t.ImportDeclaration) {
   if (
     t.isStringLiteral(node.moduleSpecifier) &&
-    node.moduleSpecifier.text === 'sayable'
+    node.moduleSpecifier.text.startsWith('sayable')
   ) {
     return transformMacroImportDeclaration(node);
   }
@@ -11,12 +11,15 @@ export function transformImportDeclaration(node: t.ImportDeclaration) {
   return null;
 }
 
-export function transformMacroImportDeclaration(node: t.ImportDeclaration) {
+function transformMacroImportDeclaration(node: t.ImportDeclaration) {
+  let specifier = (node.moduleSpecifier as t.StringLiteral).text;
+  if (specifier === 'sayable') specifier = 'sayable/runtime';
+
   return f.updateImportDeclaration(
     node,
     node.modifiers,
     node.importClause,
-    f.createStringLiteral('sayable/runtime'),
+    f.createStringLiteral(specifier),
     node.attributes,
   );
 }

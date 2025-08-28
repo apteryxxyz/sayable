@@ -8,6 +8,7 @@ use swc_core::{
 
 mod ast_generators;
 mod ast_parsers;
+mod ast_transformers;
 mod generate_hash;
 mod icu_generator;
 mod message_types;
@@ -15,20 +16,14 @@ mod message_types;
 use crate::{
   ast_generators::generate_say_expression,
   ast_parsers::{parse_call_expression, parse_tagged_template_expression, Extra},
+  ast_transformers::transform_import_declaration,
 };
 
 struct Visitor {}
 
 impl Fold for Visitor {
   fn fold_import_decl(&mut self, mut node: t::ImportDecl) -> t::ImportDecl {
-    if node.src.value == *"sayable" {
-      node.src = Box::new(t::Str {
-        span: node.src.span,
-        value: "sayable/runtime".into(),
-        raw: None,
-      });
-    }
-    node
+    transform_import_declaration(&mut node).unwrap_or(node)
   }
 
   fn fold_expr(&mut self, expr: t::Expr) -> t::Expr {

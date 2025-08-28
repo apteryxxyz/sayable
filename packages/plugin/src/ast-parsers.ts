@@ -1,7 +1,7 @@
 /**
  * KEEP IN SYNC:
- * - `packages/plugin/src/ast-parser.ts`
- * - `packages/swc-plugin/src/ast_parser.rs`
+ * - `packages/plugin/src/ast-parsers.ts`
+ * - `packages/swc-plugin/src/ast_parsers.rs`
  */
 
 import t from 'typescript';
