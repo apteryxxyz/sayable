@@ -5,8 +5,8 @@ export default defineConfig({
   locales: ['en', 'fr'],
   catalogues: [
     {
-      include: ['app/**/*.tsx', 'components/**/*.tsx'],
-      output: `lib/locales/{locale}/messages.{extension}`,
+      include: ['src/**/*.tsx'],
+      output: `src/locales/{locale}/messages.{extension}`,
     },
   ],
 });

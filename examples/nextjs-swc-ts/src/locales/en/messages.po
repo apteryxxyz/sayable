@@ -3,9 +3,9 @@ msgstr ""
 "POT-Creation-Date: 2025-08-26 18:40+1200\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Language: fr\n"
+"Language: en\n"
 "X-Generator: sayable\n"
 
-#: app/page.tsx:5:11
+#: src/app/[locale]/page.tsx:5:16
 msgid "Hello, world!"
-msgstr "Bonjour, monde!"
+msgstr "Hello, world!"

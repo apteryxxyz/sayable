@@ -1,11 +1,11 @@
 import Sayable from 'sayable';
-import en from './locales/en/messages.json' with { type: 'json' };
-import fr from './locales/fr/messages.json' with { type: 'json' };
 
-const say = new Sayable();
+const say = new Sayable({
+  en: () => import('./locales/en/messages.json', { with: { type: 'json' } }),
+  fr: () => import('./locales/fr/messages.json', { with: { type: 'json' } }),
+});
 
-say.load('en', en);
-say.load('fr', fr);
+await say.preload('fr');
 say.activate('fr');
 
 export default say;
