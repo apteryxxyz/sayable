@@ -1,0 +1,19 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2025-08-29 00:21+1200\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: en\n"
+"X-Generator: sayable\n"
+
+#: src/commands/ping.ts:39:12
+msgid "ping"
+msgstr "ping"
+
+#: src/commands/ping.ts:40:19
+msgid "Ping the bot!"
+msgstr "Ping the bot!"
+
+#: src/commands/ping.ts:46:28
+msgid "Pong! Hello from {1}!"
+msgstr "Pong! Hello from {1}!"

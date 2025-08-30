@@ -5,3 +5,5 @@ target/
 dist/
 .next/
 examples/**/messages.json
+.wrangler/
+.dev.vars
