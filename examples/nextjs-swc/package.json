@@ -1,11 +1,11 @@
 {
   "name": "nextjs-swc-ts-example",
   "scripts": {
-    "dev": "next dev --turbo",
-    "build": "next build --turbo",
-    "start": "next start",
     "extract": "sayable extract",
-    "compile": "sayable compile"
+    "compile": "sayable compile",
+    "build": "next build --turbo",
+    "dev": "next dev --turbo",
+    "start": "next start"
   },
   "dependencies": {
     "next": "^15.5.0",
