@@ -30,7 +30,7 @@ importers:
         specifier: ^3.5.5
         version: 3.5.5(typescript@5.9.2)
 
-  examples/babel-js:
+  examples/babel:
     dependencies:
       sayable:
         specifier: workspace:^
@@ -52,7 +52,7 @@ importers:
         specifier: workspace:^
         version: link:../../packages/plugin
 
-  examples/carbon-ts:
+  examples/carbon-tsc:
     dependencies:
       '@buape/carbon':
         specifier: 0.10.0
@@ -77,7 +77,7 @@ importers:
         specifier: 4.33.1
         version: 4.33.1(@cloudflare/workers-types@4.20250828.0)
 
-  examples/nextjs-swc-ts:
+  examples/nextjs-swc:
     dependencies:
       next:
         specifier: ^15.5.0
@@ -108,7 +108,7 @@ importers:
         specifier: ^19.1.7
         version: 19.1.7(@types/react@19.1.11)
 
-  examples/tsc-ts:
+  examples/tsc:
     dependencies:
       sayable:
         specifier: workspace:^

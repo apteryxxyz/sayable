@@ -9,7 +9,7 @@
     "lint": {
       "dependsOn": ["^lint"],
       "inputs": ["src/**"],
-      "outputLogs": "new-only"
+      "outputLogs": "full"
     },
     "format": {
       "dependsOn": ["^format"],

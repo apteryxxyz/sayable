@@ -1,4 +1,4 @@
-import type { CommandInteraction } from '@buape/carbon';
+import { type CommandInteraction, MessageFlags } from '@buape/carbon';
 import { SayableCommand } from './_base.js';
 
 export default class PingCommand extends SayableCommand {
@@ -10,6 +10,9 @@ export default class PingCommand extends SayableCommand {
   }
 
   async run(interaction: CommandInteraction) {
-    await interaction.reply(interaction.say`Pong! Hello from ${'Carbon'}!`);
+    await interaction.reply({
+      content: interaction.say`Pong! Hello from ${'Carbon'}!`,
+      flags: MessageFlags.Ephemeral,
+    });
   }
 }

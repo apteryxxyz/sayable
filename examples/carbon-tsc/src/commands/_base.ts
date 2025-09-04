@@ -4,6 +4,7 @@
 // IDEA: Move all this to a separate "integration" package?
 
 import { BaseInteraction, Command, Locale } from '@buape/carbon';
+import sayable from '../../sayable.config.json' with { type: 'json' };
 import say from '../i18n.js';
 
 const allowedLocales = Object.values(Locale);
@@ -55,6 +56,22 @@ export function combineLocalisations<T extends object>(
   return recurse(sources);
 }
 
+export function getBestLocale(userLocales: string[]) {
+  for (const userLocale of userLocales) {
+    let languageMatch: string | undefined;
+
+    for (const supportedLocale of sayable.locales) {
+      if (supportedLocale === userLocale) return supportedLocale;
+      if (supportedLocale.startsWith(userLocale.split('-')[0]))
+        languageMatch = supportedLocale;
+    }
+
+    if (languageMatch) return languageMatch;
+  }
+
+  return sayable.sourceLocale;
+}
+
 export abstract class SayableCommand extends Command {
   name = '';
 
@@ -83,10 +100,10 @@ declare module '@buape/carbon' {
 }
 
 Object.defineProperty(BaseInteraction.prototype, 'say', {
-  get() {
+  get(this: BaseInteraction) {
     this[' say'] ??= say.clone();
-    if (say.locales.includes(this.rawData.locale))
-      this[' say'].activate(this.rawData.locale);
+    const locale = getBestLocale([this.rawData.locale]);
+    this[' say'].activate(locale);
     return this[' say'];
   },
 });
