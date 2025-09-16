@@ -6,7 +6,7 @@
 use swc_core::ecma::ast::{self as t};
 
 pub fn transform_import_declaration(node: &t::ImportDecl) -> Option<t::ImportDecl> {
-  if node.src.value.starts_with("sayable") {
+  if node.src.value.contains("sayable") {
     return Some(transform_macro_import_declaration(node));
   }
 
@@ -15,7 +15,9 @@ pub fn transform_import_declaration(node: &t::ImportDecl) -> Option<t::ImportDec
 
 fn transform_macro_import_declaration(node: &t::ImportDecl) -> t::ImportDecl {
   let specifier = match &*node.src.value {
-    _ => "sayable/runtime",
+    "sayable" => "sayable/runtime",
+    "@sayable/react" => "@sayable/react/runtime",
+    _ => node.src.value.as_str(),
   };
 
   t::ImportDecl {

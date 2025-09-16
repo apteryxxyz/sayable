@@ -14,12 +14,18 @@ export default new Command()
 
     for (const catalogue of config.catalogues) {
       const paths = await globCatalogue(catalogue);
-      const sourceMessages = await extractCatalogueMessages(catalogue, paths);
+
+      const messages: Record<string, Formatter.Message> = {};
+      for (const path of paths) {
+        const scopedMessages = await extractMessages(catalogue, path);
+        for (const [id, message] of Object.entries(scopedMessages))
+          messages[id] = message;
+      }
 
       for (const locale of config.locales) {
         await writeMessagesForLocale(catalogue, locale, {
           locale: config.sourceLocale,
-          messages: sourceMessages,
+          messages: messages,
         });
       }
     }
@@ -34,25 +40,23 @@ async function globCatalogue(catalogue: output<typeof Catalogue>) {
   return paths;
 }
 
-async function extractCatalogueMessages(
+async function extractMessages(
   catalogue: output<typeof Catalogue>,
-  paths: string[],
+  path: string,
 ) {
   const result: Record<string, Formatter.Message> = {};
-  for await (const id of paths) {
-    const code = await readFile(id, 'utf8');
-    const messages = await catalogue.extractor.extract({ id, code });
-    for (const message of messages) {
-      const icu = generateIcuMessageFormat(message);
-      const hash = generateHash(icu, message.context);
-      result[hash] = {
-        message: icu,
-        translation: icu,
-        context: message.context,
-        comments: message.comments,
-        references: message.references,
-      };
-    }
+  const code = await readFile(path, 'utf8');
+  const messages = await catalogue.extractor.extract({ id: path, code });
+  for (const message of messages) {
+    const icu = generateIcuMessageFormat(message);
+    const hash = generateHash(icu, message.context);
+    result[hash] = {
+      message: icu,
+      translation: icu,
+      context: message.context,
+      comments: message.comments,
+      references: message.references,
+    };
   }
   return result;
 }
@@ -117,39 +121,4 @@ async function writeMessagesForLocale(
     },
   );
   await writeFile(outputFile, localeContent);
-
-  /*
-  const outputFile = resolveLocaleFile(catalogue, locale);
-  await mkdir(dirname(outputFile), { recursive: true });
-
-  const existingContent = await readFile(outputFile, 'utf8') //
-    .catch(() => undefined);
-  if (locale !== source.locale) {
-    const existingMessages = existingContent
-      ? await catalogue.formatter //
-          .parse(existingContent, { locale })
-      : [];
-
-    const mergedMessages: Formatter.Message[] = [];
-
-    // const mergedMessages: Record<string, Formatter.Message> = {};
-    // for (const [id, sourceMessage] of Object.entries(source.messages)) {
-    //   const existingMessage = existingMessages[id];
-    //   mergedMessages[id] = {
-    //     message: sourceMessage.message,
-    //     translation: undefined,
-    //     ...existingMessage,
-    //     comments: sourceMessage.comments,
-    //     references: sourceMessage.references,
-    //   };
-    // }
-    // source.messages = mergedMessages;
-  }
-
-  const localeContent = await catalogue.formatter.stringify(source.messages, {
-    locale,
-    previousContent: existingContent,
-  });
-  await writeFile(outputFile, localeContent);
-*/
 }

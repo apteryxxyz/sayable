@@ -5,7 +5,7 @@ import type { CompositeMessage } from '@sayable/message-utils';
 import { err, ok } from 'neverthrow';
 import * as z from 'zod';
 
-type Awaitable<T> = T | Promise<T>;
+type Awaitable<T> = T | PromiseLike<T>;
 
 export const Transformer = z.object({
   transform: z.custom<
@@ -21,8 +21,8 @@ export const Extractor = z.object({
 
 export const Formatter = z.object({
   extension: z
-    .templateLiteral(['.', z.string()]) //
-    .transform((s) => s.slice(1)),
+    .templateLiteral(['.', z.string()])
+    .transform((val) => val.slice(1)),
   parse: z.custom<
     (
       content: string,
@@ -43,7 +43,7 @@ export namespace Formatter {
     translation?: string;
     context?: string;
     comments?: string[];
-    references?: `${string}:${number}:${number}`[];
+    references?: `${string}:${number}`[];
   }
 }
 

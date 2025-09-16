@@ -6,14 +6,14 @@ msgstr ""
 "Language: en\n"
 "X-Generator: sayable\n"
 
-#: src/commands/ping.ts:6:12
+#: src/commands/ping.ts:6
 msgid "ping"
 msgstr "ping"
 
-#: src/commands/ping.ts:7:19
+#: src/commands/ping.ts:7
 msgid "Ping the bot!"
 msgstr "Ping the bot!"
 
-#: src/commands/ping.ts:13:15
-msgid "Pong! Hello from {1}!"
-msgstr "Pong! Hello from {1}!"
+#: src/commands/ping.ts:13
+msgid "Pong! Hello from {0}!"
+msgstr "Pong! Hello from {0}!"

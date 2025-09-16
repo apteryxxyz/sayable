@@ -20,3 +20,4 @@ data-encoding = "2.9.0"
 serde = "1"
 sha2 = "0.10.9"
 swc_core = { version = "33.0.*", features = ["ecma_plugin_transform"] }
+swc_ecma_lexer = "21.0.1"

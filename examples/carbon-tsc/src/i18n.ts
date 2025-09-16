@@ -1,5 +1,5 @@
-import type MacroSayable from 'sayable';
-import Sayable from 'sayable/runtime';
+import type { Sayable as MacroSayable } from 'sayable';
+import { Sayable } from 'sayable/runtime';
 
 // HACK: wrangler and our macro don't play nicely together, so we have to
 // import the runtime manually, and assert it as the type of the macro

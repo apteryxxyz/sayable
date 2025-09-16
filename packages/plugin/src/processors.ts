@@ -1,9 +1,14 @@
-import type { Extractor, Transformer } from '@sayable/config';
 import { generateHash, generateIcuMessageFormat } from '@sayable/message-utils';
 import t from 'typescript';
-import { generateSayExpression } from './ast-generators.js';
 import {
+  generateJsxSayExpression,
+  generateSayExpression,
+} from './ast-generators.js';
+import {
+  createIdentifierStore,
   parseCallExpression,
+  parseJsxElement,
+  parseJsxSelfClosingElement,
   parseTaggedTemplateExpression,
 } from './ast-parsers.js';
 import { transformImportDeclaration } from './ast-transformers.js';
@@ -18,10 +23,13 @@ export function createVisitor(onMessage?: (message: CompositeMessage) => void) {
         if (t.isImportDeclaration(node)) {
           const replacement = transformImportDeclaration(node);
           if (replacement) return replacement;
+          return node;
         }
 
+        const identifierStore = createIdentifierStore();
+
         if (t.isTaggedTemplateExpression(node)) {
-          const result = parseTaggedTemplateExpression(node, {});
+          const result = parseTaggedTemplateExpression(node, identifierStore);
           if (result) {
             if (onMessage) onMessage(result);
             return generateSayExpression(result);
@@ -29,10 +37,26 @@ export function createVisitor(onMessage?: (message: CompositeMessage) => void) {
         }
 
         if (t.isCallExpression(node)) {
-          const result = parseCallExpression(node, {});
+          const result = parseCallExpression(node, identifierStore);
           if (result) {
             if (onMessage) onMessage(result);
             return generateSayExpression(result);
+          }
+        }
+
+        if (t.isJsxElement(node)) {
+          const result = parseJsxElement(node, identifierStore);
+          if (result) {
+            if (onMessage) onMessage(result);
+            return generateJsxSayExpression(result);
+          }
+        }
+
+        if (t.isJsxSelfClosingElement(node)) {
+          const result = parseJsxSelfClosingElement(node, identifierStore);
+          if (result) {
+            if (onMessage) onMessage(result);
+            return generateJsxSayExpression(result);
           }
         }
 
@@ -48,7 +72,7 @@ export function createVisitor(onMessage?: (message: CompositeMessage) => void) {
 
 export function createTransformer() {
   return {
-    transform(module) {
+    transform(module: { code: string; id: string }) {
       const file = t.createSourceFile(
         module.id,
         module.code,
@@ -60,14 +84,14 @@ export function createTransformer() {
 
       return t.createPrinter().printFile(result.transformed[0]!);
     },
-  } satisfies Transformer;
+  };
 }
 
 // ===== Extractor ===== //
 
 export function createExtractor() {
   return {
-    extract(module) {
+    extract(module: { code: string; id: string }) {
       const file = t.createSourceFile(
         module.id,
         module.code,
@@ -94,5 +118,5 @@ export function createExtractor() {
 
       return [...messages.values()];
     },
-  } satisfies Extractor;
+  };
 }

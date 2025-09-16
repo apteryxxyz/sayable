@@ -23,6 +23,16 @@ export interface ArgumentMessage extends s.ArgumentMessage {
 }
 
 /**
+ * Represents a part of the message wrapped in a specific XML-like tag.
+ * Children are indexed by their order.
+ * @example `<0>Hello, world!</0>`
+ */
+export interface ElementMessage extends s.ElementMessage {
+  expression: t.Expression;
+  children: Record<string /*number*/, Message>;
+}
+
+/**
  * Represents a number of messages that chooses among multiple options based on a variable.
  * @example `{gender, select, male {He} female {She} other {They}}`
  * @example `{count, plural, one {1 item} other {# items}}`
@@ -52,5 +62,6 @@ export interface CompositeMessage extends s.CompositeMessage {
 export type Message =
   | LiteralMessage
   | ArgumentMessage
+  | ElementMessage
   | ChoiceMessage
   | CompositeMessage;

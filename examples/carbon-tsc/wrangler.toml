@@ -1,6 +1,6 @@
 name = "carbon-ts"
 main = "dist/src/entry.js"
-compatibility_date = "2025-08-28"
+compatibility_date = "2025-08-23"
 
 [build]
 command = "pnpm tsc"

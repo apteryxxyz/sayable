@@ -14,6 +14,11 @@ use swc_core::ecma::ast::Expr;
 pub struct LiteralMessage {
   pub text: String,
 }
+impl LiteralMessage {
+  pub fn new(text: impl Into<String>) -> Self {
+    LiteralMessage { text: text.into() }
+  }
+}
 
 #[derive(Debug, Clone)]
 ///
@@ -25,6 +30,40 @@ pub struct ArgumentMessage {
   /// The expression that "gets" the value for this argument.
   ///
   pub expression: Box<Expr>,
+}
+impl ArgumentMessage {
+  pub fn new(identifier: impl Into<String>, expression: Box<Expr>) -> Self {
+    ArgumentMessage {
+      identifier: identifier.into(),
+      expression,
+    }
+  }
+}
+
+#[derive(Debug, Clone)]
+///
+/// Represents a part of the message wrapped in a specific XML-like tag.
+/// Children are indexed by their order.
+/// #### Example
+/// - `<0>Hello, world!</0>`
+///
+pub struct ElementMessage {
+  pub identifier: String,
+  pub expression: Box<Expr>,
+  pub children: BTreeMap<String, Message>,
+}
+impl ElementMessage {
+  pub fn new(
+    identifier: impl Into<String>,
+    expression: Box<Expr>,
+    children: BTreeMap<String, Message>,
+  ) -> Self {
+    ElementMessage {
+      identifier: identifier.into(),
+      expression,
+      children,
+    }
+  }
 }
 
 #[derive(Debug, Clone)]
@@ -44,6 +83,21 @@ pub struct ChoiceMessage {
   pub expression: Box<Expr>,
   pub children: BTreeMap<String, Message>,
 }
+impl ChoiceMessage {
+  pub fn new(
+    kind: impl Into<String>,
+    identifier: impl Into<String>,
+    expression: Box<Expr>,
+    children: BTreeMap<String, Message>,
+  ) -> Self {
+    ChoiceMessage {
+      kind: kind.into(),
+      identifier: identifier.into(),
+      expression,
+      children,
+    }
+  }
+}
 
 #[derive(Debug, Clone)]
 ///
@@ -56,18 +110,32 @@ pub struct CompositeMessage {
   /// #### Example
   /// Usually `say`, but can be any object with a `say` method (`object.say`).
   ///
-  pub expression: Box<Expr>,
+  pub accessor: Box<Expr>,
   pub children: BTreeMap<String, Message>,
   pub context: Option<String>,
   // Comments and references are only ever used by the cli compiler, which the swc plugin does not support
   // pub comments: None,
   // pub references: None,
 }
+impl CompositeMessage {
+  pub fn new(
+    accessor: Box<Expr>,
+    children: BTreeMap<String, Message>,
+    context: Option<String>,
+  ) -> Self {
+    CompositeMessage {
+      accessor,
+      children,
+      context,
+    }
+  }
+}
 
 #[derive(Debug, Clone)]
 pub enum Message {
   Literal(LiteralMessage),
   Argument(ArgumentMessage),
+  Element(ElementMessage),
   Choice(ChoiceMessage),
   Composite(CompositeMessage),
 }

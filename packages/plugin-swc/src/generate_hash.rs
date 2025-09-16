@@ -9,14 +9,15 @@ use sha2::{Digest, Sha256};
 ///
 /// Generates a unique hash from any string, can be used as a translation key.
 ///
-pub fn generate_hash(input: String, context: Option<String>) -> String {
+pub fn generate_hash(input: &str, context: Option<&str>) -> String {
   let mut hasher = Sha256::new();
+
+  hasher.update(input.as_bytes());
   if let Some(context) = context {
-    hasher.update(format!("{input}\u{001F}{context}"));
-  } else {
-    hasher.update(input);
+    hasher.update([0x1F]);
+    hasher.update(context.as_bytes());
   }
 
   let result = hasher.finalize();
-  BASE64.encode(result.as_ref())[0..6].into()
+  BASE64.encode(result.as_ref())[..6].to_string()
 }

@@ -22,6 +22,17 @@ export interface ArgumentMessage {
 }
 
 /**
+ * Represents a part of the message wrapped in a specific HTML-like tag.
+ * Children are indexed by their order.
+ * @example `<0>Hello, world!</0>`
+ */
+export interface ElementMessage {
+  type: 'element';
+  identifier: string;
+  children: Record<string /*number*/, Message>;
+}
+
+/**
  * Represents a number of messages that chooses among multiple options based on a variable.
  * @example `{gender, select, male {He} female {She} other {They}}`
  * @example `{count, plural, one {1 item} other {# items}}`
@@ -42,12 +53,13 @@ export interface CompositeMessage {
   type: 'composite';
   children: Record<string /*number*/, Message>;
   comments: string[] | undefined;
-  references: `${string}:${number}:${number}`[] | undefined;
+  references: `${string}:${number}`[] | undefined;
   context: string | undefined;
 }
 
 export type Message =
   | LiteralMessage
   | ArgumentMessage
+  | ElementMessage
   | ChoiceMessage
   | CompositeMessage;

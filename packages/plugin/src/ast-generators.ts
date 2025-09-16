@@ -1,50 +1,86 @@
-/**
- * KEEP IN SYNC:
- * - `packages/plugin/src/ast-generator.ts`
- * - `packages/swc-plugin/src/ast_generator.rs`
- */
-
 import { generateHash, generateIcuMessageFormat } from '@sayable/message-utils';
-import type t from 'typescript';
-import { factory as f } from 'typescript';
-import type { ChoiceMessage, CompositeMessage } from './message-types.js';
+import t, { factory as f } from 'typescript';
+import type { CompositeMessage, Message } from './message-types.js';
 
-/**
- * Generates the `say` expression for a message.
- */
 export function generateSayExpression(message: CompositeMessage) {
   const id = generateHash(generateIcuMessageFormat(message), message.context);
-  const entries = new Map<string, t.Expression>([
+  const children = new Map<string, t.Expression>([
     ['id', f.createStringLiteral(id)],
     ...generateChildExpressions(message.children),
   ]);
 
-  const properties = [...entries].map(([k, v]) =>
-    f.createPropertyAssignment(f.createIdentifier(k), v),
-  );
+  const properties = [...children].map(([name, expression]) => {
+    return f.createPropertyAssignment(f.createIdentifier(name), expression);
+  });
 
   return f.createCallExpression(
-    f.createPropertyAccessExpression(message.expression, 'say'),
+    f.createPropertyAccessExpression(message.expression, 'call'),
     undefined,
-    [f.createObjectLiteralExpression(properties, true)],
+    [f.createObjectLiteralExpression(properties)],
   );
 }
 
-/**
- * Generates the child expressions for a message.
- */
+export function generateJsxSayExpression(message: CompositeMessage) {
+  const id = generateHash(generateIcuMessageFormat(message), message.context);
+  const children = new Map<string, t.Expression>([
+    ['id', f.createStringLiteral(id)],
+    ...generateChildExpressions(message.children),
+  ]);
+
+  const properties = [...children].map(([name, expression]) => {
+    if (!Number.isNaN(Number(name))) name = `_${name}`;
+    if (t.isJsxElement(expression))
+      expression = removeReactElementChildren(expression);
+
+    return f.createJsxAttribute(
+      f.createIdentifier(name),
+      t.isJsxExpression(expression)
+        ? expression
+        : f.createJsxExpression(undefined, expression),
+    );
+  });
+
+  return f.createJsxSelfClosingElement(
+    message.expression as t.Identifier,
+    undefined,
+    f.createJsxAttributes(properties),
+  );
+}
+
+//
+
+function removeReactElementChildren(element: t.JsxElement) {
+  return f.updateJsxElement(
+    element,
+    element.openingElement,
+    [],
+    element.closingElement,
+  );
+}
+
 function* generateChildExpressions(
-  children: ChoiceMessage['children'],
+  children: Record<string, Message>,
 ): Generator<[string, t.Expression]> {
   for (const [, message] of Object.entries(children)) {
     switch (message.type) {
       case 'argument': {
-        yield [String(message.identifier), message.expression];
+        yield [message.identifier, message.expression];
+        break;
+      }
+
+      case 'element': {
+        yield [message.identifier, message.expression];
+        yield* generateChildExpressions(message.children);
         break;
       }
 
       case 'choice': {
-        yield [String(message.identifier), message.expression];
+        yield [message.identifier, message.expression];
+        yield* generateChildExpressions(message.children);
+        break;
+      }
+
+      case 'composite': {
         yield* generateChildExpressions(message.children);
         break;
       }

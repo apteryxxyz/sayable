@@ -22,6 +22,13 @@ export function generateIcuMessageFormat(message: Message): string {
     case 'argument':
       return `{${message.identifier}}`;
 
+    case 'element': {
+      const children = Object.values(message.children)
+        .map((m) => generateIcuMessageFormat(m))
+        .join('');
+      return `<${message.identifier}>${children}</${message.identifier}>`;
+    }
+
     case 'choice': {
       const options = Object.entries(message.children)
         .map(([k, m]) => {

@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server.js';
-import sayable from '../sayable.config';
+
+const sayable = { sourceLocale: 'en', locales: ['en', 'fr'] };
 
 export function middleware(request: NextRequest) {
   let respondWith = NextResponse.next();

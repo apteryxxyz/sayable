@@ -1,12 +1,13 @@
-import { notFound } from 'next/navigation';
+import { SayProvider } from '@sayable/react';
+import { notFound } from 'next/navigation.js';
+import type { PropsWithChildren } from 'react';
 import say from '../../i18n';
-import { SayableProvider } from './provider';
 
 export default async function RootLayout({
-  children,
   params,
-}: React.PropsWithChildren<{
-  params: Promise<{ locale: typeof say.locale }>;
+  children,
+}: PropsWithChildren<{
+  params: Promise<{ locale: 'en' }>;
 }>) {
   const { locale } = await params;
   try {
@@ -19,9 +20,9 @@ export default async function RootLayout({
   return (
     <html lang={locale}>
       <body>
-        <SayableProvider locale={say.locale} messages={say.messages}>
+        <SayProvider locale={locale} messages={say.messages}>
           {children}
-        </SayableProvider>
+        </SayProvider>
       </body>
     </html>
   );

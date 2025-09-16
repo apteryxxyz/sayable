@@ -9,12 +9,12 @@
   },
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
+      "types": "./dist/define.d.ts",
+      "default": "./dist/define.js"
     }
   },
   "bin": {
-    "sayable": "./dist/commands/sayable.js"
+    "sayable": "./dist/commands/index.js"
   },
   "dependencies": {
     "@sayable/message-utils": "workspace:^",

@@ -1,7 +1,9 @@
-'use client';
+import { Say } from '@sayable/react';
 
-import say from '../../i18n';
-
-export default function HomePage() {
-  return <main>{say`Hello, world!`}</main>;
+export default async function HomePage() {
+  return (
+    <main>
+      <Say>Hello, world!</Say>
+    </main>
+  );
 }

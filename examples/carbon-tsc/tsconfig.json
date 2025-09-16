@@ -1,14 +1,6 @@
 {
-  "include": ["src"],
-  "exclude": ["node_modules", "dist"],
+  "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "plugins": [{ "transform": "@sayable/plugin/tsc" }],
-    "strict": true,
-    "skipLibCheck": true,
-    "lib": ["dom", "es2022"],
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
-    "baseUrl": ".",
-    "outDir": "dist"
+    "plugins": [{ "transform": "@sayable/plugin/tsc" }]
   }
 }

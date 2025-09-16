@@ -4,7 +4,7 @@
 // IDEA: Move all this to a separate "integration" package?
 
 import { BaseInteraction, Command, Locale } from '@buape/carbon';
-import sayable from '../../sayable.config.json' with { type: 'json' };
+import sayable from '../../.sayablerc.json' with { type: 'json' };
 import say from '../i18n.js';
 
 const allowedLocales = Object.values(Locale);

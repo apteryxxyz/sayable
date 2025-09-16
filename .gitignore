@@ -1,9 +1,5 @@
 .ignore/
 node_modules/
 .turbo/
-target/
 dist/
-.next/
-examples/**/messages.json
-.wrangler/
-.dev.vars
+target/

@@ -9,8 +9,8 @@
   },
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
+      "types": "./dist/formatter.d.ts",
+      "default": "./dist/formatter.js"
     }
   },
   "dependencies": {

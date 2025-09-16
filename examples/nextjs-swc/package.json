@@ -8,13 +8,13 @@
     "start": "next start"
   },
   "dependencies": {
+    "@sayable/react": "workspace:^",
     "next": "^15.5.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "sayable": "workspace:^"
   },
   "devDependencies": {
-    "@sayable/config": "workspace:^",
     "@sayable/plugin": "workspace:^",
     "@sayable/plugin-swc": "workspace:^",
     "@types/react": "^19.1.11",
