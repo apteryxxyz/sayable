@@ -1,11 +1,20 @@
-import { glob, mkdir, readFile, writeFile } from 'node:fs/promises';
+import type { PathLike, WatchOptions } from 'node:fs';
+import {
+  type FileChangeInfo,
+  glob,
+  mkdir,
+  readFile,
+  watch,
+  writeFile,
+} from 'node:fs/promises';
 import { dirname, relative, resolve } from 'node:path';
 import { Command } from '@commander-js/extra-typings';
 import { generateHash, generateIcuMessageFormat } from '@sayable/message-utils';
+import pm from 'picomatch';
 import type { output } from 'zod';
-import Logger from '~/logger.js';
+import Logger, { loggerStorage } from '~/logger.js';
 import { resolveConfig } from '~/resolve.js';
-import type { Catalogue, Formatter } from '~/shapes.js';
+import type { Catalogue, Configuration, Formatter } from '~/shapes.js';
 
 export default new Command()
   .name('extract')
@@ -14,68 +23,152 @@ export default new Command()
   )
   .option('-v, --verbose', 'enable verbose logging', false)
   .option('-q, --quiet', 'suppress all logging', false)
+  .option('-w, --watch', 'watch source files for changes', false)
   .action(async (options) => {
     const config = await resolveConfig();
     const logger = new Logger(options.quiet, options.verbose);
+    loggerStorage.enterWith(logger);
 
     logger.header('🛠 Extracting Messages');
 
-    for (const catalogue of config.catalogues) {
-      logger.info(`Processing catalogue: ${catalogue.include}`);
-
-      const paths = await globCatalogue(catalogue);
-      logger.step(`Found ${paths.length} file(s)`);
-
-      const messages: Record<string, Formatter.Message> = {};
-      for (const path of paths) {
-        logger.step(`Processing ${relative(process.cwd(), path)}`);
-
-        const scopedMessages = await extractMessages(catalogue, path);
-        logger.step(
-          `Found ${Object.keys(scopedMessages).length} message(s) in ${relative(
-            process.cwd(),
-            path,
-          )}`,
-        );
-
-        for (const [id, message] of Object.entries(scopedMessages))
-          messages[id] = message;
-      }
-
-      logger.info(`Extracted ${Object.keys(messages).length} message(s)`);
-
-      for (const locale of config.locales) {
-        logger.step(`Writing locale file for ${locale}`);
-        await writeMessagesForLocale(catalogue, locale, {
-          locale: config.sourceLocale,
-          messages: messages,
-        });
-      }
-
-      logger.success(`Wrote locale files`);
-    }
+    const watchers = [];
+    for (const catalogue of config.catalogues)
+      watchers.push(await processCatalogue(catalogue, config, options));
+    await Promise.allSettled(watchers.map((f) => f()));
   });
+
+async function processCatalogue(
+  catalogue: output<typeof Catalogue>,
+  config: output<typeof Configuration>,
+  options: { watch: boolean },
+) {
+  const logger = loggerStorage.getStore()!;
+  logger.info(`Processing catalogue: ${catalogue.include}`);
+
+  //
+
+  const paths = await globCatalogue(catalogue);
+  logger.step(`Found ${paths.length} file(s)`);
+
+  //
+
+  const messagesByFile: Record<string, Record<string, Formatter.Message>> = {};
+  async function processPath(path: string) {
+    logger.step(`Processing ${relative(process.cwd(), path)}`);
+
+    const messages = await extractMessages(catalogue, path);
+    if (!Object.keys(messages).length) return false;
+
+    messagesByFile[path] = messages;
+    logger.step(
+      `Found ${Object.keys(messages).length} message(s) in ${relative(
+        process.cwd(),
+        path,
+      )}`,
+    );
+    return true;
+  }
+
+  for (const path of paths) await processPath(path);
+
+  const currentMessages = () =>
+    Object.assign({}, ...Object.values(messagesByFile));
+  logger.info(`Extracted ${Object.keys(currentMessages()).length} message(s)`);
+
+  //
+
+  async function writeAllMessages() {
+    for (const locale of config.locales) {
+      logger.step(`Writing locale file for ${locale}`);
+      await writeMessages(
+        catalogue,
+        locale,
+        config.sourceLocale,
+        currentMessages(),
+      );
+    }
+  }
+
+  await writeAllMessages();
+  logger.success(`Wrote locale files`);
+
+  return async () => {
+    if (options.watch) {
+      logger.log(`👀 Watching for changes to ${catalogue.include}`);
+      const matcher = pm(catalogue.include, { ignore: catalogue.exclude });
+
+      for await (const event of watchDebounce(process.cwd(), {
+        recursive: true,
+      })) {
+        if (!event.filename || !matcher(event.filename)) continue;
+
+        logger.info(`Detected change in ${event.filename}`);
+        const done = await processPath(event.filename);
+        if (done) await writeAllMessages();
+      }
+    }
+  };
+}
 
 async function globCatalogue(catalogue: output<typeof Catalogue>) {
   const paths: string[] = [];
   for await (const path of glob(catalogue.include, {
     exclude: catalogue.exclude,
   }))
-    paths.push(resolve(path));
+    paths.push(path);
   return paths;
+}
+
+export async function* watchDebounce(path: PathLike, options?: WatchOptions) {
+  const debounceTimers = new Map<string, NodeJS.Timeout>();
+  const pendingEvents = new Map<string, Promise<FileChangeInfo<string>>>();
+  const resolvers = new Map<string, (value: FileChangeInfo<string>) => void>();
+
+  (async () => {
+    for await (const event of watch(path, options)) {
+      const key = event.filename ?? '__unknown__';
+
+      if (debounceTimers.has(key)) clearTimeout(debounceTimers.get(key)!);
+
+      if (!pendingEvents.has(key))
+        pendingEvents.set(key, new Promise((r) => resolvers.set(key, r)));
+
+      debounceTimers.set(
+        key,
+        setTimeout(() => {
+          resolvers.get(key)?.(event);
+          debounceTimers.delete(key);
+          resolvers.delete(key);
+        }, 300),
+      );
+    }
+  })();
+
+  while (true) {
+    if (pendingEvents.size) {
+      const next = await Promise.race(pendingEvents.values());
+      pendingEvents.delete(next.filename ?? '__unknown__');
+      yield next;
+    } else {
+      // avoid busy loop, yield control briefly
+      await new Promise((r) => setTimeout(r, 10));
+    }
+  }
 }
 
 async function extractMessages(
   catalogue: output<typeof Catalogue>,
   path: string,
 ) {
-  const result: Record<string, Formatter.Message> = {};
   const code = await readFile(path, 'utf8');
   const messages = await catalogue.extractor.extract({ id: path, code });
+
+  const formattedMessages: Record<string, Formatter.Message> = {};
   for (const message of messages) {
     const icu = generateIcuMessageFormat(message);
     const hash = generateHash(icu, message.context);
-    result[hash] = {
+
+    formattedMessages[hash] = {
       message: icu,
       translation: icu,
       context: message.context,
@@ -83,67 +176,80 @@ async function extractMessages(
       references: message.references,
     };
   }
-  return result;
+  return formattedMessages;
 }
 
-function resolveLocaleFile(
+export function resolveOutputFilePath(
   catalogue: output<typeof Catalogue>,
   locale: string,
+  extension = catalogue.formatter.extension,
 ) {
   return resolve(
     catalogue.output
-      .replace('{locale}', locale)
-      .replace('{extension}', catalogue.formatter.extension),
+      .replaceAll('{locale}', locale)
+      .replaceAll('{extension}', extension),
   );
 }
 
-async function writeMessagesForLocale(
+export async function readMessages(
   catalogue: output<typeof Catalogue>,
   locale: string,
-  source: {
-    locale: string;
-    messages: Record<string, Formatter.Message>;
-  },
+  path = resolveOutputFilePath(catalogue, locale),
 ) {
-  const outputFile = resolveLocaleFile(catalogue, locale);
-  await mkdir(dirname(outputFile), { recursive: true });
-
-  const existingContent = await readFile(outputFile, 'utf8') //
-    .catch(() => undefined);
-  if (locale !== source.locale) {
-    const _existingMessages = existingContent
-      ? await catalogue.formatter //
-          .parse(existingContent, { locale })
-      : [];
-    const existingMessages = _existingMessages.reduce<
-      Record<string, Formatter.Message>
-    >((result, message) => {
+  const content = await readFile(path, 'utf8').catch(() => '');
+  const messages = await catalogue.formatter.parse(content, { locale });
+  const mapped = messages.reduce(
+    (messages, message) => {
       const hash = generateHash(message.message, message.context);
-      result[hash] = message;
-      return result;
-    }, {});
+      messages[hash] = message;
+      return messages;
+    },
+    {} as Record<string, Formatter.Message>,
+  );
 
-    const mergedMessages: Record<string, Formatter.Message> = {};
-    for (const [id, sourceMessage] of Object.entries(source.messages)) {
-      const existingMessage = existingMessages[id];
-      mergedMessages[id] = {
-        message: sourceMessage.message,
-        translation: undefined,
-        ...existingMessage,
-        context: sourceMessage.context,
-        comments: sourceMessage.comments,
-        references: sourceMessage.references,
-      };
-    }
-    source.messages = mergedMessages;
+  return Object.assign([content, mapped] as const, mapped);
+}
+
+function updateMessages(
+  existingMessages: Record<string, Formatter.Message>,
+  newMessages: Record<string, Formatter.Message>,
+) {
+  const mergedMessages: Record<string, Formatter.Message> = {};
+  for (const [id, newMessage] of Object.entries(newMessages)) {
+    const existingMessage = existingMessages[id];
+
+    mergedMessages[id] = {
+      message: newMessage.message,
+      translation: undefined,
+      ...existingMessage,
+      context: newMessage.context,
+      comments: newMessage.comments,
+      references: newMessage.references,
+    };
   }
+  return mergedMessages;
+}
+
+async function writeMessages(
+  catalogue: output<typeof Catalogue>,
+  locale: string,
+  sourceLocale: string,
+  newMessages: Record<string, Formatter.Message>,
+) {
+  const [existingContent, existingMessages] = //
+    await readMessages(catalogue, locale);
+
+  const localeMessages =
+    locale !== sourceLocale
+      ? updateMessages(existingMessages, newMessages)
+      : newMessages;
 
   const localeContent = await catalogue.formatter.stringify(
-    Object.values(source.messages),
-    {
-      locale,
-      previousContent: existingContent,
-    },
+    Object.values(localeMessages),
+    { locale, previousContent: existingContent },
   );
-  await writeFile(outputFile, localeContent);
+
+  const outputPath = resolveOutputFilePath(catalogue, locale);
+  await mkdir(dirname(outputPath), { recursive: true });
+  await writeFile(outputPath, localeContent);
 }

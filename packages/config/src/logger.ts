@@ -1,3 +1,5 @@
+import { AsyncLocalStorage } from 'node:async_hooks';
+
 const RESET = '\x1b[0m';
 const DIM = '\x1b[2m';
 const BRIGHT = '\x1b[1m';
@@ -36,10 +38,14 @@ export default class Logger {
   }
 
   header(message: string) {
-    this.log(`\n${BRIGHT}${message}${RESET}`);
+    this.log(`${BRIGHT}${message}${RESET}`);
   }
 
   step(message: string) {
     if (this.#verbose) this.log(` ${DIM}→ ${message}${RESET}`);
   }
 }
+
+export const loggerStorage = new AsyncLocalStorage<Logger>({
+  defaultValue: new Logger(false, false),
+});

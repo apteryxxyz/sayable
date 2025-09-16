@@ -1,66 +1,82 @@
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
-import { dirname, resolve } from 'node:path';
+import { mkdir, writeFile } from 'node:fs/promises';
+import { dirname, relative } from 'node:path';
 import { Command } from '@commander-js/extra-typings';
-import { generateHash } from '@sayable/message-utils';
 import type { output } from 'zod';
-import Logger from '~/logger.js';
+import Logger, { loggerStorage } from '~/logger.js';
 import { resolveConfig } from '~/resolve.js';
 import type { Catalogue, Configuration, Formatter } from '~/shapes.js';
+import {
+  readMessages,
+  resolveOutputFilePath,
+  watchDebounce,
+} from './extract.js';
 
 export default new Command()
   .name('compile')
   .description('Compile extracted messages into runtime-ready locale files.')
   .option('-v, --verbose', 'enable verbose logging', false)
   .option('-q, --quiet', 'suppress all logging', false)
-  .action(async (options: { verbose: boolean; quiet: boolean }) => {
+  .option('-w, --watch', 'watch source files for changes', false)
+  .action(async (options) => {
     const config = await resolveConfig();
     const logger = new Logger(options.quiet, options.verbose);
+    loggerStorage.enterWith(logger);
 
     logger.header('📦 Compiling Messages');
 
-    for (const catalogue of config.catalogues) {
-      logger.info(`Processing catalogue: ${catalogue.include}`);
-
-      const cache = new Map<string, Record<string, string>>();
-
-      for (const locale of config.locales) {
-        logger.step(`Processing ${locale}`);
-
-        const messages = await readMessages(catalogue, locale);
-        logger.step(`Loaded ${Object.keys(messages).length} message(s)`);
-
-        const hydratedMessages = //
-          await hydrateMessages(cache, config, catalogue, locale, messages);
-        logger.step(
-          `Hydrated for ${Object.keys(hydratedMessages).length} message(s)`,
-        );
-
-        logger.step('Writing runtime file');
-        await writeMessagesForLocale(catalogue, locale, hydratedMessages);
-      }
-
-      logger.success(`Wrote runtime files for messages`);
-    }
+    const watchers = [];
+    for (const catalogue of config.catalogues)
+      watchers.push(await processCatalogue(catalogue, config, options));
+    await Promise.allSettled(watchers.map((f) => f()));
   });
 
-function resolveLocaleFile(
+async function processCatalogue(
   catalogue: output<typeof Catalogue>,
-  locale: string,
+  config: output<typeof Configuration>,
+  options: { watch: boolean },
 ) {
-  return resolve(
-    catalogue.output
-      .replace('{locale}', locale)
-      .replace('{extension}', catalogue.formatter.extension),
-  );
-}
+  const cache = new Map<string, Record<string, string>>();
+  const logger = loggerStorage.getStore()!;
 
-async function readMessages(
-  catalogue: output<typeof Catalogue>,
-  locale: string,
-) {
-  const file = resolveLocaleFile(catalogue, locale);
-  const content = await readFile(file, 'utf8');
-  return catalogue.formatter.parse(content, { locale });
+  logger.info(`Processing catalogue: ${catalogue.include}`);
+
+  async function writeLocaleMessages(locale: string) {
+    const [, messages] = await readMessages(catalogue, locale);
+    logger.step(`Loaded ${Object.keys(messages).length} message(s)`);
+
+    const translations = //
+      await hydrateMessages(cache, config, catalogue, locale, messages);
+    logger.step(`Hydrated for ${Object.keys(translations).length} message(s)`);
+
+    logger.step('Writing runtime file');
+    await writeTranslations(catalogue, locale, translations);
+  }
+
+  for (const locale of config.locales) {
+    logger.step(`Processing ${locale}`);
+    await writeLocaleMessages(locale);
+  }
+
+  logger.success(`Wrote runtime files for messages`);
+
+  return async () => {
+    if (options.watch) {
+      logger.info(
+        `Watching for changes to ${relative(
+          process.cwd(),
+          resolveOutputFilePath(catalogue, '{locale}'),
+        )}`,
+      );
+
+      await Promise.allSettled(
+        config.locales.map(async (locale) => {
+          const path = resolveOutputFilePath(catalogue, locale);
+          for await (const _event of watchDebounce(path))
+            await writeLocaleMessages(locale);
+        }),
+      );
+    }
+  };
 }
 
 async function hydrateMessages(
@@ -68,20 +84,13 @@ async function hydrateMessages(
   config: output<typeof Configuration>,
   catalogue: output<typeof Catalogue>,
   locale: string,
-  messages: Formatter.Message[],
-): Promise<Record<string, string>> {
+  messages: Record<string, Formatter.Message>,
+) {
   if (cache.has(locale)) return cache.get(locale)!;
-
-  const hydratedMessages = await applyFallbacks(
-    cache,
-    config,
-    catalogue,
-    locale,
-    messages,
-  );
-
-  cache.set(locale, hydratedMessages);
-  return hydratedMessages;
+  const translations = //
+    await applyFallbacks(cache, config, catalogue, locale, messages);
+  cache.set(locale, translations);
+  return translations;
 }
 
 async function applyFallbacks(
@@ -89,44 +98,39 @@ async function applyFallbacks(
   config: output<typeof Configuration>,
   catalogue: output<typeof Catalogue>,
   locale: string,
-  messages: Formatter.Message[],
-): Promise<Record<string, string>> {
-  const result: Record<string, string> = {};
+  messages: Record<string, Formatter.Message>,
+) {
+  const fallbacks = [
+    ...(config.fallbackLocales?.[locale] ?? []),
+    config.sourceLocale,
+  ];
 
-  for (const message of messages) {
-    const hash = generateHash(message.message, message.context);
-
+  const translations: Record<string, string> = {};
+  for (const [id, message] of Object.entries(messages)) {
     if (message.translation) {
-      result[hash] = message.translation;
+      translations[id] = message.translation;
       continue;
     }
-
-    const fallbacks = [
-      ...(config.fallbackLocales?.[locale] ?? []),
-      config.sourceLocale,
-    ];
 
     for (const fallback of fallbacks) {
       const fallbackMessages = //
         await hydrateMessages(cache, config, catalogue, fallback, messages);
-      if (fallbackMessages[hash]) {
-        result[hash] = fallbackMessages[hash];
+      if (fallbackMessages[id]) {
+        translations[id] = fallbackMessages[id];
         break;
       }
     }
   }
 
-  return result;
+  return translations;
 }
 
-async function writeMessagesForLocale(
+async function writeTranslations(
   catalogue: output<typeof Catalogue>,
   locale: string,
-  messages: Record<string, string>,
+  translations: Record<string, string>,
 ) {
-  const outputFile = resolve(
-    catalogue.output.replace('{locale}', locale).replace('{extension}', 'json'),
-  );
-  await mkdir(dirname(outputFile), { recursive: true });
-  await writeFile(outputFile, JSON.stringify(messages, null, 2));
+  const outputPath = resolveOutputFilePath(catalogue, locale, 'json');
+  await mkdir(dirname(outputPath), { recursive: true });
+  await writeFile(outputPath, JSON.stringify(translations, null, 2));
 }
