@@ -76,6 +76,9 @@ importers:
         specifier: workspace:^
         version: link:../../packages/integration
     devDependencies:
+      '@sayable/config':
+        specifier: workspace:^
+        version: link:../../packages/config
       '@sayable/plugin':
         specifier: workspace:^
         version: link:../../packages/plugin
