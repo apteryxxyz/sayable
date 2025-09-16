@@ -1,4 +1,3 @@
-// log.ts
 const RESET = '\x1b[0m';
 const DIM = '\x1b[2m';
 const BRIGHT = '\x1b[1m';
@@ -6,23 +5,41 @@ const RED = '\x1b[31m';
 const GREEN = '\x1b[32m';
 const YELLOW = '\x1b[33m';
 const BLUE = '\x1b[34m';
-const CYAN = '\x1b[36m';
 
-export default {
-  log: (msg: string) => console.log(msg),
+export default class Logger {
+  #quiet: boolean;
+  #verbose: boolean;
 
-  info: (msg: string) => console.log(`${BLUE}ℹ${RESET} ${msg}`),
+  constructor(quiet: boolean, verbose: boolean) {
+    this.#quiet = quiet;
+    this.#verbose = verbose;
+  }
 
-  success: (msg: string) => console.log(`${GREEN}✔${RESET} ${msg}`),
+  log(...args: unknown[]) {
+    if (!this.#quiet) console.log(...args);
+  }
 
-  warn: (msg: string) => console.warn(`${YELLOW}⚠${RESET} ${msg}`),
+  info(...args: unknown[]) {
+    this.log(`${BLUE}🛈${RESET}`, ...args);
+  }
 
-  error: (msg: string) => console.error(`${RED}✖${RESET} ${msg}`),
+  warn(...args: unknown[]) {
+    this.log(`${YELLOW}⚠${RESET}`, ...args);
+  }
 
-  debug: (msg: string) =>
-    console.debug(`${CYAN}🐛${RESET} ${DIM}${msg}${RESET}`),
+  error(...args: unknown[]) {
+    this.log(`${RED}✖${RESET}`, ...args);
+  }
 
-  header: (msg: string) => console.log(`\n${BRIGHT}${msg}${RESET}`),
+  success(...args: unknown[]) {
+    this.log(`${GREEN}✔${RESET}`, ...args);
+  }
 
-  step: (msg: string) => console.log(`${DIM}→ ${msg}${RESET}`),
-};
+  header(message: string) {
+    this.log(`\n${BRIGHT}${message}${RESET}`);
+  }
+
+  step(message: string) {
+    if (this.#verbose) this.log(` ${DIM}→ ${message}${RESET}`);
+  }
+}

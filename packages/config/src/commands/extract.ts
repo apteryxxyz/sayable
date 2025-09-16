@@ -1,33 +1,55 @@
 import { glob, mkdir, readFile, writeFile } from 'node:fs/promises';
-import { dirname, resolve } from 'node:path';
+import { dirname, relative, resolve } from 'node:path';
 import { generateHash, generateIcuMessageFormat } from '@sayable/message-utils';
 import { Command } from 'commander';
 import type { output } from 'zod';
+import Logger from '~/logger.js';
 import { resolveConfig } from '~/resolve.js';
 import type { Catalogue, Formatter } from '~/shapes.js';
 
 export default new Command()
   .name('extract')
-  .description('')
-  .action(async () => {
+  .option('-v, --verbose')
+  .option('-q, --quiet')
+  .action(async (options: { verbose: boolean; quiet: boolean }) => {
     const config = await resolveConfig();
+    const logger = new Logger(options.quiet, options.verbose);
+
+    logger.header('🛠 Extracting Messages');
 
     for (const catalogue of config.catalogues) {
+      logger.info(`Processing catalogue: ${catalogue.include}`);
+
       const paths = await globCatalogue(catalogue);
+      logger.step(`Found ${paths.length} file(s)`);
 
       const messages: Record<string, Formatter.Message> = {};
       for (const path of paths) {
+        logger.step(`Processing ${relative(process.cwd(), path)}`);
+
         const scopedMessages = await extractMessages(catalogue, path);
+        logger.step(
+          `Found ${Object.keys(scopedMessages).length} message(s) in ${relative(
+            process.cwd(),
+            path,
+          )}`,
+        );
+
         for (const [id, message] of Object.entries(scopedMessages))
           messages[id] = message;
       }
 
+      logger.info(`Extracted ${Object.keys(messages).length} message(s)`);
+
       for (const locale of config.locales) {
+        logger.step(`Writing locale file for ${locale}`);
         await writeMessagesForLocale(catalogue, locale, {
           locale: config.sourceLocale,
           messages: messages,
         });
       }
+
+      logger.success(`Wrote locale files`);
     }
   });
 
