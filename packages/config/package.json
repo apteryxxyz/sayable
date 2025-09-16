@@ -17,6 +17,7 @@
     "sayable": "./dist/commands/index.js"
   },
   "dependencies": {
+    "@commander-js/extra-typings": "^14.0.0",
     "@sayable/message-utils": "workspace:^",
     "commander": "^14.0.0",
     "cosmiconfig": "^9.0.0",

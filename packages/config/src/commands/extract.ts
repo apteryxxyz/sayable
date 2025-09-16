@@ -1,7 +1,7 @@
 import { glob, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, relative, resolve } from 'node:path';
+import { Command } from '@commander-js/extra-typings';
 import { generateHash, generateIcuMessageFormat } from '@sayable/message-utils';
-import { Command } from 'commander';
 import type { output } from 'zod';
 import Logger from '~/logger.js';
 import { resolveConfig } from '~/resolve.js';
@@ -9,9 +9,12 @@ import type { Catalogue, Formatter } from '~/shapes.js';
 
 export default new Command()
   .name('extract')
-  .option('-v, --verbose')
-  .option('-q, --quiet')
-  .action(async (options: { verbose: boolean; quiet: boolean }) => {
+  .description(
+    'Extract messages from source files into translation catalogues.',
+  )
+  .option('-v, --verbose', 'enable verbose logging', false)
+  .option('-q, --quiet', 'suppress all logging', false)
+  .action(async (options) => {
     const config = await resolveConfig();
     const logger = new Logger(options.quiet, options.verbose);
 
