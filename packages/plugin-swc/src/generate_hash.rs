@@ -13,10 +13,8 @@ pub fn generate_hash(input: &str, context: Option<&str>) -> String {
   let mut hasher = Sha256::new();
 
   hasher.update(input.as_bytes());
-  if let Some(context) = context {
     hasher.update([0x1F]);
-    hasher.update(context.as_bytes());
-  }
+  hasher.update(context.unwrap_or("").as_bytes());
 
   let result = hasher.finalize();
   BASE64.encode(result.as_ref())[..6].to_string()
