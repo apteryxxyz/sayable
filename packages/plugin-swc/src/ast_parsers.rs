@@ -6,7 +6,6 @@
 use crate::message_types::{
   ArgumentMessage, ChoiceMessage, CompositeMessage, ElementMessage, LiteralMessage, Message,
 };
-use std::collections::BTreeMap;
 use swc_core::{
   common::{SyntaxContext, DUMMY_SP},
   ecma::ast::{self as t},
@@ -37,20 +36,26 @@ pub fn parse_tagged_template_expression(
       }
     }
 
-    let mut children = BTreeMap::new();
+    let mut children = Vec::new();
     for (i, segment) in segments {
       match segment {
         Segment::Quasi(segment) => {
           let message = LiteralMessage::new(segment.raw.to_string());
-          children.insert(i.to_string(), Message::Literal(message));
+          children.push((i.to_string(), Message::Literal(message)));
         }
 
         Segment::Expr(segment) => match segment {
           t::Expr::Call(call) => {
-            let message = parse_call_expression(call, identifier_store)
-              .and_then(|message| message.children.get("0").cloned());
+            let message = parse_call_expression(call, identifier_store).and_then(|message| {
+              message
+                .children
+                .iter()
+                .find(|(k, _)| k == "0")
+                .map(|(_, v)| v)
+                .cloned()
+            });
             if let Some(message) = message {
-              children.insert(i.to_string(), message);
+              children.push((i.to_string(), message));
             }
           }
 
@@ -59,7 +64,7 @@ pub fn parse_tagged_template_expression(
               get_property_name(segment, identifier_store),
               segment.clone().into(),
             );
-            children.insert(i.to_string(), Message::Argument(message));
+            children.push((i.to_string(), Message::Argument(message)));
           }
         },
       }
@@ -110,7 +115,7 @@ pub fn parse_call_expression(
     let callee = node.callee.as_expr()?.as_member()?;
     let property = callee.prop.as_ident()?;
 
-    let mut children = BTreeMap::new();
+    let mut children = Vec::new();
     let obj = node.args[1].expr.as_object()?;
     for prop in &obj.props {
       let t::PropOrSpread::Prop(boxed_prop) = prop else {
@@ -126,13 +131,13 @@ pub fn parse_call_expression(
           let literal = LiteralMessage {
             text: value.to_string(),
           };
-          children.insert(key, Message::Literal(literal));
+          children.push((key, Message::Literal(literal)));
         }
         t::Expr::Lit(t::Lit::Num(t::Number { value, .. })) => {
           let literal = LiteralMessage {
             text: value.to_string(),
           };
-          children.insert(key, Message::Literal(literal));
+          children.push((key, Message::Literal(literal)));
         }
 
         t::Expr::Tpl(tpl) => {
@@ -149,7 +154,7 @@ pub fn parse_call_expression(
           };
           let message = parse_tagged_template_expression(&fake, identifier_store);
           if let Some(message) = message {
-            children.insert(key, Message::Composite(message));
+            children.push((key, Message::Composite(message)));
           }
         }
 
@@ -185,7 +190,7 @@ pub fn parse_call_expression(
 
     return Some(CompositeMessage::new(
       accessor.clone(),
-      BTreeMap::from_iter([("0".to_string(), choice)]),
+      vec![("0".to_string(), choice)],
       context,
     ));
   }
@@ -203,12 +208,12 @@ pub fn parse_jsx_element(
   } {
     // <Say>...</Say>
 
-    let mut children = BTreeMap::new();
+    let mut children = Vec::new();
     for (i, child) in node.children.iter().enumerate() {
       match child {
         t::JSXElementChild::JSXText(t::JSXText { value, .. }) => {
           let message = LiteralMessage::new(value.to_string());
-          children.insert(i.to_string(), Message::Literal(message));
+          children.push((i.to_string(), Message::Literal(message)));
         }
 
         t::JSXElementChild::JSXExprContainer(t::JSXExprContainer { expr, .. }) => match expr {
@@ -217,7 +222,7 @@ pub fn parse_jsx_element(
               identifier: get_property_name(expr.as_ref(), identifier_store),
               expression: expr.clone(),
             };
-            children.insert(i.to_string(), Message::Argument(argument));
+            children.push((i.to_string(), Message::Argument(argument)));
           }
           _ => continue,
         },
@@ -254,7 +259,7 @@ pub fn parse_jsx_element(
             if let t::JSXElementChild::JSXElement(jsx_elem) = child {
               let expr = Box::new(t::Expr::JSXElement(Box::new(jsx_elem.as_ref().clone())));
               let message2 = ElementMessage::new(preloaded_identifier, expr, message.children);
-              children.insert(i.to_string(), Message::Element(message2));
+              children.push((i.to_string(), Message::Element(message2)));
             }
           } else {
             identifier_store.back();
@@ -306,7 +311,7 @@ pub fn parse_jsx_self_closing_element(
 
   let mut value_expr: Option<Box<t::Expr>> = None;
 
-  let mut children = BTreeMap::new();
+  let mut children = Vec::new();
   for attr in &node.opening.attrs {
     if let t::JSXAttrOrSpread::JSXAttr(t::JSXAttr { name, value, .. }) = attr {
       let key = get_jsx_property_name(name, identifier_store);
@@ -327,11 +332,11 @@ pub fn parse_jsx_self_closing_element(
       match value.as_ref().unwrap() {
         t::JSXAttrValue::Lit(t::Lit::Str(s)) => {
           let literal = LiteralMessage::new(s.value.to_string());
-          children.insert(key, Message::Literal(literal));
+          children.push((key, Message::Literal(literal)));
         }
         t::JSXAttrValue::Lit(t::Lit::Num(t::Number { value, .. })) => {
           let literal = LiteralMessage::new(value.to_string());
-          children.insert(key, Message::Literal(literal));
+          children.push((key, Message::Literal(literal)));
         }
 
         t::JSXAttrValue::JSXExprContainer(t::JSXExprContainer { expr, .. }) => {
@@ -393,7 +398,7 @@ pub fn parse_jsx_self_closing_element(
 
   Some(CompositeMessage::new(
     Box::new(accessor),
-    BTreeMap::from_iter([("0".to_string(), choice)]),
+    vec![("0".to_string(), choice)],
     get_property_value(&t::Expr::JSXElement(Box::new(node.clone())), "context"),
   ))
 }

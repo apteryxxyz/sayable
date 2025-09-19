@@ -4,7 +4,6 @@
  * - `packages/plugin/src/message-types.ts`
  * - `packages/swc-plugin/src/message_types.rs`
  */
-use std::collections::BTreeMap;
 use swc_core::ecma::ast::Expr;
 
 #[derive(Debug, Clone)]
@@ -50,13 +49,13 @@ impl ArgumentMessage {
 pub struct ElementMessage {
   pub identifier: String,
   pub expression: Box<Expr>,
-  pub children: BTreeMap<String, Message>,
+  pub children: Vec<(String, Message)>,
 }
 impl ElementMessage {
   pub fn new(
     identifier: impl Into<String>,
     expression: Box<Expr>,
-    children: BTreeMap<String, Message>,
+    children: Vec<(String, Message)>,
   ) -> Self {
     ElementMessage {
       identifier: identifier.into(),
@@ -81,14 +80,14 @@ pub struct ChoiceMessage {
   /// The expression that "gets" the value for this ordinal.
   ///
   pub expression: Box<Expr>,
-  pub children: BTreeMap<String, Message>,
+  pub children: Vec<(String, Message)>,
 }
 impl ChoiceMessage {
   pub fn new(
     kind: impl Into<String>,
     identifier: impl Into<String>,
     expression: Box<Expr>,
-    children: BTreeMap<String, Message>,
+    children: Vec<(String, Message)>,
   ) -> Self {
     ChoiceMessage {
       kind: kind.into(),
@@ -111,7 +110,7 @@ pub struct CompositeMessage {
   /// Usually `say`, but can be any object with a `say` method (`object.say`).
   ///
   pub accessor: Box<Expr>,
-  pub children: BTreeMap<String, Message>,
+  pub children: Vec<(String, Message)>,
   pub context: Option<String>,
   // Comments and references are only ever used by the cli compiler, which the swc plugin does not support
   // pub comments: None,
@@ -120,7 +119,7 @@ pub struct CompositeMessage {
 impl CompositeMessage {
   pub fn new(
     accessor: Box<Expr>,
-    children: BTreeMap<String, Message>,
+    children: Vec<(String, Message)>,
     context: Option<String>,
   ) -> Self {
     CompositeMessage {

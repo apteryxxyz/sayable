@@ -17,8 +17,8 @@ pub fn generate_icu_message_format(message: &Message) -> String {
     Message::Element(message) => {
       let children = message
         .children
-        .values()
-        .map(generate_icu_message_format)
+        .iter()
+        .map(|(_, v)| generate_icu_message_format(v))
         .collect::<String>();
       format!(
         "<{}>{}</{}>",
@@ -31,18 +31,25 @@ pub fn generate_icu_message_format(message: &Message) -> String {
         .children
         .iter()
         .map(|(index, message)| {
-          let key = index.trim_matches(|c| c == '=' || c == ' ');
-          format!("  {key} {{\n{}\n  }}", generate_icu_message_format(message))
+          let key = match index.parse::<i32>() {
+            Ok(key) => format!("={key}"),
+            Err(_) => index.to_string(),
+          };
+          format!("  {key} {{{}}}\n", generate_icu_message_format(message))
         })
         .collect::<String>();
-      let format = message.kind.to_string();
-      format!("{{{}}}, {format},\n{options}", message.identifier)
+
+      let format = match message.kind.as_str() {
+        "ordinal" => "selectordinal",
+        _ => message.kind.as_str(),
+      };
+      format!("{{{}, {format},\n{options}}}", message.identifier)
     }
 
     Message::Composite(message) => message
       .children
-      .values()
-      .map(generate_icu_message_format)
+      .iter()
+      .map(|(_, v)| generate_icu_message_format(v))
       .collect::<Vec<_>>()
       .join(""),
   }

@@ -3,8 +3,6 @@
  * - `packages/plugin/src/ast-generator.ts`
  * - `packages/swc-plugin/src/ast_generator.rs`
  */
-use std::collections::BTreeMap;
-
 use swc_core::{
   common::{util::take::Take, SyntaxContext, DUMMY_SP},
   ecma::ast as t,
@@ -17,9 +15,9 @@ use crate::{
 };
 
 pub fn generate_say_expression(message: &CompositeMessage) -> t::Expr {
-  let mut children = BTreeMap::new();
+  let mut children = Vec::new();
 
-  children.insert(
+  children.push((
     "id".to_string(),
     Box::new(t::Expr::Lit(t::Lit::Str(t::Str {
       span: DUMMY_SP,
@@ -30,10 +28,8 @@ pub fn generate_say_expression(message: &CompositeMessage) -> t::Expr {
       .into(),
       raw: None,
     }))),
-  );
-  for (k, v) in generate_child_expressions(&message.children) {
-    children.insert(k, v);
-  }
+  ));
+  children.extend(generate_child_expressions(&message.children));
 
   let properties = children
     .into_iter()
@@ -65,9 +61,9 @@ pub fn generate_say_expression(message: &CompositeMessage) -> t::Expr {
 }
 
 pub fn generate_jsx_say_expression(message: &CompositeMessage) -> t::JSXElement {
-  let mut children = BTreeMap::new();
+  let mut children = Vec::new();
 
-  children.insert(
+  children.push((
     "id".to_string(),
     Box::new(t::Expr::Lit(t::Lit::Str(t::Str {
       span: DUMMY_SP,
@@ -78,10 +74,8 @@ pub fn generate_jsx_say_expression(message: &CompositeMessage) -> t::JSXElement 
       .into(),
       raw: None,
     }))),
-  );
-  for (k, v) in generate_child_expressions(&message.children) {
-    children.insert(k, v);
-  }
+  ));
+  children.extend(generate_child_expressions(&message.children));
 
   let properties = children
     .into_iter()
@@ -132,10 +126,10 @@ fn remove_react_element_children(element: &t::JSXElement) -> t::JSXElement {
   }
 }
 
-fn generate_child_expressions(children: &BTreeMap<String, Message>) -> Vec<(String, Box<t::Expr>)> {
+fn generate_child_expressions(children: &Vec<(String, Message)>) -> Vec<(String, Box<t::Expr>)> {
   let mut results = Vec::new();
 
-  for message in children.values() {
+  for message in children.iter().map(|(_, v)| v) {
     match message {
       Message::Argument(message) => {
         results.push((message.identifier.clone(), message.expression.clone()));
