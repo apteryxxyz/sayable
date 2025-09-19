@@ -19,7 +19,7 @@ mod ast_generators;
 mod ast_parsers;
 mod ast_transformers;
 mod generate_hash;
-mod icu_generator;
+mod generate_icu_message_format;
 mod message_types;
 
 struct Visitor {}

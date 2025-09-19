@@ -12,7 +12,7 @@ use swc_core::{
 
 use crate::{
   generate_hash::generate_hash,
-  icu_generator::generate_icu_message_format,
+  generate_icu_message_format::generate_icu_message_format,
   message_types::{CompositeMessage, Message},
 };
 
