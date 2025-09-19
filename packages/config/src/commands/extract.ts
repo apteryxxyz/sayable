@@ -1,4 +1,4 @@
-import type { PathLike, WatchOptions } from 'node:fs';
+import type { PathLike, WatchOptionsWithStringEncoding } from 'node:fs';
 import {
   type FileChangeInfo,
   glob,
@@ -119,7 +119,10 @@ async function globCatalogue(catalogue: output<typeof Catalogue>) {
   return paths;
 }
 
-export async function* watchDebounce(path: PathLike, options?: WatchOptions) {
+export async function* watchDebounce(
+  path: PathLike,
+  options?: WatchOptionsWithStringEncoding,
+) {
   const debounceTimers = new Map<string, NodeJS.Timeout>();
   const pendingEvents = new Map<string, Promise<FileChangeInfo<string>>>();
   const resolvers = new Map<string, (value: FileChangeInfo<string>) => void>();

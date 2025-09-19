@@ -19,11 +19,11 @@
   "dependencies": {
     "@commander-js/extra-typings": "^14.0.0",
     "@sayable/message-utils": "workspace:^",
-    "commander": "^14.0.0",
+    "commander": "^14.0.1",
     "cosmiconfig": "^9.0.0",
     "neverthrow": "^8.2.0",
     "picomatch": "^4.0.3",
-    "zod": "^4.0.15"
+    "zod": "^4.1.9"
   },
   "devDependencies": {
     "@types/picomatch": "^4.0.2"

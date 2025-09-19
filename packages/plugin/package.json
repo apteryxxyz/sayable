@@ -20,7 +20,7 @@
   "dependencies": {
     "@sayable/message-utils": "workspace:^",
     "js-sha256": "^0.11.1",
-    "unplugin": "^2.3.5"
+    "unplugin": "^2.3.10"
   },
   "devDependencies": {
     "@types/babel__core": "^7.20.5",
