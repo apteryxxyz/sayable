@@ -12,8 +12,8 @@ import { Command } from '@commander-js/extra-typings';
 import { generateHash, generateIcuMessageFormat } from '@sayable/message-utils';
 import pm from 'picomatch';
 import type { output } from 'zod';
+import { resolveConfig } from '~/loader/resolve.js';
 import Logger, { loggerStorage } from '~/logger.js';
-import { resolveConfig } from '~/resolve.js';
 import type { Catalogue, Configuration, Formatter } from '~/shapes.js';
 
 export default new Command()

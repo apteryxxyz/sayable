@@ -2,8 +2,8 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, relative } from 'node:path';
 import { Command } from '@commander-js/extra-typings';
 import type { output } from 'zod';
+import { resolveConfig } from '~/loader/resolve.js';
 import Logger, { loggerStorage } from '~/logger.js';
-import { resolveConfig } from '~/resolve.js';
 import type { Catalogue, Configuration, Formatter } from '~/shapes.js';
 import {
   readMessages,
