@@ -3,6 +3,7 @@
   "explorer.fileNesting.enabled": true,
   "explorer.fileNesting.patterns": {
     "package.json": "pnpm-lock.yaml, pnpm-workspace.yaml",
+    "*.ts": "$(capture).test.ts",
     "*.js": "$(capture).js.map, $(capture).d.ts, $(capture).d.ts.map, $(capture).cjs",
     "*.cjs": "$(capture).cjs.map, $(capture).d.cts, $(capture).d.cts.map",
     "Cargo.toml": "Cargo.lock"

@@ -54,3 +54,154 @@ pub fn generate_icu_message_format(message: &Message) -> String {
       .join(""),
   }
 }
+
+#[cfg(test)]
+mod tests {
+  use super::generate_icu_message_format;
+  use crate::message_types::{
+    ArgumentMessage, ChoiceMessage, CompositeMessage, ElementMessage, LiteralMessage, Message,
+  };
+  use swc_core::{common::util::take::Take, ecma::ast::Expr};
+
+  #[test]
+  fn generate_literal_messages() {
+    let msg = LiteralMessage {
+      text: "Hello".to_string(),
+    };
+    assert_eq!(generate_icu_message_format(&Message::Literal(msg)), "Hello");
+  }
+
+  #[test]
+  fn generate_composite_messages() {
+    let msg = CompositeMessage {
+      accessor: Box::new(Expr::dummy()),
+      children: vec![
+        (
+          "0".to_string(),
+          Message::Literal(LiteralMessage {
+            text: "Hello".to_string(),
+          }),
+        ),
+        (
+          "1".to_string(),
+          Message::Literal(LiteralMessage {
+            text: " world".to_string(),
+          }),
+        ),
+      ]
+      .into_iter()
+      .map(|(key, val)| (key, val))
+      .collect(),
+      context: None,
+    };
+    assert_eq!(
+      generate_icu_message_format(&Message::Composite(msg)),
+      "Hello world"
+    );
+  }
+
+  #[test]
+  fn generate_argument_messages() {
+    let msg = ArgumentMessage {
+      identifier: "name".to_string(),
+      expression: Box::new(Expr::dummy()),
+    };
+    assert_eq!(
+      generate_icu_message_format(&Message::Argument(msg)),
+      "{name}"
+    );
+  }
+
+  #[test]
+  fn generate_element_messages() {
+    let msg = ElementMessage {
+      identifier: "0".to_string(),
+      expression: Box::new(Expr::dummy()),
+      children: vec![(
+        "0".to_string(),
+        Message::Literal(LiteralMessage {
+          text: "bold".to_string(),
+        }),
+      )]
+      .into_iter()
+      .map(|(key, val)| (key, val))
+      .collect(),
+    };
+    assert_eq!(
+      generate_icu_message_format(&Message::Element(msg)),
+      "<0>bold</0>"
+    );
+  }
+
+  #[test]
+  fn generate_choice_messages_with_numeric_keys_as_equals() {
+    let msg = ChoiceMessage {
+      kind: "plural".to_string(),
+      identifier: "count".to_string(),
+      expression: Box::new(Expr::dummy()),
+      children: vec![
+        (
+          "0".to_string(),
+          Message::Literal(LiteralMessage {
+            text: "none".to_string(),
+          }),
+        ),
+        (
+          "one".to_string(),
+          Message::Literal(LiteralMessage {
+            text: "one".to_string(),
+          }),
+        ),
+        (
+          "other".to_string(),
+          Message::Literal(LiteralMessage {
+            text: "many".to_string(),
+          }),
+        ),
+      ]
+      .into_iter()
+      .map(|(key, val)| (key, val))
+      .collect(),
+    };
+    assert_eq!(
+      generate_icu_message_format(&Message::Choice(msg)),
+      "{count, plural,\n  =0 {none}\n  one {one}\n  other {many}\n}"
+    );
+  }
+
+  #[test]
+  fn generate_choice_messages_with_ordinal_kind() {
+    let msg = ChoiceMessage {
+      kind: "ordinal".to_string(),
+      identifier: "place".to_string(),
+      expression: Box::new(Expr::dummy()),
+      children: vec![
+        (
+          "one".to_string(),
+          Message::Literal(LiteralMessage {
+            text: "first".to_string(),
+          }),
+        ),
+        (
+          "two".to_string(),
+          Message::Literal(LiteralMessage {
+            text: "second".to_string(),
+          }),
+        ),
+        (
+          "other".to_string(),
+          Message::Literal(LiteralMessage {
+            text: "other".to_string(),
+          }),
+        ),
+      ]
+      .into_iter()
+      .map(|(key, val)| (key, val))
+      .collect(),
+    };
+    assert_eq!(
+      generate_icu_message_format(&Message::Choice(msg)),
+      "{place, selectordinal,\n  one {first}\n  two {second}\n  other {other}\n}"
+    );
+  }
+}

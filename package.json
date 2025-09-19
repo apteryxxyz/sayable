@@ -6,6 +6,7 @@
     "check": "turbo run check",
     "lint": "turbo run lint && biome lint .",
     "format": "turbo run format && biome format . --write",
+    "test": "turbo run test",
     "build": "turbo run build --filter=\"./packages/*\"",
     "dev": "turbo watch build --filter=\"./packages/*\"",
     "prepare": "husky & ts-patch install"
@@ -17,6 +18,7 @@
     "ts-patch": "^3.3.0",
     "turbo": "^2.5.5",
     "typescript": "^5.9.2",
-    "typescript-transform-paths": "^3.5.5"
+    "typescript-transform-paths": "^3.5.5",
+    "vitest": "^3.2.4"
   }
 }
