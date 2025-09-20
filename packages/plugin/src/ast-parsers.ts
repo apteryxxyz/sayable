@@ -275,12 +275,15 @@ export function parseJsxSelfClosingElement(
     const value = node.attributes.properties //
       .find((p): p is t.JsxAttribute => p.name?.getText() === '_')!
       .initializer as t.JsxExpression;
+    const identifier =
+      ('expression' in value &&
+        t.isIdentifier(value.expression!) &&
+        value.expression?.getText()) ||
+      '_';
     const choice = {
       type: 'choice',
       kind: node.tagName.name.text.toLowerCase() as ChoiceMessage['kind'],
-      identifier: t.isIdentifier(value.expression!)
-        ? value.expression.text
-        : '_',
+      identifier: identifier,
       expression: value,
       children,
     } satisfies ChoiceMessage;

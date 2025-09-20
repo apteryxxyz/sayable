@@ -315,17 +315,18 @@ pub fn parse_jsx_self_closing_element(
   for attr in &node.opening.attrs {
     if let t::JSXAttrOrSpread::JSXAttr(t::JSXAttr { name, value, .. }) = attr {
       let key = get_jsx_property_name(name, identifier_store);
-      if key == "_" || key == "context" {
-        if key == "_" {
-          if let Some(t::JSXAttrValue::JSXExprContainer(t::JSXExprContainer {
+      if key == "_" {
+        match value.clone().unwrap() {
+          t::JSXAttrValue::JSXExprContainer(t::JSXExprContainer {
             expr: t::JSXExpr::Expr(e),
             ..
-          })) = value
-          {
-            value_expr = Some(e.clone());
-          }
+          }) => value_expr = Some(e),
+          t::JSXAttrValue::Lit(e) => value_expr = Some(Box::new(t::Expr::Lit(e))),
+          _ => {},
         }
-
+        continue
+      }
+      if key == "context" {
         continue;
       }
 
