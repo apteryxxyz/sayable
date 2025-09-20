@@ -5,7 +5,7 @@
   "scripts": {
     "check": "tsc --noEmit",
     "test": "vitest run",
-    "build": "tsc",
+    "build": "tsdown",
     "prepack": "pnpm build"
   },
   "exports": {

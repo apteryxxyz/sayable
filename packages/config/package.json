@@ -4,13 +4,13 @@
   "type": "module",
   "scripts": {
     "check": "tsc --noEmit",
-    "build": "tsc && tsx scripts/create-json-schema.ts",
+    "build": "tsdown",
     "prepack": "pnpm build"
   },
   "exports": {
     ".": {
-      "types": "./dist/define.d.ts",
-      "default": "./dist/define.js"
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
     }
   },
   "bin": {
@@ -24,7 +24,11 @@
     "picomatch": "^4.0.3",
     "zod": "^4.1.9"
   },
+  "peerDependencies": {
+    "typescript": "*"
+  },
   "devDependencies": {
-    "@types/picomatch": "^4.0.2"
+    "@types/picomatch": "^4.0.2",
+    "typescript": "^5.9.2"
   }
 }

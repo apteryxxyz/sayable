@@ -2,7 +2,7 @@ import type { Formatter } from '@sayable/config';
 import { format as formatDate } from 'date-fns';
 import PO from 'pofile';
 
-export function createFormatter() {
+export function createFormatter(): Formatter {
   return {
     extension: '.po',
 
@@ -52,7 +52,7 @@ export function createFormatter() {
 
       return po.toString();
     },
-  } satisfies Formatter;
+  };
 }
 
 export default createFormatter;
