@@ -71,8 +71,11 @@ async function processCatalogue(
       await Promise.allSettled(
         config.locales.map(async (locale) => {
           const path = resolveOutputFilePath(catalogue, locale);
-          for await (const _event of watchDebounce(path))
+          for await (const event of watchDebounce(path)) {
+            cache.delete(locale);
+            logger.info(`Detected change in ${event.filename}`);
             await writeLocaleMessages(locale);
+          }
         }),
       );
     }
