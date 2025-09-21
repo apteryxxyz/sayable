@@ -23,6 +23,38 @@ export class Sayable {
     this.#loaders = loaders;
     this.#cache = new Map();
     this.#active = undefined;
+
+    // Allow these properties to be spread into other objects
+    // TODO: Improve error messages, will be done all at once later
+    Object.defineProperty(this, 'locale', {
+      get: () => {
+        if (this.#active) return this.#active;
+        throw new Error('No locale activated');
+      },
+      set: () => {
+        throw new TypeError('`locale` is read-only');
+      },
+      enumerable: true,
+    });
+    Object.defineProperty(this, 'locales', {
+      get: () => {
+        return Object.keys(this.#loaders);
+      },
+      set: () => {
+        throw new TypeError('`locales` is read-only');
+      },
+      enumerable: true,
+    });
+    Object.defineProperty(this, 'messages', {
+      get: () => {
+        if (this.#cache.has(this.locale)) return this.#cache.get(this.locale)!;
+        throw new Error('No messages loaded for locale');
+      },
+      set: () => {
+        throw new TypeError('`messages` is read-only');
+      },
+      enumerable: true,
+    });
   }
 
   /**
@@ -30,17 +62,12 @@ export class Sayable {
    *
    * @throws If no locale is active
    */
-  get locale() {
-    if (this.#active) return this.#active;
-    throw new Error('No locale activated');
-  }
+  declare locale: string;
 
   /**
    * All available locales.
    */
-  get locales() {
-    return Object.keys(this.#loaders);
-  }
+  declare locales: string[];
 
   /**
    * Loads messages for the given locales.
@@ -74,10 +101,7 @@ export class Sayable {
    * @throws If no locale is active
    * @throws If no messages are available for the active locale
    */
-  get messages() {
-    if (this.#cache.has(this.locale)) return this.#cache.get(this.locale)!;
-    throw new Error('No messages for locale');
-  }
+  declare messages: Sayable.Messages;
 
   /**
    * Set the active locale.

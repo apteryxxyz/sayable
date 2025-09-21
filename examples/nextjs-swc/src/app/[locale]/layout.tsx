@@ -17,9 +17,7 @@ export default async function RootLayout({
   return (
     <html lang={locale}>
       <body>
-        <SayProvider locale={locale} messages={say.messages}>
-          {children}
-        </SayProvider>
+        <SayProvider {...say}>{children}</SayProvider>
       </body>
     </html>
   );
