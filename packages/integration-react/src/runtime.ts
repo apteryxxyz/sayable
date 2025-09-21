@@ -15,7 +15,7 @@ import HTML2React, {
 import { Sayable } from 'sayable/runtime';
 
 const SayContext = //
-  createContext<ReturnType<Sayable<string>['freeze']>>(undefined!);
+  createContext<ReturnType<Sayable['freeze']>>(undefined!);
 
 export function SayProvider({
   locale,
@@ -25,7 +25,7 @@ export function SayProvider({
   locale: string;
   messages: Sayable.Messages;
 }>) {
-  const say = new Sayable<string>({});
+  const say = new Sayable({});
   say.assign(locale, messages);
   say.activate(locale);
   return createElement(SayContext.Provider, { value: say.freeze() }, children);

@@ -3,16 +3,15 @@ import type { Awaitable } from './types.js';
 
 export namespace Sayable {
   export type Messages = Record<string, string>;
-  export type Loaders<Locale extends string> = //
-    Record<Locale, () => Awaitable<Messages | { default: Messages }>>;
+  export type Loader = (locale: string) => Awaitable<Messages>;
 }
 
-export class Sayable<Locale extends string> {
-  #loaders: Sayable.Loaders<Locale>;
-  #cache: Map<Locale, Sayable.Messages>;
-  #active: Locale | undefined;
+export class Sayable {
+  #loaders: Record<string, Sayable.Loader>;
+  #cache: Map<string, Sayable.Messages>;
+  #active: string | undefined;
 
-  constructor(loaders: Sayable.Loaders<Locale>) {
+  constructor(loaders: Record<string, Sayable.Loader>) {
     this.#loaders = loaders;
     this.#cache = new Map();
     this.#active = undefined;
@@ -24,21 +23,19 @@ export class Sayable<Locale extends string> {
   }
 
   get locales() {
-    return Object.keys(this.#loaders) as Locale[];
+    return Object.keys(this.#loaders);
   }
 
-  async load(...locales: Locale[]) {
+  async load(...locales: string[]) {
     if (locales.length === 0) locales = this.locales;
     for (const locale of locales) {
       if (this.#cache.has(locale)) continue;
-      let messages = await this.#loaders[locale]();
-      if ('default' in messages)
-        messages = messages.default as Sayable.Messages;
-      this.assign(locale, messages);
+      const messages = await this.#loaders[locale]?.(locale);
+      if (messages) this.assign(locale, messages);
     }
   }
 
-  assign(locale: Locale, messages: Sayable.Messages) {
+  assign(locale: string, messages: Sayable.Messages) {
     this.#cache.set(locale, messages);
     this.#loaders[locale] = () => messages;
   }
@@ -48,7 +45,7 @@ export class Sayable<Locale extends string> {
     throw new Error('No messages for locale');
   }
 
-  activate(locale: Locale) {
+  activate(locale: string) {
     if (!this.locales.includes(locale))
       throw new Error(`No loader for locale '${locale}'`);
     this.#active = locale;
@@ -72,9 +69,9 @@ export class Sayable<Locale extends string> {
   }
 
   #call(
-    locale: Locale,
+    locale: string,
     messages: Sayable.Messages,
-    descriptor: Parameters<Sayable<Locale>['call']>[0],
+    descriptor: Parameters<Sayable['call']>[0],
   ) {
     const message = messages[descriptor.id];
     if (!message) throw new Error(`Descriptor '${descriptor.id}' not found`);
