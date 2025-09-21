@@ -1,14 +1,11 @@
 import { SayProvider } from '@sayable/react';
 import { notFound } from 'next/navigation.js';
-import type { PropsWithChildren } from 'react';
 import say from '../../i18n';
 
 export default async function RootLayout({
   params,
   children,
-}: PropsWithChildren<{
-  params: Promise<{ locale: 'en' }>;
-}>) {
+}: LayoutProps<'/[locale]'>) {
   const { locale } = await params;
   try {
     await say.load(locale);

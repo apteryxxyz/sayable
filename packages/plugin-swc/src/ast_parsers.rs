@@ -322,9 +322,9 @@ pub fn parse_jsx_self_closing_element(
             ..
           }) => value_expr = Some(e),
           t::JSXAttrValue::Lit(e) => value_expr = Some(Box::new(t::Expr::Lit(e))),
-          _ => {},
+          _ => {}
         }
-        continue
+        continue;
       }
       if key == "context" {
         continue;

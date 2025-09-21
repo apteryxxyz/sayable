@@ -1170,7 +1170,7 @@ checksum = "dd29631678d6fb0903b69223673e122c32e9ae559d0960a38d574695ebc0ea15"
 
 [[package]]
 name = "sayable"
-version = "0.1.0"
+version = "0.0.0"
 dependencies = [
  "data-encoding",
  "serde",

@@ -126,7 +126,7 @@ fn remove_react_element_children(element: &t::JSXElement) -> t::JSXElement {
   }
 }
 
-fn generate_child_expressions(children: &Vec<(String, Message)>) -> Vec<(String, Box<t::Expr>)> {
+fn generate_child_expressions(children: &[(String, Message)]) -> Vec<(String, Box<t::Expr>)> {
   let mut results = Vec::new();
 
   for message in children.iter().map(|(_, v)| v) {
