@@ -7,7 +7,12 @@
 import { sha256 } from 'js-sha256';
 
 /**
- * Generates a unique hash from any string, can be used as a translation key.
+ * Generates a unique repeatable hash from any string, which can be used as a translation key.
+ *
+ * @param input Input string
+ * @param context An optional string to seed the hash with
+ * @returns A unique hash
+ * @example `generateHash('Hello, world!')` → `3HNlwb`
  */
 export function generateHash(input: string, context?: string): string {
   const hasher = sha256.create();

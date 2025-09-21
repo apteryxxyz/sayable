@@ -7,7 +7,10 @@
 import type { Message } from './message-types.js';
 
 /**
- * Generates the ICU MessageFormat string for a message.
+ * Generate the ICU MessageFormat string for an extracted message.
+ *
+ * @param message The message to generate the ICU MessageFormat string for
+ * @returns The ICU MessageFormat string
  */
 export function generateIcuMessageFormat(message: Message): string {
   switch (message.type) {
