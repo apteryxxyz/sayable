@@ -7,15 +7,15 @@
     "dev": "wrangler dev --port 3000"
   },
   "dependencies": {
-    "@buape/carbon": "0.10.0",
+    "@buape/carbon": "0.11.0",
     "sayable": "workspace:^"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "4.20250828.0",
+    "@cloudflare/workers-types": "4.20250921.0",
     "@sayable/config": "workspace:^",
     "@sayable/plugin": "workspace:^",
     "ts-patch": "^3.3.0",
     "typescript": "5.9.2",
-    "wrangler": "4.33.1"
+    "wrangler": "4.38.0"
   }
 }
