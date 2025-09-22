@@ -1,15 +1,12 @@
 // @ts-nocheck
 
 // NOTE: This is very hacky and is mostly a proof of concept, it doesn't cover every case where localisation might be needed, but it works
-// IDEA: Move all this to a separate "integration" package?
 
-import { BaseInteraction, Command, Locale } from '@buape/carbon';
-import sayable from '../../sayable.config.json' with { type: 'json' };
-import say from '../i18n.js';
+import { Locale } from '@buape/carbon';
 
 const allowedLocales = Object.values(Locale);
 
-export function combineLocalisations<T extends object>(
+export function combineCommandOptions<T extends object>(
   localisationRecords: Record<string, T>,
   defaultLocale: string,
 ) {
@@ -55,55 +52,3 @@ export function combineLocalisations<T extends object>(
 
   return recurse(sources);
 }
-
-export function getBestLocale(userLocales: string[]) {
-  for (const userLocale of userLocales) {
-    let languageMatch: string | undefined;
-
-    for (const supportedLocale of sayable.locales) {
-      if (supportedLocale === userLocale) return supportedLocale;
-      if (supportedLocale.startsWith(userLocale.split('-')[0]))
-        languageMatch = supportedLocale;
-    }
-
-    if (languageMatch) return languageMatch;
-  }
-
-  return sayable.sourceLocale;
-}
-
-export abstract class SayableCommand extends Command {
-  name = '';
-
-  constructor(
-    makeOptions: (
-      s: typeof say,
-    ) => Pick<Command, 'name' | 'description' | 'options'>,
-  ) {
-    super();
-
-    const localisationRecords = {};
-    for (const locale of say.locales) {
-      const s = say.clone().activate(locale);
-      localisationRecords[locale] = makeOptions(s);
-    }
-
-    const options = combineLocalisations(localisationRecords, say.locale);
-    Object.assign(this, options);
-  }
-}
-
-declare module '@buape/carbon' {
-  interface BaseInteraction {
-    say: typeof say;
-  }
-}
-
-Object.defineProperty(BaseInteraction.prototype, 'say', {
-  get(this: BaseInteraction) {
-    this[' say'] ??= say.clone();
-    const locale = getBestLocale([this.rawData.locale]);
-    this[' say'].activate(locale);
-    return this[' say'];
-  },
-});

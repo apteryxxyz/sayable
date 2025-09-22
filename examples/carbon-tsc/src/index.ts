@@ -1,6 +1,12 @@
 import { Client } from '@buape/carbon';
 import { createHandler } from '@buape/carbon/adapters/fetch';
+import { SayablePlugin } from '@sayable/carbon';
 import PingCommand from './commands/ping.js';
+import say from './i18n.js';
+
+// Command constructors rely on the global `say` instance that the plugin defines
+// Need to construct the plugin before the commands are constructed
+const sayable = new SayablePlugin(say);
 
 const client = new Client(
   {
@@ -13,6 +19,7 @@ const client = new Client(
   {
     commands: [new PingCommand()],
   },
+  [sayable],
 );
 
 const handler = createHandler(client);

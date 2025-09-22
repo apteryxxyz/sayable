@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "@buape/carbon": "0.11.0",
+    "@sayable/carbon": "workspace:^",
     "sayable": "workspace:^"
   },
   "devDependencies": {

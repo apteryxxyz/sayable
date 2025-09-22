@@ -1,5 +1,5 @@
 import { type CommandInteraction, MessageFlags } from '@buape/carbon';
-import { SayableCommand } from './_base.js';
+import { SayableCommand } from '@sayable/carbon';
 
 export default class PingCommand extends SayableCommand {
   constructor() {
