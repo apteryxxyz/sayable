@@ -39,19 +39,26 @@ export abstract class SayableCommand extends Command {
    * for that locale.
    */
   constructor(
-    make: (say: Sayable) => Pick<Command, 'name' | 'description' | 'options'>,
+    public makeOptions: (
+      say: Sayable,
+    ) => Pick<Command, 'name' | 'description' | 'options'>,
   ) {
     super();
+  }
+
+  override serialize() {
     const say = Reflect.get(globalThis, kSay) as Sayable;
     if (!say) throw new Error('No `say` instance available');
 
     const records = {};
     for (const locale of say.locales) {
       const s = say.clone().activate(locale);
-      Reflect.set(records, locale, make(s));
+      Reflect.set(records, locale, this.makeOptions(s));
     }
 
     const options = combineCommandOptions(records, say.locale);
     Object.assign(this, options);
+
+    return super.serialize();
   }
 }
