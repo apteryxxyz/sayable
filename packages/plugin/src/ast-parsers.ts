@@ -339,10 +339,13 @@ function getPropertyValue(node: t.Expression, key: string) {
     return undefined;
 
   for (const property of node.properties) {
-    if (!t.isPropertyAssignment(property)) continue;
-    if (property.name.getText() !== key) continue;
-    if (t.isStringLiteral(property.initializer))
-      return property.initializer.text;
+    if (t.isJsxAttribute(property)) {
+      if (property.name.getText() === key) return property.name.getText();
+    } else if (t.isPropertyAssignment(property)) {
+      if (property.name.getText() === key) return property.name.getText();
+      if (t.isStringLiteral(property.initializer))
+        return property.initializer.text;
+    }
   }
   return undefined;
 }

@@ -14,7 +14,9 @@ export { SayProvider, useSay } from './runtime.js';
  * <Say context="correctness">Right</Say>
  * ```
  */
-export declare function Say(props: PropsWithChildren): ReactNode;
+export declare function Say(
+  props: PropsWithChildren<{ context?: string }>,
+): ReactNode;
 
 export declare namespace Say {
   /**
