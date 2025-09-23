@@ -39,8 +39,11 @@ importers:
   examples/carbon-tsc:
     dependencies:
       '@buape/carbon':
-        specifier: 0.11.0
-        version: 0.11.0(@types/react@19.1.13)(hono@4.9.7)
+        specifier: 0.0.0-beta-20250923053431
+        version: 0.0.0-beta-20250923053431(@types/react@19.1.13)(hono@4.9.7)
+      '@sapphire/snowflake':
+        specifier: ^3.5.5
+        version: 3.5.5
       '@sayable/carbon':
         specifier: workspace:^
         version: link:../../packages/integration-carbon
@@ -151,8 +154,8 @@ importers:
   packages/integration-carbon:
     devDependencies:
       '@buape/carbon':
-        specifier: ^0.11.0
-        version: 0.11.0(@types/react@19.1.13)(hono@4.9.7)
+        specifier: 0.0.0-beta-20250923053431
+        version: 0.0.0-beta-20250923053431(@types/react@19.1.13)(hono@4.9.7)
       sayable:
         specifier: workspace:^
         version: link:../integration
@@ -282,8 +285,8 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@buape/carbon@0.11.0':
-    resolution: {integrity: sha512-yIU0g40TJ4BH3D5WejeRrQL+ZWGHrKvhYgPg5hiAQ5cLM43rJw7Y8QO3eXY7fas/Km/ewK7IlSOZ8H07/cmlAQ==}
+  '@buape/carbon@0.0.0-beta-20250923053431':
+    resolution: {integrity: sha512-fU40A07XLwqpWGRo4/pXWPYATewA0ESty4rIwPWDYRR9np35H2rE4HdtH+dHBUUM4DBaKt8vNhFbRv1s/AvLKw==}
 
   '@cloudflare/kv-asset-handler@0.4.0':
     resolution: {integrity: sha512-+tv3z+SPp+gqTIcImN9o0hqE9xyfQjI1XD9pL6NuKjua9B1y7mNYv0S9cP+QEbA4ppVgGZEmKOvHX5G5Ei1CVA==}
@@ -1034,6 +1037,10 @@ packages:
     cpu: [x64]
     os: [win32]
 
+  '@sapphire/snowflake@3.5.5':
+    resolution: {integrity: sha512-xzvBr1Q1c4lCe7i6sRnrofxeO1QTP/LKQ6A6qy0iB4x5yfiSfARMEQEghojzTNALDTcv8En04qYNIco9/K9eZQ==}
+    engines: {node: '>=v14.0.0', npm: '>=7.0.0'}
+
   '@sindresorhus/is@7.1.0':
     resolution: {integrity: sha512-7F/yz2IphV39hiS2zB4QYVkivrptHHh0K8qJJd9HhuWSdvf8AN7NpebW3CcDZDBQsUPMoDKWsY2WWgW7bqOcfA==}
     engines: {node: '>=18'}
@@ -1059,8 +1066,8 @@ packages:
   '@types/babel__traverse@7.28.0':
     resolution: {integrity: sha512-8PvcXf70gTDZBgt9ptxJ8elBeBjcLOAcOtoO/mPJjtji1+CdGbHgm77om1GrsPxsiE+uXIpNSK64UYaIwQXd4Q==}
 
-  '@types/bun@1.2.20':
-    resolution: {integrity: sha512-dX3RGzQ8+KgmMw7CsW4xT5ITBSCrSbfHc36SNT31EOUg/LA9JWq0VDdEXDRSe1InVWpd2yLUM1FUF/kEOyTzYA==}
+  '@types/bun@1.2.21':
+    resolution: {integrity: sha512-NiDnvEqmbfQ6dmZ3EeUO577s4P5bf4HCTXtI6trMc6f6RzirY5IrF3aIookuSpyslFzrnvv2lmEWv5HyC1X79A==}
 
   '@types/chai@5.2.2':
     resolution: {integrity: sha512-8kB30R7Hwqf40JPiKhVzodJs2Qc1ZJ5zuT3uzw5Hq/dhNCl3G3l83jfpdI1e20BP348+fV7VIL/+FxaXkqBmWg==}
@@ -1166,8 +1173,8 @@ packages:
   brace-expansion@2.0.2:
     resolution: {integrity: sha512-Jt0vHyM+jmUBqojB7E1NIYadt0vI0Qxjxd2TErW94wDz+E2LAm5vKMXXwg6ZZBTHPuUlDgQHKXvjGBdfcF1ZDQ==}
 
-  bun-types@1.2.20:
-    resolution: {integrity: sha512-pxTnQYOrKvdOwyiyd/7sMt9yFOenN004Y6O4lCcCUoKVej48FS5cvTw9geRaEcB9TsDZaJKAxPTVvi8tFsVuXA==}
+  bun-types@1.2.21:
+    resolution: {integrity: sha512-sa2Tj77Ijc/NTLS0/Odjq/qngmEPZfbfnOERi0KRUYhT9R8M4VBioWVmMWE5GrYbKMc+5lVybXygLdibHaqVqw==}
     peerDependencies:
       '@types/react': ^19
 
@@ -1252,8 +1259,8 @@ packages:
     resolution: {integrity: sha512-sSuxWU5j5SR9QQji/o2qMvqRNYRDOcBTgsJ/DeCf4iSN4gW+gNMXM7wFIP+fdXZxoNiAnHUTGjCr+TSWXdRDKg==}
     engines: {node: '>=0.3.1'}
 
-  discord-api-types@0.38.22:
-    resolution: {integrity: sha512-2gnYrgXN3yTlv2cKBISI/A8btZwsSZLwKpIQXeI1cS8a7W7wP3sFVQOm3mPuuinTD8jJCKGPGNH399zE7Un1kA==}
+  discord-api-types@0.38.24:
+    resolution: {integrity: sha512-P7/DkcFIiIoaBogStnhhcGRX7KR+gIFp0SpmwsZUIM0bgDkYMEUx+8l+t3quYc/KSgg92wvE9w/4mabO57EMug==}
 
   dts-resolver@2.1.2:
     resolution: {integrity: sha512-xeXHBQkn2ISSXxbJWD828PFjtyg+/UrMDo7W4Ffcs7+YWCquxU8YjV1KoxuiL+eJ5pg3ll+bC6flVv61L3LKZg==}
@@ -1925,14 +1932,14 @@ snapshots:
   '@biomejs/cli-win32-x64@2.2.4':
     optional: true
 
-  '@buape/carbon@0.11.0(@types/react@19.1.13)(hono@4.9.7)':
+  '@buape/carbon@0.0.0-beta-20250923053431(@types/react@19.1.13)(hono@4.9.7)':
     dependencies:
       '@types/node': 22.18.3
-      discord-api-types: 0.38.22
+      discord-api-types: 0.38.24
     optionalDependencies:
       '@cloudflare/workers-types': 4.20250513.0
       '@hono/node-server': 1.18.2(hono@4.9.7)
-      '@types/bun': 1.2.20(@types/react@19.1.13)
+      '@types/bun': 1.2.21(@types/react@19.1.13)
       '@types/ws': 8.18.1
       ws: 8.18.3
     transitivePeerDependencies:
@@ -2449,6 +2456,8 @@ snapshots:
   '@rollup/rollup-win32-x64-msvc@4.50.2':
     optional: true
 
+  '@sapphire/snowflake@3.5.5': {}
+
   '@sindresorhus/is@7.1.0': {}
 
   '@speed-highlight/core@1.2.7': {}
@@ -2483,9 +2492,9 @@ snapshots:
     dependencies:
       '@babel/types': 7.28.4
 
-  '@types/bun@1.2.20(@types/react@19.1.13)':
+  '@types/bun@1.2.21(@types/react@19.1.13)':
     dependencies:
-      bun-types: 1.2.20(@types/react@19.1.13)
+      bun-types: 1.2.21(@types/react@19.1.13)
     transitivePeerDependencies:
       - '@types/react'
     optional: true
@@ -2594,7 +2603,7 @@ snapshots:
     dependencies:
       balanced-match: 1.0.2
 
-  bun-types@1.2.20(@types/react@19.1.13):
+  bun-types@1.2.21(@types/react@19.1.13):
     dependencies:
       '@types/node': 24.5.2
       '@types/react': 19.1.13
@@ -2663,7 +2672,7 @@ snapshots:
 
   diff@8.0.2: {}
 
-  discord-api-types@0.38.22: {}
+  discord-api-types@0.38.24: {}
 
   dts-resolver@2.1.2: {}
 

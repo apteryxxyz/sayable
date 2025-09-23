@@ -18,7 +18,7 @@
     "sayable": "workspace:^"
   },
   "devDependencies": {
-    "@buape/carbon": "^0.11.0",
+    "@buape/carbon": "0.0.0-beta-20250923053431",
     "sayable": "workspace:^"
   }
 }

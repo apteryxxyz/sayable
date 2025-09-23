@@ -1,7 +1,9 @@
 import { Client } from '@buape/carbon';
 import { createHandler } from '@buape/carbon/adapters/fetch';
 import { SayablePlugin } from '@sayable/carbon';
+import MathsCommand from './commands/maths.js';
 import PingCommand from './commands/ping.js';
+// import PingCommand from './commands/ping.js';
 import say from './i18n.js';
 
 const client = new Client(
@@ -13,7 +15,7 @@ const client = new Client(
     token: process.env.DISCORD_BOT_TOKEN,
   },
   {
-    commands: [new PingCommand()],
+    commands: [new PingCommand(), new MathsCommand()],
   },
   [
     new SayablePlugin(say), //
