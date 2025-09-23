@@ -29,7 +29,10 @@ import { combineCommandOptions } from '~/utils/combine-command-options.js';
  * ```
  */
 export abstract class SayableCommand extends Command {
-  name = '';
+  #makeOptions: (
+    say: Sayable,
+  ) => Pick<Command, 'name' | 'description' | 'options'>;
+  #name: string | undefined;
 
   /**
    * Create a new localised command.
@@ -39,26 +42,38 @@ export abstract class SayableCommand extends Command {
    * for that locale.
    */
   constructor(
-    public makeOptions: (
+    makeOptions: (
       say: Sayable,
     ) => Pick<Command, 'name' | 'description' | 'options'>,
   ) {
     super();
+    this.#makeOptions = makeOptions;
+
+    Object.defineProperty(this, 'name', {
+      ...Object.getOwnPropertyDescriptor(SayableCommand.prototype, 'name'),
+      enumerable: true,
+    });
   }
 
-  override serialize() {
+  override get name() {
+    if (this.#name) return this.#name;
+
     const say = Reflect.get(globalThis, kSay) as Sayable;
     if (!say) throw new Error('No `say` instance available');
 
     const records = {};
     for (const locale of say.locales) {
       const s = say.clone().activate(locale);
-      Reflect.set(records, locale, this.makeOptions(s));
+      Reflect.set(records, locale, this.#makeOptions(s));
     }
 
     const options = combineCommandOptions(records, say.locale);
     Object.assign(this, options);
 
-    return super.serialize();
+    return this.#name!;
+  }
+
+  set name(value: string) {
+    this.#name = value;
   }
 }
