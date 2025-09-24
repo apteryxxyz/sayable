@@ -44,29 +44,30 @@ pub fn parse_tagged_template_expression(
           children.push((i.to_string(), Message::Literal(message)));
         }
 
-        Segment::Expr(segment) => match segment {
-          t::Expr::Call(call) => {
-            let message = parse_call_expression(call, identifier_store).and_then(|message| {
-              message
-                .children
-                .iter()
-                .find(|(k, _)| k == "0")
-                .map(|(_, v)| v)
-                .cloned()
-            });
-            if let Some(message) = message {
-              children.push((i.to_string(), message));
+        Segment::Expr(segment) => {
+          let message_opt = match segment {
+            t::Expr::Call(call) => {
+              parse_call_expression(call, identifier_store).and_then(|message| {
+                message
+                  .children
+                  .iter()
+                  .find(|(k, _)| k == "0")
+                  .map(|(_, v)| v.clone())
+              })
             }
-          }
+            _ => None,
+          };
 
-          _ => {
-            let message = ArgumentMessage::new(
+          let message = message_opt.unwrap_or_else(|| {
+            let arg_msg = ArgumentMessage::new(
               get_property_name(segment, identifier_store),
               segment.clone().into(),
             );
-            children.push((i.to_string(), Message::Argument(message)));
-          }
-        },
+            Message::Argument(arg_msg)
+          });
+
+          children.push((i.to_string(), message));
+        }
       }
     }
 
@@ -124,6 +125,8 @@ pub fn parse_call_expression(
       let t::Prop::KeyValue(t::KeyValueProp { key, value }) = &**boxed_prop else {
         continue;
       };
+
+      // TODO: Review, compare to tsc
       let key = key.as_ident().unwrap().sym.to_string();
 
       match value.as_ref() {
@@ -443,11 +446,22 @@ impl IdentifierStore {
 
 fn get_property_name(node: &t::Expr, identifier_store: &mut IdentifierStore) -> String {
   match node {
-    t::Expr::Ident(t::Ident { sym, .. }) => sym.to_string(),
-    t::Expr::Member(t::MemberExpr {
-      prop: t::MemberProp::Ident(t::IdentName { sym, .. }),
-      ..
-    }) => sym.to_string(),
+    t::Expr::Ident(ident) => ident.sym.to_string(),
+
+    t::Expr::Call(call) => match &call.callee {
+      t::Callee::Expr(callee_expr) => match &**callee_expr {
+        t::Expr::Member(member) => get_property_name(&member.obj, identifier_store),
+        other => get_property_name(other, identifier_store),
+      },
+      _ => identifier_store.next(),
+    },
+
+    t::Expr::Member(member) => match &member.prop {
+      t::MemberProp::Ident(ident) => ident.sym.to_string(),
+      t::MemberProp::Computed(comp) => get_property_name(&comp.expr, identifier_store),
+      _ => identifier_store.next(),
+    },
+
     _ => identifier_store.next(),
   }
 }

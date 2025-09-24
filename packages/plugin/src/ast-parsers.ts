@@ -29,7 +29,6 @@ export function parseTaggedTemplateExpression(
       if (t.isCallExpression(segment)) {
         const message = parseCallExpression(segment, identifierStore);
         if (message) children[i] = message;
-        continue;
       }
 
       if (t.isExpression(segment)) {
@@ -326,12 +325,19 @@ export function createIdentifierStore() {
 }
 
 function getPropertyName(node: t.Node, identifierStore: IdentifierStore) {
-  if (t.isIdentifier(node)) return node.text;
-  if (t.isJsxExpression(node))
-    return getPropertyName(node.expression!, identifierStore);
-  if (t.isPropertyAccessExpression(node))
-    return getPropertyName(node.name!, identifierStore);
-  return identifierStore.next();
+  if (t.isIdentifier(node)) {
+    return node.text;
+  } else if (t.isCallExpression(node)) {
+    if (t.isPropertyAccessExpression(node.expression)) {
+      return getPropertyName(node.expression.expression, identifierStore);
+    } else {
+      return getPropertyName(node.expression, identifierStore);
+    }
+  } else if (t.isPropertyAccessExpression(node)) {
+    return getPropertyName(node.name, identifierStore);
+  } else {
+    return identifierStore.next();
+  }
 }
 
 function getPropertyValue(node: t.Expression, key: string) {
