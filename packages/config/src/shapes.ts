@@ -70,7 +70,7 @@ export const Catalogue = z.object({
   extractor: Extractor.optional().transform(async (extractor, context) => {
     if (extractor) return extractor;
 
-    const module = await require('@sayable/plugin');
+    const module = await require('@sayable/factory');
     if (module.isErr()) {
       context.addIssue(module.error);
       return z.NEVER;

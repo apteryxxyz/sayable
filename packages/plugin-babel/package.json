@@ -1,0 +1,23 @@
+{
+  "name": "@sayable/babel-plugin",
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "check": "tsc --noEmit",
+    "build": "tsdown",
+    "prepack": "pnpm build"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "dependencies": {
+    "@sayable/factory": "workspace:^"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.28.4",
+    "@types/babel__core": "^7.20.5"
+  }
+}

@@ -2,6 +2,6 @@ import type { NextConfig } from 'next';
 
 export default {
   experimental: {
-    swcPlugins: [['@sayable/plugin-swc', {}]],
+    swcPlugins: [['@sayable/swc-plugin', {}]],
   },
 } satisfies NextConfig;

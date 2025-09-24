@@ -1,5 +1,5 @@
 import { defineConfig } from 'tsdown';
 
 export default defineConfig({
-  entry: ['src/index.ts', 'src/bundlers/*.ts'],
+  entry: ['src/index.ts'],
 });

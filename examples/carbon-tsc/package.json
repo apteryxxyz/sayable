@@ -15,7 +15,7 @@
   "devDependencies": {
     "@cloudflare/workers-types": "4.20250921.0",
     "@sayable/config": "workspace:^",
-    "@sayable/plugin": "workspace:^",
+    "@sayable/tsc-plugin": "workspace:^",
     "ts-patch": "^3.3.0",
     "typescript": "5.9.2",
     "wrangler": "4.38.0"

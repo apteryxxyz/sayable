@@ -1,0 +1,22 @@
+{
+  "name": "@sayable/tsc-plugin",
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "check": "tsc --noEmit",
+    "build": "tsdown",
+    "prepack": "pnpm build"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "dependencies": {
+    "@sayable/factory": "workspace:^"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.2"
+  }
+}

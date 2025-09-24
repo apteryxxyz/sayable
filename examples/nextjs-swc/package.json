@@ -17,8 +17,7 @@
   },
   "devDependencies": {
     "@sayable/config": "workspace:^",
-    "@sayable/plugin": "workspace:^",
-    "@sayable/plugin-swc": "workspace:^",
+    "@sayable/swc-plugin": "workspace:^",
     "@types/react": "^19.1.13",
     "@types/react-dom": "^19.1.9"
   }
