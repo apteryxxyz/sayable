@@ -46,15 +46,12 @@ pub fn parse_tagged_template_expression(
 
         Segment::Expr(segment) => {
           let message_opt = match segment {
-            t::Expr::Call(call) => {
-              parse_call_expression(call, identifier_store).and_then(|message| {
-                message
-                  .children
-                  .iter()
-                  .find(|(k, _)| k == "0")
-                  .map(|(_, v)| v.clone())
-              })
-            }
+            t::Expr::Call(call) => parse_call_expression(call, identifier_store)
+              .map(|message| Message::Composite(message)),
+
+            t::Expr::TaggedTpl(tpl) => parse_tagged_template_expression(tpl, identifier_store)
+              .map(|message| Message::Composite(message)),
+
             _ => None,
           };
 

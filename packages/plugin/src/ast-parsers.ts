@@ -28,7 +28,18 @@ export function parseTaggedTemplateExpression(
 
       if (t.isCallExpression(segment)) {
         const message = parseCallExpression(segment, identifierStore);
-        if (message) children[i] = message;
+        if (message) {
+          children[i] = message;
+          continue;
+        }
+      }
+
+      if (t.isTaggedTemplateExpression(segment)) {
+        const message = parseTaggedTemplateExpression(segment, identifierStore);
+        if (message) {
+          children[i] = message;
+          continue;
+        }
       }
 
       if (t.isExpression(segment)) {
