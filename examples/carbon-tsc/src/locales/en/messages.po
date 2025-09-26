@@ -6,66 +6,66 @@ msgstr ""
 "Language: en\n"
 "X-Generator: sayable\n"
 
-#: src/commands/maths.ts:9
+#: src/commands/maths.ts:10
 msgid "add"
 msgstr "add"
 
-#: src/commands/maths.ts:10
+#: src/commands/maths.ts:11
 msgid "Add two numbers!"
 msgstr "Add two numbers!"
 
-#: src/commands/maths.ts:13
-#: src/commands/maths.ts:45
+#: src/commands/maths.ts:14
+#: src/commands/maths.ts:46
 msgid "a"
 msgstr "a"
 
-#: src/commands/maths.ts:14
-#: src/commands/maths.ts:46
+#: src/commands/maths.ts:15
+#: src/commands/maths.ts:47
 msgid "The first number."
 msgstr "The first number."
 
-#: src/commands/maths.ts:19
-#: src/commands/maths.ts:51
+#: src/commands/maths.ts:20
+#: src/commands/maths.ts:52
 msgid "b"
 msgstr "b"
 
-#: src/commands/maths.ts:20
-#: src/commands/maths.ts:52
+#: src/commands/maths.ts:21
+#: src/commands/maths.ts:53
 msgid "The second number."
 msgstr "The second number."
 
-#: src/commands/maths.ts:33
+#: src/commands/maths.ts:34
 msgid "The sum is {0}!"
 msgstr "The sum is {0}!"
 
-#: src/commands/maths.ts:41
+#: src/commands/maths.ts:42
 msgid "subtract"
 msgstr "subtract"
 
-#: src/commands/maths.ts:42
+#: src/commands/maths.ts:43
 msgid "Subtract two numbers!"
 msgstr "Subtract two numbers!"
 
-#: src/commands/maths.ts:65
+#: src/commands/maths.ts:66
 msgid "The difference is {0}!"
 msgstr "The difference is {0}!"
 
-#: src/commands/maths.ts:73
+#: src/commands/maths.ts:74
 msgid "maths"
 msgstr "maths"
 
-#: src/commands/maths.ts:74
+#: src/commands/maths.ts:75
 msgid "Maths commands!"
 msgstr "Maths commands!"
 
-#: src/commands/ping.ts:7
+#: src/commands/ping.ts:8
 msgid "ping"
 msgstr "ping"
 
-#: src/commands/ping.ts:8
+#: src/commands/ping.ts:9
 msgid "Ping the bot!"
 msgstr "Ping the bot!"
 
-#: src/commands/ping.ts:19
+#: src/commands/ping.ts:18
 msgid "Pong! Latency is {latency}ms."
 msgstr "Pong! Latency is {latency}ms."

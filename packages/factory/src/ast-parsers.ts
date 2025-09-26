@@ -426,9 +426,8 @@ function getNodeReferences(node: t.Node, sourceFile = node.getSourceFile()) {
       .replaceAll('\\', '/') || filename;
   if (relative.startsWith('/')) relative = relative.slice(1);
 
-  const position = node
-    .getSourceFile()
-    .getLineAndCharacterOfPosition(node.getStart());
+  const position = node.getSourceFile().getLineAndCharacterOfPosition(node.pos);
 
-  return [`${relative}:${position.line}` as const];
+  // position.line seems to be consistently off by one
+  return [`${relative}:${position.line + 1}` as const];
 }
