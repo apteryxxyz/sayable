@@ -26,15 +26,15 @@ export class Sayable {
 
     // Allow these properties to be spread into other objects
     Object.defineProperty(this, 'locale', {
-      ...Object.getOwnPropertyDescriptor(Sayable.prototype, 'locale'),
+      ...Object.getOwnPropertyDescriptor(Sayable.prototype, ' locale'),
       enumerable: true,
     });
     Object.defineProperty(this, 'locales', {
-      ...Object.getOwnPropertyDescriptor(Sayable.prototype, 'locales'),
+      ...Object.getOwnPropertyDescriptor(Sayable.prototype, ' locales'),
       enumerable: true,
     });
     Object.defineProperty(this, 'messages', {
-      ...Object.getOwnPropertyDescriptor(Sayable.prototype, 'messages'),
+      ...Object.getOwnPropertyDescriptor(Sayable.prototype, ' messages'),
       enumerable: true,
     });
   }
@@ -44,7 +44,8 @@ export class Sayable {
    *
    * @throws If no locale is active
    */
-  get locale() {
+  declare locale: string;
+  get ' locale'() {
     if (this.#active) return this.#active;
     throw new Error('No locale activated');
   }
@@ -52,7 +53,8 @@ export class Sayable {
   /**
    * All available locales.
    */
-  get locales() {
+  declare locales: string[];
+  get ' locales'() {
     return Object.keys(this.#loaders);
   }
 
@@ -88,7 +90,8 @@ export class Sayable {
    * @throws If no locale is active
    * @throws If no messages are available for the active locale
    */
-  get messages() {
+  declare messages: Sayable.Messages;
+  get ' messages'() {
     if (this.#cache.has(this.locale)) return this.#cache.get(this.locale)!;
     throw new Error('No messages loaded for locale');
   }
