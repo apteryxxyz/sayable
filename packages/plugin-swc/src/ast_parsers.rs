@@ -1,6 +1,6 @@
 /**
  * KEEP IN SYNC:
- * - `packages/plugin/src/ast-parsers.ts`
+ * - `packages/factory/src/ast-parsers.ts`
  * - `packages/swc-plugin/src/ast_parsers.rs`
  */
 use crate::message_types::{
@@ -46,11 +46,13 @@ pub fn parse_tagged_template_expression(
 
         Segment::Expr(segment) => {
           let message_opt = match segment {
-            t::Expr::Call(call) => parse_call_expression(call, identifier_store)
-              .map(|message| Message::Composite(message)),
+            t::Expr::Call(call) => {
+              parse_call_expression(call, identifier_store).map(Message::Composite)
+            }
 
-            t::Expr::TaggedTpl(tpl) => parse_tagged_template_expression(tpl, identifier_store)
-              .map(|message| Message::Composite(message)),
+            t::Expr::TaggedTpl(tpl) => {
+              parse_tagged_template_expression(tpl, identifier_store).map(Message::Composite)
+            }
 
             _ => None,
           };

@@ -1,6 +1,6 @@
 /**
  * KEEP IN SYNC:
- * - `packages/plugin/src/ast-generator.ts`
+ * - `packages/factory/src/ast-generator.ts`
  * - `packages/swc-plugin/src/ast_generator.rs`
  */
 use swc_core::{
