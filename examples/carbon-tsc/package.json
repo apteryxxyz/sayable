@@ -2,22 +2,23 @@
   "name": "carbon-ts-example",
   "type": "module",
   "scripts": {
+    "check": "tsc --noEmit",
     "extract": "sayable extract",
     "compile": "sayable compile",
     "dev": "wrangler dev --port 3000"
   },
   "dependencies": {
-    "@buape/carbon": "0.0.0-beta-20250923053431",
+    "@buape/carbon": "0.12.0",
     "@sapphire/snowflake": "^3.5.5",
     "@sayable/carbon": "workspace:^",
     "sayable": "workspace:^"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "4.20250921.0",
+    "@cloudflare/workers-types": "4.20250927.0",
     "@sayable/config": "workspace:^",
     "@sayable/tsc-plugin": "workspace:^",
     "ts-patch": "^3.3.0",
     "typescript": "5.9.2",
-    "wrangler": "4.38.0"
+    "wrangler": "4.40.2"
   }
 }
