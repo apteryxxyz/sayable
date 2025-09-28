@@ -1,4 +1,4 @@
-import { IntlMessageFormat } from 'intl-messageformat';
+import { mf1ToMessage } from '@messageformat/icu-messageformat-1';
 import type { Awaitable } from './types.js';
 
 export namespace Sayable {
@@ -163,8 +163,8 @@ export class Sayable {
     if (typeof message !== 'string')
       throw new Error(`Descriptor '${descriptor.id}' is not a string`);
 
-    const format = new IntlMessageFormat(message, locale);
-    return String(format.format(descriptor as never));
+    const format = mf1ToMessage(locale, message);
+    return String(format.format(descriptor));
   }
 
   [Symbol.for('nodejs.util.inspect.custom')](

@@ -1,6 +1,6 @@
 import type { PropsWithChildren, ReactNode } from 'react';
 import type { NumeralOptions, SelectOptions } from 'sayable/runtime';
-import type { ReactifyProps } from '~/types.js';
+import type { PropsWithJSXSafeKeys } from '~/types.js';
 
 export { SayProvider, useSay } from './runtime.js';
 
@@ -36,7 +36,7 @@ export declare namespace Say {
    * @returns The plural form of the number, as a React node
    */
   export function Plural(
-    props: { _: number } & ReactifyProps<NumeralOptions>,
+    props: { _: number } & PropsWithJSXSafeKeys<NumeralOptions>,
   ): ReactNode;
 
   /**
@@ -58,7 +58,7 @@ export declare namespace Say {
    * @returns The ordinal form of the number, as a React node
    */
   export function Ordinal(
-    props: { _: number } & ReactifyProps<NumeralOptions>,
+    props: { _: number } & PropsWithJSXSafeKeys<NumeralOptions>,
   ): ReactNode;
 
   /**
@@ -79,7 +79,7 @@ export declare namespace Say {
    * @returns The select form of the value, as a React node
    */
   export function Select(
-    props: { _: string } & ReactifyProps<SelectOptions>,
+    props: { _: string } & PropsWithJSXSafeKeys<SelectOptions>,
   ): ReactNode;
 }
 

@@ -18,6 +18,6 @@
     }
   },
   "dependencies": {
-    "intl-messageformat": "^10.7.16"
+    "@messageformat/icu-messageformat-1": "^0.11.0"
   }
 }

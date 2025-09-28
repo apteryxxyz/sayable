@@ -13,6 +13,7 @@ import HTML2React, {
   type HTML2ReactProps,
 } from 'react-html-string-parser/HTML2React';
 import { Sayable } from 'sayable/runtime';
+import { decodeJsxSafePropKeys } from './types.js';
 
 const SayContext = //
   createContext<ReturnType<Sayable['freeze']>>(undefined!);
@@ -57,13 +58,16 @@ export function useSay() {
  * @param descriptor Descriptor to render the translation for
  * @returns The translation node for the descriptor
  */
-export function Say(descriptor: { id: string; [match: string]: unknown }) {
+export function Say(
+  _descriptor: { id: string; [match: string]: unknown },
+  descriptor = decodeJsxSafePropKeys(_descriptor),
+) {
   const say = useSay();
   return createElement(HTML2React, {
     html: say.call(descriptor),
     getComponent(tag: string) {
-      if (`_${tag}` in descriptor && isValidElement(descriptor[`_${tag}`])) {
-        const element = descriptor[`_${tag}`] as ReactElement;
+      if (tag in descriptor && isValidElement(descriptor[tag])) {
+        const element = descriptor[tag] as ReactElement;
         return ({ children }) => cloneElement(element, undefined, ...children);
       }
       return undefined;
