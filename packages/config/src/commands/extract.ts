@@ -7,7 +7,7 @@ import {
   watch,
   writeFile,
 } from 'node:fs/promises';
-import { dirname, relative, resolve } from 'node:path';
+import { dirname, join, relative, resolve } from 'node:path';
 import { Command } from '@commander-js/extra-typings';
 import { generateHash, generateIcuMessageFormat } from '@sayable/message-utils';
 import pm from 'picomatch';
@@ -112,10 +112,11 @@ async function processCatalogue(
 
 async function globCatalogue(catalogue: output<typeof Catalogue>) {
   const paths: string[] = [];
-  for await (const path of glob(catalogue.include, {
+  for await (const file of glob(catalogue.include, {
     exclude: catalogue.exclude,
+    withFileTypes: true,
   }))
-    paths.push(path);
+    if (file.isFile()) paths.push(join(file.parentPath, file.name));
   return paths;
 }
 
