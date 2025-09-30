@@ -1,5 +1,6 @@
 {
   "name": "root",
+  "private": true,
   "packageManager": "pnpm@10.14.0",
   "workspaces": ["examples/*", "packages/*"],
   "scripts": {

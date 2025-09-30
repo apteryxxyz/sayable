@@ -1,5 +1,6 @@
 {
   "name": "nextjs-swc-ts-example",
+  "private": true,
   "type": "module",
   "scripts": {
     "check": "tsc --noEmit",

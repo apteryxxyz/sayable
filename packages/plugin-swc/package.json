@@ -1,6 +1,7 @@
 {
   "name": "@sayable/swc-plugin",
   "version": "0.0.0",
+  "files": ["dist"],
   "main": "./dist/sayable.wasm",
   "scripts": {
     "check": "cargo check",

@@ -8,6 +8,7 @@
     "build": "tsdown",
     "prepack": "pnpm build"
   },
+  "files": ["dist", "!dist/**/*.map"],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
