@@ -3,9 +3,9 @@ import { Configuration } from '~/shapes.js';
 import { findConfigFile } from './explorer.js';
 import loaders from './loaders.js';
 
-export async function resolveConfig() {
-  const file = await findConfigFile('sayable', process.cwd());
-  if (!file) throw new Error(`Could not find config file for "${name}"`);
+export async function resolveConfig(name = 'sayable') {
+  const file = await findConfigFile(name, process.cwd());
+  if (!file) throw new Error(`Could not find config file for "${'name'}"`);
 
   const ext = extname(file.id) as keyof typeof loaders;
   const loader = loaders[ext] ?? loaders[''];
