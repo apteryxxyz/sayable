@@ -7,7 +7,7 @@ export function combineCommandOptions(
   mappedOptions: Record<string, any>,
   baseLocale: string,
 ) {
-  const options = structuredClone(mappedOptions[baseLocale]);
+  const options = mappedOptions[baseLocale];
   const availableLocales = Object.keys(mappedOptions) //
     .filter((l) => l !== baseLocale && ALLOWED_LOCALES.includes(l));
 
@@ -20,8 +20,8 @@ export function combineCommandOptions(
       }
       options[`${key}_localizations`] = options[`${key}Localizations`];
     }
-
-    if (Array.isArray(value)) {
+    //
+    else if ((key === 'options' || key === 'choices') && Array.isArray(value)) {
       for (const [index, option] of Object.entries(value)) {
         const mapped = { [baseLocale]: option };
         for (const locale of availableLocales) {

@@ -6,66 +6,115 @@ msgstr ""
 "Language: fr\n"
 "X-Generator: sayable\n"
 
-#: src/commands/maths.ts:10
+#: src/commands/about.ts:16
+msgid "about"
+msgstr "à-propos"
+
+#: src/commands/about.ts:17
+msgid "Tell me about yourself!"
+msgstr "Parle-moi de toi!"
+
+#: src/commands/about.ts:31
+msgid "About You"
+msgstr "À propos de toi"
+
+#: src/commands/about.ts:40
+msgid "Your name is {name}!"
+msgstr "Ton nom est {name} !"
+
+#: src/commands/about.ts:47
+msgid "Name"
+msgstr "Nom"
+
+#: src/commands/about.ts:55
+msgid "Your name"
+msgstr "Ton nom"
+
+#: src/commands/maths.ts:13
 msgid "add"
 msgstr "additionner"
 
-#: src/commands/maths.ts:11
+#: src/commands/maths.ts:14
 msgid "Add two numbers!"
 msgstr "Additionne deux nombres !"
 
-#: src/commands/maths.ts:14
-#: src/commands/maths.ts:46
+#: src/commands/maths.ts:17
+#: src/commands/maths.ts:49
 msgid "a"
 msgstr "a"
 
-#: src/commands/maths.ts:15
-#: src/commands/maths.ts:47
+#: src/commands/maths.ts:18
+#: src/commands/maths.ts:50
 msgid "The first number."
 msgstr "Le premier nombre."
 
-#: src/commands/maths.ts:20
-#: src/commands/maths.ts:52
+#: src/commands/maths.ts:23
+#: src/commands/maths.ts:55
 msgid "b"
 msgstr "b"
 
-#: src/commands/maths.ts:21
-#: src/commands/maths.ts:53
+#: src/commands/maths.ts:24
+#: src/commands/maths.ts:56
 msgid "The second number."
 msgstr "Le deuxième nombre."
 
-#: src/commands/maths.ts:34
+#: src/commands/maths.ts:37
 msgid "The sum is {0}!"
 msgstr "La somme est {0} !"
 
-#: src/commands/maths.ts:42
+#: src/commands/maths.ts:45
 msgid "subtract"
 msgstr "soustraire"
 
-#: src/commands/maths.ts:43
+#: src/commands/maths.ts:46
 msgid "Subtract two numbers!"
 msgstr "Soustrais deux nombres !"
 
-#: src/commands/maths.ts:66
+#: src/commands/maths.ts:69
 msgid "The difference is {0}!"
 msgstr "La différence est {0} !"
 
-#: src/commands/maths.ts:74
+#: src/commands/maths.ts:77
 msgid "maths"
 msgstr "maths"
 
-#: src/commands/maths.ts:75
+#: src/commands/maths.ts:78
 msgid "Maths commands!"
 msgstr "Commandes de maths !"
 
-#: src/commands/ping.ts:8
+#: src/commands/ping.ts:9
 msgid "ping"
 msgstr "ping"
 
-#: src/commands/ping.ts:9
+#: src/commands/ping.ts:10
 msgid "Ping the bot!"
 msgstr "Ping le bot !"
 
-#: src/commands/ping.ts:18
+#: src/commands/ping.ts:19
 msgid "Pong! Latency is {latency}ms."
 msgstr "Pong ! Latence est de {latency} ms."
+
+#: src/commands/roll.ts:15
+msgid "roll"
+msgstr "lancer"
+
+#: src/commands/roll.ts:16
+msgid "Roll the dice!"
+msgstr "Lancez le dé !"
+
+#: src/commands/roll.ts:19
+msgid "sides"
+msgstr "côtés"
+
+#: src/commands/roll.ts:20
+msgid "The number of sides on the dice."
+msgstr "Le nombre de côtés sur le dé."
+
+#: src/commands/roll.ts:33
+#: src/commands/roll.ts:52
+msgid "The dice rolled {result}!"
+msgstr "Le dé a tiré {result} !"
+
+#: src/commands/roll.ts:42
+msgid "Roll Again"
+msgstr "Lancer à nouveau"

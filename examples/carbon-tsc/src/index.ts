@@ -1,9 +1,10 @@
 import { Client } from '@buape/carbon';
 import { createHandler } from '@buape/carbon/adapters/fetch';
 import { SayablePlugin } from '@sayable/carbon';
-import MathsCommand from './commands/maths.js';
-import PingCommand from './commands/ping.js';
-// import PingCommand from './commands/ping.js';
+import { AboutCommand, AboutModal } from './commands/about.js';
+import { MathsCommand } from './commands/maths.js';
+import { PingCommand } from './commands/ping.js';
+import { RollAgainButton, RollCommand } from './commands/roll.js';
 import say from './i18n.js';
 
 const client = new Client(
@@ -15,12 +16,18 @@ const client = new Client(
     token: process.env.DISCORD_BOT_TOKEN,
   },
   {
-    commands: [new PingCommand(), new MathsCommand()],
+    commands: [
+      new AboutCommand(say),
+      new MathsCommand(say),
+      new PingCommand(say),
+      new RollCommand(say),
+    ],
+    components: [new RollAgainButton(say)],
   },
-  [
-    new SayablePlugin(say), //
-  ],
+  [new SayablePlugin(say)],
 );
+for (const modal of [new AboutModal(say)])
+  client.modalHandler.registerModal(modal);
 
 const handler = createHandler(client);
 export default { fetch: handler };
