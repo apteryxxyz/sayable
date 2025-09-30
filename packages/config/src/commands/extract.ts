@@ -200,8 +200,10 @@ export async function readMessages(
   locale: string,
   path = resolveOutputFilePath(catalogue, locale),
 ) {
-  const content = await readFile(path, 'utf8').catch(() => '');
-  const messages = await catalogue.formatter.parse(content, { locale });
+  const content = await readFile(path, 'utf8').catch(() => undefined);
+  const messages = content
+    ? await catalogue.formatter.parse(content, { locale })
+    : [];
   const mapped = messages.reduce(
     (messages, message) => {
       const hash = generateHash(message.message, message.context);
