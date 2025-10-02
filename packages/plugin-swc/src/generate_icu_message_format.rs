@@ -9,6 +9,12 @@ use crate::message_types::Message;
 /// Generates the ICU MessageFormat string for a message.
 ///
 pub fn generate_icu_message_format(message: &Message) -> String {
+  internal_generate_icu_message_format(message)
+    .trim()
+    .to_string()
+}
+
+fn internal_generate_icu_message_format(message: &Message) -> String {
   match message {
     Message::Literal(message) => message.text.to_string(),
 
@@ -18,7 +24,7 @@ pub fn generate_icu_message_format(message: &Message) -> String {
       let children = message
         .children
         .iter()
-        .map(|(_, v)| generate_icu_message_format(v))
+        .map(|(_, v)| internal_generate_icu_message_format(v))
         .collect::<String>();
       format!(
         "<{}>{}</{}>",
@@ -35,7 +41,10 @@ pub fn generate_icu_message_format(message: &Message) -> String {
             Ok(key) => format!("={key}"),
             Err(_) => index.to_string(),
           };
-          format!("  {key} {{{}}}\n", generate_icu_message_format(message))
+          format!(
+            "  {key} {{{}}}\n",
+            internal_generate_icu_message_format(message)
+          )
         })
         .collect::<String>();
 
@@ -49,7 +58,7 @@ pub fn generate_icu_message_format(message: &Message) -> String {
     Message::Composite(message) => message
       .children
       .iter()
-      .map(|(_, v)| generate_icu_message_format(v))
+      .map(|(_, v)| internal_generate_icu_message_format(v))
       .collect::<Vec<_>>()
       .join(""),
   }
@@ -202,6 +211,39 @@ mod tests {
     assert_eq!(
       generate_icu_message_format(&Message::Choice(msg)),
       "{place, selectordinal,\n  one {first}\n  two {second}\n  other {other}\n}"
+    );
+  }
+
+  #[test]
+  fn normalise_jsx_related_whitespace() {
+    let msg = CompositeMessage {
+      accessor: Box::new(Expr::dummy()),
+      children: vec![
+        (
+          "0".to_string(),
+          Message::Literal(LiteralMessage {
+            text: "\n  Hello, ".to_string(),
+          }),
+        ),
+        (
+          "1".to_string(),
+          Message::Argument(ArgumentMessage {
+            identifier: "name".to_string(),
+            expression: Box::new(Expr::dummy()),
+          }),
+        ),
+        (
+          "2".to_string(),
+          Message::Literal(LiteralMessage {
+            text: "!\n".to_string(),
+          }),
+        ),
+      ],
+      context: None,
+    };
+    assert_eq!(
+      generate_icu_message_format(&Message::Composite(msg)),
+      "Hello, {name}!"
     );
   }
 }

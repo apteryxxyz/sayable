@@ -17,6 +17,7 @@ opt-level = "s"
 
 [dependencies]
 data-encoding = "2.9.0"
+regex = "1.11.3"
 serde = "1"
 sha2 = "0.10.9"
 swc_core = { version = "33.0.*", features = ["ecma_plugin_transform"] }

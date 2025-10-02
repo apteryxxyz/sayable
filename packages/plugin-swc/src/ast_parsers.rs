@@ -6,6 +6,7 @@
 use crate::message_types::{
   ArgumentMessage, ChoiceMessage, CompositeMessage, ElementMessage, LiteralMessage, Message,
 };
+use regex::Regex;
 use swc_core::{
   common::{SyntaxContext, DUMMY_SP},
   ecma::ast::{self as t},
@@ -210,11 +211,13 @@ pub fn parse_jsx_element(
   } {
     // <Say>...</Say>
 
+    let whitespace_re = Regex::new(r"\s+").unwrap();
     let mut children = Vec::new();
     for (i, child) in node.children.iter().enumerate() {
       match child {
         t::JSXElementChild::JSXText(t::JSXText { value, .. }) => {
-          let message = LiteralMessage::new(value.to_string());
+          let text = whitespace_re.replace_all(value, " ").to_string();
+          let message = LiteralMessage::new(text);
           children.push((i.to_string(), Message::Literal(message)));
         }
 

@@ -83,4 +83,20 @@ describe('generateIcuMessageFormat', () => {
         }"
       `);
   });
+
+  it('should normalise jsx related whitespace', () => {
+    const msg: Message = {
+      type: 'composite',
+      children: {
+        0: { type: 'literal', text: '\n  Hello, ' },
+        1: { type: 'argument', identifier: 'name' },
+        2: { type: 'literal', text: '!\n' },
+      },
+      comments: [],
+      references: [],
+      context: undefined,
+    };
+    expect(generateIcuMessageFormat(msg)) //
+      .toMatchInlineSnapshot('"Hello, {name}!"');
+  });
 });

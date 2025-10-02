@@ -173,10 +173,8 @@ export function parseJsxElement(
     const children: CompositeMessage['children'] = {};
     for (const [i, child] of node.children.entries()) {
       if (t.isJsxText(child)) {
-        children[i] = {
-          type: 'literal',
-          text: child.text,
-        };
+        const text = child.text.replace(/\s+/g, ' ');
+        children[i] = { type: 'literal', text };
         continue;
       }
 
