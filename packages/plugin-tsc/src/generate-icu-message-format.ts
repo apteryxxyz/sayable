@@ -1,7 +1,7 @@
 /**
  * KEEP IN SYNC:
- * - `packages/message-utils/src/icu-generator.ts`
- * - `packages/swc-plugin/src/icu_generator.rs`
+ * - `packages/plugin-tsc/src/generate-icu-message-format.ts`
+ * - `packages/plugin-swc/src/generate_icu_message_format.rs`
  */
 
 import type { Message } from './message-types.js';

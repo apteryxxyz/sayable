@@ -1,7 +1,7 @@
 /**
  * KEEP IN SYNC:
- * - `packages/message-utils/src/generate-hash.ts`
- * - `packages/swc-plugin/src/generate_hash.rs`
+ * - `packages/plugin-tsc/src/generate-hash.ts`
+ * - `packages/plugin-swc/src/generate_hash.rs`
  */
 use data_encoding::BASE64;
 use sha2::{Digest, Sha256};

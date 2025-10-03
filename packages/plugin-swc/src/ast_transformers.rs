@@ -1,7 +1,7 @@
 /**
  * KEEP IN SYNC:
- * - `packages/factory/src/ast-transformers.ts`
- * - `packages/swc-plugin/src/ast_transformers.rs`
+ * - `packages/plugin-tsc/src/ast-transformers.ts`
+ * - `packages/plugin-swc/src/ast_transformers.rs`
  */
 use swc_core::ecma::ast::{self as t};
 

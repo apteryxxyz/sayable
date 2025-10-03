@@ -1,7 +1,7 @@
 /**
  * KEEP IN SYNC:
- * - `packages/message-utils/src/generate-hash.ts`
- * - `packages/swc-plugin/src/generate_hash.rs`
+ * - `packages/plugin-tsc/src/generate-hash.ts`
+ * - `packages/plugin-swc/src/generate_hash.rs`
  */
 
 import { sha256 } from 'js-sha256';

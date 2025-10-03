@@ -1,5 +1,11 @@
-import { generateHash, generateIcuMessageFormat } from '@sayable/message-utils';
+/**
+ * KEEP IN SYNC:
+ * - `packages/plugin-tsc/src/ast-generators.ts`
+ * - `packages/plugin-swc/src/ast_generators.rs`
+ */
 import t, { factory as f } from 'typescript';
+import { generateHash } from './generate-hash.js';
+import { generateIcuMessageFormat } from './generate-icu-message-format.js';
 import type { CompositeMessage, Message } from './message-types.js';
 
 export function generateSayExpression(message: CompositeMessage) {

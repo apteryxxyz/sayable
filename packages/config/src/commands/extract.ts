@@ -9,7 +9,7 @@ import {
 } from 'node:fs/promises';
 import { dirname, join, relative, resolve } from 'node:path';
 import { Command } from '@commander-js/extra-typings';
-import { generateHash, generateIcuMessageFormat } from '@sayable/message-utils';
+import { generateHash, generateIcuMessageFormat } from '@sayable/tsc-plugin';
 import pm from 'picomatch';
 import type { output } from 'zod';
 import { resolveConfig } from '~/loader/resolve.js';

@@ -1,7 +1,7 @@
 /**
  * KEEP IN SYNC:
- * - `packages/factory/src/ast-generator.ts`
- * - `packages/swc-plugin/src/ast_generator.rs`
+ * - `packages/plugin-tsc/src/ast-generators.ts`
+ * - `packages/plugin-swc/src/ast_generators.rs`
  */
 use swc_core::{
   common::{util::take::Take, SyntaxContext, DUMMY_SP},

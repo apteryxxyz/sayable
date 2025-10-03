@@ -12,6 +12,7 @@ describe('generateIcuMessageFormat', () => {
   it('should generate composite messages', () => {
     const msg: Message = {
       type: 'composite',
+      expression: null as never,
       children: {
         0: { type: 'literal', text: 'Hello' },
         1: { type: 'literal', text: ' world' },
@@ -25,7 +26,11 @@ describe('generateIcuMessageFormat', () => {
   });
 
   it('should generate argument messages', () => {
-    const msg: Message = { type: 'argument', identifier: 'name' };
+    const msg: Message = {
+      type: 'argument',
+      expression: null as never,
+      identifier: 'name',
+    };
     expect(generateIcuMessageFormat(msg)) //
       .toMatchInlineSnapshot('"{name}"');
   });
@@ -33,6 +38,7 @@ describe('generateIcuMessageFormat', () => {
   it('should generate element messages', () => {
     const msg: Message = {
       type: 'element',
+      expression: null as never,
       identifier: '0',
       children: {
         0: { type: 'literal', text: 'bold' },
@@ -46,6 +52,7 @@ describe('generateIcuMessageFormat', () => {
     const msg: Message = {
       type: 'choice',
       kind: 'plural',
+      expression: null as never,
       identifier: 'count',
       children: {
         0: { type: 'literal', text: 'none' },
@@ -66,8 +73,9 @@ describe('generateIcuMessageFormat', () => {
   it('should generate choice messages with ordinal kind', () => {
     const msg: Message = {
       type: 'choice',
-      identifier: 'place',
       kind: 'ordinal',
+      expression: null as never,
+      identifier: 'place',
       children: {
         one: { type: 'literal', text: 'first' },
         two: { type: 'literal', text: 'second' },
@@ -87,9 +95,10 @@ describe('generateIcuMessageFormat', () => {
   it('should normalise jsx related whitespace', () => {
     const msg: Message = {
       type: 'composite',
+      expression: null as never,
       children: {
         0: { type: 'literal', text: '\n  Hello, ' },
-        1: { type: 'argument', identifier: 'name' },
+        1: { type: 'argument', expression: null as never, identifier: 'name' },
         2: { type: 'literal', text: '!\n' },
       },
       comments: [],

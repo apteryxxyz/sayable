@@ -15,7 +15,7 @@
     }
   },
   "dependencies": {
-    "@sayable/factory": "workspace:^"
+    "@sayable/tsc-plugin": "workspace:^"
   },
   "devDependencies": {
     "@babel/core": "^7.28.4",

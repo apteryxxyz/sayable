@@ -1,3 +1,9 @@
+/**
+ * KEEP IN SYNC:
+ * - `packages/plugin-tsc/src/ast-transformers.ts`
+ * - `packages/plugin-swc/src/ast_transformers.rs`
+ */
+
 import t, { factory as f } from 'typescript';
 
 export function transformImportDeclaration(node: t.ImportDeclaration) {

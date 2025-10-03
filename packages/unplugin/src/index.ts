@@ -1,4 +1,4 @@
-import { createTransformer } from '@sayable/factory';
+import { createTransformer } from '@sayable/tsc-plugin';
 import { createUnplugin } from 'unplugin';
 
 export default createUnplugin(() => {

@@ -1,8 +1,7 @@
 /**
  * KEEP IN SYNC:
- * - `packages/message-utils/src/message-types.ts`
- * - `packages/factory/src/message-types.ts`
- * - `packages/swc-plugin/src/message_types.rs`
+ * - `packages/plugin-tsc/src/message-types.ts`
+ * - `packages/plugin-swc/src/message_types.rs`
  */
 use swc_core::ecma::ast::Expr;
 

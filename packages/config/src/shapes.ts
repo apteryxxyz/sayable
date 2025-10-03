@@ -1,7 +1,7 @@
 import { createRequire } from 'node:module';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import type { CompositeMessage } from '@sayable/message-utils';
+import type { CompositeMessage } from '@sayable/tsc-plugin';
 import { err, ok } from 'neverthrow';
 import * as z from 'zod';
 
@@ -70,7 +70,7 @@ export const Catalogue = z.object({
   extractor: Extractor.optional().transform(async (extractor, context) => {
     if (extractor) return extractor;
 
-    const module = await require('@sayable/factory');
+    const module = await require('@sayable/tsc-plugin');
     if (module.isErr()) {
       context.addIssue(module.error);
       return z.NEVER;

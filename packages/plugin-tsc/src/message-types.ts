@@ -1,21 +1,25 @@
 /**
  * KEEP IN SYNC:
- * - `packages/plugin/src/message-types.ts`
- * - `packages/swc-plugin/src/message_types.rs`
+ * - `packages/plugin-tsc/src/message-types.ts`
+ * - `packages/plugin-swc/src/message_types.rs`
  */
 
-import type * as s from '@sayable/message-utils';
 import type t from 'typescript';
 
 /**
  * Represents a static literal value in a message.
  */
-export interface LiteralMessage extends s.LiteralMessage {}
+export interface LiteralMessage {
+  type: 'literal';
+  text: string;
+}
 
 /**
  * Represents a placeholder/variable within a message (e.g., `{name}`).
  */
-export interface ArgumentMessage extends s.ArgumentMessage {
+export interface ArgumentMessage {
+  type: 'argument';
+  identifier: string;
   /**
    * The expression that "gets" the value for this select.
    */
@@ -27,7 +31,9 @@ export interface ArgumentMessage extends s.ArgumentMessage {
  * Children are indexed by their order.
  * @example `<0>Hello, world!</0>`
  */
-export interface ElementMessage extends s.ElementMessage {
+export interface ElementMessage {
+  type: 'element';
+  identifier: string;
   expression: t.Expression;
   children: Record<string /*number*/, Message>;
 }
@@ -38,7 +44,10 @@ export interface ElementMessage extends s.ElementMessage {
  * @example `{count, plural, one {1 item} other {# items}}`
  * @example `{rank, selectordinal, =1 {1st} =2 {2nd} =3 {3rd} other {#th}}`
  */
-export interface ChoiceMessage extends s.ChoiceMessage {
+export interface ChoiceMessage {
+  type: 'choice';
+  kind: 'select' | 'plural' | 'ordinal';
+  identifier: string;
   /**
    * The expression that "gets" the value for this select.
    */
@@ -50,7 +59,11 @@ export interface ChoiceMessage extends s.ChoiceMessage {
  * Represents a sequence of messages, such as a template literal or concatenated parts.
  * Children are indexed by their order.
  */
-export interface CompositeMessage extends s.CompositeMessage {
+export interface CompositeMessage {
+  type: 'composite';
+  comments: string[] | undefined;
+  references: `${string}:${number}`[] | undefined;
+  context: string | undefined;
   /**
    * The expression that accesses the `say` method on the object.
    * @example usually `say`, but can be any object with a `say` method (`object.say`).

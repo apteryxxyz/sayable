@@ -19,23 +19,16 @@
   },
   "dependencies": {
     "@commander-js/extra-typings": "^14.0.0",
-    "@sayable/message-utils": "workspace:^",
+    "@sayable/tsc-plugin": "workspace:*",
     "commander": "^14.0.1",
     "neverthrow": "^8.2.0",
     "picomatch": "^4.0.3",
     "zod": "^4.1.11"
   },
   "peerDependencies": {
-    "@sayable/factory": "workspace:^",
-    "typescript": "*"
-  },
-  "peerDependenciesMeta": {
-    "typescript": {
-      "optional": true
-    }
+    "typescript": "^5.9.2"
   },
   "devDependencies": {
-    "@sayable/factory": "workspace:^",
     "@types/picomatch": "^4.0.2",
     "typescript": "^5.9.2"
   }
