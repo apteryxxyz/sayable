@@ -100,9 +100,9 @@ function removeReactElementChildren(element: t.JsxElement) {
  * @yields Tuples of [identifier, expression] for each message child
  */
 function* generateChildExpressions(
-  children: Record<string, Message>,
+  children: Message[],
 ): Generator<[string, t.Expression]> {
-  for (const [, message] of Object.entries(children)) {
+  for (const message of children) {
     switch (message.type) {
       case 'argument': {
         yield [message.identifier, message.expression];
@@ -117,7 +117,7 @@ function* generateChildExpressions(
 
       case 'choice': {
         yield [message.identifier, message.expression];
-        yield* generateChildExpressions(message.children);
+        yield* generateChildExpressions(Object.values(message.branches));
         break;
       }
 

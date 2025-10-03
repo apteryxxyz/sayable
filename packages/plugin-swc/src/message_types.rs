@@ -56,14 +56,10 @@ pub struct ElementMessage {
   pub identifier: String,
   /// The expression that "gets" the component for this element.
   pub expression: Box<Expr>,
-  pub children: Vec<(String, Message)>,
+  pub children: Vec<Message>,
 }
 impl ElementMessage {
-  pub fn new(
-    identifier: impl Into<String>,
-    expression: Box<Expr>,
-    children: Vec<(String /*Number*/, Message)>,
-  ) -> Self {
+  pub fn new(identifier: impl Into<String>, expression: Box<Expr>, children: Vec<Message>) -> Self {
     ElementMessage {
       identifier: identifier.into(),
       expression,
@@ -89,20 +85,20 @@ pub struct ChoiceMessage {
   pub identifier: String,
   /// The expression that "gets" the value for this ordinal.
   pub expression: Box<Expr>,
-  pub children: Vec<(String, Message)>,
+  pub branches: Vec<(String, Message)>,
 }
 impl ChoiceMessage {
   pub fn new(
     kind: impl Into<String>,
     identifier: impl Into<String>,
     expression: Box<Expr>,
-    children: Vec<(String, Message)>,
+    branches: Vec<(String, Message)>,
   ) -> Self {
     ChoiceMessage {
       kind: kind.into(),
       identifier: identifier.into(),
       expression,
-      children,
+      branches,
     }
   }
 }
@@ -118,18 +114,14 @@ pub struct CompositeMessage {
   /// Usually `say`, but can be any object with a `say` method (`object.say`).
   ///
   pub accessor: Box<Expr>,
-  pub children: Vec<(String /*Number*/, Message)>,
+  pub children: Vec<Message>,
   pub context: Option<String>,
   // Comments and references are only ever used by the cli compiler, which the swc plugin does not support
   // pub comments: None,
   // pub references: None,
 }
 impl CompositeMessage {
-  pub fn new(
-    accessor: Box<Expr>,
-    children: Vec<(String, Message)>,
-    context: Option<String>,
-  ) -> Self {
+  pub fn new(accessor: Box<Expr>, children: Vec<Message>, context: Option<String>) -> Self {
     CompositeMessage {
       accessor,
       children,

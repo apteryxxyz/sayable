@@ -29,10 +29,14 @@ fn internal_generate_icu_message_format(message: &Message) -> String {
     Message::Argument(message) => format!("{{{}}}", message.identifier),
 
     Message::Element(message) => {
+      if message.children.is_empty() {
+        return format!("<{}/>", message.identifier);
+      }
+
       let children = message
         .children
         .iter()
-        .map(|(_, v)| internal_generate_icu_message_format(v))
+        .map(internal_generate_icu_message_format)
         .collect::<String>();
       format!(
         "<{}>{}</{}>",
@@ -42,7 +46,7 @@ fn internal_generate_icu_message_format(message: &Message) -> String {
 
     Message::Choice(message) => {
       let options = message
-        .children
+        .branches
         .iter()
         .map(|(index, message)| {
           let key = match index.parse::<i32>() {
@@ -66,7 +70,7 @@ fn internal_generate_icu_message_format(message: &Message) -> String {
     Message::Composite(message) => message
       .children
       .iter()
-      .map(|(_, v)| internal_generate_icu_message_format(v))
+      .map(internal_generate_icu_message_format)
       .collect::<Vec<_>>()
       .join(""),
   }
@@ -93,22 +97,13 @@ mod tests {
     let msg = CompositeMessage {
       accessor: Box::new(Expr::dummy()),
       children: vec![
-        (
-          "0".to_string(),
-          Message::Literal(LiteralMessage {
-            text: "Hello".to_string(),
-          }),
-        ),
-        (
-          "1".to_string(),
-          Message::Literal(LiteralMessage {
-            text: " world".to_string(),
-          }),
-        ),
-      ]
-      .into_iter()
-      .map(|(key, val)| (key, val))
-      .collect(),
+        Message::Literal(LiteralMessage {
+          text: "Hello".to_string(),
+        }),
+        Message::Literal(LiteralMessage {
+          text: " world".to_string(),
+        }),
+      ],
       context: None,
     };
     assert_eq!(
@@ -134,15 +129,9 @@ mod tests {
     let msg = ElementMessage {
       identifier: "0".to_string(),
       expression: Box::new(Expr::dummy()),
-      children: vec![(
-        "0".to_string(),
-        Message::Literal(LiteralMessage {
-          text: "bold".to_string(),
-        }),
-      )]
-      .into_iter()
-      .map(|(key, val)| (key, val))
-      .collect(),
+      children: vec![Message::Literal(LiteralMessage {
+        text: "bold".to_string(),
+      })],
     };
     assert_eq!(
       generate_icu_message_format(&Message::Element(msg)),
@@ -156,7 +145,7 @@ mod tests {
       kind: "plural".to_string(),
       identifier: "count".to_string(),
       expression: Box::new(Expr::dummy()),
-      children: vec![
+      branches: vec![
         (
           "0".to_string(),
           Message::Literal(LiteralMessage {
@@ -175,10 +164,7 @@ mod tests {
             text: "many".to_string(),
           }),
         ),
-      ]
-      .into_iter()
-      .map(|(key, val)| (key, val))
-      .collect(),
+      ],
     };
     assert_eq!(
       generate_icu_message_format(&Message::Choice(msg)),
@@ -192,7 +178,7 @@ mod tests {
       kind: "ordinal".to_string(),
       identifier: "place".to_string(),
       expression: Box::new(Expr::dummy()),
-      children: vec![
+      branches: vec![
         (
           "one".to_string(),
           Message::Literal(LiteralMessage {
@@ -211,10 +197,7 @@ mod tests {
             text: "other".to_string(),
           }),
         ),
-      ]
-      .into_iter()
-      .map(|(key, val)| (key, val))
-      .collect(),
+      ],
     };
     assert_eq!(
       generate_icu_message_format(&Message::Choice(msg)),
@@ -227,25 +210,16 @@ mod tests {
     let msg = CompositeMessage {
       accessor: Box::new(Expr::dummy()),
       children: vec![
-        (
-          "0".to_string(),
-          Message::Literal(LiteralMessage {
-            text: "\n  Hello, ".to_string(),
-          }),
-        ),
-        (
-          "1".to_string(),
-          Message::Argument(ArgumentMessage {
-            identifier: "name".to_string(),
-            expression: Box::new(Expr::dummy()),
-          }),
-        ),
-        (
-          "2".to_string(),
-          Message::Literal(LiteralMessage {
-            text: "!\n".to_string(),
-          }),
-        ),
+        Message::Literal(LiteralMessage {
+          text: "\n  Hello, ".to_string(),
+        }),
+        Message::Argument(ArgumentMessage {
+          identifier: "name".to_string(),
+          expression: Box::new(Expr::dummy()),
+        }),
+        Message::Literal(LiteralMessage {
+          text: "!\n".to_string(),
+        }),
       ],
       context: None,
     };

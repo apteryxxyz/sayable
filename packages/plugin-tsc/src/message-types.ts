@@ -37,7 +37,7 @@ export interface ElementMessage {
   identifier: string;
   /** The expression that "gets" the component for this element. */
   expression: t.Expression;
-  children: Record<string /*number*/, Message>;
+  children: Message[];
 }
 
 /**
@@ -52,7 +52,7 @@ export interface ChoiceMessage {
   identifier: string;
   /** The expression that "gets" the value for this choice. */
   expression: t.Expression;
-  children: Record<string, Message>;
+  branches: Record<string, Message>;
 }
 
 /**
@@ -69,7 +69,7 @@ export interface CompositeMessage {
    * @remark usually `say` identifier, but can be any object with a `say` method (`object.say`).
    */
   accessor: t.Expression;
-  children: Record<string /*number*/, Message>;
+  children: Message[];
 }
 
 export type Message =

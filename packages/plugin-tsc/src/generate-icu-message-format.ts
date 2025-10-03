@@ -18,26 +18,25 @@ export function generateIcuMessageFormat(message: Message): string {
 
 function internalGenerateIcuMessageFormat(message: Message): string {
   switch (message.type) {
-    case 'literal':
+    case 'literal': {
       return String(message.text);
+    }
 
-    case 'composite':
-      return Object.entries(message.children)
-        .map(([, m]) => internalGenerateIcuMessageFormat(m))
-        .join('');
-
-    case 'argument':
+    case 'argument': {
       return `{${message.identifier}}`;
+    }
 
     case 'element': {
-      const children = Object.values(message.children)
+      if (message.children.length === 0) return `<${message.identifier}/>`;
+
+      const children = message.children
         .map((m) => internalGenerateIcuMessageFormat(m))
         .join('');
       return `<${message.identifier}>${children}</${message.identifier}>`;
     }
 
     case 'choice': {
-      const options = Object.entries(message.children)
+      const options = Object.entries(message.branches)
         .map(([k, m]) => {
           const key = k.match(/^\d+$/) ? `=${k}` : k;
           return `  ${key} {${internalGenerateIcuMessageFormat(m)}}\n`;
@@ -47,6 +46,12 @@ function internalGenerateIcuMessageFormat(message: Message): string {
       const format =
         message.kind === 'ordinal' ? 'selectordinal' : message.kind;
       return `{${message.identifier}, ${format},\n${options}}`;
+    }
+
+    case 'composite': {
+      return Object.entries(message.children)
+        .map(([, m]) => internalGenerateIcuMessageFormat(m))
+        .join('');
     }
   }
 }

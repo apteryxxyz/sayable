@@ -13,10 +13,10 @@ describe('generateIcuMessageFormat', () => {
     const msg: Message = {
       type: 'composite',
       accessor: null as never,
-      children: {
-        0: { type: 'literal', text: 'Hello' },
-        1: { type: 'literal', text: ' world' },
-      },
+      children: [
+        { type: 'literal', text: 'Hello' },
+        { type: 'literal', text: ' world' },
+      ],
       comments: [],
       references: [],
       context: undefined,
@@ -40,9 +40,7 @@ describe('generateIcuMessageFormat', () => {
       type: 'element',
       expression: null as never,
       identifier: '0',
-      children: {
-        0: { type: 'literal', text: 'bold' },
-      },
+      children: [{ type: 'literal', text: 'bold' }],
     };
     expect(generateIcuMessageFormat(msg)) //
       .toMatchInlineSnapshot('"<0>bold</0>"');
@@ -54,7 +52,7 @@ describe('generateIcuMessageFormat', () => {
       kind: 'plural',
       expression: null as never,
       identifier: 'count',
-      children: {
+      branches: {
         0: { type: 'literal', text: 'none' },
         one: { type: 'literal', text: 'one' },
         other: { type: 'literal', text: 'many' },
@@ -76,7 +74,7 @@ describe('generateIcuMessageFormat', () => {
       kind: 'ordinal',
       expression: null as never,
       identifier: 'place',
-      children: {
+      branches: {
         one: { type: 'literal', text: 'first' },
         two: { type: 'literal', text: 'second' },
         other: { type: 'literal', text: 'other' },
@@ -96,11 +94,11 @@ describe('generateIcuMessageFormat', () => {
     const msg: Message = {
       type: 'composite',
       accessor: null as never,
-      children: {
-        0: { type: 'literal', text: '\n  Hello, ' },
-        1: { type: 'argument', expression: null as never, identifier: 'name' },
-        2: { type: 'literal', text: '!\n' },
-      },
+      children: [
+        { type: 'literal', text: '\n  Hello, ' },
+        { type: 'argument', expression: null as never, identifier: 'name' },
+        { type: 'literal', text: '!\n' },
+      ],
       comments: [],
       references: [],
       context: undefined,

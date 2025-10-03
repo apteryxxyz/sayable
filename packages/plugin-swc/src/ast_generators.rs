@@ -184,10 +184,10 @@ fn remove_react_element_children(element: &t::JSXElement) -> t::JSXElement {
 ///
 /// List of key-value pairs of expressions
 ///
-fn generate_child_expressions(children: &[(String, Message)]) -> Vec<(String, Box<t::Expr>)> {
+fn generate_child_expressions(children: &[Message]) -> Vec<(String, Box<t::Expr>)> {
   let mut results = Vec::new();
 
-  for message in children.iter().map(|(_, v)| v) {
+  for message in children.iter() {
     match message {
       Message::Argument(message) => {
         results.push((message.identifier.clone(), message.expression.clone()));
@@ -200,7 +200,12 @@ fn generate_child_expressions(children: &[(String, Message)]) -> Vec<(String, Bo
 
       Message::Choice(message) => {
         results.push((message.identifier.clone(), message.expression.clone()));
-        results.extend(generate_child_expressions(&message.children));
+        let branches = &message
+          .branches
+          .iter()
+          .map(|(_, m)| m.clone())
+          .collect::<Vec<_>>();
+        results.extend(generate_child_expressions(&branches));
       }
 
       Message::Composite(message) => {
