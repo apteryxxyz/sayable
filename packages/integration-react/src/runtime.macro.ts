@@ -1,8 +1,30 @@
 import type { PropsWithChildren, ReactNode } from 'react';
+import type { Sayable } from 'sayable';
 import type { NumeralOptions, SelectOptions } from 'sayable/runtime';
 import type { PropsWithJSXSafeKeys } from '~/types.js';
 
-export { SayProvider, useSay } from './runtime.js';
+/**
+ * Provide a localised {@link runtime.Sayable} instance to descendant components via context.
+ * Must wrap any component tree using {@link useSay} or {@link Say}.
+ *
+ * @param props.locale The current locale
+ * @param props.messages The current messages for the locale
+ */
+export declare function SayProvider(
+  props: PropsWithChildren<{
+    locale: string;
+    messages: Sayable.Messages;
+  }>,
+): ReactNode;
+
+/**
+ * Get the current {@link Sayable} instance.
+ * Must be called within a {@link SayProvider}.
+ *
+ * @returns The current {@link Sayable} instance
+ * @throws If no provider is in the component tree
+ */
+export declare function useSay(): Sayable;
 
 /**
  * Define a message.
