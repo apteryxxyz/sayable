@@ -15,11 +15,11 @@
     "sayable": "workspace:^"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "4.20250927.0",
+    "@cloudflare/workers-types": "4.20251003.0",
     "@sayable/config": "workspace:^",
     "@sayable/tsc-plugin": "workspace:^",
     "ts-patch": "^3.3.0",
-    "typescript": "5.9.2",
-    "wrangler": "4.40.2"
+    "typescript": "5.9.3",
+    "wrangler": "4.40.3"
   }
 }

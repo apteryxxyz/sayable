@@ -26,10 +26,10 @@
     "zod": "^4.1.11"
   },
   "peerDependencies": {
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.3"
   },
   "devDependencies": {
     "@types/picomatch": "^4.0.2",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.3"
   }
 }
