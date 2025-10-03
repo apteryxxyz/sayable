@@ -176,9 +176,16 @@ function mapMessages(...messages: Formatter.Message[]) {
   for (const message of messages) {
     const hash = generateHash(message.message, message.context);
     const existingMessage = mappedMessages.get(hash);
+
     if (existingMessage) {
-      (existingMessage.comments ??= []).push(...(message.comments ?? []));
-      (existingMessage.references ??= []).push(...(message.references ?? []));
+      existingMessage.comments ??= [];
+      existingMessage.references ??= [];
+      for (const comment of message.comments ?? [])
+        if (!existingMessage.comments.includes(comment))
+          existingMessage.comments.push(comment);
+      for (const reference of message.references ?? [])
+        if (!existingMessage.references.includes(reference))
+          existingMessage.references.push(reference);
     } else {
       mappedMessages.set(hash, message);
     }
