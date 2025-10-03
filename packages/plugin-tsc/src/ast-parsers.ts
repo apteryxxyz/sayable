@@ -9,6 +9,13 @@ import type { ChoiceMessage, CompositeMessage } from './message-types.js';
 
 //
 
+/**
+ * Parse a tagged template expression into maybe a composite message.
+ *
+ * @param node Tagged template expression node
+ * @param identifierStore The store to track generated identifiers
+ * @returns Composite message or null
+ */
 export function parseTaggedTemplateExpression(
   node: t.TaggedTemplateExpression,
   identifierStore: IdentifierStore,
@@ -60,24 +67,36 @@ export function parseTaggedTemplateExpression(
       void segment;
     }
 
-    const expression = //
-      t.isCallExpression(node.tag) ? node.tag.expression : node.tag;
+    const accessor = t.isCallExpression(node.tag)
+      ? node.tag.expression
+      : node.tag;
+    const descriptor = t.isCallExpression(node.tag)
+      ? node.tag.arguments[0]!
+      : undefined;
+    const context = descriptor
+      ? getPropertyValue(descriptor, 'context')
+      : undefined;
+
     return {
       type: 'composite',
-      expression,
-      children,
+      accessor: accessor,
+      children: children,
       comments: getTranslatorComments(node),
       references: getNodeReferences(node),
-      context:
-        (t.isCallExpression(node.tag) &&
-          getPropertyValue(node.tag.arguments[0]!, 'context')) ||
-        undefined,
+      context: context,
     };
   }
 
   return null;
 }
 
+/**
+ * Parse a call expression into a choice message wrapped in a composite message.
+ *
+ * @param node Call expression node
+ * @param identifierStore The store to track generated identifiers
+ * @returns Composite message with a single choice message child or null
+ */
 export function parseCallExpression(
   node: t.CallExpression,
   identifierStore: IdentifierStore,
@@ -113,6 +132,7 @@ export function parseCallExpression(
       }
 
       if (t.isTemplateExpression(property.initializer)) {
+        // Wrap template expression in fake say`...` element for recursion
         const fake = f.createTaggedTemplateExpression(
           f.createIdentifier('say'),
           undefined,
@@ -135,37 +155,45 @@ export function parseCallExpression(
 
     const property = node.expression.name;
     const value = node.arguments[0]!;
+
     const choice = {
       type: 'choice',
       kind: property.text as ChoiceMessage['kind'],
-      identifier: t.isIdentifier(value) ? value.text : '_',
+      identifier: t.isIdentifier(value) ? value.text : identifierStore.next(),
       expression: value,
       children,
     } satisfies ChoiceMessage;
 
-    const expression = t.isCallExpression(node.expression.expression)
+    const accessor = t.isCallExpression(node.expression.expression)
       ? node.expression.expression.expression
       : node.expression.expression;
+    const descriptor = t.isCallExpression(node.expression.expression)
+      ? node.expression.expression.arguments[0]!
+      : undefined;
+    const context = descriptor
+      ? getPropertyValue(descriptor, 'context')
+      : undefined;
 
     return {
       type: 'composite',
-      expression,
+      accessor: accessor,
       children: { 0: choice },
       comments: getTranslatorComments(node),
       references: getNodeReferences(node),
-      context:
-        (t.isCallExpression(node.expression.expression) &&
-          getPropertyValue(
-            node.expression.expression.arguments[0]!,
-            'context',
-          )) ||
-        undefined,
+      context: context,
     };
   }
 
   return null;
 }
 
+/**
+ * Parse a JSX element into a composite message.
+ *
+ * @param node JSX element node
+ * @param identifierStore The store to track generated identifiers
+ * @returns Composite message or null
+ */
 export function parseJsxElement(
   node: t.JsxElement,
   identifierStore: IdentifierStore,
@@ -180,7 +208,7 @@ export function parseJsxElement(
     for (const [i, child] of node.children.entries()) {
       if (t.isJsxText(child)) {
         const text = child.text.replace(/\s+/g, ' ');
-        children[i] = { type: 'literal', text };
+        children[i] = { type: 'literal', text: text };
         continue;
       }
 
@@ -191,6 +219,7 @@ export function parseJsxElement(
       }
 
       if (t.isJsxElement(child) || t.isJsxFragment(child)) {
+        // Wrap expression in fake <Say>...</Say> element for recursion
         const fake = t.factory.createJsxElement(
           t.factory.createJsxOpeningElement(
             t.factory.createIdentifier('Say'),
@@ -225,19 +254,30 @@ export function parseJsxElement(
       void child;
     }
 
+    const accessor = node.openingElement.tagName;
+    const descriptor = node.openingElement.attributes;
+    const context = getPropertyValue(descriptor, 'context');
+
     return {
       type: 'composite',
-      expression: node.openingElement.tagName,
-      children,
+      accessor: accessor,
+      children: children,
       comments: getTranslatorComments(node),
       references: getNodeReferences(node),
-      context: getPropertyValue(node.openingElement.attributes, 'context'),
+      context: context,
     };
   }
 
   return null;
 }
 
+/**
+ * Parse a JSX self-closing element into a choice message wrapped in a composite message.
+ *
+ * @param node JSX self-closing element node
+ * @param identifierStore The store to track generated identifiers
+ * @returns Composite message with a single choice message child or null
+ */
 export function parseJsxSelfClosingElement(
   node: t.JsxSelfClosingElement,
   identifierStore: IdentifierStore,
@@ -269,6 +309,7 @@ export function parseJsxSelfClosingElement(
       }
 
       if (t.isJsxExpression(property.initializer)) {
+        // Wrap expression in fake <Say>...</Say> element for recursion
         const fake = t.factory.createJsxElement(
           t.factory.createJsxOpeningElement(
             t.factory.createIdentifier('Say'),
@@ -293,7 +334,8 @@ export function parseJsxSelfClosingElement(
       ('expression' in value &&
         t.isIdentifier(value.expression!) &&
         value.expression?.getText()) ||
-      '_';
+      identifierStore.next();
+
     const choice = {
       type: 'choice',
       kind: node.tagName.name.text.toLowerCase() as ChoiceMessage['kind'],
@@ -304,11 +346,11 @@ export function parseJsxSelfClosingElement(
 
     return {
       type: 'composite',
-      expression: node.tagName,
+      accessor: node.tagName,
       children: { 0: choice },
       comments: getTranslatorComments(node),
       references: getNodeReferences(node),
-      context: getPropertyValue(node.attributes, 'context'),
+      context: undefined,
     };
   }
 
@@ -317,6 +359,12 @@ export function parseJsxSelfClosingElement(
 
 //
 
+/**
+ * Check if an expression is a valid `say` identifier.
+ *
+ * @param node Expression node to check
+ * @returns `true` if the expression is a valid `say` identifier
+ */
 function isSayIdentifier(
   node: t.LeftHandSideExpression,
 ): node is t.Identifier | t.PropertyAccessExpression | t.CallExpression {
@@ -339,6 +387,14 @@ export function createIdentifierStore() {
   };
 }
 
+/**
+ * Get the "name" of a node, used as the identifier for a message.
+ *
+ * @param node Node to get the name of
+ * @param identifierStore The store to track generated identifiers, fallback
+ * if no name could be determined
+ * @returns The "name" of the node
+ */
 function getPropertyName(node: t.Node, identifierStore: IdentifierStore) {
   if (t.isIdentifier(node)) {
     return node.text;
@@ -355,6 +411,13 @@ function getPropertyName(node: t.Node, identifierStore: IdentifierStore) {
   }
 }
 
+/**
+ * Get the value of property with the given key.
+ *
+ * @param node Object literal or JSX attributes
+ * @param key Property key
+ * @returns Property value, a string or undefined
+ */
 function getPropertyValue(node: t.Expression, key: string) {
   if (!t.isObjectLiteralExpression(node) && !t.isJsxAttributes(node))
     return undefined;
@@ -371,6 +434,13 @@ function getPropertyValue(node: t.Expression, key: string) {
   return undefined;
 }
 
+/**
+ * Get the leading comments for a node.
+ *
+ * @param node Node to get comments for
+ * @param sourceFile Source file to get comments from
+ * @returns Array of leading comments
+ */
 function getLeadingCommentsForNode(
   node: t.Node,
   sourceFile = node.getSourceFile(),
@@ -389,6 +459,12 @@ function getLeadingCommentsForNode(
   return [];
 }
 
+/**
+ * Get the leading comments for a JSX node.
+ *
+ * @param node JSX node to get comments for
+ * @returns Array of leading comments
+ */
 function getLeadingCommentsForJsxNode(node: t.JsxExpression) {
   // The first getChildren returns a sort of tuple, like [<h1>, [...children], </h1>]
   const siblings = node.parent.getChildren()[1]?.getChildren();
@@ -402,6 +478,16 @@ function getLeadingCommentsForJsxNode(node: t.JsxExpression) {
   return match ? [`// ${match[1]!.trim()}`] : [];
 }
 
+/**
+ * Get the TRANSLATORS: comments for a node.
+ *
+ * @example
+ * // TRANSLATORS: Greeting
+ * say`Hello, {name}!`
+ *
+ * @param node Node to get comments for
+ * @returns Array of translator comments
+ */
 function getTranslatorComments(node: t.Node): string[] {
   if (!node || t.isBlock(node) || t.isFunctionDeclaration(node)) return [];
 
@@ -420,6 +506,13 @@ function getTranslatorComments(node: t.Node): string[] {
     : getTranslatorComments(node.parent);
 }
 
+/**
+ * Get the references (file path and line number) for a node.
+ *
+ * @param node Node to get references for
+ * @param sourceFile Source file, for the file path
+ * @returns Array of references
+ */
 function getNodeReferences(node: t.Node, sourceFile = node.getSourceFile()) {
   if (!sourceFile) return [];
   const filename = sourceFile.fileName;

@@ -7,7 +7,16 @@ use data_encoding::BASE64;
 use sha2::{Digest, Sha256};
 
 ///
-/// Generates a unique hash from any string, can be used as a translation key.
+/// Generates a unique repeatable hash from any string, which can be used as a translation key.
+///
+/// # Arguments
+///
+/// * `input` - Input string
+/// * `context` - An optional string to seed the hash with
+///
+/// # Returns
+///
+/// A unique hash
 ///
 pub fn generate_hash(input: &str, context: Option<&str>) -> String {
   let mut hasher = Sha256::new();

@@ -14,6 +14,18 @@ use crate::{
   message_types::{CompositeMessage, Message},
 };
 
+///
+/// Generates an expression for a runtime `say({ ... })` call.
+/// Includes all interpolated children and a hashed message ID.
+///
+/// # Arguments
+///
+/// * `message` — The composite message to turn into a call expression
+///
+/// # Returns
+///
+/// `Expr::Call(CallExpr)` node
+///
 pub fn generate_say_expression(message: &CompositeMessage) -> t::Expr {
   let mut children = Vec::new();
 
@@ -60,6 +72,18 @@ pub fn generate_say_expression(message: &CompositeMessage) -> t::Expr {
   })
 }
 
+///
+/// Generates a JSX self-closing element like `<Say.Plural />` with props.
+/// Converts message children to JSX attributes, includes hashed ID.
+///
+/// # Arguments
+///
+/// * `message` — The composite message to convert into JSX
+///
+/// # Returns
+///
+/// `JSXElement` node
+///
 pub fn generate_jsx_say_expression(message: &CompositeMessage) -> t::JSXElement {
   let mut children = Vec::new();
 
@@ -81,9 +105,14 @@ pub fn generate_jsx_say_expression(message: &CompositeMessage) -> t::JSXElement 
     .into_iter()
     .map(|(name, expression)| {
       let mut name: String = name;
+
+      // If name is numeric, prefix with `_` since JSX props can't start with numbers
       if name.parse::<f64>().is_ok() {
         name = format!("_{name}");
       }
+
+      // Strip children from any nested JSX elements to avoid redundant output
+      // Related to element message type
       let mut expression = *expression;
       if let t::Expr::JSXElement(el) = expression {
         expression = t::Expr::JSXElement(Box::new(remove_react_element_children(&el)));
@@ -117,6 +146,18 @@ pub fn generate_jsx_say_expression(message: &CompositeMessage) -> t::JSXElement 
   }
 }
 
+///
+/// Strips children from a JSX element.
+/// Used to prevent double-nesting when generating from `element` type messages.
+///
+/// # Arguments
+///
+/// * `element` — JSX element to strip children from
+///
+/// # Returns
+///
+/// JSX element without children
+///
 fn remove_react_element_children(element: &t::JSXElement) -> t::JSXElement {
   t::JSXElement {
     span: DUMMY_SP,
@@ -126,6 +167,23 @@ fn remove_react_element_children(element: &t::JSXElement) -> t::JSXElement {
   }
 }
 
+///
+/// Get list of key-value pairs of expressions to be used in output AST.
+///
+/// Handles nested message types like:
+/// - arguments: basic identifiers or expressions
+/// - elements: embedded JSX fragments
+/// - choices: plural/select/ordinal forms
+/// - composites: nested structures with children
+///
+/// # Arguments
+///
+/// * `children` — A record of message parts (arguments, choices, etc.)
+///
+/// # Returns
+///
+/// List of key-value pairs of expressions
+///
 fn generate_child_expressions(children: &[(String, Message)]) -> Vec<(String, Box<t::Expr>)> {
   let mut results = Vec::new();
 

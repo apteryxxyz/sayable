@@ -12,7 +12,7 @@ describe('generateIcuMessageFormat', () => {
   it('should generate composite messages', () => {
     const msg: Message = {
       type: 'composite',
-      expression: null as never,
+      accessor: null as never,
       children: {
         0: { type: 'literal', text: 'Hello' },
         1: { type: 'literal', text: ' world' },
@@ -95,7 +95,7 @@ describe('generateIcuMessageFormat', () => {
   it('should normalise jsx related whitespace', () => {
     const msg: Message = {
       type: 'composite',
-      expression: null as never,
+      accessor: null as never,
       children: {
         0: { type: 'literal', text: '\n  Hello, ' },
         1: { type: 'argument', expression: null as never, identifier: 'name' },

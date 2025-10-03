@@ -20,13 +20,16 @@ impl LiteralMessage {
 
 #[derive(Debug, Clone)]
 ///
-/// Represents a placeholder/variable within a message (e.g., `{name}`).
+/// Represents a placeholder/variable within a message.
+///
+/// # Examples
+/// ```ts
+/// '{name}'
+/// ```
 ///
 pub struct ArgumentMessage {
   pub identifier: String,
-  ///
   /// The expression that "gets" the value for this argument.
-  ///
   pub expression: Box<Expr>,
 }
 impl ArgumentMessage {
@@ -42,11 +45,16 @@ impl ArgumentMessage {
 ///
 /// Represents a part of the message wrapped in a specific XML-like tag.
 /// Children are indexed by their order.
-/// #### Example
-/// - `<0>Hello, world!</0>`
+///
+/// # Examples
+///
+/// ```ts
+/// '<0>Hello, world!</0>'
+/// ```
 ///
 pub struct ElementMessage {
   pub identifier: String,
+  /// The expression that "gets" the component for this element.
   pub expression: Box<Expr>,
   pub children: Vec<(String, Message)>,
 }
@@ -54,7 +62,7 @@ impl ElementMessage {
   pub fn new(
     identifier: impl Into<String>,
     expression: Box<Expr>,
-    children: Vec<(String, Message)>,
+    children: Vec<(String /*Number*/, Message)>,
   ) -> Self {
     ElementMessage {
       identifier: identifier.into(),
@@ -67,17 +75,19 @@ impl ElementMessage {
 #[derive(Debug, Clone)]
 ///
 /// Represents a number of messages that chooses among multiple options based on a variable.
-/// #### Example
-/// - `{gender, select, male {He} female {She} other {They}}`
-/// - `{count, plural, one {1 item} other {# items}}`
-/// - `{rank, selectordinal, =1 {1st} =2 {2nd} =3 {3rd} other {#th}}`
+///
+/// # Examples
+///
+/// ```ts
+/// '{gender, select, male {He} female {She} other {They}}'
+/// '{count, plural, one {1 item} other {# items}}'
+/// '{rank, selectordinal, =1 {1st} =2 {2nd} =3 {3rd} other {#th}}'
+/// ```
 ///
 pub struct ChoiceMessage {
   pub kind: String,
   pub identifier: String,
-  ///
   /// The expression that "gets" the value for this ordinal.
-  ///
   pub expression: Box<Expr>,
   pub children: Vec<(String, Message)>,
 }
@@ -105,11 +115,10 @@ impl ChoiceMessage {
 pub struct CompositeMessage {
   ///
   /// The expression that accesses the `say` method on the object.
-  /// #### Example
   /// Usually `say`, but can be any object with a `say` method (`object.say`).
   ///
   pub accessor: Box<Expr>,
-  pub children: Vec<(String, Message)>,
+  pub children: Vec<(String /*Number*/, Message)>,
   pub context: Option<String>,
   // Comments and references are only ever used by the cli compiler, which the swc plugin does not support
   // pub comments: None,

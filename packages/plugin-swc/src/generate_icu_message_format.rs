@@ -6,7 +6,15 @@
 use crate::message_types::Message;
 
 ///
-/// Generates the ICU MessageFormat string for a message.
+/// Generate the ICU MessageFormat string for an extracted message.
+///
+/// # Arguments
+///
+/// * `message` — The message to generate the ICU MessageFormat string for
+///
+/// # Returns
+///
+/// The ICU MessageFormat string
 ///
 pub fn generate_icu_message_format(message: &Message) -> String {
   internal_generate_icu_message_format(message)

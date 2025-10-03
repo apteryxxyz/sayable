@@ -20,6 +20,18 @@ enum Segment<'a> {
   Expr(&'a t::Expr),
 }
 
+///
+/// Parse a tagged template expression into maybe a composite message.
+///
+/// # Arguments
+///
+/// * `node` — Tagged template expression node
+/// * `identifier_store` — The store to track generated identifiers
+///
+/// # Returns
+///
+/// Composite message option
+///
 pub fn parse_tagged_template_expression(
   node: &t::TaggedTpl,
   identifier_store: &mut IdentifierStore,
@@ -90,6 +102,18 @@ pub fn parse_tagged_template_expression(
   None
 }
 
+///
+/// Parse a call expression into a choice message wrapped in a composite message.
+///
+/// # Arguments
+///
+/// * `node` — Call expression node
+/// * `identifier_store` — The store to track generated identifiers
+///
+/// # Returns
+///
+/// Composite message with a single choice message child option
+///
 pub fn parse_call_expression(
   node: &t::CallExpr,
   identifier_store: &mut IdentifierStore,
@@ -113,8 +137,7 @@ pub fn parse_call_expression(
     && matches!(*node.args[1].expr, t::Expr::Object(_));
 
   if is_say_callee && is_select_callee && is_select_args {
-    let callee = node.callee.as_expr()?.as_member()?;
-    let property = callee.prop.as_ident()?;
+    // say.plural(_, {...}) or say({...}).plural(_, {...})
 
     let mut children = Vec::new();
     let obj = node.args[1].expr.as_object()?;
@@ -144,6 +167,7 @@ pub fn parse_call_expression(
         }
 
         t::Expr::Tpl(tpl) => {
+          // Wrap template expression in fake say`...` element for recursion
           let fake = t::TaggedTpl {
             span: tpl.span,
             ctxt: SyntaxContext::empty(),
@@ -165,23 +189,21 @@ pub fn parse_call_expression(
       }
     }
 
-    let key_expr = &node.args[0].expr;
-    let key_ident = match &**key_expr {
-      t::Expr::Ident(ident) => ident.sym.to_string(),
-      _ => "unknown".to_string(),
-    };
-    let choice = Message::Choice(ChoiceMessage::new(
+    let callee = node.callee.as_expr()?.as_member()?;
+    let property = callee.prop.as_ident()?;
+    let value = &node.args[0].expr;
+
+    let choice = ChoiceMessage::new(
       property.sym.to_string(),
-      key_ident,
-      key_expr.clone(),
+      value.as_ident().unwrap().sym.to_string(),
+      value.clone(),
       children,
-    ));
+    );
 
     let accessor = match &*callee.obj {
       t::Expr::Call(call) => call.callee.as_expr().unwrap(),
       _ => &callee.obj,
     };
-
     let descriptor = match &*callee.obj {
       t::Expr::Call(t::CallExpr { args, .. }) => Some(args.first().unwrap().expr.as_expr()),
       _ => None,
@@ -193,7 +215,7 @@ pub fn parse_call_expression(
 
     return Some(CompositeMessage::new(
       accessor.clone(),
-      vec![("0".to_string(), choice)],
+      vec![("0".to_string(), Message::Choice(choice))],
       context,
     ));
   }
@@ -201,6 +223,18 @@ pub fn parse_call_expression(
   None
 }
 
+///
+/// Parse a JSX element into a composite message.
+///
+/// # Arguments
+///
+/// * `node` — JSX element node
+/// * `identifier_store` — The store to track generated identifiers
+///
+/// # Returns
+///
+/// Composite message option
+///
 pub fn parse_jsx_element(
   node: &t::JSXElement,
   identifier_store: &mut IdentifierStore,
@@ -233,6 +267,7 @@ pub fn parse_jsx_element(
         },
 
         t::JSXElementChild::JSXElement(el) => {
+          // Wrap expression in fake <Say>...</Say> element for recursion
           let fake = t::JSXElement {
             span: DUMMY_SP,
             opening: t::JSXOpeningElement {
@@ -288,6 +323,18 @@ pub fn parse_jsx_element(
   None
 }
 
+///
+/// Parse a JSX self-closing element into a choice message wrapped in a composite message.
+///
+/// # Arguments
+///
+/// * `node` — JSX self-closing element node
+/// * `identifier_store` — The store to track generated identifiers
+///
+/// # Returns
+///
+/// Composite message with a single choice message child option
+///
 pub fn parse_jsx_self_closing_element(
   node: &t::JSXElement,
   identifier_store: &mut IdentifierStore,
@@ -313,6 +360,8 @@ pub fn parse_jsx_self_closing_element(
     }
     _ => return None,
   };
+
+  // <Say.Select /> or <Say.Plural /> or <Say.Ordinal />
 
   let mut value_expr: Option<Box<t::Expr>> = None;
 
@@ -340,6 +389,7 @@ pub fn parse_jsx_self_closing_element(
           let literal = LiteralMessage::new(s.value.to_string());
           children.push((key, Message::Literal(literal)));
         }
+
         t::JSXAttrValue::Lit(t::Lit::Num(t::Number { value, .. })) => {
           let literal = LiteralMessage::new(value.to_string());
           children.push((key, Message::Literal(literal)));
@@ -347,6 +397,7 @@ pub fn parse_jsx_self_closing_element(
 
         t::JSXAttrValue::JSXExprContainer(t::JSXExprContainer { expr, .. }) => {
           if let t::JSXExpr::Expr(expr) = expr {
+            // Wrap expression in fake <Say>...</Say> element for recursion
             let fake = t::JSXElement {
               span: DUMMY_SP,
               opening: t::JSXOpeningElement {
@@ -393,7 +444,7 @@ pub fn parse_jsx_self_closing_element(
       t::Expr::Ident(ident) => Some(ident.sym.to_string()),
       _ => None,
     })
-    .unwrap_or_else(|| "_".to_string());
+    .unwrap_or_else(|| identifier_store.next());
 
   let choice = Message::Choice(ChoiceMessage::new(
     kind.to_lowercase(),
@@ -405,12 +456,23 @@ pub fn parse_jsx_self_closing_element(
   Some(CompositeMessage::new(
     Box::new(accessor),
     vec![("0".to_string(), choice)],
-    get_property_value(&t::Expr::JSXElement(Box::new(node.clone())), "context"),
+    None,
   ))
 }
 
 //
 
+///
+/// Check if an expression is a valid `say` identifier.
+///
+/// # Arguments
+///
+/// * `node` — Expression node to check
+///
+/// # Returns
+///
+/// `true` if the expression is a valid `say` identifier
+///
 fn is_say_identifier(node: &t::Expr) -> bool {
   match node {
     // say
@@ -446,6 +508,18 @@ impl IdentifierStore {
   }
 }
 
+///
+/// Get the "name" of a node, used as the identifier for a message.
+///
+/// # Arguments
+///
+/// * `node` — Node to get the name of
+/// * `identifier_store` — The store to track generated identifiers, fallback if no name could be determined
+///
+/// # Returns
+///
+/// The "name" of the node
+///
 fn get_property_name(node: &t::Expr, identifier_store: &mut IdentifierStore) -> String {
   match node {
     t::Expr::Ident(ident) => ident.sym.to_string(),
@@ -468,6 +542,18 @@ fn get_property_name(node: &t::Expr, identifier_store: &mut IdentifierStore) -> 
   }
 }
 
+///
+/// Get the "name" of a JSX attribute, used as the identifier for a message.
+///
+/// # Arguments
+///
+/// * `name` — JSX attribute name
+/// * `identifier_store` — The store to track generated identifiers, fallback if no name could be determined
+///
+/// # Returns
+///
+/// The "name" of the JSX attribute
+///
 fn get_jsx_property_name(name: &t::JSXAttrName, identifier_store: &mut IdentifierStore) -> String {
   match name {
     t::JSXAttrName::Ident(t::IdentName { sym, .. }) => sym.to_string(),
@@ -475,6 +561,18 @@ fn get_jsx_property_name(name: &t::JSXAttrName, identifier_store: &mut Identifie
   }
 }
 
+///
+/// Get the value of property with the given key.
+///
+/// # Arguments
+///
+/// * `node` — Object literal or JSX attributes
+/// * `key` — Property key
+///
+/// # Returns
+///
+/// Property value, a string or undefined
+///
 fn get_property_value(node: &t::Expr, key: &str) -> Option<String> {
   match node {
     t::Expr::Object(node) => {

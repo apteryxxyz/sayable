@@ -5,6 +5,19 @@
  */
 use swc_core::ecma::ast::{self as t};
 
+///
+/// Transforms imports from `sayable` or `@sayable/react` into their runtime equivalents.
+///
+/// Only matches imports where the module specifier includes `"sayable"`.
+///
+/// # Arguments
+///
+/// * `node` — The original import declaration node
+///
+/// # Returns
+///
+/// A transformed import declaration, or null if not matched
+///
 pub fn transform_import_declaration(node: &t::ImportDecl) -> Option<t::ImportDecl> {
   if node.src.value.contains("sayable") {
     return Some(transform_macro_import_declaration(node));
@@ -13,6 +26,17 @@ pub fn transform_import_declaration(node: &t::ImportDecl) -> Option<t::ImportDec
   None
 }
 
+///
+/// Rewrites `sayable` and `@sayable/react` imports to their `/runtime` equivalents.
+///
+/// # Arguments
+///
+/// * `node` — The import declaration node to transform
+///
+/// # Returns
+///
+/// A new import declaration node with updated module specifier
+///
 fn transform_macro_import_declaration(node: &t::ImportDecl) -> t::ImportDecl {
   let specifier = match &*node.src.value {
     "sayable" => "sayable/runtime",
