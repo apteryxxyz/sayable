@@ -11,8 +11,6 @@ import {
   parseTaggedTemplateExpression,
 } from './ast-parsers.js';
 import { transformImportDeclaration } from './ast-transformers.js';
-import { generateHash } from './generate-hash.js';
-import { generateIcuMessageFormat } from './generate-icu-message-format.js';
 import type { CompositeMessage } from './message-types.js';
 
 // ===== Visitor ===== //
@@ -100,24 +98,9 @@ export function createExtractor() {
         true,
       );
 
-      const messages = new Map<string, CompositeMessage>();
-      t.transform(file, [
-        createVisitor((message) => {
-          const hash = generateHash(
-            generateIcuMessageFormat(message),
-            message.context,
-          );
-          const existing = messages.get(hash);
-          if (existing) {
-            (existing.comments ??= []).push(...(message.comments ?? []));
-            (existing.references ??= []).push(...(message.references ?? []));
-          } else {
-            messages.set(hash, message);
-          }
-        }),
-      ]);
-
-      return [...messages.values()];
+      const messages: CompositeMessage[] = [];
+      t.transform(file, [createVisitor((message) => messages.push(message))]);
+      return messages;
     },
   };
 }

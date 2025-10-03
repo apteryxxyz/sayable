@@ -52,40 +52,31 @@ async function processCatalogue(
 
   //
 
-  const messagesByFile: Record<string, Record<string, Formatter.Message>> = {};
+  const indexedMessages = new Map<string, Formatter.Message[]>();
   async function processPath(path: string) {
     logger.step(`Processing ${relative(process.cwd(), path)}`);
 
     const messages = await extractMessages(catalogue, path);
-    if (!Object.keys(messages).length) return false;
+    if (!messages.length) return false;
 
-    messagesByFile[path] = messages;
+    indexedMessages.set(path, messages);
     logger.step(
-      `Found ${Object.keys(messages).length} message(s) in ${relative(
-        process.cwd(),
-        path,
-      )}`,
+      `Found ${messages.length} message(s) in ${relative(process.cwd(), path)}`,
     );
     return true;
   }
 
   for (const path of paths) await processPath(path);
-
-  const currentMessages = () =>
-    Object.assign({}, ...Object.values(messagesByFile));
-  logger.info(`Extracted ${Object.keys(currentMessages()).length} message(s)`);
+  const currentMessages = () => [...indexedMessages.values()].flat();
+  logger.info(`Extracted ${currentMessages().length} message(s)`);
 
   //
 
   async function writeAllMessages() {
     for (const locale of config.locales) {
       logger.step(`Writing locale file for ${locale}`);
-      await writeMessages(
-        catalogue,
-        locale,
-        config.sourceLocale,
-        currentMessages(),
-      );
+      const messages = mapMessages(...currentMessages());
+      await writeMessages(catalogue, locale, config.sourceLocale, messages);
     }
   }
 
@@ -164,23 +155,36 @@ async function extractMessages(
   catalogue: output<typeof Catalogue>,
   path: string,
 ) {
-  const code = await readFile(path, 'utf8');
+  const code = await readFile(path, 'utf8').catch(() => '');
   const messages = await catalogue.extractor.extract({ id: path, code });
 
-  const formattedMessages: Record<string, Formatter.Message> = {};
-  for (const message of messages) {
+  return messages.map((message) => {
     const icu = generateIcuMessageFormat(message);
-    const hash = generateHash(icu, message.context);
-
-    formattedMessages[hash] = {
+    return {
       message: icu,
       translation: icu,
       context: message.context,
-      comments: message.comments,
-      references: message.references,
+      comments: message.comments ?? [],
+      references: message.references ?? [],
     };
+  });
+}
+
+function mapMessages(...messages: Formatter.Message[]) {
+  const mappedMessages = new Map<string, Formatter.Message>();
+
+  for (const message of messages) {
+    const hash = generateHash(message.message, message.context);
+    const existingMessage = mappedMessages.get(hash);
+    if (existingMessage) {
+      (existingMessage.comments ??= []).push(...(message.comments ?? []));
+      (existingMessage.references ??= []).push(...(message.references ?? []));
+    } else {
+      mappedMessages.set(hash, message);
+    }
   }
-  return formattedMessages;
+
+  return Object.fromEntries(mappedMessages);
 }
 
 export function resolveOutputFilePath(
@@ -201,39 +205,31 @@ export async function readMessages(
   path = resolveOutputFilePath(catalogue, locale),
 ) {
   const content = await readFile(path, 'utf8').catch(() => undefined);
-  const messages = content
-    ? await catalogue.formatter.parse(content, { locale })
-    : [];
-  const mapped = messages.reduce(
-    (messages, message) => {
-      const hash = generateHash(message.message, message.context);
-      messages[hash] = message;
-      return messages;
-    },
-    {} as Record<string, Formatter.Message>,
-  );
-
-  return Object.assign([content, mapped] as const, mapped);
+  const messages =
+    (content && (await catalogue.formatter.parse(content, { locale }))) || [];
+  return [content, mapMessages(...messages)] as const;
 }
 
 function updateMessages(
   existingMessages: Record<string, Formatter.Message>,
   newMessages: Record<string, Formatter.Message>,
 ) {
-  const mergedMessages: Record<string, Formatter.Message> = {};
+  const mergedMessages = new Map<string, Formatter.Message>();
+
   for (const [id, newMessage] of Object.entries(newMessages)) {
     const existingMessage = existingMessages[id];
 
-    mergedMessages[id] = {
+    mergedMessages.set(id, {
       message: newMessage.message,
       translation: undefined,
       ...existingMessage,
       context: newMessage.context,
       comments: newMessage.comments,
       references: newMessage.references,
-    };
+    });
   }
-  return mergedMessages;
+
+  return Object.fromEntries(mergedMessages);
 }
 
 async function writeMessages(
@@ -245,17 +241,16 @@ async function writeMessages(
   const [existingContent, existingMessages] = //
     await readMessages(catalogue, locale);
 
-  const localeMessages =
+  const messages =
     locale !== sourceLocale
       ? updateMessages(existingMessages, newMessages)
       : newMessages;
-
-  const localeContent = await catalogue.formatter.stringify(
-    Object.values(localeMessages),
-    { locale, previousContent: existingContent },
-  );
+  const content = await catalogue.formatter.stringify(Object.values(messages), {
+    locale,
+    previousContent: existingContent,
+  });
 
   const outputPath = resolveOutputFilePath(catalogue, locale);
   await mkdir(dirname(outputPath), { recursive: true });
-  await writeFile(outputPath, localeContent);
+  await writeFile(outputPath, content);
 }
