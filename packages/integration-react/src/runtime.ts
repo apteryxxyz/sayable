@@ -69,8 +69,9 @@ export function Say(
       if (tag in descriptor && isValidElement(descriptor[tag])) {
         const element = descriptor[tag] as ReactElement;
         return ({ children }) => cloneElement(element, undefined, ...children);
+      } else {
+        return ({ children }) => createElement(tag, undefined, ...children);
       }
-      return undefined;
     },
   } satisfies HTML2ReactProps);
 }
