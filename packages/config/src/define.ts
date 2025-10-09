@@ -1,8 +1,8 @@
 import type { input } from 'zod';
-import type * as s from './shapes.js';
+import type { Configuration } from './shapes.js';
 
-export function defineConfig<T extends input<typeof s.Configuration>>(
-  config: T,
-): T {
+export function defineConfig<Config extends input<typeof Configuration>>(
+  config: Config,
+): Config {
   return config;
 }

@@ -1,5 +1,5 @@
 [package]
-name = "sayable"
+name = "sayable_swc_plugin"
 version = "0.0.0"
 edition = "2021"
 
@@ -7,18 +7,12 @@ edition = "2021"
 crate-type = ["cdylib"]
 
 [profile.release]
-# This removes more dead code
-codegen-units = 1
-lto = true
-# Optimize for size
-opt-level = "s"
-# Optimize for performance, this is default so you don't need to specify it
-# opt-level = "z"
+lto = true          # link-time optimisation
+opt-level = "z"     # optimise for size (or "s")
+codegen-units = 1   # allow max cross-crate optimisations
+panic = "abort"     # remove unwinding machinery
+strip = "debuginfo"
 
 [dependencies]
-data-encoding = "2.9.0"
-regex = "1.11.3"
-serde = "1"
-sha2 = "0.10.9"
-swc_core = { version = "33.0.*", features = ["ecma_plugin_transform"] }
-swc_ecma_lexer = "21.0.1"
+sayable_factory = { path = "../factory" }
+swc_core = { version = "44.0.2", features = ["ecma_plugin_transform"] }

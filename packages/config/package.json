@@ -19,16 +19,17 @@
   },
   "dependencies": {
     "@commander-js/extra-typings": "^14.0.0",
-    "@sayable/tsc-plugin": "workspace:*",
     "commander": "^14.0.1",
     "neverthrow": "^8.2.0",
     "picomatch": "^4.0.3",
-    "zod": "^4.1.11"
+    "zod": "^4.1.12"
   },
   "peerDependencies": {
-    "typescript": "^5.9.3"
+    "@sayable/factory": "*",
+    "typescript": "*"
   },
   "devDependencies": {
+    "@sayable/factory": "workspace:^",
     "@types/picomatch": "^4.0.2",
     "typescript": "^5.9.3"
   }

@@ -16,7 +16,7 @@
   },
   "peerDependencies": {
     "@buape/carbon": "*",
-    "sayable": "workspace:^"
+    "sayable": "*"
   },
   "devDependencies": {
     "@buape/carbon": "0.12.0",

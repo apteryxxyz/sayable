@@ -1,9 +1,7 @@
 import type * as babelCore from '@babel/core';
-import { createTransformer } from '@sayable/tsc-plugin';
+import { transform } from '@sayable/factory';
 
 export default function ({ parse }: typeof babelCore): babelCore.PluginObj {
-  const { transform } = createTransformer();
-
   return {
     name: 'sayable',
     visitor: {
@@ -11,10 +9,10 @@ export default function ({ parse }: typeof babelCore): babelCore.PluginObj {
         const currentTarget = //
           Reflect.get(path.hub, 'file') as babelCore.BabelFile;
 
-        const newCode = transform({
-          code: currentTarget.code,
-          id: currentTarget.opts.filename!,
-        });
+        const newCode = transform(
+          currentTarget.opts.filename!,
+          currentTarget.code,
+        );
         const newFile = parse(newCode, currentTarget.opts)!;
         path.node.body = newFile.program.body;
       },

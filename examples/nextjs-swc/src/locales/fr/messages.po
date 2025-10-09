@@ -6,6 +6,6 @@ msgstr ""
 "Language: fr\n"
 "X-Generator: sayable\n"
 
-#: src/app/[locale]/page.tsx:6
-msgid "Hello, world!"
-msgstr "Bonjour, monde!"
+#: src/app/[locale]/page.tsx:8
+msgid "Hello, <0>{name}</0>!"
+msgstr "Bonjour, <0>{name}</0>!"

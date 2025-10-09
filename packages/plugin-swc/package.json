@@ -2,13 +2,13 @@
   "name": "@sayable/swc-plugin",
   "version": "0.0.0",
   "files": ["dist"],
-  "main": "./dist/sayable.wasm",
+  "main": "./dist/sayable_swc_plugin.wasm",
   "scripts": {
     "check": "cargo check",
     "lint": "cargo clippy",
     "format": "cargo fmt",
     "test": "cargo test",
-    "build": "cargo build --release --target wasm32-wasip1 && shx mkdir -p dist && shx cp target/wasm32-wasip1/release/sayable.wasm dist/",
+    "build": "cargo build --release --target wasm32-wasip1 && shx mkdir -p dist && shx cp target/wasm32-wasip1/release/*.wasm dist/",
     "prepack": "pnpm build"
   }
 }

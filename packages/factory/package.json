@@ -1,0 +1,19 @@
+{
+  "name": "@sayable/factory",
+  "version": "0.0.0",
+  "files": ["dist"],
+  "exports": {
+    ".": {
+      "types": "./dist/sayable_factory.d.ts",
+      "default": "./dist/sayable_factory.js"
+    }
+  },
+  "scripts": {
+    "check": "cargo check",
+    "lint": "cargo clippy",
+    "format": "cargo fmt",
+    "test": "cargo test",
+    "build": "wasm-pack build --target nodejs --out-dir dist --no-pack",
+    "prepack": "pnpm build"
+  }
+}

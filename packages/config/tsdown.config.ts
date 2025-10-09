@@ -12,8 +12,7 @@ export default defineConfig({
       io: 'input',
       unrepresentable: 'any',
       override(ctx) {
-        if (ctx.path.includes('extractor') || ctx.path.includes('formatter'))
-          ctx.jsonSchema.type = 'string';
+        if (ctx.path.includes('formatter')) ctx.jsonSchema.type = 'null';
       },
     });
     await writeFile('dist/schema.json', JSON.stringify(schema, null, 2));

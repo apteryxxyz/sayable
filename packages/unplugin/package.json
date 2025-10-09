@@ -19,7 +19,7 @@
     }
   },
   "dependencies": {
-    "@sayable/tsc-plugin": "workspace:^",
+    "@sayable/factory": "workspace:^",
     "unplugin": "^2.3.10"
   }
 }

@@ -1,0 +1,32 @@
+[package]
+name = "sayable_factory"
+version = "0.0.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[profile.release]
+lto = true          # link-time optimisation
+opt-level = "z"     # optimise for size (or "s")
+codegen-units = 1   # allow max cross-crate optimisations
+# panic = "panic"    # remove unwinding machinery
+strip = "debuginfo"
+
+[dependencies]
+console_error_panic_hook = "0.1.7"
+data-encoding = "2.9.0"
+pastey = "0.1.1"
+regex = "1.11.3"
+serde = { version = "1.0.228" }
+serde-wasm-bindgen = "0.6.5"
+sha2 = "0.10.9"
+swc_core = { version = "44.0.2", features = [
+  "common",
+  "ecma_ast",
+  "ecma_codegen",
+  "ecma_parser",
+  "ecma_visit",
+] }
+wasm-bindgen = "0.2.104"
+web-sys = { version = "0.3.81", features = ["console"] }

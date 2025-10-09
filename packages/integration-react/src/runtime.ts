@@ -12,7 +12,7 @@ import {
 import HTML2React, {
   type HTML2ReactProps,
 } from 'react-html-string-parser/HTML2React';
-import { Sayable } from 'sayable/runtime';
+import { Sayable } from 'sayable';
 import { decodeJsxSafePropKeys } from './types.js';
 
 const SayContext = //

@@ -1,49 +1,34 @@
 import { createRequire } from 'node:module';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import type { CompositeMessage } from '@sayable/tsc-plugin';
 import { err, ok } from 'neverthrow';
 import * as z from 'zod';
 
 type Awaitable<T> = T | PromiseLike<T>;
 
-export const Transformer = z.object({
-  transform: z.custom<
-    (module: { code: string; id: string }) => Awaitable<string>
-  >((val) => typeof val === 'function'),
-});
-
-export const Extractor = z.object({
-  extract: z.custom<
-    (module: { code: string; id: string }) => Awaitable<CompositeMessage[]>
-  >((val) => typeof val === 'function'),
-});
-
 export const Formatter = z.object({
-  extension: z
-    .templateLiteral(['.', z.string()])
-    .transform((val) => val.slice(1)),
+  extension: z.templateLiteral(['.', z.string()]).transform((v) => v.slice(1)),
   parse: z.custom<
     (
       content: string,
       context: { locale: string },
     ) => Awaitable<Formatter.Message[]>
-  >((val) => typeof val === 'function'),
+  >((v) => typeof v === 'function'),
   stringify: z.custom<
     (
       messages: Formatter.Message[],
       context: { locale: string; previousContent?: string },
     ) => Awaitable<string>
-  >((val) => typeof val === 'function'),
+  >((v) => typeof v === 'function'),
 });
 
 export namespace Formatter {
   export interface Message {
     message: string;
     translation?: string;
-    context?: string;
-    comments?: string[];
-    references?: `${string}:${number}`[];
+    context: string | undefined;
+    comments: string[];
+    references: string[];
   }
 }
 
@@ -58,32 +43,14 @@ async function require(id: string) {
 }
 
 export const Catalogue = z.object({
-  include: z.string().array(),
-  exclude: z.string().array().optional(),
+  include: z.array(z.string()),
+  exclude: z.array(z.string()).optional(),
   output: z.templateLiteral([
     z.string(),
     '{locale}',
     z.string(),
     '.{extension}',
   ]),
-
-  extractor: Extractor.optional().transform(async (extractor, context) => {
-    if (extractor) return extractor;
-
-    const module = await require('@sayable/tsc-plugin');
-    if (module.isErr()) {
-      context.addIssue(module.error);
-      return z.NEVER;
-    }
-    extractor = module.value.createExtractor();
-
-    const result = Extractor.safeParse(extractor);
-    if (result.error) {
-      for (const issue of result.error.issues) context.addIssue({ ...issue });
-      return z.NEVER;
-    }
-    return result.data;
-  }),
 
   formatter: Formatter.optional().transform(async (formatter, context) => {
     if (formatter) return formatter;
@@ -107,8 +74,8 @@ export const Catalogue = z.object({
 export const Configuration = z
   .object({
     sourceLocale: z.string(),
-    locales: z.string().array().min(1),
-    fallbackLocales: z.record(z.string(), z.string().array()).optional(),
+    locales: z.tuple([z.string()], z.string()),
+    fallbackLocales: z.record(z.string(), z.array(z.string())).optional(),
     catalogues: z.array(Catalogue),
   })
   .refine(

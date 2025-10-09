@@ -9,7 +9,7 @@ import {
 } from 'node:fs/promises';
 import { dirname, join, relative, resolve } from 'node:path';
 import { Command } from '@commander-js/extra-typings';
-import { generateHash, generateIcuMessageFormat } from '@sayable/tsc-plugin';
+import { extract, generateHash } from '@sayable/factory';
 import pm from 'picomatch';
 import type { output } from 'zod';
 import { resolveConfig } from '~/loader/resolve.js';
@@ -56,7 +56,7 @@ async function processCatalogue(
   async function processPath(path: string) {
     logger.step(`Processing ${relative(process.cwd(), path)}`);
 
-    const messages = await extractMessages(catalogue, path);
+    const messages = await extractMessages(path);
     if (!messages.length) return false;
 
     indexedMessages.set(path, messages);
@@ -76,7 +76,7 @@ async function processCatalogue(
     for (const locale of config.locales) {
       logger.step(`Writing locale file for ${locale}`);
       const messages = mapMessages(...currentMessages());
-      await writeMessages(catalogue, locale, config.sourceLocale, messages);
+      await writeMessages(catalogue, locale, config.locales[0], messages);
     }
   }
 
@@ -151,23 +151,18 @@ export async function* watchDebounce(
   }
 }
 
-async function extractMessages(
-  catalogue: output<typeof Catalogue>,
-  path: string,
-) {
+async function extractMessages(path: string) {
   const code = await readFile(path, 'utf8').catch(() => '');
-  const messages = await catalogue.extractor.extract({ id: path, code });
+  const messages = extract(path, code);
 
-  return messages.map((message) => {
-    const icu = generateIcuMessageFormat(message);
-    return {
-      message: icu,
-      translation: icu,
-      context: message.context,
-      comments: message.comments ?? [],
-      references: message.references ?? [],
-    };
-  });
+  return messages.map((message) => ({
+    message: message.toICUString(),
+    translation: message.toICUString(),
+    context: message.context,
+    comments: message.comments,
+    references: message.references //
+      .map((ref) => relative(process.cwd(), ref).replaceAll('\\', '/')),
+  })) satisfies Formatter.Message[];
 }
 
 function mapMessages(...messages: Formatter.Message[]) {
@@ -178,8 +173,6 @@ function mapMessages(...messages: Formatter.Message[]) {
     const existingMessage = mappedMessages.get(hash);
 
     if (existingMessage) {
-      existingMessage.comments ??= [];
-      existingMessage.references ??= [];
       for (const comment of message.comments ?? [])
         if (!existingMessage.comments.includes(comment))
           existingMessage.comments.push(comment);

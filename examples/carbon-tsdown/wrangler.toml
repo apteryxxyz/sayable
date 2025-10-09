@@ -3,4 +3,4 @@ main = "dist/entry.js"
 compatibility_date = "2025-08-23"
 
 [build]
-command = "pnpm tsc"
+command = "pnpm build"
