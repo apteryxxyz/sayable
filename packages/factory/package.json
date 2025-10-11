@@ -13,7 +13,7 @@
     "lint": "cargo clippy",
     "format": "cargo fmt",
     "test": "cargo test",
-    "build": "wasm-pack build --target nodejs --out-dir dist --no-pack",
+    "build": "wasm-pack build --target nodejs --out-dir dist --no-pack && shx rm dist/.gitignore",
     "prepack": "pnpm build"
   }
 }
