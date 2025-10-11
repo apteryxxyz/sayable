@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use swc_core::common::sync::Lrc;
 use swc_core::common::{comments::Comments, SourceFile};
 
@@ -11,12 +9,15 @@ use crate::core::messages::CompositeMessage;
 /// as well as mutable data like collected messages and a counter-based identifier store.
 pub struct Context {
   pub source_file: Option<Lrc<SourceFile>>,
-  pub single_comments: Rc<dyn Comments>,
+  pub single_comments: Option<Lrc<dyn Comments>>,
   pub found_messages: Vec<CompositeMessage>,
   pub identifier_store: IdentifierStore,
 }
 impl Context {
-  pub fn new(source_file: Option<Lrc<SourceFile>>, single_comments: Rc<dyn Comments>) -> Context {
+  pub fn new(
+    source_file: Option<Lrc<SourceFile>>,
+    single_comments: Option<Lrc<dyn Comments>>,
+  ) -> Context {
     Context {
       source_file,
       single_comments,

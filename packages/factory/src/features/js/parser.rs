@@ -54,7 +54,7 @@ pub fn parse_tagged_template(
 
     return Some(CompositeMessage::new(
       context,
-      get_position_comments(ctx, tagged_tpl.tag.span_lo()),
+      get_position_comments(ctx, tagged_tpl.tag.span_lo()).map_or([].into(), |s| s),
       get_position_reference(ctx, tagged_tpl.tag.span_lo()).map_or([].into(), |s| [s].into()),
       children,
       accessor.clone().into(),
@@ -124,7 +124,7 @@ pub fn parse_call_expression(
 
     return Some(CompositeMessage::new(
       context,
-      get_position_comments(ctx, call.callee.as_expr()?.span_lo()),
+      get_position_comments(ctx, call.callee.as_expr()?.span_lo()).map_or([].into(), |s| s),
       get_position_reference(ctx, call.callee.as_expr()?.span_lo())
         .map_or([].into(), |s| [s].into()),
       vec![choice.into()],
@@ -148,32 +148,30 @@ pub fn use_expression_key(ctx: &Rc<RefCell<Context>>, expr: &Expr) -> String {
 /// Extracts translator comments at a given byte position.
 ///
 /// Only includes comments starting with `translators:` (case-insensitive).
-pub fn get_position_comments(ctx: &Rc<RefCell<Context>>, pos: BytePos) -> Vec<String> {
-  ctx
-    .borrow()
-    .single_comments
-    .get_leading(pos)
-    .unwrap_or_default()
-    .iter()
-    .filter_map(|cmt| {
-      let text = cmt.text.trim();
-      text
-        .to_lowercase()
-        .starts_with("translators:")
-        .then(|| text[12..].trim().to_string())
-    })
-    .collect()
+pub fn get_position_comments(ctx: &Rc<RefCell<Context>>, pos: BytePos) -> Option<Vec<String>> {
+  ctx.borrow().single_comments.as_ref().map(|comments| {
+    comments
+      .get_leading(pos)
+      .unwrap_or_default()
+      .iter()
+      .filter_map(|cmt| {
+        let text = cmt.text.trim();
+        text
+          .to_lowercase()
+          .starts_with("translators:")
+          .then(|| text[12..].trim().to_string())
+      })
+      .collect()
+  })
 }
 
 /// Creates a human-readable source reference from a byte position (e.g. `"file.ts:42"`).
 pub fn get_position_reference(ctx: &Rc<RefCell<Context>>, pos: BytePos) -> Option<String> {
-  if let Some(file) = ctx.borrow().source_file.as_ref() {
+  ctx.borrow().source_file.as_ref().map(|file| {
     let path = file.name.to_string();
-    let line = file.lookup_line(pos)?;
-    Some(format!("{}:{}", path, line + 1))
-  } else {
-    None
-  }
+    let line = file.lookup_line(pos).unwrap_or(0);
+    format!("{}:{}", path, line + 1)
+  })
 }
 
 /// Recursively processes an expression to extract:

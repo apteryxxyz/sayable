@@ -122,7 +122,7 @@ pub fn parse_jsx_container_element(
 
     return Some(CompositeMessage::new(
       None,
-      get_position_comments(ctx, element.span_lo()),
+      get_position_comments(ctx, element.span_lo()).map_or([].into(), |s| s),
       get_position_reference(ctx, element.span_lo()).map_or([].into(), |s| [s].into()),
       children,
       accessor.clone(),
@@ -214,7 +214,7 @@ pub fn parse_jsx_self_closing_element(
 
     return Some(CompositeMessage::new(
       None,
-      get_position_comments(ctx, element.span_lo()),
+      get_position_comments(ctx, element.span_lo()).map_or([].into(), |s| s),
       get_position_reference(ctx, element.span_lo()).map_or([].into(), |s| [s].into()),
       vec![choice.into()],
       accessor.clone(),

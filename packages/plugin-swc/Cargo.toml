@@ -15,4 +15,4 @@ strip = "debuginfo"
 
 [dependencies]
 sayable_factory = { path = "../factory" }
-swc_core = { version = "44.0.2", features = ["ecma_plugin_transform"] }
+swc_core = { version = "<27.0.0", features = ["ecma_plugin_transform"] }
