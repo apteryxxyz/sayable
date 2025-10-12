@@ -138,11 +138,46 @@ export class Sayable {
   freeze() {
     type ReadonlySayable = Omit<
       typeof this,
-      'load' | 'assign' | 'activate' | 'clone'
+      'load' | 'assign' | 'activate' | 'clone' | 'map' | 'reduce' | 'freeze'
     >;
     return Object.freeze(this) as ReadonlySayable;
   }
 
+  /**
+   * Calls a defined callback function on each locale, passing the Sayable instance and locale to the callback.
+   *
+   * @param callback Callback function to call on each locale
+   */
+  map<T>(callback: (say: ReturnType<Sayable['freeze']>, locale: string) => T) {
+    if (Object.isFrozen(this))
+      throw new TypeError('Cannot map over an immutable Sayable');
+    return this.locales.map((locale) => {
+      const say = this.clone().activate(locale).freeze();
+      return callback(say, locale);
+    });
+  }
+
+  /**
+   * Calls the specified callback function for all the elements in an array, passing the Sayable instance and locale to the callback.
+   *
+   * @param callback Callback function to call for each element
+   * @param initial Initial value to use as the first argument to the first call of the callback
+   */
+  reduce<T>(
+    callback: (
+      say: ReturnType<Sayable['freeze']>,
+      locale: string,
+      accumulator: T,
+    ) => T,
+    initial: T,
+  ) {
+    if (Object.isFrozen(this))
+      throw new TypeError('Cannot reduce over an immutable Sayable');
+    return this.locales.reduce((acc, locale) => {
+      const say = this.clone().activate(locale).freeze();
+      return callback(say, locale, acc);
+    }, initial);
+  }
 
   /**
    * Get the translation for a descriptor.
