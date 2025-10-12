@@ -1,14 +1,53 @@
 import { mf1ToMessage } from '@messageformat/icu-messageformat-1';
-import type { Awaitable } from './types.js';
+import type { Awaitable, NumeralOptions, SelectOptions } from './types.js';
 
 export namespace Sayable {
   export type Messages = { [key: string]: string };
   export type Loader = (locale: string) => Awaitable<Messages>;
 }
 
-/**
- * Sayable manages localised message loading, activation, and formatting.
- */
+export interface Sayable {
+  // ===== Macros ===== //
+
+  /**
+   * Define a message.
+   *
+   * @example
+   * ```ts
+   * say`Hello, ${name}!`
+   * ```
+   *
+   * @remark This is a macro and must be used with the relevant sayable plugin
+   */
+  (strings: TemplateStringsArray, ...placeholders: unknown[]): string;
+
+  /**
+   * Provide a context for the message, used to disambiguate identical strings
+   * that have different meanings depending on usage.
+   *
+   * @example
+   * ```ts
+   * say({ context: 'direction' })`Right`
+   * say({ context: 'correctness' })`Right`
+   * ```
+   *
+   * @param descriptor Object containing an optional `context` property
+   * @remark This is a macro and must be used with the relevant sayable plugin
+   */
+  (descriptor: { context?: string }): Sayable;
+}
+
+export type ReadonlySayable = Sayable & {
+  [K in
+    | 'load'
+    | 'assign'
+    | 'activate'
+    | 'clone'
+    | 'map'
+    | 'reduce' as K]: never;
+};
+
+// biome-ignore lint/suspicious/noUnsafeDeclarationMerging: false
 export class Sayable {
   #loaders: Record<string, Sayable.Loader>;
   #cache: Map<string, Sayable.Messages>;
@@ -136,11 +175,7 @@ export class Sayable {
    * @returns A readonly Sayable instance
    */
   freeze() {
-    type ReadonlySayable = Omit<
-      typeof this,
-      'load' | 'assign' | 'activate' | 'clone' | 'map' | 'reduce' | 'freeze'
-    >;
-    return Object.freeze(this) as ReadonlySayable;
+    return Object.freeze(this) as unknown as ReadonlySayable;
   }
 
   /**
@@ -222,6 +257,85 @@ export class Sayable {
     if (this.#active)
       return `${this.constructor.name}<${inspect(this.#active, options)}> {}`;
     else return `${this.constructor.name} {}`;
+  }
+
+  // ===== Macros ===== //
+
+  /**
+   * Define a pluralised message.
+   *
+   * @example
+   * ```ts
+   * say.plural(count, {
+   *   one: 'You have 1 item',
+   *   other: 'You have # items',
+   * })
+   * ```
+   *
+   * The `#` symbol inside options is replaced with the numeric value.
+   * @param _ Number to determine the plural form of
+   * @param options Pluralisation rules keyed by CLDR categories or specific numbers
+   * @returns The plural form of the number
+   * @remark This is a macro and must be used with the relevant sayable plugin
+   */
+  plural(_: number, options: NumeralOptions): string {
+    void _;
+    void options;
+    throw new Error(
+      "'Sayable#plural' is a macro and must be used with the relevant sayable plugin",
+    );
+  }
+
+  /**
+   * Define an ordinal message (e.g. "1st", "2nd", "3rd").
+   * The `#` symbol inside options is replaced with the numeric value.
+   *
+   * @example
+   * ```ts
+   * say.ordinal(position, {
+   *   1: '#st',
+   *   2: '#nd',
+   *   3: '#rd',
+   *   other: '#th',
+   * })
+   * ```
+   *
+   * @param _ Number to determine the ordinal form of
+   * @param options Ordinal rules keyed by CLDR categories or specific numbers
+   * @returns The ordinal form of the number
+   * @remark This is a macro and must be used with the relevant sayable plugin
+   */
+  ordinal(_: number, options: NumeralOptions): string {
+    void _;
+    void options;
+    throw new Error(
+      "'Sayable#ordinal' is a macro and must be used with the relevant sayable plugin",
+    );
+  }
+
+  /**
+   * Define a select message, useful for handling gender, status, or other categories.
+   *
+   * @example
+   * ```ts
+   * say.select(gender, {
+   *   male: 'He',
+   *   female: 'She',
+   *   other: 'They',
+   * })
+   * ```
+   *
+   * @param _ Selector value to determine which option is chosen
+   * @param options A mapping of possible selector values to message strings
+   * @returns The select form of the value
+   * @remark This is a macro and must be used with the relevant sayable plugin
+   */
+  select(_: string, options: SelectOptions): string {
+    void _;
+    void options;
+    throw new Error(
+      "'Sayable#select' is a macro and must be used with the relevant sayable plugin",
+    );
   }
 }
 

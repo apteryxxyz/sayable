@@ -1,6 +1,6 @@
 import { defineConfig } from 'tsdown';
 
 export default defineConfig({
-  entry: ['src/runtime.ts', 'src/runtime.macro.d.ts'],
+  entry: ['src/runtime.ts'],
   target: 'es2020',
 });

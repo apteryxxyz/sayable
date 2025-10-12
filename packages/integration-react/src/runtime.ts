@@ -7,13 +7,14 @@ import {
   isValidElement,
   type PropsWithChildren,
   type ReactElement,
+  type ReactNode,
   useContext,
 } from 'react';
 import HTML2React, {
   type HTML2ReactProps,
 } from 'react-html-string-parser/HTML2React';
-import { Sayable } from 'sayable';
-import { decodeJsxSafePropKeys } from './types.js';
+import { type NumeralOptions, Sayable, type SelectOptions } from 'sayable';
+import { decodeJsxSafePropKeys, type PropsWithJSXSafeKeys } from './types.js';
 
 const SayContext = //
   createContext<ReturnType<Sayable['freeze']> | null>(null);
@@ -36,8 +37,7 @@ export function SayProvider({
   messages: Sayable.Messages;
 }>) {
   const say = new Sayable({});
-  say.assign(locale, messages);
-  for (const l of locales) say.assign(l, {});
+  for (const l of locales) say.assign(l, messages);
   say.activate(locale);
   return createElement(SayContext.Provider, { value: say.freeze() }, children);
 }
@@ -60,11 +60,24 @@ export function useSay() {
  *
  * @param descriptor Descriptor to render the translation for
  * @returns The translation node for the descriptor
+ * @remark This is a macro and must be used with the relevant sayable plugin
  */
+// @ts-expect-error macro
+export function Say(
+  props: PropsWithChildren<{ context?: string }>,
+): ReactElement;
 export function Say(
   _descriptor: { id: string; [match: string]: unknown },
   descriptor = decodeJsxSafePropKeys(_descriptor),
 ) {
+  if (!('id' in descriptor))
+    throw new Error(
+      "'Say' is a macro and must be used with the relevant sayable plugin",
+      {
+        cause: new Error("The 'id' property is required for a descriptor"),
+      },
+    );
+
   const say = useSay();
   return createElement(HTML2React, {
     html: say.call(descriptor),
@@ -77,4 +90,89 @@ export function Say(
       }
     },
   } satisfies HTML2ReactProps);
+}
+
+export namespace Say {
+  // ===== Macros ===== //
+
+  /**
+   * Define a pluralised message.
+   *
+   * @example
+   * ```tsx
+   * <Say.Plural
+   *   _={count}
+   *   one="You have 1 item"
+   *   other="You have # items"
+   * />
+   * ```
+   *
+   * @param props._ Number to determine the plural form of
+   * @param props Options pluralisation rules keyed by CLDR categories or specific numbers
+   * @returns The plural form of the number, as a React node
+   * @remark This is a macro and must be used with the relevant sayable plugin
+   */
+  export function Plural(
+    props: { _: number } & PropsWithJSXSafeKeys<NumeralOptions>,
+  ): ReactNode {
+    void props;
+    throw new Error(
+      "'Say.Plural' is a macro and must be used with the relevant sayable plugin",
+    );
+  }
+
+  /**
+   * Define an ordinal message (e.g. "1st", "2nd", "3rd").
+   *
+   * @example
+   * ```tsx
+   * <Say.Ordinal
+   *   _={position}
+   *   1="#st"
+   *   2="#nd"
+   *   3="#rd"
+   *   other="#th"
+   * />
+   * ```
+   *
+   * @param props._ Number to determine the ordinal form of
+   * @param props Options ordinal rules keyed by CLDR categories or specific numbers
+   * @returns The ordinal form of the number, as a React node
+   * @remark This is a macro and must be used with the relevant sayable plugin
+   */
+  export function Ordinal(
+    props: { _: number } & PropsWithJSXSafeKeys<NumeralOptions>,
+  ): ReactNode {
+    void props;
+    throw new Error(
+      "'Say.Ordinal' is a macro and must be used with the relevant sayable plugin",
+    );
+  }
+
+  /**
+   * Define a select message, useful for handling gender, status, or other categories.
+   *
+   * @example
+   * ```tsx
+   * <Say.Select
+   *   _={gender}
+   *   male="He"
+   *   female="She"
+   *   other="They"
+   * />
+   * ```
+   *
+   * @param props._ Selector value to determine which option is chosen
+   * @param props Options a mapping of possible selector values to message strings
+   * @returns The select form of the value, as a React node
+   * @remark This is a macro and must be used with the relevant sayable plugin
+   */
+  export function Select(
+    props: { _: string } & PropsWithJSXSafeKeys<SelectOptions>,
+  ): ReactNode {
+    void props;
+    throw new Error(
+      "'Say.Select' is a macro and must be used with the relevant sayable plugin",
+    );
+  }
 }
