@@ -65,6 +65,8 @@ export class Sayable {
    * @param locales Locales to load messages for, defaults to {@link Sayable.locales}
    */
   async load(...locales: string[]) {
+    if (Object.isFrozen(this))
+      throw new TypeError('Cannot load messages for an immutable Sayable');
     if (locales.length === 0) locales = this.locales;
     for (const locale of locales) {
       if (this.#cache.has(locale)) continue;
@@ -80,6 +82,8 @@ export class Sayable {
    * @param messages Messages to assign
    */
   assign(locale: string, messages: Sayable.Messages) {
+    if (Object.isFrozen(this))
+      throw new TypeError('Cannot assign messages to an immutable Sayable');
     this.#cache.set(locale, messages);
     this.#loaders[locale] = () => messages;
   }
@@ -104,20 +108,12 @@ export class Sayable {
    * @throws If locale is not available
    */
   activate(locale: string) {
+    if (Object.isFrozen(this))
+      throw new TypeError('Cannot change locale of an immutable Sayable');
     if (!this.locales.includes(locale))
       throw new Error(`No loader for locale '${locale}'`);
     this.#active = locale;
     return this;
-  }
-
-  /**
-   * Freezes the Sayable instance, preventing further modifications.
-   *
-   * @returns A readonly Sayable instance
-   */
-  freeze() {
-    type ReadonlySayable = Omit<typeof this, 'load' | 'assign' | 'activate'>;
-    return Object.freeze(this) as ReadonlySayable;
   }
 
   /**
@@ -126,11 +122,27 @@ export class Sayable {
    * @returns A clone of the Sayable instance
    */
   clone() {
+    if (Object.isFrozen(this))
+      throw new TypeError('Cannot clone an immutable Sayable');
     const clone = new Sayable(this.#loaders);
     clone.#cache = this.#cache;
     clone.#active = this.#active;
     return clone as this;
   }
+
+  /**
+   * Freezes the Sayable instance, preventing further modifications.
+   *
+   * @returns A readonly Sayable instance
+   */
+  freeze() {
+    type ReadonlySayable = Omit<
+      typeof this,
+      'load' | 'assign' | 'activate' | 'clone'
+    >;
+    return Object.freeze(this) as ReadonlySayable;
+  }
+
 
   /**
    * Get the translation for a descriptor.
