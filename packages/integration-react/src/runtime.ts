@@ -16,7 +16,7 @@ import { Sayable } from 'sayable';
 import { decodeJsxSafePropKeys } from './types.js';
 
 const SayContext = //
-  createContext<ReturnType<Sayable['freeze']>>(undefined!);
+  createContext<ReturnType<Sayable['freeze']> | null>(null);
 
 /**
  * Provide a localised {@link runtime.Sayable} instance to descendant components via context.
@@ -27,14 +27,17 @@ const SayContext = //
  */
 export function SayProvider({
   locale,
+  locales,
   messages,
   children,
 }: PropsWithChildren<{
   locale: string;
+  locales: string[];
   messages: Sayable.Messages;
 }>) {
   const say = new Sayable({});
   say.assign(locale, messages);
+  for (const l of locales) say.assign(l, {});
   say.activate(locale);
   return createElement(SayContext.Provider, { value: say.freeze() }, children);
 }
