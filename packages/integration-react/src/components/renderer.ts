@@ -27,6 +27,8 @@ export function Renderer({
     return tag && tag in components ? components[tag]! : Fragment;
   }
 
+  let nodeKey = 0;
+
   function parseNode(input: string) {
     const stack: { tag: string; children: ReactNode[] }[] = [];
     let current: ReactNode[] = [];
@@ -48,14 +50,14 @@ export function Renderer({
         if (isSelfClosing) {
           // Self-closing tag like <1/>
           const Component = getComponent(tagName);
-          current.push(createElement(Component, { key: current.length }));
+          current.push(createElement(Component, { key: nodeKey++ }));
         } else if (isClosing) {
           // Closing tag like </0>
           const last = stack.pop()!;
           const Component = getComponent(last.tag);
           const element = createElement(
             Component,
-            { key: stack.length },
+            { key: nodeKey++ },
             ...current,
           );
           current = last.children;
