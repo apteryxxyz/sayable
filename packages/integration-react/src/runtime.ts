@@ -10,10 +10,8 @@ import {
   type ReactNode,
   useContext,
 } from 'react';
-import HTML2React, {
-  type HTML2ReactProps,
-} from 'react-html-string-parser/HTML2React';
 import { type NumeralOptions, Sayable, type SelectOptions } from 'sayable';
+import { Renderer } from './components/renderer.js';
 import { decodeJsxSafePropKeys, type PropsWithJSXSafeKeys } from './types.js';
 
 const SayContext = //
@@ -79,17 +77,18 @@ export function Say(
     );
 
   const say = useSay();
-  return createElement(HTML2React, {
+  return createElement(Renderer, {
     html: say.call(descriptor),
-    getComponent(tag: string) {
-      if (tag in descriptor && isValidElement(descriptor[tag])) {
-        const element = descriptor[tag] as ReactElement;
-        return ({ children }) => cloneElement(element, undefined, ...children);
+    components(tag?: string) {
+      if (tag && tag in descriptor && isValidElement(descriptor[tag])) {
+        const element = descriptor[tag]! as ReactElement;
+        return (props) =>
+          cloneElement(element, { ...(element.props ?? {}), ...props });
       } else {
-        return ({ children }) => createElement(tag, undefined, ...children);
+        return tag;
       }
     },
-  } satisfies HTML2ReactProps);
+  });
 }
 
 export namespace Say {

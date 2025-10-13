@@ -14,9 +14,6 @@
       "default": "./dist/runtime.js"
     }
   },
-  "dependencies": {
-    "react-html-string-parser": "^1.4.1"
-  },
   "peerDependencies": {
     "react": "*",
     "sayable": "*"
