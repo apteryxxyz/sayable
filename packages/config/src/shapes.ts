@@ -32,7 +32,7 @@ export namespace Formatter {
   }
 }
 
-async function require(id: string) {
+async function tryImport(id: string) {
   const require = createRequire(join(process.cwd(), 'noop.js'));
   try {
     const url = pathToFileURL(require.resolve(id));
@@ -55,7 +55,7 @@ export const Catalogue = z.object({
   formatter: Formatter.optional().transform(async (formatter, context) => {
     if (formatter) return formatter;
 
-    const module = await require('@sayable/format-po');
+    const module = await tryImport('@sayable/format-po');
     if (module.isErr()) {
       context.addIssue(module.error);
       return z.NEVER;

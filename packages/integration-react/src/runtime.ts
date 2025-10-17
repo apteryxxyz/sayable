@@ -9,13 +9,20 @@ import {
   type ReactElement,
   type ReactNode,
   useContext,
+  useMemo,
 } from 'react';
-import { type NumeralOptions, Sayable, type SelectOptions } from 'sayable';
+import {
+  type Disallow,
+  type NumeralOptions,
+  Sayable,
+  type SelectOptions,
+} from 'sayable';
 import { Renderer } from './components/renderer.js';
-import { decodeJsxSafePropKeys, type PropsWithJSXSafeKeys } from './types.js';
+import { type PropsWithJSXSafeKeys, resolveJsxSafePropKeys } from './types.js';
 
 const SayContext = //
   createContext<ReturnType<Sayable['freeze']> | null>(null);
+SayContext.displayName = 'SayContext';
 
 /**
  * Provide a localised {@link runtime.Sayable} instance to descendant components via context.
@@ -34,9 +41,13 @@ export function SayProvider({
   locales: string[];
   messages: Sayable.Messages;
 }>) {
-  const say = new Sayable({});
-  for (const l of locales) say.assign(l, messages);
-  say.activate(locale);
+  const say = useMemo(() => {
+    const instance = new Sayable({});
+    for (const l of locales) instance.assign(l, messages);
+    instance.activate(locale);
+    return instance.freeze();
+  }, [locale, locales, messages]);
+
   return createElement(SayContext.Provider, { value: say.freeze() }, children);
 }
 
@@ -62,13 +73,10 @@ export function useSay() {
  */
 // @ts-expect-error macro
 export function Say(
-  props: PropsWithChildren<{ context?: string }>,
+  props: PropsWithChildren<Disallow<{ context?: string }, 'id'>>,
 ): ReactElement;
-export function Say(
-  _descriptor: { id: string; [match: string]: unknown },
-  descriptor = decodeJsxSafePropKeys(_descriptor),
-) {
-  if (!('id' in descriptor))
+export function Say(props: { id: string; [match: string]: unknown }) {
+  if (!('id' in props))
     throw new Error(
       "'Say' is a macro and must be used with the relevant sayable plugin",
       {
@@ -77,6 +85,8 @@ export function Say(
     );
 
   const say = useSay();
+  const descriptor = resolveJsxSafePropKeys(props);
+
   return createElement(Renderer, {
     html: say.call(descriptor),
     components(tag?: string) {
@@ -112,7 +122,9 @@ export namespace Say {
    * @remark This is a macro and must be used with the relevant sayable plugin
    */
   export function Plural(
-    props: { _: number } & PropsWithJSXSafeKeys<NumeralOptions>,
+    props: { _: number } & PropsWithJSXSafeKeys<
+      Disallow<NumeralOptions, 'id' | 'context'>
+    >,
   ): ReactNode {
     void props;
     throw new Error(
@@ -140,7 +152,9 @@ export namespace Say {
    * @remark This is a macro and must be used with the relevant sayable plugin
    */
   export function Ordinal(
-    props: { _: number } & PropsWithJSXSafeKeys<NumeralOptions>,
+    props: { _: number } & PropsWithJSXSafeKeys<
+      Disallow<NumeralOptions, 'id' | 'context'>
+    >,
   ): ReactNode {
     void props;
     throw new Error(
@@ -167,7 +181,9 @@ export namespace Say {
    * @remark This is a macro and must be used with the relevant sayable plugin
    */
   export function Select(
-    props: { _: string } & PropsWithJSXSafeKeys<SelectOptions>,
+    props: { _: string } & PropsWithJSXSafeKeys<
+      Disallow<SelectOptions, 'id' | 'context'>
+    >,
   ): ReactNode {
     void props;
     throw new Error(

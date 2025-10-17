@@ -1,4 +1,4 @@
-export type Disallow<K extends PropertyKey> = Partial<Record<K, never>>;
+export type Disallow<T, K extends PropertyKey> = T & Partial<Record<K, never>>;
 
 export type Awaitable<T> = T | PromiseLike<T>;
 
@@ -10,5 +10,5 @@ export interface NumeralOptions
 
 export interface SelectOptions {
   other: string;
-  [match: PropertyKey]: string;
+  [match: string | number]: string;
 }

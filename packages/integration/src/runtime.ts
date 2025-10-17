@@ -1,5 +1,10 @@
 import { mf1ToMessage } from '@messageformat/icu-messageformat-1';
-import type { Awaitable, NumeralOptions, SelectOptions } from './types.js';
+import type {
+  Awaitable,
+  Disallow,
+  NumeralOptions,
+  SelectOptions,
+} from './types.js';
 
 export namespace Sayable {
   export type Messages = { [key: string]: string };
@@ -149,8 +154,8 @@ export class Sayable {
   activate(locale: string) {
     if (Object.isFrozen(this))
       throw new TypeError('Cannot change locale of an immutable Sayable');
-    if (!this.locales.includes(locale))
-      throw new Error(`No loader for locale '${locale}'`);
+    if (!this.#cache.has(locale))
+      throw new Error(`No messages loaded for locale '${locale}'`);
     this.#active = locale;
     return this;
   }
@@ -278,7 +283,10 @@ export class Sayable {
    * @returns The plural form of the number
    * @remark This is a macro and must be used with the relevant sayable plugin
    */
-  plural(_: number, options: NumeralOptions): string {
+  plural(
+    _: number,
+    options: Disallow<NumeralOptions, 'id' | 'context'>,
+  ): string {
     void _;
     void options;
     throw new Error(
@@ -305,7 +313,10 @@ export class Sayable {
    * @returns The ordinal form of the number
    * @remark This is a macro and must be used with the relevant sayable plugin
    */
-  ordinal(_: number, options: NumeralOptions): string {
+  ordinal(
+    _: number,
+    options: Disallow<NumeralOptions, 'id' | 'context'>,
+  ): string {
     void _;
     void options;
     throw new Error(
@@ -330,7 +341,10 @@ export class Sayable {
    * @returns The select form of the value
    * @remark This is a macro and must be used with the relevant sayable plugin
    */
-  select(_: string, options: SelectOptions): string {
+  select(
+    _: string,
+    options: Disallow<SelectOptions, 'id' | 'context'>,
+  ): string {
     void _;
     void options;
     throw new Error(

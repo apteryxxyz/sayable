@@ -1,6 +1,7 @@
 import { rm, writeFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
-import { dirname } from 'node:path';
+import { tmpdir } from 'node:os';
+import { dirname, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 export type Loader = (path: string, content: string) => Promise<unknown>;
@@ -8,12 +9,13 @@ export type Loader = (path: string, content: string) => Promise<unknown>;
 export const js: Loader = async (path, _content) => {
   try {
     const { href } = pathToFileURL(path);
-    return import(href).then((m) => m.default);
+    const module = await import(href);
+    return module.default;
   } catch (importError) {
     try {
       const require = globalThis.require ?? createRequire(path);
       const module = require(path);
-      delete require.cache[path];
+      delete require.cache[require.resolve(path)];
       return module?.default ?? module;
     } catch (requireError) {
       throw new Error('Failed to import module', {
@@ -53,7 +55,7 @@ namespace YAML {
     function parseValue(value: string, fallback?: YAMLValue): YAMLValue {
       if (value === 'true') return true;
       if (value === 'false') return false;
-      if (!Number.isNaN(value) && value !== '') return Number(value);
+      if (!Number.isNaN(Number(value)) && value !== '') return Number(value);
       if (value.startsWith('[') && value.endsWith(']')) {
         return value
           .slice(1, -1)
@@ -135,7 +137,7 @@ export const yaml: Loader = async (_path, content) => {
 
 export const ts: Loader = async (path, content) => {
   const ts = await import('typescript');
-  const outputPath = `${path}.js`;
+  const outputPath = resolve(tmpdir(), `${path}.${Date.now()}.js`);
 
   try {
     const tsConfigPath =

@@ -25,9 +25,11 @@ export default new Command()
     logger.header('📦 Compiling Messages');
 
     const watchers = [];
-    for (const catalogue of config.catalogues)
-      watchers.push(await processCatalogue(catalogue, config, options));
-    await Promise.allSettled(watchers.map((f) => f()));
+    for (const catalogue of config.catalogues) {
+      const watcher = await processCatalogue(catalogue, config, options);
+      watchers.push(watcher());
+    }
+    await Promise.allSettled(watchers);
   });
 
 async function processCatalogue(
