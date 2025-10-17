@@ -1,7 +1,6 @@
 import { rm, writeFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
-import { tmpdir } from 'node:os';
-import { dirname, resolve } from 'node:path';
+import { dirname } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 export type Loader = (path: string, content: string) => Promise<unknown>;
@@ -137,7 +136,7 @@ export const yaml: Loader = async (_path, content) => {
 
 export const ts: Loader = async (path, content) => {
   const ts = await import('typescript');
-  const outputPath = resolve(tmpdir(), `${path}.${Date.now()}.js`);
+  const outputPath = `${path}.${Date.now()}.js`;
 
   try {
     const tsConfigPath =
