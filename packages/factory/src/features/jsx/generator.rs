@@ -20,10 +20,15 @@ use crate::features::js::generator::generate_child_expressions;
 /// - All argument, element, and choice messages are included as properties.
 /// - Nested messages are recursively flattened into properties.
 pub fn generate_say_jsx_element(message: &CompositeMessage) -> JSXElement {
-  let mut children = Vec::new();
-  let icu = convert_message_to_icu(&message.clone().into());
-  let hash = generate_hash(icu, message.context.clone());
-  children.push(("id".into(), Expr::Lit(hash.into()).into()));
+  let mut children: Vec<(String, Box<Expr>)> = Vec::new();
+
+  if let Some(id) = &message.descriptor.id {
+    children.push(("id".into(), Expr::Lit(id.clone().into()).into()));
+  } else {
+    let icu = convert_message_to_icu(&message.clone().into());
+    let hash = generate_hash(icu, message.descriptor.context.clone());
+    children.push(("id".into(), Expr::Lit(hash.into()).into()));
+  }
   children.extend(generate_child_expressions(&message.children));
 
   let properties = children

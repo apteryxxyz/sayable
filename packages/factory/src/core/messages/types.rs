@@ -123,10 +123,17 @@ define_message!(
   private expression: Box<Expr>,
 );
 
+#[wasm_bindgen(getter_with_clone)]
+#[derive(Debug, Clone, Serialize)]
+pub struct CompositeMessageDescriptor {
+  pub id: Option<String>,
+  pub context: Option<String>,
+}
+
 define_message!(
   /// Represents a sequence of messages, such as a template literal or concatenated parts.
   Composite,
-  public context: Option<String>,
+  public descriptor: CompositeMessageDescriptor,
   public comments: Vec<String>,
   public references: Vec<String>,
   public children: Vec<Message>,
@@ -154,7 +161,7 @@ impl Message {
   #[wasm_bindgen(js_name = "toHashString")]
   pub fn to_hash_string(&self) -> String {
     match &self.composite {
-      Some(message) => generate_hash(self.to_icu_string(), message.context.clone()),
+      Some(message) => generate_hash(self.to_icu_string(), message.descriptor.context.clone()),
       None => generate_hash(self.to_icu_string(), None),
     }
   }

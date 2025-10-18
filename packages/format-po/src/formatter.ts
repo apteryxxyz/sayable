@@ -14,13 +14,22 @@ export function createFormatter(): Formatter {
       if (po.headers.Language !== context.locale)
         throw new Error('PO file locale does not match the expected locale');
 
-      return po.items.map((item) => ({
-        context: item.msgctxt,
-        message: item.msgid,
-        translation: item.msgstr[0],
-        comments: item.comments,
-        references: item.references as never,
-      }));
+      return po.items.map((item) => {
+        const id = item.extractedComments
+          .find((c) => c.startsWith('id:'))
+          ?.slice(3);
+        const comments = item.extractedComments //
+          .filter((c) => !c.startsWith('id:'));
+
+        return {
+          id,
+          context: item.msgctxt,
+          message: item.msgid,
+          translation: item.msgstr[0],
+          comments,
+          references: item.references as never,
+        };
+      });
     },
 
     stringify(messages, context) {
@@ -28,10 +37,14 @@ export function createFormatter(): Formatter {
         ? PO.parse(context.previousContent)
         : new PO();
 
+      const items = po.items.reduce((map, item) => {
+        const key = `${item.msgctxt ?? ''}\u0000${item.msgid}`;
+        return map.set(key, item);
+      }, new Map<string, (typeof po.items)[number]>());
+
       // Remove empty headers
       for (const key in po.headers)
         if (!po.headers[key]) delete po.headers[key];
-      po.items = [];
 
       po.headers['POT-Creation-Date'] ||= //
         formatDate(new Date(), 'yyyy-MM-dd HH:mmxxxx');
@@ -41,15 +54,23 @@ export function createFormatter(): Formatter {
       po.headers['X-Generator'] = 'sayable';
 
       for (const message of messages) {
-        const item = new PO.Item();
+        const key = `${message.context ?? ''}\u0000${message.message}`;
+        const item = items.get(key) ?? new PO.Item();
+
         item.msgid = message.message;
         if (message.context) item.msgctxt = message.context;
         item.msgstr = [message.translation ?? ''];
-        item.comments = message.comments ?? [];
+
+        const comments: string[] = [];
+        if (message.id) comments.push(`id:${message.id}`);
+        if (message.comments.length) comments.push(...message.comments);
+        item.extractedComments = comments;
+
         item.references = message.references ?? [];
-        po.items.push(item);
+        items.set(key, item);
       }
 
+      po.items = Array.from(items.values());
       return po.toString();
     },
   };

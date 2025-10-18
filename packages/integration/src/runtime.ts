@@ -27,8 +27,8 @@ export interface Sayable {
   (strings: TemplateStringsArray, ...placeholders: unknown[]): string;
 
   /**
-   * Provide a context for the message, used to disambiguate identical strings
-   * that have different meanings depending on usage.
+   * Provide a custom id or context for the message, the latter used to disambiguate
+   * identical strings that have different meanings depending on usage.
    *
    * @example
    * ```ts
@@ -36,10 +36,10 @@ export interface Sayable {
    * say({ context: 'correctness' })`Right`
    * ```
    *
-   * @param descriptor Object containing an optional `context` property
+   * @param descriptor Object containing optional `id` and `context` properties
    * @remark This is a macro and must be used with the relevant sayable plugin
    */
-  (descriptor: { context?: string }): Sayable;
+  (descriptor: { id?: string; context?: string }): Sayable;
 }
 
 export type ReadonlySayable = Sayable & {

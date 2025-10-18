@@ -135,7 +135,10 @@ mod tests {
   #[test]
   fn generate_composite_message() {
     let message = CompositeMessage::new(
-      None,
+      CompositeMessageDescriptor {
+        id: None,
+        context: None,
+      },
       vec![],
       vec![],
       vec![

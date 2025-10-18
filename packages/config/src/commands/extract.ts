@@ -160,7 +160,8 @@ async function extractMessages(path: string) {
   return messages.map((message) => ({
     message: message.toICUString(),
     translation: message.toICUString(),
-    context: message.context,
+    id: message.descriptor.id,
+    context: message.descriptor.context,
     comments: message.comments,
     references: message.references //
       .map((ref) => relative(process.cwd(), ref).replaceAll('\\', '/')),
@@ -171,8 +172,8 @@ function mapMessages(...messages: Formatter.Message[]) {
   const mappedMessages = new Map<string, Formatter.Message>();
 
   for (const message of messages) {
-    const hash = generateHash(message.message, message.context);
-    const existingMessage = mappedMessages.get(hash);
+    const id = message.id ?? generateHash(message.message, message.context);
+    const existingMessage = mappedMessages.get(id);
 
     if (existingMessage) {
       for (const comment of message.comments ?? [])
@@ -182,7 +183,7 @@ function mapMessages(...messages: Formatter.Message[]) {
         if (!existingMessage.references.includes(reference))
           existingMessage.references.push(reference);
     } else {
-      mappedMessages.set(hash, message);
+      mappedMessages.set(id, message);
     }
   }
 
@@ -225,6 +226,7 @@ function updateMessages(
       message: newMessage.message,
       translation: undefined,
       ...existingMessage,
+      id: newMessage.id,
       context: newMessage.context,
       comments: newMessage.comments,
       references: newMessage.references,

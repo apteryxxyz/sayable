@@ -26,6 +26,7 @@ export namespace Formatter {
   export interface Message {
     message: string;
     translation?: string;
+    id: string | undefined;
     context: string | undefined;
     comments: string[];
     references: string[];

@@ -6,7 +6,8 @@ use swc_core::ecma::ast::*;
 
 use crate::core::context::Context;
 use crate::core::messages::{
-  ArgumentMessage, ChoiceMessage, ChoiceMessageBranch, CompositeMessage, LiteralMessage, Message,
+  ArgumentMessage, ChoiceMessage, ChoiceMessageBranch, CompositeMessage,
+  CompositeMessageDescriptor, LiteralMessage, Message,
 };
 
 fn parse_expression(ctx: &Rc<RefCell<Context>>, expr: &Expr, fallback: bool) -> Option<Message> {
@@ -43,6 +44,14 @@ pub fn parse_tagged_template(
       }
     }
 
+    let id = descriptor
+      .and_then(|obj| find_property_value(obj, "id"))
+      .and_then(|val| {
+        val
+          .as_lit()
+          .map(|lit| lit.as_str().map(|str| str.value.to_string()))
+      })
+      .flatten();
     let context = descriptor
       .and_then(|obj| find_property_value(obj, "context"))
       .and_then(|val| {
@@ -53,7 +62,7 @@ pub fn parse_tagged_template(
       .flatten();
 
     return Some(CompositeMessage::new(
-      context,
+      CompositeMessageDescriptor { id, context },
       get_position_comments(ctx, tagged_tpl.tag.span_lo()).map_or([].into(), |s| s),
       get_position_reference(ctx, tagged_tpl.tag.span_lo()).map_or([].into(), |s| [s].into()),
       children,
@@ -113,6 +122,14 @@ pub fn parse_call_expression(
       value.clone(),
     );
 
+    let id = descriptor
+      .and_then(|obj| find_property_value(obj, "id"))
+      .and_then(|val| {
+        val
+          .as_lit()
+          .map(|lit| lit.as_str().map(|str| str.value.to_string()))
+      })
+      .flatten();
     let context = descriptor
       .and_then(|obj| find_property_value(obj, "context"))
       .and_then(|val| {
@@ -123,7 +140,7 @@ pub fn parse_call_expression(
       .flatten();
 
     return Some(CompositeMessage::new(
-      context,
+      CompositeMessageDescriptor { id, context },
       get_position_comments(ctx, call.callee.as_expr()?.span_lo()).map_or([].into(), |s| s),
       get_position_reference(ctx, call.callee.as_expr()?.span_lo())
         .map_or([].into(), |s| [s].into()),

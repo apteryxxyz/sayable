@@ -7,8 +7,8 @@ use swc_core::ecma::ast::*;
 
 use crate::core::context::Context;
 use crate::core::messages::{
-  ArgumentMessage, ChoiceMessage, ChoiceMessageBranch, CompositeMessage, ElementMessage,
-  LiteralMessage, Message,
+  ArgumentMessage, ChoiceMessage, ChoiceMessageBranch, CompositeMessage,
+  CompositeMessageDescriptor, ElementMessage, LiteralMessage, Message,
 };
 use crate::features::js::parser::{
   get_position_comments, get_position_reference, use_expression_key,
@@ -121,7 +121,10 @@ pub fn parse_jsx_container_element(
     }
 
     return Some(CompositeMessage::new(
-      None,
+      CompositeMessageDescriptor {
+        id: None,
+        context: None,
+      },
       get_position_comments(ctx, element.span_lo()).map_or([].into(), |s| s),
       get_position_reference(ctx, element.span_lo()).map_or([].into(), |s| [s].into()),
       children,
@@ -213,7 +216,10 @@ pub fn parse_jsx_self_closing_element(
     );
 
     return Some(CompositeMessage::new(
-      None,
+      CompositeMessageDescriptor {
+        id: None,
+        context: None,
+      },
       get_position_comments(ctx, element.span_lo()).map_or([].into(), |s| s),
       get_position_reference(ctx, element.span_lo()).map_or([].into(), |s| [s].into()),
       vec![choice.into()],
