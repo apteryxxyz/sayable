@@ -4,7 +4,7 @@ import { Command } from '@commander-js/extra-typings';
 import type { output } from 'zod';
 import { resolveConfig } from '~/loader/resolve.js';
 import Logger, { loggerStorage } from '~/logger.js';
-import type { Catalogue, Configuration, Formatter } from '~/shapes.js';
+import type { Bucket, Configuration, Formatter } from '~/shapes.js';
 import {
   readMessages,
   resolveOutputFilePath,
@@ -25,7 +25,7 @@ export default new Command()
     logger.header('📦 Compiling Messages');
 
     const watchers = [];
-    for (const catalogue of config.catalogues) {
+    for (const catalogue of config.buckets) {
       const watcher = await processCatalogue(catalogue, config, options);
       watchers.push(watcher());
     }
@@ -33,7 +33,7 @@ export default new Command()
   });
 
 async function processCatalogue(
-  catalogue: output<typeof Catalogue>,
+  catalogue: output<typeof Bucket>,
   config: output<typeof Configuration>,
   options: { watch: boolean },
 ) {
@@ -87,7 +87,7 @@ async function processCatalogue(
 async function hydrateMessages(
   cache: Map<string, Record<string, string>>,
   config: output<typeof Configuration>,
-  catalogue: output<typeof Catalogue>,
+  catalogue: output<typeof Bucket>,
   locale: string,
   messages: Record<string, Formatter.Message>,
 ) {
@@ -101,7 +101,7 @@ async function hydrateMessages(
 async function applyFallbacks(
   cache: Map<string, Record<string, string>>,
   config: output<typeof Configuration>,
-  catalogue: output<typeof Catalogue>,
+  catalogue: output<typeof Bucket>,
   locale: string,
   messages: Record<string, Formatter.Message>,
 ) {
@@ -131,7 +131,7 @@ async function applyFallbacks(
 }
 
 async function writeTranslations(
-  catalogue: output<typeof Catalogue>,
+  catalogue: output<typeof Bucket>,
   locale: string,
   translations: Record<string, string>,
 ) {

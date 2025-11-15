@@ -10,8 +10,8 @@
   "files": ["dist", "!dist/**/*.map"],
   "exports": {
     ".": {
-      "types": "./dist/runtime.d.ts",
-      "default": "./dist/runtime.js"
+      "types": "./dist/runtime.d.mts",
+      "default": "./dist/runtime.mjs"
     }
   },
   "peerDependencies": {
@@ -19,7 +19,7 @@
     "sayable": "*"
   },
   "devDependencies": {
-    "@types/react": "^19.2.2",
+    "@types/react": "^19.2.5",
     "react": "^19.2.0",
     "sayable": "workspace:^"
   }

@@ -10,15 +10,25 @@
   "files": ["dist", "!dist/**/*.map"],
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
+      "types": "./dist/index.d.mts",
+      "default": "./dist/index.mjs"
+    },
+    "./core": {
+      "types": "./dist/core/index.d.mts",
+      "default": "./dist/core/index.mjs"
     }
   },
-  "dependencies": {
-    "@sayable/factory": "workspace:^"
-  },
   "devDependencies": {
-    "@babel/core": "^7.28.4",
-    "@types/babel__core": "^7.20.5"
+    "@babel/core": "^7.28.5",
+    "@types/babel__core": "^7.20.5",
+    "@types/babel__generator": "^7.27.0",
+    "@types/babel__traverse": "^7.28.0"
+  },
+  "dependencies": {
+    "@babel/generator": "^7.28.5",
+    "@babel/parser": "^7.28.5",
+    "@babel/traverse": "^7.28.5",
+    "@babel/types": "^7.28.5",
+    "js-sha256": "^0.11.1"
   }
 }

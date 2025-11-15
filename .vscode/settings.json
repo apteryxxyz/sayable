@@ -19,20 +19,14 @@
       "source.organizeImports.biome": "explicit"
     }
   },
-  "[rust]": {
-    "editor.defaultFormatter": "rust-lang.rust-analyzer"
-  },
 
   // TypeScript
   "typescript.preferences.importModuleSpecifierEnding": "js",
   "typescript.inlayHints.parameterNames.enabled": "all",
   "typescript.inlayHints.variableTypes.suppressWhenTypeMatchesName": true,
 
-  // Rust
-  "rust-analyzer.linkedProjects": ["packages/plugin-swc/Cargo.toml"],
-
   // Code Spell Checker
-  "cSpell.language": "en-AU",
+  "cSpell.language": "en-GB",
   "cSpell.words": ["sayable"],
 
   // Todo Tree

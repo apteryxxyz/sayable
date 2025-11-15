@@ -10,26 +10,25 @@
   "files": ["dist", "!dist/**/*.map"],
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
+      "types": "./dist/index.d.mts",
+      "default": "./dist/index.mjs"
     }
   },
   "bin": {
-    "sayable": "./dist/commands/index.js"
+    "sayable": "./dist/commands/index.mjs"
   },
   "dependencies": {
     "@commander-js/extra-typings": "^14.0.0",
-    "commander": "^14.0.1",
+    "@sayable/babel-plugin": "workspace:*",
+    "commander": "^14.0.2",
     "neverthrow": "^8.2.0",
     "picomatch": "^4.0.3",
     "zod": "^4.1.12"
   },
   "peerDependencies": {
-    "@sayable/factory": "*",
     "typescript": "*"
   },
   "devDependencies": {
-    "@sayable/factory": "workspace:^",
     "@types/picomatch": "^4.0.2",
     "typescript": "^5.9.3"
   }

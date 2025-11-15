@@ -1,4 +1,4 @@
-import { transform } from '@sayable/factory';
+import { transformCode } from '@sayable/babel-plugin/core';
 import { createUnplugin } from 'unplugin';
 
 export default createUnplugin(() => {
@@ -6,7 +6,7 @@ export default createUnplugin(() => {
     name: 'sayable',
     transform: {
       filter: { id: { exclude: /node_modules/ } },
-      handler: (code, id) => transform(id, code),
+      handler: (code, id) => transformCode(id, code),
     },
   };
 });

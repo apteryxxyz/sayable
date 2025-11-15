@@ -1,5 +1,5 @@
 name = "carbon-ts"
-main = "dist/entry.js"
+main = "dist/entry.mjs"
 compatibility_date = "2025-08-23"
 
 [build]

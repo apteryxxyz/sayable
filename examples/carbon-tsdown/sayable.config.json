@@ -2,7 +2,7 @@
   "$schema": "./node_modules/@sayable/config/dist/schema.json",
   "sourceLocale": "en",
   "locales": ["en", "fr"],
-  "catalogues": [
+  "buckets": [
     {
       "include": ["src/**/*.ts"],
       "output": "src/locales/{locale}/messages.{extension}"

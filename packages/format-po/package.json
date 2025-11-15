@@ -9,8 +9,8 @@
   },
   "exports": {
     ".": {
-      "types": "./dist/formatter.d.ts",
-      "default": "./dist/formatter.js"
+      "types": "./dist/formatter.d.mts",
+      "default": "./dist/formatter.mjs"
     }
   },
   "files": ["dist", "!dist/**/*.map"],

@@ -9,18 +9,19 @@ import {
 } from 'node:fs/promises';
 import { dirname, join, relative, resolve } from 'node:path';
 import { Command } from '@commander-js/extra-typings';
-import { extract, generateHash } from '@sayable/factory';
+import {
+  extractMessages as extract,
+  generateHash,
+} from '@sayable/babel-plugin/core';
 import pm from 'picomatch';
 import type { output } from 'zod';
 import { resolveConfig } from '~/loader/resolve.js';
 import Logger, { loggerStorage } from '~/logger.js';
-import type { Catalogue, Configuration, Formatter } from '~/shapes.js';
+import type { Bucket, Configuration, Formatter } from '~/shapes.js';
 
 export default new Command()
   .name('extract')
-  .description(
-    'Extract messages from source files into translation catalogues.',
-  )
+  .description('Extract messages from source files into translation buckets.')
   .option('-v, --verbose', 'enable verbose logging', false)
   .option('-q, --quiet', 'suppress all logging', false)
   .option('-w, --watch', 'watch source files for changes', false)
@@ -32,7 +33,7 @@ export default new Command()
     logger.header('🛠 Extracting Messages');
 
     const watchers = [];
-    for (const catalogue of config.catalogues) {
+    for (const catalogue of config.buckets) {
       const watcher = await processCatalogue(catalogue, config, options);
       watchers.push(watcher());
     }
@@ -40,7 +41,7 @@ export default new Command()
   });
 
 async function processCatalogue(
-  catalogue: output<typeof Catalogue>,
+  catalogue: output<typeof Bucket>,
   config: output<typeof Configuration>,
   options: { watch: boolean },
 ) {
@@ -103,7 +104,7 @@ async function processCatalogue(
   };
 }
 
-async function globCatalogue(catalogue: output<typeof Catalogue>) {
+async function globCatalogue(catalogue: output<typeof Bucket>) {
   const paths: string[] = [];
   for await (const file of glob(catalogue.include, {
     exclude: catalogue.exclude,
@@ -191,7 +192,7 @@ function mapMessages(...messages: Formatter.Message[]) {
 }
 
 export function resolveOutputFilePath(
-  catalogue: output<typeof Catalogue>,
+  catalogue: output<typeof Bucket>,
   locale: string,
   extension = catalogue.formatter.extension,
 ) {
@@ -203,7 +204,7 @@ export function resolveOutputFilePath(
 }
 
 export async function readMessages(
-  catalogue: output<typeof Catalogue>,
+  catalogue: output<typeof Bucket>,
   locale: string,
   path = resolveOutputFilePath(catalogue, locale),
 ) {
@@ -237,7 +238,7 @@ function updateMessages(
 }
 
 async function writeMessages(
-  catalogue: output<typeof Catalogue>,
+  catalogue: output<typeof Bucket>,
   locale: string,
   sourceLocale: string,
   newMessages: Record<string, Formatter.Message>,

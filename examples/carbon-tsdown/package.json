@@ -6,8 +6,8 @@
     "check": "tsc --noEmit",
     "extract": "sayable extract",
     "compile": "sayable compile",
-    "build": "tsdown && shx cp -r src/locales dist",
-    "dev": "wrangler dev --port 3000"
+    "build": "tsdown",
+    "dev": "wrangler dev"
   },
   "dependencies": {
     "@buape/carbon": "0.13.0",

@@ -87,6 +87,8 @@ export function Say(props: { id: string; [match: string]: unknown }) {
   const say = useSay();
   const descriptor = resolveJsxSafePropKeys(props);
 
+  console.log({ say, descriptor, props });
+
   return createElement(Renderer, {
     html: say.call(descriptor),
     components(tag?: string) {

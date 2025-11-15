@@ -1,21 +1,10 @@
-import type * as babelCore from '@babel/core';
-import { transform } from '@sayable/factory';
+import type { PluginObj } from '@babel/core';
+import { Context } from './core/context.js';
+import { Visitor } from './core/visitor.js';
 
-export default function ({ parse }: typeof babelCore): babelCore.PluginObj {
+export default function (): PluginObj {
   return {
     name: 'sayable',
-    visitor: {
-      Program(path) {
-        const currentTarget = //
-          Reflect.get(path.hub, 'file') as babelCore.BabelFile;
-
-        const newCode = transform(
-          currentTarget.opts.filename!,
-          currentTarget.code,
-        );
-        const newFile = parse(newCode, currentTarget.opts)!;
-        path.node.body = newFile.program.body;
-      },
-    },
+    visitor: new Visitor(new Context([])).toHandlers(),
   };
 }

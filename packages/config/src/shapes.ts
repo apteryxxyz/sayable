@@ -43,7 +43,7 @@ async function tryImport(id: string) {
   }
 }
 
-export const Catalogue = z.object({
+export const Bucket = z.object({
   include: z.array(z.string()),
   exclude: z.array(z.string()).optional(),
   output: z.templateLiteral([
@@ -77,7 +77,7 @@ export const Configuration = z
     sourceLocale: z.string(),
     locales: z.tuple([z.string()], z.string()),
     fallbackLocales: z.record(z.string(), z.array(z.string())).optional(),
-    catalogues: z.array(Catalogue),
+    buckets: z.array(Bucket),
   })
   .refine(
     (c) => c.sourceLocale === c.locales[0],

@@ -1,3 +1,5 @@
+Error.stackTraceLimit = 100;
+
 import { defineConfig } from 'tsdown';
 import sayable from 'unplugin-sayable/rolldown';
 
