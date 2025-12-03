@@ -1,5 +1,5 @@
 {
-  "$schema": "./node_modules/@sayable/config/dist/schema.json",
+  "$schema": "./node_modules/@saykit/config/dist/schema.json",
   "sourceLocale": "en",
   "locales": ["en", "fr"],
   "buckets": [

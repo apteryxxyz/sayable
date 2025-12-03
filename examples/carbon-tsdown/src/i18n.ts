@@ -1,6 +1,6 @@
-import { Sayable } from 'sayable';
+import { SayKit } from 'saykit';
 
-const say = new Sayable({
+const say = new SayKit({
   en: () =>
     import('./locales/en/messages.json') //
       .then((m) => m.default),

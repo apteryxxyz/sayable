@@ -1,4 +1,4 @@
-import { SayProvider } from '@sayable/react';
+import { SayProvider } from '@saykit/react';
 import { notFound } from 'next/navigation.js';
 import say from '../../i18n';
 

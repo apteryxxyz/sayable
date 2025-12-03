@@ -4,11 +4,11 @@ import {
   type CommandInteraction,
   CommandWithSubcommands,
 } from '@buape/carbon';
-import { sayable } from '@sayable/carbon';
-import type { Sayable } from 'sayable';
+import { saykit } from '@saykit/carbon';
+import type { SayKit } from 'saykit';
 
-class AddCommand extends sayable(Command) {
-  constructor(say: Sayable) {
+class AddCommand extends saykit(Command) {
+  constructor(say: SayKit) {
     super(say, (say) => ({
       name: say`add`,
       description: say`Add two numbers!`,
@@ -39,8 +39,8 @@ class AddCommand extends sayable(Command) {
   }
 }
 
-class SubtractCommand extends sayable(Command) {
-  constructor(say: Sayable) {
+class SubtractCommand extends saykit(Command) {
+  constructor(say: SayKit) {
     super(say, (say) => ({
       name: say`subtract`,
       description: say`Subtract two numbers!`,
@@ -71,8 +71,8 @@ class SubtractCommand extends sayable(Command) {
   }
 }
 
-export class MathsCommand extends sayable(CommandWithSubcommands) {
-  constructor(say: Sayable) {
+export class MathsCommand extends saykit(CommandWithSubcommands) {
+  constructor(say: SayKit) {
     super(say, (say) => ({
       name: say`maths`,
       description: say`Maths commands!`,

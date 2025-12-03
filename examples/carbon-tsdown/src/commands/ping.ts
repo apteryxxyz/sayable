@@ -1,10 +1,10 @@
 import { Command, type CommandInteraction } from '@buape/carbon';
 import { DiscordSnowflake } from '@sapphire/snowflake';
-import { sayable } from '@sayable/carbon';
-import type { Sayable } from 'sayable';
+import { saykit } from '@saykit/carbon';
+import type { SayKit } from 'saykit';
 
-export class PingCommand extends sayable(Command) {
-  constructor(say: Sayable) {
+export class PingCommand extends saykit(Command) {
+  constructor(say: SayKit) {
     super(say, (say) => ({
       name: say`ping`,
       description: say`Ping the bot!`,

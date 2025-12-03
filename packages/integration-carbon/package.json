@@ -1,5 +1,5 @@
 {
-  "name": "@sayable/carbon",
+  "name": "@saykit/carbon",
   "version": "0.0.0",
   "type": "module",
   "scripts": {
@@ -16,10 +16,10 @@
   },
   "peerDependencies": {
     "@buape/carbon": "*",
-    "sayable": "*"
+    "saykit": "*"
   },
   "devDependencies": {
     "@buape/carbon": "0.13.0",
-    "sayable": "workspace:^"
+    "saykit": "workspace:^"
   }
 }

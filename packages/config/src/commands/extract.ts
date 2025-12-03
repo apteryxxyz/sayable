@@ -12,7 +12,7 @@ import { Command } from '@commander-js/extra-typings';
 import {
   extractMessages as extract,
   generateHash,
-} from '@sayable/babel-plugin/core';
+} from '@saykit/babel-plugin/core';
 import pm from 'picomatch';
 import type { output } from 'zod';
 import { resolveConfig } from '~/loader/resolve.js';

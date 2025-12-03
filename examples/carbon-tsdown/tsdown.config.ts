@@ -1,9 +1,9 @@
 Error.stackTraceLimit = 100;
 
 import { defineConfig } from 'tsdown';
-import sayable from 'unplugin-sayable/rolldown';
+import saykit from 'unplugin-saykit/rolldown';
 
 export default defineConfig({
   entry: ['src/entry.ts'],
-  plugins: [sayable()],
+  plugins: [saykit()],
 });

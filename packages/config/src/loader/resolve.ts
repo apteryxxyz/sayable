@@ -3,7 +3,7 @@ import { Configuration } from '~/shapes.js';
 import { findConfigFile } from './explorer.js';
 import loaders from './loaders.js';
 
-export async function resolveConfig(name = 'sayable') {
+export async function resolveConfig(name = 'saykit') {
   const file = await findConfigFile(name, process.cwd());
   if (!file) throw new Error(`Could not find config file for "${name}"`);
 
@@ -14,8 +14,8 @@ export async function resolveConfig(name = 'sayable') {
   let config = await loader(file.id, file.content);
   if (!config || typeof config !== 'object')
     throw new Error(`Invalid config file for "${name}"`);
-  if (config && typeof config === 'object' && 'sayable' in config)
-    config = config.sayable;
+  if (config && typeof config === 'object' && 'saykit' in config)
+    config = config.saykit;
 
   const result = await Configuration.safeParseAsync(config);
   if (result.error)

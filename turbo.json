@@ -23,7 +23,7 @@
     },
     "build": {
       "dependsOn": ["^build"],
-      "inputs": ["Cargo.toml", "src/**"],
+      "inputs": ["src/**"],
       "outputs": ["dist/**"],
       "outputLogs": "new-only"
     },

@@ -14,18 +14,18 @@ import {
 import {
   type Disallow,
   type NumeralOptions,
-  Sayable,
+  SayKit,
   type SelectOptions,
-} from 'sayable';
+} from 'saykit';
 import { Renderer } from './components/renderer.js';
 import { type PropsWithJSXSafeKeys, resolveJsxSafePropKeys } from './types.js';
 
 const SayContext = //
-  createContext<ReturnType<Sayable['freeze']> | null>(null);
+  createContext<ReturnType<SayKit['freeze']> | null>(null);
 SayContext.displayName = 'SayContext';
 
 /**
- * Provide a localised {@link runtime.Sayable} instance to descendant components via context.
+ * Provide a localised {@link runtime.SayKit} instance to descendant components via context.
  * Must wrap any component tree using {@link useSay} or {@link Say}.
  *
  * @param props.locale The current locale
@@ -39,10 +39,10 @@ export function SayProvider({
 }: PropsWithChildren<{
   locale: string;
   locales: string[];
-  messages: Sayable.Messages;
+  messages: SayKit.Messages;
 }>) {
   const say = useMemo(() => {
-    const instance = new Sayable({});
+    const instance = new SayKit({});
     for (const l of locales) instance.assign(l, messages);
     instance.activate(locale);
     return instance.freeze();
@@ -52,10 +52,10 @@ export function SayProvider({
 }
 
 /**
- * Get the current {@link Sayable} instance.
+ * Get the current {@link SayKit} instance.
  * Must be called within a {@link SayProvider}.
  *
- * @returns The current {@link Sayable} instance
+ * @returns The current {@link SayKit} instance
  * @throws If no provider is in the component tree
  */
 export function useSay() {
@@ -69,7 +69,7 @@ export function useSay() {
  *
  * @param descriptor Descriptor to render the translation for
  * @returns The translation node for the descriptor
- * @remark This is a macro and must be used with the relevant sayable plugin
+ * @remark This is a macro and must be used with the relevant saykit plugin
  */
 // @ts-expect-error macro
 export function Say(
@@ -78,7 +78,7 @@ export function Say(
 export function Say(props: { id: string; [match: string]: unknown }) {
   if (!('id' in props))
     throw new Error(
-      "'Say' is a macro and must be used with the relevant sayable plugin",
+      "'Say' is a macro and must be used with the relevant saykit plugin",
       {
         cause: new Error("The 'id' property is required for a descriptor"),
       },
@@ -86,8 +86,6 @@ export function Say(props: { id: string; [match: string]: unknown }) {
 
   const say = useSay();
   const descriptor = resolveJsxSafePropKeys(props);
-
-  console.log({ say, descriptor, props });
 
   return createElement(Renderer, {
     html: say.call(descriptor),
@@ -121,7 +119,7 @@ export namespace Say {
    * @param props._ Number to determine the plural form of
    * @param props Options pluralisation rules keyed by CLDR categories or specific numbers
    * @returns The plural form of the number, as a React node
-   * @remark This is a macro and must be used with the relevant sayable plugin
+   * @remark This is a macro and must be used with the relevant saykit plugin
    */
   export function Plural(
     props: { _: number } & PropsWithJSXSafeKeys<
@@ -130,7 +128,7 @@ export namespace Say {
   ): ReactNode {
     void props;
     throw new Error(
-      "'Say.Plural' is a macro and must be used with the relevant sayable plugin",
+      "'Say.Plural' is a macro and must be used with the relevant saykit plugin",
     );
   }
 
@@ -151,7 +149,7 @@ export namespace Say {
    * @param props._ Number to determine the ordinal form of
    * @param props Options ordinal rules keyed by CLDR categories or specific numbers
    * @returns The ordinal form of the number, as a React node
-   * @remark This is a macro and must be used with the relevant sayable plugin
+   * @remark This is a macro and must be used with the relevant saykit plugin
    */
   export function Ordinal(
     props: { _: number } & PropsWithJSXSafeKeys<
@@ -160,7 +158,7 @@ export namespace Say {
   ): ReactNode {
     void props;
     throw new Error(
-      "'Say.Ordinal' is a macro and must be used with the relevant sayable plugin",
+      "'Say.Ordinal' is a macro and must be used with the relevant saykit plugin",
     );
   }
 
@@ -180,7 +178,7 @@ export namespace Say {
    * @param props._ Selector value to determine which option is chosen
    * @param props Options a mapping of possible selector values to message strings
    * @returns The select form of the value, as a React node
-   * @remark This is a macro and must be used with the relevant sayable plugin
+   * @remark This is a macro and must be used with the relevant saykit plugin
    */
   export function Select(
     props: { _: string } & PropsWithJSXSafeKeys<
@@ -189,7 +187,7 @@ export namespace Say {
   ): ReactNode {
     void props;
     throw new Error(
-      "'Say.Select' is a macro and must be used with the relevant sayable plugin",
+      "'Say.Select' is a macro and must be used with the relevant saykit plugin",
     );
   }
 }

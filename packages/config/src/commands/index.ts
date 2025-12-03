@@ -5,7 +5,7 @@ import compile from './compile.js';
 import extract from './extract.js';
 
 program
-  .name('sayable')
+  .name('saykit')
   .helpOption('-h, --help', 'Display help for command')
   .helpCommand('help [command]', 'Display help for command')
   .addCommand(compile)

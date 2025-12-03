@@ -1,19 +1,19 @@
 import { Guild } from '@buape/carbon';
-import type { Sayable } from 'sayable';
+import type { SayKit } from 'saykit';
 import { kSay } from '~/constants.js';
 import { getBestLocale } from '~/utils/get-best-locale.js';
 
 declare module '@buape/carbon' {
   interface Guild {
-    get say(): Sayable;
-    [kSay]: Sayable;
+    get say(): SayKit;
+    [kSay]: SayKit;
   }
 }
 
 export function applyGuildExtension() {
   Object.defineProperty(Guild.prototype, 'say', {
     get(this: Guild) {
-      const say = Reflect.get(globalThis, kSay) as Sayable;
+      const say = Reflect.get(globalThis, kSay) as SayKit;
       if (!say) throw new Error('No `say` instance available');
 
       this[kSay] ??= say.clone();

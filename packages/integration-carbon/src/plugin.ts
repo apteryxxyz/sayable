@@ -1,26 +1,26 @@
 import { Plugin } from '@buape/carbon';
-import type { Sayable } from 'sayable';
+import type { SayKit } from 'saykit';
 import { kSay } from './constants.js';
 import { applyBaseInteractionExtension } from './extensions/base-interaction.js';
 import { applyGuildExtension } from './extensions/guild.js';
 
 /**
- * A Carbon plugin that provides a singleton {@link Sayable} instance.
+ * A Carbon plugin that provides a singleton {@link SayKit} instance.
  *
- * `SayablePlugin` registers a {@link Sayable} instance globally and
+ * `SayKitPlugin` registers a {@link SayKit} instance globally and
  * applies interaction and guild-level extensions so that commands and
  * other handlers can access localisation utilities directly.
  *
  * @example
  * ```ts
- * const say = new Sayable({ ... });
- * const client = new Client({ ... }, { ... }, [new SayablePlugin(say)]);
+ * const say = new SayKit({ ... });
+ * const client = new Client({ ... }, { ... }, [new SayKitPlugin(say)]);
  * ```
  */
-export class SayablePlugin extends Plugin {
-  id = 'sayable';
+export class SayKitPlugin extends Plugin {
+  id = 'saykit';
 
-  constructor(say: Sayable) {
+  constructor(say: SayKit) {
     super();
     Reflect.set(globalThis, kSay, say);
     applyBaseInteractionExtension();

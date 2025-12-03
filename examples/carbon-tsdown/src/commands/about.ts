@@ -7,11 +7,11 @@ import {
   TextInput,
   TextInputStyle,
 } from '@buape/carbon';
-import { sayable } from '@sayable/carbon';
-import type { Sayable } from 'sayable';
+import { saykit } from '@saykit/carbon';
+import type { SayKit } from 'saykit';
 
-export class AboutCommand extends sayable(Command) {
-  constructor(say: Sayable) {
+export class AboutCommand extends saykit(Command) {
+  constructor(say: SayKit) {
     super(say, (say) => ({
       name: say`about`,
       description: say`Tell me about yourself!`,
@@ -23,10 +23,10 @@ export class AboutCommand extends sayable(Command) {
   }
 }
 
-export class AboutModal extends sayable(Modal) {
+export class AboutModal extends saykit(Modal) {
   customId = 'about';
 
-  constructor(say: Sayable) {
+  constructor(say: SayKit) {
     super({
       title: say`About You`,
       components: [new NameLabel(say)],
@@ -42,15 +42,15 @@ export class AboutModal extends sayable(Modal) {
   }
 }
 
-class NameLabel extends sayable(Label) {
-  constructor(say: Sayable) {
+class NameLabel extends saykit(Label) {
+  constructor(say: SayKit) {
     super({ label: say`Name` }, new NameTextInput(say));
   }
 }
 
-class NameTextInput extends sayable(TextInput) {
+class NameTextInput extends saykit(TextInput) {
   customId = 'name';
-  constructor(say: Sayable) {
+  constructor(say: SayKit) {
     super({
       placeholder: say`Your name`,
     });

@@ -4,7 +4,7 @@ import { Visitor } from './core/visitor.js';
 
 export default function (): PluginObj {
   return {
-    name: 'sayable',
+    name: 'saykit',
     visitor: new Visitor(new Context([])).toHandlers(),
   };
 }

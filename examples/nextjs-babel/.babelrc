@@ -1,4 +1,4 @@
 {
   "presets": ["next/babel"],
-  "plugins": ["@sayable/babel-plugin"]
+  "plugins": ["@saykit/babel-plugin"]
 }

@@ -6,12 +6,12 @@ import type {
   SelectOptions,
 } from './types.js';
 
-export namespace Sayable {
+export namespace SayKit {
   export type Messages = { [key: string]: string };
   export type Loader = (locale: string) => Awaitable<Messages>;
 }
 
-export interface Sayable {
+export interface SayKit {
   // ===== Macros ===== //
 
   /**
@@ -22,7 +22,7 @@ export interface Sayable {
    * say`Hello, ${name}!`
    * ```
    *
-   * @remark This is a macro and must be used with the relevant sayable plugin
+   * @remark This is a macro and must be used with the relevant saykit plugin
    */
   (strings: TemplateStringsArray, ...placeholders: unknown[]): string;
 
@@ -37,12 +37,12 @@ export interface Sayable {
    * ```
    *
    * @param descriptor Object containing optional `id` and `context` properties
-   * @remark This is a macro and must be used with the relevant sayable plugin
+   * @remark This is a macro and must be used with the relevant saykit plugin
    */
-  (descriptor: { id?: string; context?: string }): Sayable;
+  (descriptor: { id?: string; context?: string }): SayKit;
 }
 
-export type ReadonlySayable = Sayable & {
+export type ReadonlySayKit = SayKit & {
   [K in
     | 'load'
     | 'assign'
@@ -53,32 +53,32 @@ export type ReadonlySayable = Sayable & {
 };
 
 // biome-ignore lint/suspicious/noUnsafeDeclarationMerging: false
-export class Sayable {
-  #loaders: Record<string, Sayable.Loader>;
-  #cache: Map<string, Sayable.Messages>;
+export class SayKit {
+  #loaders: Record<string, SayKit.Loader>;
+  #cache: Map<string, SayKit.Messages>;
   #active: string | undefined;
 
   /**
-   * Create a new Sayable instance.
+   * Create a new SayKit instance.
    *
    * @param loaders A record of locale identifiers mapped to message loaders.
    */
-  constructor(loaders: Record<string, Sayable.Loader>) {
+  constructor(loaders: Record<string, SayKit.Loader>) {
     this.#loaders = loaders;
     this.#cache = new Map();
     this.#active = undefined;
 
     // Allow these properties to be spread into other objects
     Object.defineProperty(this, 'locale', {
-      ...Object.getOwnPropertyDescriptor(Sayable.prototype, ' locale'),
+      ...Object.getOwnPropertyDescriptor(SayKit.prototype, ' locale'),
       enumerable: true,
     });
     Object.defineProperty(this, 'locales', {
-      ...Object.getOwnPropertyDescriptor(Sayable.prototype, ' locales'),
+      ...Object.getOwnPropertyDescriptor(SayKit.prototype, ' locales'),
       enumerable: true,
     });
     Object.defineProperty(this, 'messages', {
-      ...Object.getOwnPropertyDescriptor(Sayable.prototype, ' messages'),
+      ...Object.getOwnPropertyDescriptor(SayKit.prototype, ' messages'),
       enumerable: true,
     });
   }
@@ -106,11 +106,11 @@ export class Sayable {
    * Loads messages for the given locales.
    * If no locales are provided, all available locales are loaded.
    *
-   * @param locales Locales to load messages for, defaults to {@link Sayable.locales}
+   * @param locales Locales to load messages for, defaults to {@link SayKit.locales}
    */
   async load(...locales: string[]) {
     if (Object.isFrozen(this))
-      throw new TypeError('Cannot load messages for an immutable Sayable');
+      throw new TypeError('Cannot load messages for an immutable SayKit');
     if (locales.length === 0) locales = this.locales;
     for (const locale of locales) {
       if (this.#cache.has(locale)) continue;
@@ -125,9 +125,9 @@ export class Sayable {
    * @param locale Locale to assign messages to
    * @param messages Messages to assign
    */
-  assign(locale: string, messages: Sayable.Messages) {
+  assign(locale: string, messages: SayKit.Messages) {
     if (Object.isFrozen(this))
-      throw new TypeError('Cannot assign messages to an immutable Sayable');
+      throw new TypeError('Cannot assign messages to an immutable SayKit');
     this.#cache.set(locale, messages);
     this.#loaders[locale] = () => messages;
   }
@@ -138,7 +138,7 @@ export class Sayable {
    * @throws If no locale is active
    * @throws If no messages are available for the active locale
    */
-  declare messages: Sayable.Messages;
+  declare messages: SayKit.Messages;
   get ' messages'() {
     if (this.#cache.has(this.locale)) return this.#cache.get(this.locale)!;
     throw new Error('No messages loaded for locale');
@@ -153,7 +153,7 @@ export class Sayable {
    */
   activate(locale: string) {
     if (Object.isFrozen(this))
-      throw new TypeError('Cannot change locale of an immutable Sayable');
+      throw new TypeError('Cannot change locale of an immutable SayKit');
     if (!this.#cache.has(locale))
       throw new Error(`No messages loaded for locale '${locale}'`);
     this.#active = locale;
@@ -161,36 +161,36 @@ export class Sayable {
   }
 
   /**
-   * Creates a clone of the Sayable instance, with the same locales and messages.
+   * Creates a clone of the SayKit instance, with the same locales and messages.
    *
-   * @returns A clone of the Sayable instance
+   * @returns A clone of the SayKit instance
    */
   clone() {
     if (Object.isFrozen(this))
-      throw new TypeError('Cannot clone an immutable Sayable');
-    const clone = new Sayable(this.#loaders);
+      throw new TypeError('Cannot clone an immutable SayKit');
+    const clone = new SayKit(this.#loaders);
     clone.#cache = this.#cache;
     clone.#active = this.#active;
     return clone as this;
   }
 
   /**
-   * Freezes the Sayable instance, preventing further modifications.
+   * Freezes the SayKit instance, preventing further modifications.
    *
-   * @returns A readonly Sayable instance
+   * @returns A readonly SayKit instance
    */
   freeze() {
-    return Object.freeze(this) as unknown as ReadonlySayable;
+    return Object.freeze(this) as unknown as ReadonlySayKit;
   }
 
   /**
-   * Calls a defined callback function on each locale, passing the Sayable instance and locale to the callback.
+   * Calls a defined callback function on each locale, passing the SayKit instance and locale to the callback.
    *
    * @param callback Callback function to call on each locale
    */
-  map<T>(callback: (say: ReturnType<Sayable['freeze']>, locale: string) => T) {
+  map<T>(callback: (say: ReturnType<SayKit['freeze']>, locale: string) => T) {
     if (Object.isFrozen(this))
-      throw new TypeError('Cannot map over an immutable Sayable');
+      throw new TypeError('Cannot map over an immutable SayKit');
     return this.locales.map((locale) => {
       const say = this.clone().activate(locale).freeze();
       return callback(say, locale);
@@ -198,21 +198,21 @@ export class Sayable {
   }
 
   /**
-   * Calls the specified callback function for all the elements in an array, passing the Sayable instance and locale to the callback.
+   * Calls the specified callback function for all the elements in an array, passing the SayKit instance and locale to the callback.
    *
    * @param callback Callback function to call for each element
    * @param initial Initial value to use as the first argument to the first call of the callback
    */
   reduce<T>(
     callback: (
-      say: ReturnType<Sayable['freeze']>,
+      say: ReturnType<SayKit['freeze']>,
       locale: string,
       accumulator: T,
     ) => T,
     initial: T,
   ) {
     if (Object.isFrozen(this))
-      throw new TypeError('Cannot reduce over an immutable Sayable');
+      throw new TypeError('Cannot reduce over an immutable SayKit');
     return this.locales.reduce((acc, locale) => {
       const say = this.clone().activate(locale).freeze();
       return callback(say, locale, acc);
@@ -241,8 +241,8 @@ export class Sayable {
    */
   #call(
     locale: string,
-    messages: Sayable.Messages,
-    descriptor: Parameters<Sayable['call']>[0],
+    messages: SayKit.Messages,
+    descriptor: Parameters<SayKit['call']>[0],
   ) {
     const message = messages[descriptor.id];
     if (!message) throw new Error(`Descriptor '${descriptor.id}' not found`);
@@ -281,7 +281,7 @@ export class Sayable {
    * @param _ Number to determine the plural form of
    * @param options Pluralisation rules keyed by CLDR categories or specific numbers
    * @returns The plural form of the number
-   * @remark This is a macro and must be used with the relevant sayable plugin
+   * @remark This is a macro and must be used with the relevant saykit plugin
    */
   plural(
     _: number,
@@ -290,7 +290,7 @@ export class Sayable {
     void _;
     void options;
     throw new Error(
-      "'Sayable#plural' is a macro and must be used with the relevant sayable plugin",
+      "'SayKit#plural' is a macro and must be used with the relevant saykit plugin",
     );
   }
 
@@ -311,7 +311,7 @@ export class Sayable {
    * @param _ Number to determine the ordinal form of
    * @param options Ordinal rules keyed by CLDR categories or specific numbers
    * @returns The ordinal form of the number
-   * @remark This is a macro and must be used with the relevant sayable plugin
+   * @remark This is a macro and must be used with the relevant saykit plugin
    */
   ordinal(
     _: number,
@@ -320,7 +320,7 @@ export class Sayable {
     void _;
     void options;
     throw new Error(
-      "'Sayable#ordinal' is a macro and must be used with the relevant sayable plugin",
+      "'SayKit#ordinal' is a macro and must be used with the relevant saykit plugin",
     );
   }
 
@@ -339,7 +339,7 @@ export class Sayable {
    * @param _ Selector value to determine which option is chosen
    * @param options A mapping of possible selector values to message strings
    * @returns The select form of the value
-   * @remark This is a macro and must be used with the relevant sayable plugin
+   * @remark This is a macro and must be used with the relevant saykit plugin
    */
   select(
     _: string,
@@ -348,7 +348,7 @@ export class Sayable {
     void _;
     void options;
     throw new Error(
-      "'Sayable#select' is a macro and must be used with the relevant sayable plugin",
+      "'SayKit#select' is a macro and must be used with the relevant saykit plugin",
     );
   }
 }

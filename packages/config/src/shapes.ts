@@ -39,7 +39,7 @@ async function tryImport(id: string) {
     const url = pathToFileURL(require.resolve(id));
     return ok(await import(url.toString()));
   } catch {
-    return err(`Cannot find package '${id}', required by sayable`);
+    return err(`Cannot find package '${id}', required by saykit`);
   }
 }
 
@@ -56,7 +56,7 @@ export const Bucket = z.object({
   formatter: Formatter.optional().transform(async (formatter, context) => {
     if (formatter) return formatter;
 
-    const module = await tryImport('@sayable/format-po');
+    const module = await tryImport('@saykit/format-po');
     if (module.isErr()) {
       context.addIssue(module.error);
       return z.NEVER;

@@ -1,4 +1,4 @@
-import { defineConfig } from '@sayable/config';
+import { defineConfig } from '@saykit/config';
 
 export default defineConfig({
   sourceLocale: 'en',

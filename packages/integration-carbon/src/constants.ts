@@ -1,1 +1,1 @@
-export const kSay = Symbol.for('sayable.say');
+export const kSay = Symbol.for('saykit.say');

@@ -1,5 +1,5 @@
 {
-  "name": "unplugin-sayable",
+  "name": "unplugin-saykit",
   "version": "0.0.0",
   "type": "module",
   "scripts": {
@@ -19,7 +19,7 @@
     }
   },
   "dependencies": {
-    "@sayable/babel-plugin": "workspace:^",
+    "@saykit/babel-plugin": "workspace:^",
     "unplugin": "^2.3.10"
   }
 }

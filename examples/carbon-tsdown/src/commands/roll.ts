@@ -6,11 +6,11 @@ import {
   type CommandInteraction,
   Row,
 } from '@buape/carbon';
-import { sayable } from '@sayable/carbon';
-import type { Sayable } from 'sayable';
+import { saykit } from '@saykit/carbon';
+import type { SayKit } from 'saykit';
 
-export class RollCommand extends sayable(Command) {
-  constructor(say: Sayable) {
+export class RollCommand extends saykit(Command) {
+  constructor(say: SayKit) {
     super(say, (say) => ({
       name: say`roll`,
       description: say`Roll the dice!`,
@@ -36,9 +36,9 @@ export class RollCommand extends sayable(Command) {
   }
 }
 
-export class RollAgainButton extends sayable(Button) {
+export class RollAgainButton extends saykit(Button) {
   customId = 'roll-again';
-  constructor(say: Sayable, sides?: number) {
+  constructor(say: SayKit, sides?: number) {
     super({ label: say`Roll Again` });
     if (sides) this.customId = `roll-again:sides=${sides}`;
   }

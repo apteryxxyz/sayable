@@ -1,5 +1,5 @@
 {
-  "name": "@sayable/react",
+  "name": "@saykit/react",
   "version": "0.0.0",
   "type": "module",
   "scripts": {
@@ -16,11 +16,11 @@
   },
   "peerDependencies": {
     "react": "*",
-    "sayable": "*"
+    "saykit": "*"
   },
   "devDependencies": {
     "@types/react": "^19.2.5",
     "react": "^19.2.0",
-    "sayable": "workspace:^"
+    "saykit": "workspace:^"
   }
 }

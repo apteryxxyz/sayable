@@ -1,13 +1,13 @@
 import { type NextRequest, NextResponse } from 'next/server.js';
 
-const sayable = { sourceLocale: 'en', locales: ['en', 'fr'] };
+const saykit = { sourceLocale: 'en', locales: ['en', 'fr'] };
 
 export default function proxy(request: NextRequest) {
   let respondWith = NextResponse.next();
 
-  const defaultLocale = sayable.sourceLocale;
+  const defaultLocale = saykit.sourceLocale;
   let pathLocale = fromUrlPathname(request.nextUrl.pathname);
-  if (pathLocale && !sayable.locales.includes(pathLocale))
+  if (pathLocale && !saykit.locales.includes(pathLocale))
     pathLocale = undefined;
 
   if (pathLocale === defaultLocale) {
@@ -19,7 +19,7 @@ export default function proxy(request: NextRequest) {
   //
   else if (!pathLocale) {
     let requestLocale = fromRequestCookies(request.cookies) ?? defaultLocale;
-    if (!sayable.locales.includes(requestLocale)) requestLocale = defaultLocale;
+    if (!saykit.locales.includes(requestLocale)) requestLocale = defaultLocale;
 
     request.nextUrl.pathname = `/${requestLocale}${request.nextUrl.pathname}`;
 

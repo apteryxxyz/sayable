@@ -1,5 +1,5 @@
 {
-  "name": "@sayable/config",
+  "name": "@saykit/config",
   "version": "0.0.0",
   "type": "module",
   "scripts": {
@@ -15,11 +15,11 @@
     }
   },
   "bin": {
-    "sayable": "./dist/commands/index.mjs"
+    "saykit": "./dist/commands/index.mjs"
   },
   "dependencies": {
     "@commander-js/extra-typings": "^14.0.0",
-    "@sayable/babel-plugin": "workspace:*",
+    "@saykit/babel-plugin": "workspace:*",
     "commander": "^14.0.2",
     "neverthrow": "^8.2.0",
     "picomatch": "^4.0.3",

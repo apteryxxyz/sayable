@@ -1,4 +1,4 @@
-import { Say } from '@sayable/react';
+import { Say } from '@saykit/react';
 
 export default async function HomePage() {
   const name = 'World';

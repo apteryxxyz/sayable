@@ -4,7 +4,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Language: fr\n"
-"X-Generator: sayable\n"
+"X-Generator: saykit\n"
 
 msgid "Hello, <0>{name}</0>!"
 msgstr "Bonjour, <0>{name}</0>!"

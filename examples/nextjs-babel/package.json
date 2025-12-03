@@ -4,22 +4,22 @@
   "type": "module",
   "scripts": {
     "check": "tsc --noEmit",
-    "extract": "sayable extract",
-    "compile": "sayable compile",
+    "extract": "saykit extract",
+    "compile": "saykit compile",
     "dev": "next dev",
     "build": "next build",
     "start": "next start"
   },
   "dependencies": {
-    "@sayable/react": "workspace:^",
+    "@saykit/react": "workspace:^",
     "next": "^16.0.3",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "sayable": "workspace:^"
+    "saykit": "workspace:^"
   },
   "devDependencies": {
-    "@sayable/babel-plugin": "workspace:^",
-    "@sayable/config": "workspace:^",
+    "@saykit/babel-plugin": "workspace:^",
+    "@saykit/config": "workspace:^",
     "@types/react": "^19.2.5",
     "@types/react-dom": "^19.2.3"
   }

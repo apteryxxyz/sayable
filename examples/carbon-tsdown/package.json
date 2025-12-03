@@ -4,21 +4,21 @@
   "type": "module",
   "scripts": {
     "check": "tsc --noEmit",
-    "extract": "sayable extract",
-    "compile": "sayable compile",
+    "extract": "saykit extract",
+    "compile": "saykit compile",
     "build": "tsdown",
     "dev": "wrangler dev"
   },
   "dependencies": {
     "@buape/carbon": "0.13.0",
     "@sapphire/snowflake": "^3.5.5",
-    "@sayable/carbon": "workspace:^",
-    "sayable": "workspace:^"
+    "@saykit/carbon": "workspace:^",
+    "saykit": "workspace:^"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "4.20251011.0",
-    "@sayable/config": "workspace:^",
-    "unplugin-sayable": "workspace:^",
+    "@saykit/config": "workspace:^",
+    "unplugin-saykit": "workspace:^",
     "ts-patch": "^3.3.0",
     "typescript": "5.9.3",
     "wrangler": "4.43.0"

@@ -1,5 +1,5 @@
 {
-  "name": "@sayable/format-po",
+  "name": "@saykit/format-po",
   "version": "0.0.0",
   "type": "module",
   "scripts": {
@@ -19,9 +19,9 @@
     "pofile": "^1.1.4"
   },
   "peerDependencies": {
-    "@sayable/config": "*"
+    "@saykit/config": "*"
   },
   "devDependencies": {
-    "@sayable/config": "workspace:^"
+    "@saykit/config": "workspace:^"
   }
 }
