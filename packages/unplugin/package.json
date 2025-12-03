@@ -20,6 +20,6 @@
   },
   "dependencies": {
     "@saykit/babel-plugin": "workspace:^",
-    "unplugin": "^2.3.10"
+    "unplugin": "^2.3.11"
   }
 }
