@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "check": "tsc --noEmit",
+    "test": "vitest",
     "build": "tsdown",
     "prepack": "pnpm build"
   },
