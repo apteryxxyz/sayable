@@ -8,7 +8,7 @@ export type PropsWithJSXSafeKeys<T> = {
 
 export function resolveJsxSafePropKeys<T extends Record<string, unknown>>(
   props: T,
-) {
+): T & Record<string | number, unknown> {
   const result: Record<string, unknown> = {};
   for (const key in props) {
     if (/^_\d+$/.test(key)) result[key.slice(1)] = props[key];

@@ -6,5 +6,8 @@ msgstr ""
 "Language: fr\n"
 "X-Generator: saykit\n"
 
-msgid "Hello, <0>{name}</0>!"
-msgstr "Bonjour, <0>{name}</0>!"
+msgid "Hello from the <0>{region}</0>"
+msgstr "Bonjour de la <0>{region}</0>"
+
+msgid "Loading..."
+msgstr "Chargement..."

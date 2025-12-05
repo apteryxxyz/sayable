@@ -10,9 +10,21 @@
   "files": ["dist", "!dist/**/*.map"],
   "exports": {
     ".": {
-      "types": "./dist/runtime.d.mts",
-      "default": "./dist/runtime.mjs"
+      "types": "./dist/index.d.mts",
+      "react-server": "./dist/index.server.mjs",
+      "default": "./dist/index.mjs"
+    },
+    "./client": {
+      "types": "./dist/client.d.mts",
+      "default": "./dist/client.mjs"
+    },
+    "./server": {
+      "types": "./dist/server.d.mts",
+      "default": "./dist/server.mjs"
     }
+  },
+  "dependencies": {
+    "server-only": "^0.0.1"
   },
   "peerDependencies": {
     "react": "*",

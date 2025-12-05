@@ -1,13 +1,20 @@
-import { Say } from '@saykit/react';
+import { init } from '../../i18n';
+import ClientComponent from './client-component';
+import ServerComponent from './server-component';
 
-export default async function HomePage() {
-  const name = 'World';
+export default async function HomePage({ params }: PageProps<'/[locale]'>) {
+  const { locale } = await params;
+  await init(locale);
 
   return (
     <main>
-      <Say>
-        Hello, <strong>{name}</strong>!
-      </Say>
+      <div style={{ border: '1px solid red' }}>
+        <ServerComponent />
+      </div>
+
+      <div style={{ border: '1px solid blue' }}>
+        <ClientComponent />
+      </div>
     </main>
   );
 }
