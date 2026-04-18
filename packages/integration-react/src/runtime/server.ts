@@ -13,8 +13,8 @@ const serverContext = cache<() => SayRef>(() => ({ current: null }));
  */
 export function setSay(say: Say | ReadonlySay | (() => Say | ReadonlySay)): void {
   const ref = serverContext();
-  if (say instanceof Say) ref.current = say as ReadonlySay;
-  else ref.current = (say as () => ReadonlySay)();
+  if (say instanceof Say) ref.current = say.clone().freeze();
+  else ref.current = say().clone().freeze();
 }
 
 /**
@@ -49,7 +49,8 @@ export function unstable_createWithSay(say: Say) {
     getLocale: (props: P) => string | Promise<string>,
   ) {
     return async function WithSay(props: P) {
-      const locale = await getLocale(props);
+      const guess = await getLocale(props);
+      const locale = say.match(guess);
       await say.load(locale);
       say.activate(locale);
       setSay(say);
