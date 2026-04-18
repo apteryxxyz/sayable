@@ -44,8 +44,8 @@ export function unstable_createWithSay(say: Say) {
   /**
    * Wrap a server component so that a {@link Say} instance is initialised before render.
    */
-  return function withSay<P extends object>(
-    Component: (props: P & { locale: string; messages: Say.Messages }) => ReactNode,
+  return function withSay<P = unknown>(
+    Component: (props: PropsWithSay<P>) => ReactNode,
     getLocale: (props: P) => string | Promise<string>,
   ) {
     return async function WithSay(props: P) {
@@ -62,3 +62,5 @@ export function unstable_createWithSay(say: Say) {
     };
   };
 }
+
+export type PropsWithSay<P = unknown> = P & { locale: string; messages: Say.Messages };
