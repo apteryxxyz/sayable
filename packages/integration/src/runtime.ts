@@ -175,11 +175,13 @@ export class Say<
    * @returns A clone of the Say instance
    */
   clone() {
-    return new Say({
+    const copy = new Say({
       locales: this.#locales,
       messages: Object.fromEntries(this.#messages) as any,
       loader: this.#loader,
     }) as unknown as this;
+    copy.#active = this.#active;
+    return copy;
   }
 
   /**
@@ -202,12 +204,15 @@ export class Say<
    *
    * @returns The best matching locale, or the first locale if no matches are found
    */
-  match(guesses: string[]): Locale {
-    for (const guess of guesses) {
+  match(...guesses: (string | string[])[]): Locale {
+    const flat = guesses.flat();
+    if (flat.length === 0) return this.#locales[0]!;
+
+    for (const guess of flat) {
       if (this.#locales.includes(guess as Locale)) return guess as Locale;
     }
 
-    for (const guess of guesses) {
+    for (const guess of flat) {
       const prefix = guess.split('-')[0]!;
       const match = this.#locales.find((l) => l.startsWith(prefix));
       if (match) return match;
