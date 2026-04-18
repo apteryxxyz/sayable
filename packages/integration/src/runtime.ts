@@ -175,11 +175,13 @@ export class Say<
    * @returns A clone of the Say instance
    */
   clone() {
-    return new Say({
+    const copy = new Say({
       locales: this.#locales,
       messages: Object.fromEntries(this.#messages) as any,
       loader: this.#loader,
     }) as unknown as this;
+    copy.#active = this.#active;
+    return copy;
   }
 
   /**
