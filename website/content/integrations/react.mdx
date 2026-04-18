@@ -1,0 +1,109 @@
+---
+title: React
+description: Use SayKit with React to localise your app
+---
+
+SayKit includes a React integration via `@saykit/react`.
+
+The React integration does two things:
+
+- provides a `<Say>` component for rendering translated JSX in both server and client components
+- provides a `<SayProvider>` context that supplies the active locale and messages to client components
+
+## `<Say>`
+
+`<Say>` is the primary way to render translated content, and works in both server and client components via the `react-server` export condition. Write your content naturally as JSX children, variables and elements are both supported.
+
+```tsx
+import { Say } from '@saykit/react';
+
+function CheckoutSummary({ items, total }: { items: number; total: string }) {
+  return (
+    <p>
+      <Say>
+        {items} items · total <strong>{total}</strong>
+      </Say>
+    </p>
+  );
+}
+```
+
+`<Say>` also exposes sub-components for pluralisation, ordinals, and select messages:
+
+```tsx
+<Say.Plural _={count} one="# item in your cart" other="# items in your cart" />
+
+<Say.Ordinal _={position} _1="1st" _2="2nd" _3="3rd" other="#th" />
+
+<Say.Select _={gender} male="He liked it" female="She liked it" other="They liked it" />
+```
+
+<Callout type="info">
+  `Say`, `Say.Plural`, `Say.Ordinal`, and `Say.Select` are macros, they must be used with the
+  relevant SayKit plugin for your build tool. See the [configuration
+  guide](/core-concepts/configuration) for setup.
+</Callout>
+
+## Client Components
+
+```ts
+import { SayProvider, useSay } from '@saykit/react/client';
+```
+
+### `<SayProvider>`
+
+Render `SayProvider` once near the top of your client tree, passing in the `locale` string and the `messages` catalogue for that locale.
+
+```tsx
+import { SayProvider } from '@saykit/react/client';
+
+const locale = say.match(...);
+await say.load(locale);
+say.activate(locale);
+const messages = say.messages;
+
+<SayProvider locale={locale} messages={messages}>
+  {children}
+</SayProvider>
+```
+
+Any client component below the provider can use `<Say>` directly, with no additional setup.
+
+### `useSay`
+
+If you need access to the `Say` instance itself in a client component, use `useSay()`. Keep in mind it will return a frozen `Say` instance, reflecting the locale and messages passed into the nearest `SayProvider`.
+
+```tsx
+function ConfirmButton({ count }: { count: number }) {
+  const say = useSay();
+  const handleClick = () => window.alert(say`Delete ${count} items?`);
+  return <button onClick={handleClick}><Say>Delete</Say></button>;
+}
+```
+
+## Server Usage
+
+```ts
+import { setSay, getSay, unstable_createWithSay } from '@saykit/react/server';
+```
+
+<Callout type="warning">
+  Server support is experimental. The exact integration API differs between frameworks, and
+  `unstable_createWithSay` may change before a stable release.
+</Callout>
+
+### `setSay`
+ 
+Call `setSay()` with your activated `Say` instance before any `<Say>` components render for the current request. It must be called before rendering, server components that use `<Say>` will throw if no instance has been registered.
+ 
+### `getSay`
+ 
+`getSay()` returns the `Say` instance registered for the current request by `setSay()`. It is the server equivalent of `useSay()`, useful when you need access to the instance itself rather than rendering through `<Say>`.
+
+## Mental Model
+
+A simple way to think about the integration is:
+
+- render translated strings and JSX with `<Say>` in any component, server or client
+- on the server, a `Say` instance is registered per-request so server components can resolve translations without a provider
+- on the client, `SayProvider` supplies the same locale and messages so client components hydrate correctly
