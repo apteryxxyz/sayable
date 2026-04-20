@@ -42,11 +42,9 @@
   },
   "dependencies": {
     "@babel/core": "^7.29.0",
-    "@babel/parser": "^7.29.2",
-    "@saykit/config": "workspace:^",
-    "@types/babel__core": "^7.20.5"
+    "@saykit/config": "workspace:^"
   },
   "devDependencies": {
-    "@types/babel__parser": "^7.1.5"
+    "@types/babel__core": "^7.20.5"
   }
 }

@@ -254,19 +254,13 @@ importers:
       '@babel/core':
         specifier: ^7.29.0
         version: 7.29.0
-      '@babel/parser':
-        specifier: ^7.29.2
-        version: 7.29.2
       '@saykit/config':
         specifier: workspace:^
         version: link:../config
+    devDependencies:
       '@types/babel__core':
         specifier: ^7.20.5
         version: 7.20.5
-    devDependencies:
-      '@types/babel__parser':
-        specifier: ^7.1.5
-        version: 7.1.5
 
   packages/plugin-unplugin:
     dependencies:
@@ -2794,10 +2788,6 @@ packages:
 
   '@types/babel__generator@7.27.0':
     resolution: {integrity: sha512-ufFd2Xi92OAVPYsy+P4n7/U7e68fex0+Ee8gSG9KX7eo084CWiQ4sdxktvdl0bOPupXtVJPY19zk6EwWqUQ8lg==}
-
-  '@types/babel__parser@7.1.5':
-    resolution: {integrity: sha512-yyWPJg3KawM9ydArmt2q+UE6dhy0usfXNB1yxDv0gE27KbZXeFCDtqR2L4jdVxXqq7I9tvkL9zuSY/ZVgF6fXQ==}
-    deprecated: This is a stub types definition. @babel/parser provides its own type definitions, so you do not need this installed.
 
   '@types/babel__template@7.4.4':
     resolution: {integrity: sha512-h/NUaSyG5EyxBIp8YRxo4RMe2/qQgvyowRwVMzhYhBCONbW8PUsg4lkFMrhgZhUe5z3L3MiLDuvyJ/CaPa2A8A==}
@@ -7323,10 +7313,6 @@ snapshots:
   '@types/babel__generator@7.27.0':
     dependencies:
       '@babel/types': 7.29.0
-
-  '@types/babel__parser@7.1.5':
-    dependencies:
-      '@babel/parser': 7.29.2
 
   '@types/babel__template@7.4.4':
     dependencies:
