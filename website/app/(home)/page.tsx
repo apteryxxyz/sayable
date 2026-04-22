@@ -88,10 +88,10 @@ function Pill({ children }: { children: ReactNode }) {
 export default async function HomePage() {
   const highlighter = await createHighlighter({
     themes: Object.values(SHIKI_THEMES),
-    langs: ['tsx', 'bash'],
+    langs: ['tsx'],
   });
 
-  const highlight = (code: string, lang: 'tsx' | 'ts') =>
+  const highlight = (code: string, lang: 'tsx') =>
     highlighter.codeToHtml(code, { lang, themes: SHIKI_THEMES, defaultColor: false });
 
   const codeHtml = highlight(CODE_EXAMPLE, 'tsx');
