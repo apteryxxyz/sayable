@@ -2,568 +2,283 @@ import * as t from '@babel/types';
 import {
   ArgumentMessage,
   ChoiceMessage,
+  CompositeMessage,
   ElementMessage,
   LiteralMessage,
 } from '@saykit/config/features/messages';
 import { describe, expect, it } from 'vitest';
 import * as parser from './parser.js';
 
+// ─── Helpers ────────────────────────────────────────────────────────────────
+
+function makeSayContainer(
+  children: (
+    | t.JSXElement
+    | t.JSXExpressionContainer
+    | t.JSXFragment
+    | t.JSXSpreadChild
+    | t.JSXText
+  )[],
+  attrs: t.JSXAttribute[] = [],
+) {
+  const id = t.jsxIdentifier('Say');
+  return t.jsxElement(t.jsxOpeningElement(id, attrs, false), t.jsxClosingElement(id), children);
+}
+
+function makeSaySelfClosing(kind: string, attrs: t.JSXAttribute[]) {
+  const name = t.jsxMemberExpression(t.jsxIdentifier('Say'), t.jsxIdentifier(kind));
+  return t.jsxOpeningElement(name, attrs, true);
+}
+
+function makeText(text: string) {
+  const id = t.jsxIdentifier('Text');
+  return t.jsxElement(t.jsxOpeningElement(id, [], false), t.jsxClosingElement(id), [
+    t.jsxText(text),
+  ]);
+}
+
+function attr(name: string, value: t.JSXAttribute['value']) {
+  return t.jsxAttribute(t.jsxIdentifier(name), value);
+}
+
+function exprAttr(name: string, expr: t.Expression) {
+  return attr(name, t.jsxExpressionContainer(expr));
+}
+
+function strAttr(name: string, value: string) {
+  return attr(name, t.stringLiteral(value));
+}
+
+// ─── parseJSXContainerElement ────────────────────────────────────────────────
+
 describe('parseJSXContainerElement', () => {
-  it('should parse simple JSX Say container element', () => {
-    const sayIdentifier = t.jsxIdentifier('Say');
-    const openingElement = t.jsxOpeningElement(sayIdentifier, [], false);
-    const closingElement = t.jsxClosingElement(sayIdentifier);
-    const helloText = t.jsxText('Hello World');
-    const jsxElement = t.jsxElement(openingElement, closingElement, [helloText]);
-
-    const result = parser.parseJSXContainerElement(jsxElement);
-
-    expect(result).not.toBeNull();
-    expect(result!.children).toHaveLength(1);
-    expect(result!.children[0]).toBeInstanceOf(LiteralMessage);
-    expect(result!.children[0]).toEqual({ text: 'Hello World' });
+  it('returns null for self-closing elements', () => {
+    const id = t.jsxIdentifier('Say');
+    const el = t.jsxElement(t.jsxOpeningElement(id, [], true), null, []);
+    expect(parser.parseJSXContainerElement(el)).toBeNull();
   });
 
-  it('should parse JSX container with expressions', () => {
-    const sayIdentifier = t.jsxIdentifier('Say');
-    const openingElement = t.jsxOpeningElement(sayIdentifier, [], false);
-    const closingElement = t.jsxClosingElement(sayIdentifier);
-    const helloText = t.jsxText('Hello ');
-    const nameExpression = t.jsxExpressionContainer(t.identifier('name'));
-    const exclamationText = t.jsxText('!');
-    const jsxElement = t.jsxElement(openingElement, closingElement, [
-      helloText,
-      nameExpression,
-      exclamationText,
-    ]);
-
-    const result = parser.parseJSXContainerElement(jsxElement);
-
-    expect(result).not.toBeNull();
-    expect(result!.children).toHaveLength(3);
-    expect(result!.children[0]).toBeInstanceOf(LiteralMessage);
-    expect(result!.children[0]).toEqual({ text: 'Hello ' });
-    expect(result!.children[1]).toBeInstanceOf(ArgumentMessage);
-    expect((result!.children[1] as ArgumentMessage).identifier).toBe('name');
-    expect(result!.children[2]).toBeInstanceOf(LiteralMessage);
-    expect(result!.children[2]).toEqual({ text: '!' });
+  it('returns null for non-Say elements', () => {
+    const id = t.jsxIdentifier('div');
+    const el = t.jsxElement(t.jsxOpeningElement(id, [], false), t.jsxClosingElement(id), []);
+    expect(parser.parseJSXContainerElement(el)).toBeNull();
   });
 
-  it('should parse JSX container with nested elements', () => {
-    const sayIdentifier = t.jsxIdentifier('Say');
-    const openingElement = t.jsxOpeningElement(sayIdentifier, [], false);
-    const closingElement = t.jsxClosingElement(sayIdentifier);
-    const helloText = t.jsxText('Hello ');
-
-    // Nested element
-    const strongIdentifier = t.jsxIdentifier('strong');
-    const strongOpening = t.jsxOpeningElement(strongIdentifier, [], false);
-    const strongClosing = t.jsxClosingElement(strongIdentifier);
-    const strongText = t.jsxText('World');
-    const strongElement = t.jsxElement(strongOpening, strongClosing, [strongText]);
-
-    const jsxElement = t.jsxElement(openingElement, closingElement, [helloText, strongElement]);
-
-    const result = parser.parseJSXContainerElement(jsxElement);
-
-    expect(result).not.toBeNull();
-    expect(result!.children).toHaveLength(2);
-    expect(result!.children[0]).toBeInstanceOf(LiteralMessage);
-    expect(result!.children[0]).toEqual({ text: 'Hello ' });
-    expect(result!.children[1]).toBeInstanceOf(ElementMessage);
+  it('parses text children as LiteralMessage', () => {
+    const result = parser.parseJSXContainerElement(makeSayContainer([t.jsxText('Hello')]));
+    expect(result).toBeInstanceOf(CompositeMessage);
+    expect(result!.children[0]).toEqual(new LiteralMessage('Hello'));
   });
 
-  it('should parse JSX container with fragments', () => {
-    const sayIdentifier = t.jsxIdentifier('Say');
-    const openingElement = t.jsxOpeningElement(sayIdentifier, [], false);
-    const closingElement = t.jsxClosingElement(sayIdentifier);
-    const helloText = t.jsxText('Hello ');
-
-    // Fragment
-    const fragment = t.jsxFragment(t.jsxOpeningFragment(), t.jsxClosingFragment(), [
-      t.jsxText('World'),
-    ]);
-
-    const jsxElement = t.jsxElement(openingElement, closingElement, [helloText, fragment]);
-
-    const result = parser.parseJSXContainerElement(jsxElement);
-
-    expect(result).not.toBeNull();
-    expect(result!.children).toHaveLength(2);
-    expect(result!.children[0]).toBeInstanceOf(LiteralMessage);
-    expect(result!.children[0]).toEqual({ text: 'Hello ' });
-    expect(result!.children[1]).toBeInstanceOf(ElementMessage);
-  });
-
-  it('should parse JSX container with descriptor id', () => {
-    const sayIdentifier = t.jsxIdentifier('Say');
-    const idAttribute = t.jsxAttribute(t.jsxIdentifier('id'), t.stringLiteral('greeting'));
-    const openingElement = t.jsxOpeningElement(sayIdentifier, [idAttribute], false);
-    const closingElement = t.jsxClosingElement(sayIdentifier);
-    const helloText = t.jsxText('Hello');
-    const jsxElement = t.jsxElement(openingElement, closingElement, [helloText]);
-
-    const result = parser.parseJSXContainerElement(jsxElement);
-
-    expect(result).not.toBeNull();
-    expect(result!.descriptor).toEqual({ id: 'greeting', context: undefined });
-  });
-
-  it('should parse JSX container with descriptor context', () => {
-    const sayIdentifier = t.jsxIdentifier('Say');
-    const contextAttribute = t.jsxAttribute(
-      t.jsxIdentifier('context'),
-      t.stringLiteral('greeting'),
+  it('normalises whitespace in text children', () => {
+    const result = parser.parseJSXContainerElement(
+      makeSayContainer([t.jsxText('\n  Hello,  \n  World!  \n')]),
     );
-    const openingElement = t.jsxOpeningElement(sayIdentifier, [contextAttribute], false);
-    const closingElement = t.jsxClosingElement(sayIdentifier);
-    const helloText = t.jsxText('Hello');
-    const jsxElement = t.jsxElement(openingElement, closingElement, [helloText]);
-
-    const result = parser.parseJSXContainerElement(jsxElement);
-
-    expect(result).not.toBeNull();
-    expect(result!.descriptor).toEqual({ id: undefined, context: 'greeting' });
+    expect((result!.children[0] as LiteralMessage).text).toBe('Hello, World!');
   });
 
-  it('should return null for self-closing elements', () => {
-    const sayIdentifier = t.jsxIdentifier('Say');
-    const openingElement = t.jsxOpeningElement(sayIdentifier, [], true);
-    const jsxElement = t.jsxElement(openingElement, null, []);
+  it('parses nested Text elements as sequential ElementMessages', () => {
+    const result = parser.parseJSXContainerElement(
+      makeSayContainer([makeText('Hello'), makeText('World')]),
+    );
 
-    const result = parser.parseJSXContainerElement(jsxElement);
-
-    expect(result).toBeNull();
+    expect(result!.children).toHaveLength(2);
+    expect(result!.children[0]).toBeInstanceOf(ElementMessage);
+    expect(result!.children[1]).toBeInstanceOf(ElementMessage);
   });
 
-  it('should return null for non-Say elements', () => {
-    const divIdentifier = t.jsxIdentifier('div');
-    const openingElement = t.jsxOpeningElement(divIdentifier, [], false);
-    const closingElement = t.jsxClosingElement(divIdentifier);
-    const helloText = t.jsxText('Hello');
-    const jsxElement = t.jsxElement(openingElement, closingElement, [helloText]);
+  it('parses nested Text elements with surrounding whitespace as sequential ElementMessages', () => {
+    const result = parser.parseJSXContainerElement(
+      makeSayContainer([
+        t.jsxText('\n  '),
+        makeText('Hello'),
+        t.jsxText('\n  '),
+        makeText('World'),
+        t.jsxText('\n'),
+      ]),
+    );
 
-    const result = parser.parseJSXContainerElement(jsxElement);
-
-    expect(result).toBeNull();
+    expect(result!.children).toHaveLength(2);
+    expect(result!.children[0]).toBeInstanceOf(ElementMessage);
+    expect(result!.children[1]).toBeInstanceOf(ElementMessage);
   });
 
-  it('should normalize whitespace in JSX text', () => {
-    const sayIdentifier = t.jsxIdentifier('Say');
-    const openingElement = t.jsxOpeningElement(sayIdentifier, [], false);
-    const closingElement = t.jsxClosingElement(sayIdentifier);
-    const whitespaceText = t.jsxText('\n  Hello,  \n  World!  \n');
-    const jsxElement = t.jsxElement(openingElement, closingElement, [whitespaceText]);
+  it('parses expression children as ArgumentMessage', () => {
+    const result = parser.parseJSXContainerElement(
+      makeSayContainer([t.jsxExpressionContainer(t.identifier('name'))]),
+    );
+    expect(result!.children[0]).toBeInstanceOf(ArgumentMessage);
+    expect((result!.children[0] as ArgumentMessage).identifier).toBe('name');
+  });
 
-    const result = parser.parseJSXContainerElement(jsxElement);
+  it('parses fragment children as ElementMessage', () => {
+    const fragment = t.jsxFragment(t.jsxOpeningFragment(), t.jsxClosingFragment(), []);
+    const result = parser.parseJSXContainerElement(makeSayContainer([fragment]));
+    expect(result!.children[0]).toBeInstanceOf(ElementMessage);
+  });
 
-    expect(result).not.toBeNull();
-    expect(result!.children).toHaveLength(1);
-    expect(result!.children[0]).toBeInstanceOf(LiteralMessage);
-    expect((result!.children[0] as LiteralMessage).text).toBe(' Hello, World! ');
+  it('parses nested JSX children as ElementMessage (non-Say fallback)', () => {
+    const inner = t.jsxIdentifier('strong');
+    const nested = t.jsxElement(t.jsxOpeningElement(inner, [], false), t.jsxClosingElement(inner), [
+      t.jsxText('bold'),
+    ]);
+    const result = parser.parseJSXContainerElement(makeSayContainer([nested]));
+    expect(result!.children[0]).toBeInstanceOf(ElementMessage);
+  });
+
+  it('reads id and context descriptor attributes', () => {
+    const result = parser.parseJSXContainerElement(
+      makeSayContainer([t.jsxText('Hi')], [strAttr('id', 'msg'), strAttr('context', 'nav')]),
+    );
+    expect(result!.descriptor).toEqual({ id: 'msg', context: 'nav' });
+  });
+
+  it('leaves descriptor fields undefined when attributes are absent', () => {
+    const result = parser.parseJSXContainerElement(makeSayContainer([t.jsxText('Hi')]));
+    expect(result!.descriptor).toEqual({ id: undefined, context: undefined });
   });
 });
+
+// ─── parseJSXOpeningElement ──────────────────────────────────────────────────
 
 describe('parseJSXOpeningElement', () => {
-  it('should parse plural self-closing element', () => {
-    const sayIdentifier = t.jsxIdentifier('Say');
-    const pluralProperty = t.jsxIdentifier('plural');
-    const sayMember = t.jsxMemberExpression(sayIdentifier, pluralProperty);
-
-    const countAttribute = t.jsxAttribute(
-      t.jsxIdentifier('_'),
-      t.jsxExpressionContainer(t.identifier('count')),
-    );
-    const oneAttribute = t.jsxAttribute(t.jsxIdentifier('one'), t.stringLiteral('item'));
-    const otherAttribute = t.jsxAttribute(t.jsxIdentifier('other'), t.stringLiteral('items'));
-
-    const openingElement = t.jsxOpeningElement(
-      sayMember,
-      [countAttribute, oneAttribute, otherAttribute],
-      true,
-    );
-
-    const result = parser.parseJSXOpeningElement(openingElement);
-
-    expect(result).not.toBeNull();
-    expect(result!.children).toHaveLength(1);
-    const choiceMessage = result!.children[0] as ChoiceMessage;
-    expect(choiceMessage).toBeInstanceOf(ChoiceMessage);
-    expect(choiceMessage.kind).toBe('plural');
-    expect(choiceMessage.identifier).toBe('count');
-    expect(choiceMessage.branches).toHaveLength(2);
-    expect(choiceMessage.branches[0]!.identifier).toBe('one');
-    expect(choiceMessage.branches[0]!.value).toEqual({ text: 'item' });
-    expect(choiceMessage.branches[1]!.identifier).toBe('other');
-    expect(choiceMessage.branches[1]!.value).toEqual({ text: 'items' });
+  it('returns null for non-self-closing elements', () => {
+    const el = t.jsxOpeningElement(t.jsxIdentifier('Say'), [], false);
+    expect(parser.parseJSXOpeningElement(el)).toBeNull();
   });
 
-  it('should parse select self-closing element', () => {
-    const sayIdentifier = t.jsxIdentifier('Say');
-    const selectProperty = t.jsxIdentifier('select');
-    const sayMember = t.jsxMemberExpression(sayIdentifier, selectProperty);
-
-    const genderAttribute = t.jsxAttribute(
-      t.jsxIdentifier('_'),
-      t.jsxExpressionContainer(t.identifier('gender')),
-    );
-    const maleAttribute = t.jsxAttribute(t.jsxIdentifier('male'), t.stringLiteral('He'));
-    const femaleAttribute = t.jsxAttribute(t.jsxIdentifier('female'), t.stringLiteral('She'));
-    const otherAttribute = t.jsxAttribute(t.jsxIdentifier('other'), t.stringLiteral('They'));
-
-    const openingElement = t.jsxOpeningElement(
-      sayMember,
-      [genderAttribute, maleAttribute, femaleAttribute, otherAttribute],
-      true,
-    );
-
-    const result = parser.parseJSXOpeningElement(openingElement);
-
-    expect(result).not.toBeNull();
-    const choiceMessage = result!.children[0] as ChoiceMessage;
-    expect(choiceMessage).toBeInstanceOf(ChoiceMessage);
-    expect(choiceMessage.kind).toBe('select');
-    expect(choiceMessage.identifier).toBe('gender');
-    expect(choiceMessage.branches).toHaveLength(3);
-    expect(choiceMessage.branches[0]!.identifier).toBe('male');
-    expect(choiceMessage.branches[0]!.value).toEqual({ text: 'He' });
-    expect(choiceMessage.branches[1]!.identifier).toBe('female');
-    expect(choiceMessage.branches[1]!.value).toEqual({ text: 'She' });
-    expect(choiceMessage.branches[2]!.identifier).toBe('other');
-    expect(choiceMessage.branches[2]!.value).toEqual({ text: 'They' });
+  it('returns null for non-Say elements', () => {
+    const el = t.jsxOpeningElement(t.jsxIdentifier('div'), [], true);
+    expect(parser.parseJSXOpeningElement(el)).toBeNull();
   });
 
-  it('should parse ordinal self-closing element', () => {
-    const sayIdentifier = t.jsxIdentifier('Say');
-    const ordinalProperty = t.jsxIdentifier('ordinal');
-    const sayMember = t.jsxMemberExpression(sayIdentifier, ordinalProperty);
-
-    const positionAttribute = t.jsxAttribute(
-      t.jsxIdentifier('_'),
-      t.jsxExpressionContainer(t.identifier('position')),
-    );
-    const firstAttribute = t.jsxAttribute(t.jsxIdentifier('1'), t.stringLiteral('first'));
-    const secondAttribute = t.jsxAttribute(t.jsxIdentifier('2'), t.stringLiteral('second'));
-    const otherAttribute = t.jsxAttribute(t.jsxIdentifier('other'), t.stringLiteral('other'));
-
-    const openingElement = t.jsxOpeningElement(
-      sayMember,
-      [positionAttribute, firstAttribute, secondAttribute, otherAttribute],
-      true,
-    );
-
-    const result = parser.parseJSXOpeningElement(openingElement);
-
-    expect(result).not.toBeNull();
-    const choiceMessage = result!.children[0] as ChoiceMessage;
-    expect(choiceMessage).toBeInstanceOf(ChoiceMessage);
-    expect(choiceMessage.kind).toBe('ordinal');
-    expect(choiceMessage.identifier).toBe('position');
-    expect(choiceMessage.branches).toHaveLength(3);
-    expect(choiceMessage.branches[0]!.identifier).toBe('1');
-    expect(choiceMessage.branches[0]!.value).toEqual({ text: 'first' });
-    expect(choiceMessage.branches[1]!.identifier).toBe('2');
-    expect(choiceMessage.branches[1]!.value).toEqual({ text: 'second' });
-    expect(choiceMessage.branches[2]!.identifier).toBe('other');
-    expect(choiceMessage.branches[2]!.value).toEqual({ text: 'other' });
+  it('returns null for unknown Say member (e.g. Say.foo)', () => {
+    const el = makeSaySelfClosing('foo', []);
+    expect(parser.parseJSXOpeningElement(el)).toBeNull();
   });
 
-  it('should handle literal values in attributes', () => {
-    const sayIdentifier = t.jsxIdentifier('Say');
-    const pluralProperty = t.jsxIdentifier('plural');
-    const sayMember = t.jsxMemberExpression(sayIdentifier, pluralProperty);
-
-    const countAttribute = t.jsxAttribute(
-      t.jsxIdentifier('_'),
-      t.jsxExpressionContainer(t.identifier('count')),
-    );
-    const zeroAttribute = t.jsxAttribute(t.jsxIdentifier('0'), t.stringLiteral('none'));
-    const oneAttribute = t.jsxAttribute(t.jsxIdentifier('one'), t.stringLiteral('single'));
-    const otherAttribute = t.jsxAttribute(t.jsxIdentifier('other'), t.stringLiteral('many'));
-
-    const openingElement = t.jsxOpeningElement(
-      sayMember,
-      [countAttribute, zeroAttribute, oneAttribute, otherAttribute],
-      true,
-    );
-
-    const result = parser.parseJSXOpeningElement(openingElement);
-
-    expect(result).not.toBeNull();
-    const choiceMessage = result!.children[0] as ChoiceMessage;
-    expect(choiceMessage.branches).toHaveLength(3);
-    expect(choiceMessage.branches[0]!.identifier).toBe('0');
-    expect(choiceMessage.branches[0]!.value).toEqual({ text: 'none' });
-    expect(choiceMessage.branches[1]!.identifier).toBe('one');
-    expect(choiceMessage.branches[1]!.value).toEqual({ text: 'single' });
-    expect(choiceMessage.branches[2]!.identifier).toBe('other');
-    expect(choiceMessage.branches[2]!.value).toEqual({ text: 'many' });
+  it('returns null when _ initialiser attribute is missing', () => {
+    const el = makeSaySelfClosing('plural', [strAttr('one', 'item')]);
+    expect(parser.parseJSXOpeningElement(el)).toBeNull();
   });
 
-  it('should handle numeric attribute keys', () => {
-    const sayIdentifier = t.jsxIdentifier('Say');
-    const pluralProperty = t.jsxIdentifier('plural');
-    const sayMember = t.jsxMemberExpression(sayIdentifier, pluralProperty);
-
-    const countAttribute = t.jsxAttribute(
-      t.jsxIdentifier('_'),
-      t.jsxExpressionContainer(t.identifier('count')),
-    );
-    const _1Attribute = t.jsxAttribute(t.jsxIdentifier('_1'), t.stringLiteral('first'));
-    const _2Attribute = t.jsxAttribute(t.jsxIdentifier('_2'), t.stringLiteral('second'));
-
-    const openingElement = t.jsxOpeningElement(
-      sayMember,
-      [countAttribute, _1Attribute, _2Attribute],
-      true,
-    );
-
-    const result = parser.parseJSXOpeningElement(openingElement);
-
-    expect(result).not.toBeNull();
-    const choiceMessage = result!.children[0] as ChoiceMessage;
-    expect(choiceMessage.branches).toHaveLength(2);
-    expect(choiceMessage.branches[0]!.identifier).toBe('1');
-    expect(choiceMessage.branches[0]!.value).toEqual({ text: 'first' });
-    expect(choiceMessage.branches[1]!.identifier).toBe('2');
-    expect(choiceMessage.branches[1]!.value).toEqual({ text: 'second' });
-  });
-
-  it('should handle expression values in attributes', () => {
-    const sayIdentifier = t.jsxIdentifier('Say');
-    const pluralProperty = t.jsxIdentifier('plural');
-    const sayMember = t.jsxMemberExpression(sayIdentifier, pluralProperty);
-
-    const countAttribute = t.jsxAttribute(
-      t.jsxIdentifier('_'),
-      t.jsxExpressionContainer(t.identifier('count')),
-    );
-    const oneAttribute = t.jsxAttribute(
-      t.jsxIdentifier('one'),
-      t.jsxExpressionContainer(t.identifier('itemText')),
-    );
-
-    const openingElement = t.jsxOpeningElement(sayMember, [countAttribute, oneAttribute], true);
-
-    const result = parser.parseJSXOpeningElement(openingElement);
-
-    expect(result).not.toBeNull();
-    const choiceMessage = result!.children[0] as ChoiceMessage;
-    expect(choiceMessage.branches).toHaveLength(1);
-    expect(choiceMessage.branches[0]!.identifier).toBe('one');
-    expect(choiceMessage.branches[0]!.value).toBeInstanceOf(ArgumentMessage);
-    expect((choiceMessage.branches[0]!.value as ArgumentMessage).identifier).toBe('itemText');
-  });
-
-  it('should handle nested elements in attributes', () => {
-    const sayIdentifier = t.jsxIdentifier('Say');
-    const pluralProperty = t.jsxIdentifier('plural');
-    const sayMember = t.jsxMemberExpression(sayIdentifier, pluralProperty);
-
-    const countAttribute = t.jsxAttribute(
-      t.jsxIdentifier('_'),
-      t.jsxExpressionContainer(t.identifier('count')),
-    );
-
-    // Nested element in attribute
-    const strongIdentifier = t.jsxIdentifier('strong');
-    const strongOpening = t.jsxOpeningElement(strongIdentifier, [], false);
-    const strongClosing = t.jsxClosingElement(strongIdentifier);
-    const strongText = t.jsxText('Bold');
-    const strongElement = t.jsxElement(strongOpening, strongClosing, [strongText]);
-    const oneAttribute = t.jsxAttribute(
-      t.jsxIdentifier('one'),
-      t.jsxExpressionContainer(strongElement),
-    );
-
-    const openingElement = t.jsxOpeningElement(sayMember, [countAttribute, oneAttribute], true);
-
-    const result = parser.parseJSXOpeningElement(openingElement);
-
-    expect(result).not.toBeNull();
-    const choiceMessage = result!.children[0] as ChoiceMessage;
-    expect(choiceMessage.branches).toHaveLength(1);
-    expect(choiceMessage.branches[0]!.identifier).toBe('one');
-    expect(choiceMessage.branches[0]!.value).toBeInstanceOf(ElementMessage);
-  });
-
-  it('should handle fragments in attributes', () => {
-    const sayIdentifier = t.jsxIdentifier('Say');
-    const pluralProperty = t.jsxIdentifier('plural');
-    const sayMember = t.jsxMemberExpression(sayIdentifier, pluralProperty);
-
-    const countAttribute = t.jsxAttribute(
-      t.jsxIdentifier('_'),
-      t.jsxExpressionContainer(t.identifier('count')),
-    );
-
-    // Fragment in attribute
-    const fragment = t.jsxFragment(t.jsxOpeningFragment(), t.jsxClosingFragment(), [
-      t.jsxText('Hello'),
-      t.jsxText(' World'),
+  it('parses Say.plural with string literal branches', () => {
+    const el = makeSaySelfClosing('plural', [
+      exprAttr('_', t.identifier('count')),
+      strAttr('one', 'item'),
+      strAttr('other', 'items'),
     ]);
-    const oneAttribute = t.jsxAttribute(t.jsxIdentifier('one'), t.jsxExpressionContainer(fragment));
-
-    const openingElement = t.jsxOpeningElement(sayMember, [countAttribute, oneAttribute], true);
-
-    const result = parser.parseJSXOpeningElement(openingElement);
-
-    expect(result).not.toBeNull();
-    const choiceMessage = result!.children[0] as ChoiceMessage;
-    expect(choiceMessage.branches).toHaveLength(1);
-    expect(choiceMessage.branches[0]!.identifier).toBe('one');
-    expect(choiceMessage.branches[0]!.value).toBeInstanceOf(ElementMessage);
+    const result = parser.parseJSXOpeningElement(el);
+    expect(result).toBeInstanceOf(CompositeMessage);
+    const choice = result!.children[0] as ChoiceMessage;
+    expect(choice).toBeInstanceOf(ChoiceMessage);
+    expect(choice.kind).toBe('plural');
+    expect(choice.identifier).toBe('count');
+    expect(choice.branches).toHaveLength(2);
+    expect(choice.branches[0]).toEqual({ identifier: 'one', value: new LiteralMessage('item') });
+    expect(choice.branches[1]).toEqual({ identifier: 'other', value: new LiteralMessage('items') });
   });
 
-  it('should parse with descriptor id', () => {
-    const sayIdentifier = t.jsxIdentifier('Say');
-    const pluralProperty = t.jsxIdentifier('plural');
-    const sayMember = t.jsxMemberExpression(sayIdentifier, pluralProperty);
-
-    const idAttribute = t.jsxAttribute(t.jsxIdentifier('id'), t.stringLiteral('itemCount'));
-    const countAttribute = t.jsxAttribute(
-      t.jsxIdentifier('_'),
-      t.jsxExpressionContainer(t.identifier('count')),
-    );
-    const oneAttribute = t.jsxAttribute(t.jsxIdentifier('one'), t.stringLiteral('item'));
-
-    const openingElement = t.jsxOpeningElement(
-      sayMember,
-      [idAttribute, countAttribute, oneAttribute],
-      true,
-    );
-
-    const result = parser.parseJSXOpeningElement(openingElement);
-
-    expect(result).not.toBeNull();
-    expect(result!.descriptor).toEqual({ id: 'itemCount', context: undefined });
+  it('parses Say.select and Say.ordinal variants', () => {
+    for (const kind of ['select', 'ordinal'] as const) {
+      const el = makeSaySelfClosing(kind, [exprAttr('_', t.identifier('val')), strAttr('a', 'A')]);
+      const result = parser.parseJSXOpeningElement(el);
+      expect((result!.children[0] as ChoiceMessage).kind).toBe(kind);
+    }
   });
 
-  it('should return null for non-choice elements', () => {
-    const sayIdentifier = t.jsxIdentifier('Say');
-    const somethingProperty = t.jsxIdentifier('something');
-    const sayMember = t.jsxMemberExpression(sayIdentifier, somethingProperty);
-
-    const openingElement = t.jsxOpeningElement(sayMember, [], true);
-
-    const result = parser.parseJSXOpeningElement(openingElement);
-
-    expect(result).toBeNull();
+  it('strips leading underscore from numeric branch names (e.g. _0 → 0)', () => {
+    const el = makeSaySelfClosing('plural', [
+      exprAttr('_', t.identifier('count')),
+      strAttr('_0', 'zero'),
+      strAttr('other', 'many'),
+    ]);
+    const choice = parser.parseJSXOpeningElement(el)!.children[0] as ChoiceMessage;
+    expect(choice.branches[0]!.identifier).toBe('0');
   });
 
-  it('should return null for container elements', () => {
-    const sayIdentifier = t.jsxIdentifier('Say');
-    const openingElement = t.jsxOpeningElement(sayIdentifier, [], false);
-
-    const result = parser.parseJSXOpeningElement(openingElement);
-
-    expect(result).toBeNull();
+  it('accepts a JSX element expression as a branch value', () => {
+    const inner = t.jsxIdentifier('b');
+    const nested = t.jsxElement(t.jsxOpeningElement(inner, [], false), t.jsxClosingElement(inner), [
+      t.jsxText('Bold'),
+    ]);
+    const el = makeSaySelfClosing('plural', [
+      exprAttr('_', t.identifier('count')),
+      attr('one', t.jsxExpressionContainer(nested)),
+    ]);
+    const choice = parser.parseJSXOpeningElement(el)!.children[0] as ChoiceMessage;
+    expect(choice.branches[0]!.value).toBeInstanceOf(ElementMessage);
   });
 
-  it('should return null for non-Say elements', () => {
-    const divIdentifier = t.jsxIdentifier('div');
-    const openingElement = t.jsxOpeningElement(divIdentifier, [], true);
+  it('accepts a JSX fragment expression as a branch value', () => {
+    const fragment = t.jsxFragment(t.jsxOpeningFragment(), t.jsxClosingFragment(), []);
+    const el = makeSaySelfClosing('plural', [
+      exprAttr('_', t.identifier('count')),
+      attr('one', t.jsxExpressionContainer(fragment)),
+    ]);
+    const choice = parser.parseJSXOpeningElement(el)!.children[0] as ChoiceMessage;
+    expect(choice.branches[0]!.value).toBeInstanceOf(ElementMessage);
+  });
 
-    const result = parser.parseJSXOpeningElement(openingElement);
+  it('accepts an expression as a branch value (ArgumentMessage)', () => {
+    const el = makeSaySelfClosing('plural', [
+      exprAttr('_', t.identifier('count')),
+      exprAttr('one', t.identifier('label')),
+    ]);
+    const choice = parser.parseJSXOpeningElement(el)!.children[0] as ChoiceMessage;
+    expect(choice.branches[0]!.value).toBeInstanceOf(ArgumentMessage);
+  });
 
-    expect(result).toBeNull();
+  it('reads id and context descriptor attributes', () => {
+    const el = makeSaySelfClosing('plural', [
+      strAttr('id', 'item-count'),
+      strAttr('context', 'shop'),
+      exprAttr('_', t.identifier('count')),
+      strAttr('one', 'item'),
+    ]);
+    expect(parser.parseJSXOpeningElement(el)!.descriptor).toEqual({
+      id: 'item-count',
+      context: 'shop',
+    });
   });
 });
 
+// ─── parseJSXElement ─────────────────────────────────────────────────────────
+
 describe('parseJSXElement', () => {
-  it('should delegate to container parser for non-self-closing', () => {
-    const sayIdentifier = t.jsxIdentifier('Say');
-    const openingElement = t.jsxOpeningElement(sayIdentifier, [], false);
-    const closingElement = t.jsxClosingElement(sayIdentifier);
-    const helloText = t.jsxText('Hello');
-    const jsxElement = t.jsxElement(openingElement, closingElement, [helloText]);
-
-    const result = parser.parseJSXElement(jsxElement);
-
-    expect(result).not.toBeNull();
-    expect(result!.children).toHaveLength(1);
-    expect(result!.children[0]).toBeInstanceOf(LiteralMessage);
-    expect(result!.children[0]).toEqual({ text: 'Hello' });
+  it('delegates to container parser for non-self-closing Say', () => {
+    const result = parser.parseJSXElement(makeSayContainer([t.jsxText('Hi')]));
+    expect(result).toBeInstanceOf(CompositeMessage);
+    expect((result as CompositeMessage).children[0]).toEqual(new LiteralMessage('Hi'));
   });
 
-  it('should delegate to opening parser for self-closing', () => {
-    const sayIdentifier = t.jsxIdentifier('Say');
-    const pluralProperty = t.jsxIdentifier('plural');
-    const sayMember = t.jsxMemberExpression(sayIdentifier, pluralProperty);
-
-    const countAttribute = t.jsxAttribute(
-      t.jsxIdentifier('_'),
-      t.jsxExpressionContainer(t.identifier('count')),
-    );
-    const oneAttribute = t.jsxAttribute(t.jsxIdentifier('one'), t.stringLiteral('item'));
-
-    const openingElement = t.jsxOpeningElement(sayMember, [countAttribute, oneAttribute], true);
-    const jsxElement = t.jsxElement(openingElement, null, []);
-
-    const result = parser.parseJSXElement(jsxElement);
-
-    expect(result).not.toBeNull();
-    // Self-closing elements that match patterns return CompositeMessage with ChoiceMessage as child
-    expect(result).toBeInstanceOf(Object); // CompositeMessage
-    if (result && 'children' in result) {
-      expect(result.children).toHaveLength(1);
-      const choiceMessage = result.children[0] as ChoiceMessage;
-      expect(choiceMessage).toBeInstanceOf(ChoiceMessage);
-      expect(choiceMessage.kind).toBe('plural');
-      expect(choiceMessage.identifier).toBe('count');
-    } else {
-      throw new Error('Expected CompositeMessage with ChoiceMessage child');
-    }
+  it('delegates to opening parser for self-closing Say.plural', () => {
+    const opening = makeSaySelfClosing('plural', [
+      exprAttr('_', t.identifier('n')),
+      strAttr('one', 'item'),
+    ]);
+    const el = t.jsxElement(opening, null, []);
+    const result = parser.parseJSXElement(el);
+    expect((result as CompositeMessage).children[0]).toBeInstanceOf(ChoiceMessage);
   });
 
-  it('should return element message for fallback=true with non-Say self-closing', () => {
-    const strongIdentifier = t.jsxIdentifier('strong');
-    const openingElement = t.jsxOpeningElement(strongIdentifier, [], true);
-    const jsxElement = t.jsxElement(openingElement, null, []);
-
-    const result = parser.parseJSXElement(jsxElement, true);
-
-    expect(result).toBeInstanceOf(ElementMessage);
+  it('returns null (no fallback) for unrecognised element', () => {
+    const id = t.jsxIdentifier('span');
+    const el = t.jsxElement(t.jsxOpeningElement(id, [], true), null, []);
+    expect(parser.parseJSXElement(el)).toBeNull();
   });
 
-  it('should return element message for fallback=true with non-Say container', () => {
-    const strongIdentifier = t.jsxIdentifier('strong');
-    const openingElement = t.jsxOpeningElement(strongIdentifier, [], false);
-    const closingElement = t.jsxClosingElement(strongIdentifier);
-    const helloText = t.jsxText('Hello');
-    const jsxElement = t.jsxElement(openingElement, closingElement, [helloText]);
-
-    const result = parser.parseJSXElement(jsxElement, true);
-
-    expect(result).toBeInstanceOf(ElementMessage);
+  it('returns ElementMessage (fallback=true) for unrecognised self-closing element', () => {
+    const id = t.jsxIdentifier('br');
+    const el = t.jsxElement(t.jsxOpeningElement(id, [], true), null, []);
+    expect(parser.parseJSXElement(el, true)).toBeInstanceOf(ElementMessage);
   });
 
-  it('should return null for fallback=false with non-Say element', () => {
-    const strongIdentifier = t.jsxIdentifier('strong');
-    const openingElement = t.jsxOpeningElement(strongIdentifier, [], true);
-    const jsxElement = t.jsxElement(openingElement, null, []);
-
-    const result = parser.parseJSXElement(jsxElement, false);
-
-    expect(result).toBeNull();
-  });
-
-  it('should wrap container element that fails parsing', () => {
-    const sayIdentifier = t.jsxIdentifier('Say');
-    const openingElement = t.jsxOpeningElement(sayIdentifier, [], false);
-    const closingElement = t.jsxClosingElement(sayIdentifier);
-    // Empty children won't match any patterns
-    const jsxElement = t.jsxElement(openingElement, closingElement, []);
-
-    const result = parser.parseJSXElement(jsxElement, true);
-
-    // This returns a CompositeMessage wrapping an ElementMessage
-    expect(result).not.toBeNull();
-    if (result && 'children' in result) {
-      // Empty Say container results in empty children array
-      expect(result.children).toHaveLength(0);
-    } else {
-      throw new Error('Expected CompositeMessage with children');
-    }
+  it('returns ElementMessage (fallback=true) for unrecognised container element', () => {
+    const id = t.jsxIdentifier('span');
+    const el = t.jsxElement(t.jsxOpeningElement(id, [], false), t.jsxClosingElement(id), [
+      t.jsxText('text'),
+    ]);
+    expect(parser.parseJSXElement(el, true)).toBeInstanceOf(ElementMessage);
   });
 });
