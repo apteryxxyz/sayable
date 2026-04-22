@@ -69,7 +69,7 @@ function createPoFormatter(options: FormatterOptions = {}): Formatter {
         if (options.references !== false) {
           let references = message.references ?? [];
           if (typeof options.references === 'object' && options.references.lineNumbers === false)
-            references = references.map((r) => r.split(':')[0]!);
+            references = references.map((r) => r.replace(/:\d+$/, ''));
           item.references = Array.from(new Set(references)).sort();
         }
         po.items.push(item);
