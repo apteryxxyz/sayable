@@ -1,7 +1,23 @@
 import type { Formatter } from '@saykit/config';
 import PO from 'pofile';
 
-function createPoFormatter(): Formatter {
+interface FormatterOptions {
+  /**
+   * Include source references in the generated PO file.
+   * @default true
+   */
+  references?:
+    | boolean
+    | {
+        /**
+         * Include line numbers in source references.
+         * @default true
+         */
+        lineNumbers?: boolean;
+      };
+}
+
+function createPoFormatter(options: FormatterOptions = {}): Formatter {
   return {
     extension: '.po',
 
@@ -50,7 +66,12 @@ function createPoFormatter(): Formatter {
         if (message.comments.length) comments.push(...message.comments);
         item.extractedComments = comments;
 
-        item.references = message.references;
+        if (options.references !== false) {
+          let references = message.references ?? [];
+          if (typeof options.references === 'object' && options.references.lineNumbers === false)
+            references = references.map((r) => r.replace(/:\d+$/, ''));
+          item.references = Array.from(new Set(references)).sort();
+        }
         po.items.push(item);
       }
 
