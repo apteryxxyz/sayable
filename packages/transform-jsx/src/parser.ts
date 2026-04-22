@@ -17,7 +17,7 @@ export function parseJSXContainerElement(element: t.JSXElement): CompositeMessag
 
   const children = element.children.reduce<Message[]>((c, e) => {
     if (t.isJSXText(e)) {
-      const text = e.value.replace(/\s+/g, ' ');
+      const text = e.value.replace(/\s+\n|\n\s+/g, '').replace(/\s+/g, ' ');
       c.push(new LiteralMessage(text));
     }
 
