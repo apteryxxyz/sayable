@@ -89,7 +89,13 @@ describe('parseJSXContainerElement', () => {
 
   it('parses nested Text elements with surrounding whitespace as sequential ElementMessages', () => {
     const result = parser.parseJSXContainerElement(
-      makeSayContainer([makeText('Hello'), makeText('World')]),
+      makeSayContainer([
+        t.jsxText('\n  '),
+        makeText('Hello'),
+        t.jsxText('\n  '),
+        makeText('World'),
+        t.jsxText('\n'),
+      ]),
     );
 
     expect(result!.children).toHaveLength(2);
