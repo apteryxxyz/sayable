@@ -1,4 +1,3 @@
-import { getMDXComponents } from 'components/mdx';
 import {
   DocsBody,
   DocsDescription,
@@ -8,10 +7,11 @@ import {
   ViewOptionsPopover,
 } from 'fumadocs-ui/layouts/docs/page';
 import { createRelativeLink } from 'fumadocs-ui/mdx';
-import { gitConfig } from 'lib/layout.shared';
-import { getPageImage, source } from 'lib/source';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import { getMDXComponents } from '@/components/mdx';
+import { gitConfig } from '@/lib/layout.shared';
+import { getPageImage, source } from '@/lib/source';
 
 export default async function Page({ params }: PageProps<'/[...slug]'>) {
   const { slug } = await params;

@@ -3,11 +3,7 @@
   "changelog": "@changesets/cli/changelog",
   "commit": false,
   "fixed": [
-    [
-      "saykit",
-      "@saykit/carbon",
-      "@saykit/react"
-    ],
+    ["saykit", "@saykit/carbon", "@saykit/react"],
     [
       "@saykit/config",
       "@saykit/format-po",

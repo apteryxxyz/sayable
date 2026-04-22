@@ -1,7 +1,7 @@
 import { DocsLayout, DocsLayoutProps } from 'fumadocs-ui/layouts/docs';
-import { baseOptions } from 'lib/layout.shared';
-import { source } from 'lib/source';
 import { Metadata } from 'next';
+import { baseOptions } from '@/lib/layout.shared';
+import { source } from '@/lib/source';
 
 function docsOptions(): DocsLayoutProps {
   return {

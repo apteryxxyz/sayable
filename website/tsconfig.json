@@ -1,6 +1,7 @@
 {
+  "include": ["**/*.ts", "**/*.tsx", ".next/types/**/*.ts", ".next/dev/types/**/*.ts"],
+  "exclude": ["node_modules"],
   "compilerOptions": {
-    "baseUrl": ".",
     "target": "ESNext",
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
@@ -17,20 +18,8 @@
     "incremental": true,
     "paths": {
       "@/*": ["./*"],
-      "collections/*": [".source/*"]
+      "collections/*": ["./.source/*"]
     },
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ]
-  },
-  "include": [
-    "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
-    ".next/types/**/*.ts",
-    ".next/dev/types/**/*.ts"
-  ],
-  "exclude": ["node_modules"]
+    "plugins": [{ "name": "next" }]
+  }
 }

@@ -77,7 +77,11 @@ If you need access to the `Say` instance itself in a client component, use `useS
 function ConfirmButton({ count }: { count: number }) {
   const say = useSay();
   const handleClick = () => window.alert(say`Delete ${count} items?`);
-  return <button onClick={handleClick}><Say>Delete</Say></button>;
+  return (
+    <button onClick={handleClick}>
+      <Say>Delete</Say>
+    </button>
+  );
 }
 ```
 
@@ -93,11 +97,11 @@ import { setSay, getSay, unstable_createWithSay } from '@saykit/react/server';
 </Callout>
 
 ### `setSay`
- 
+
 Call `setSay()` with your activated `Say` instance before any `<Say>` components render for the current request. It must be called before rendering, server components that use `<Say>` will throw if no instance has been registered.
- 
+
 ### `getSay`
- 
+
 `getSay()` returns the `Say` instance registered for the current request by `setSay()`. It is the server equivalent of `useSay()`, useful when you need access to the instance itself rather than rendering through `<Say>`.
 
 ## Mental Model
