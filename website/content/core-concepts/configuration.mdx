@@ -97,13 +97,18 @@ Buckets group related messages and control extraction and output:
       required: true,
     },
     transformer: {
-      description: 'Transformer or array of Transformers for message extraction and transformation.',
+      description:
+        'Transformer or array of Transformers for message extraction and transformation.',
       type: (
         <>
           <a className="text-blue-400" href="#transformer">
             Transformer
           </a>{' '}
-          | <a className="text-blue-400" href="#transformer">Transformer</a>[]
+          |{' '}
+          <a className="text-blue-400" href="#transformer">
+            Transformer
+          </a>
+          []
         </>
       ),
       required: true,
@@ -134,16 +139,22 @@ Transformers control how messages are extracted and transformed:
       required: true,
     },
     extract: {
-      description: 'Function to extract messages from file content. Must be synchronous - cannot return Promise.',
+      description:
+        'Function to extract messages from file content. Must be synchronous - cannot return Promise.',
       type: (
         <>
-          (code: string, id: string) {'=>'} <a className="text-blue-400" href="#message">Message</a>[]
+          (code: string, id: string) {'=>'}{' '}
+          <a className="text-blue-400" href="#message">
+            Message
+          </a>
+          []
         </>
       ),
       required: true,
     },
     transform: {
-      description: 'Function to transform source code. Must be synchronous - cannot return Promise.',
+      description:
+        'Function to transform source code. Must be synchronous - cannot return Promise.',
       type: '(code: string, id: string) => string',
       required: true,
     },
@@ -162,19 +173,29 @@ Formatters control how messages are serialized to disk:
       required: true,
     },
     parse: {
-      description: 'Function to parse file content into messages. Must be synchronous - cannot return Promise.',
+      description:
+        'Function to parse file content into messages. Must be synchronous - cannot return Promise.',
       type: (
         <>
-          (content: string, context: {'{ locale: string }'}) {'=>'} <a className="text-blue-400" href="#message">Message</a>[]
+          (content: string, context: {'{ locale: string }'}) {'=>'}{' '}
+          <a className="text-blue-400" href="#message">
+            Message
+          </a>
+          []
         </>
       ),
       required: true,
     },
     stringify: {
-      description: 'Function to serialize messages to file content. Must be synchronous - cannot return Promise.',
+      description:
+        'Function to serialize messages to file content. Must be synchronous - cannot return Promise.',
       type: (
         <>
-          (messages: <a className="text-blue-400" href="#message">Message</a>[], context: {'{ locale: string }'}) {'=>'} string
+          (messages:{' '}
+          <a className="text-blue-400" href="#message">
+            Message
+          </a>
+          [], context: {'{ locale: string }'}) {'=>'} string
         </>
       ),
       required: true,
