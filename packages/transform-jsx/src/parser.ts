@@ -15,22 +15,24 @@ export function parseJSXContainerElement(element: t.JSXElement): CompositeMessag
   if (!processed) return null;
   const [accessor] = processed;
 
-  const children = element.children.reduce<Message[]>((c, e) => {
-    if (t.isJSXText(e)) {
-      const text = e.value.replace(/\s+\n|\n\s+/g, '').replace(/\s+/g, ' ');
-      if (text.trim()) c.push(new LiteralMessage(text));
+  const children = element.children.reduce<Message[]>((p, c, i, a) => {
+    if (t.isJSXText(c)) {
+      let text = c.value.replace(/\s+/g, ' ');
+      if (i === 0) text = text.trimStart();
+      if (i === a.length - 1) text = text.trimEnd();
+      if (text) p.push(new LiteralMessage(text));
     }
 
-    if (t.isJSXElement(e)) {
-      c.push(parseJSXElement(e, true));
-    } else if (t.isJSXFragment(e)) {
-      c.push(new ElementMessage(AUTO_INCREMENT_IDENTIFIER, [], e));
-    } else if (t.isJSXExpressionContainer(e)) {
-      if (t.isExpression(e.expression))
-        c.push(new ArgumentMessage(getExpressionAsIdentifier(e.expression), e.expression));
+    if (t.isJSXElement(c)) {
+      p.push(parseJSXElement(c, true));
+    } else if (t.isJSXFragment(c)) {
+      p.push(new ElementMessage(AUTO_INCREMENT_IDENTIFIER, [], c));
+    } else if (t.isJSXExpressionContainer(c)) {
+      if (t.isExpression(c.expression))
+        p.push(new ArgumentMessage(getExpressionAsIdentifier(c.expression), c.expression));
     }
 
-    return c;
+    return p;
   }, []);
 
   const descriptorId = findAttributeValueIfStringLiteralAsString(

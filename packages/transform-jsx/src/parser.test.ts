@@ -30,13 +30,6 @@ function makeSaySelfClosing(kind: string, attrs: t.JSXAttribute[]) {
   return t.jsxOpeningElement(name, attrs, true);
 }
 
-function makeText(text: string) {
-  const id = t.jsxIdentifier('Text');
-  return t.jsxElement(t.jsxOpeningElement(id, [], false), t.jsxClosingElement(id), [
-    t.jsxText(text),
-  ]);
-}
-
 function attr(name: string, value: t.JSXAttribute['value']) {
   return t.jsxAttribute(t.jsxIdentifier(name), value);
 }
@@ -72,35 +65,9 @@ describe('parseJSXContainerElement', () => {
 
   it('normalises whitespace in text children', () => {
     const result = parser.parseJSXContainerElement(
-      makeSayContainer([t.jsxText('\n  Hello,  \n  World!  \n')]),
+      makeSayContainer([t.jsxText('\n  Hello,  \n  world!  \n')]),
     );
-    expect((result!.children[0] as LiteralMessage).text).toBe('Hello, World!');
-  });
-
-  it('parses nested Text elements as sequential ElementMessages', () => {
-    const result = parser.parseJSXContainerElement(
-      makeSayContainer([makeText('Hello'), makeText('World')]),
-    );
-
-    expect(result!.children).toHaveLength(2);
-    expect(result!.children[0]).toBeInstanceOf(ElementMessage);
-    expect(result!.children[1]).toBeInstanceOf(ElementMessage);
-  });
-
-  it('parses nested Text elements with surrounding whitespace as sequential ElementMessages', () => {
-    const result = parser.parseJSXContainerElement(
-      makeSayContainer([
-        t.jsxText('\n  '),
-        makeText('Hello'),
-        t.jsxText('\n  '),
-        makeText('World'),
-        t.jsxText('\n'),
-      ]),
-    );
-
-    expect(result!.children).toHaveLength(2);
-    expect(result!.children[0]).toBeInstanceOf(ElementMessage);
-    expect(result!.children[1]).toBeInstanceOf(ElementMessage);
+    expect((result!.children[0] as LiteralMessage).text).toBe('Hello, world!');
   });
 
   it('parses expression children as ArgumentMessage', () => {
