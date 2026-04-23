@@ -11,8 +11,8 @@ Create a `saykit.config.ts` in your project root:
 
 ```ts title='saykit.config.ts'
 import { defineConfig } from '@saykit/config';
-import createPoFormatter from '@saykit/format-po';
-import createJsTransformer from '@saykit/transform-js';
+import po from '@saykit/format-po';
+import js from '@saykit/transform-js';
 
 export default defineConfig({
   sourceLocale: 'en',
@@ -21,8 +21,8 @@ export default defineConfig({
     {
       include: ['src/**/*.{ts,tsx}'],
       output: 'src/locales/{locale}.{extension}',
-      transformer: createJsTransformer(),
-      formatter: createPoFormatter(),
+      transformer: js(),
+      formatter: po(),
     },
   ],
 });
@@ -48,11 +48,6 @@ The configuration is type-checked using Zod schemas at runtime:
       description: 'Array of supported locales. The first locale must be the source locale.',
       type: '[string, ...string[]]',
       required: true,
-    },
-    fallbackLocales: {
-      description:
-        "Define fallback chains for locales. If a message isn't found in a locale, SayKit will check the fallback locales in order.",
-      type: 'Record<string, string[]>',
     },
     buckets: {
       description:
@@ -152,12 +147,6 @@ Transformers control how messages are extracted and transformed:
       ),
       required: true,
     },
-    transform: {
-      description:
-        'Function to transform source code. Must be synchronous - cannot return Promise.',
-      type: '(code: string, id: string) => string',
-      required: true,
-    },
   }}
 />
 
@@ -177,7 +166,7 @@ Formatters control how messages are serialized to disk:
         'Function to parse file content into messages. Must be synchronous - cannot return Promise.',
       type: (
         <>
-          (content: string, context: {'{ locale: string }'}) {'=>'}{' '}
+          (content: string) {'=>'}{' '}
           <a className="text-blue-400" href="#message">
             Message
           </a>
@@ -195,7 +184,7 @@ Formatters control how messages are serialized to disk:
           <a className="text-blue-400" href="#message">
             Message
           </a>
-          [], context: {'{ locale: string }'}) {'=>'} string
+          []) {'=>'} string
         </>
       ),
       required: true,

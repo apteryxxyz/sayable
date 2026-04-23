@@ -19,17 +19,12 @@ You create a `Say` instance with a list of supported locales, plus either preloa
 
 ```ts
 import { Say } from 'saykit';
+import en from './locales/en.po';
+import fr from './locales/fr.po';
 
 const say = new Say({
   locales: ['en', 'fr'],
-  messages: {
-    en: await import('./locales/en/messages.json').then((m) => m.default),
-    fr: await import('./locales/fr/messages.json').then((m) => m.default),
-  },
-  // or with a loader:
-  async loader(locale) {
-    return import(`./locales/${locale}/messages.json`).then((m) => m.default);
-  },
+  messages: { en, fr },
 });
 ```
 
@@ -164,8 +159,8 @@ In normal application code you usually do not write this by hand. Instead, the c
 There are two different fallback ideas in SayKit:
 
 - runtime locale matching, handled by `say.match()`
-- translation fallback chains, configured with `fallbackLocales` during compilation
+- translation fallback chains, configured with `fallbackLocales` in your config
 
-Today, the `Say` instance itself does not walk a per-message fallback chain at runtime. Instead, fallback translations are applied when translations are compiled, based on [`fallbackLocales`](/core-concepts/configuration).
+Today, the `Say` instance itself does not walk a per-message fallback chain at runtime. Instead, fallback translations are applied during extraction, based on [`fallbackLocales`](/core-concepts/configuration).
 
-That means the runtime instance is responsible for selecting and using one locale, while the compile step is responsible for building the final translation catalogue for that locale.
+That means the runtime instance is responsible for selecting and using one locale, while extraction is responsible for building the final translation catalogue for that locale.
