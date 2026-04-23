@@ -1,7 +1,7 @@
 import { defineConfig } from '@saykit/config';
-import createPoFormatter from '@saykit/format-po';
-import createJsTransformer from '@saykit/transform-js';
-import createJsxTransformer from '@saykit/transform-jsx';
+import po from '@saykit/format-po';
+import js from '@saykit/transform-js';
+import jsx from '@saykit/transform-jsx';
 
 export default defineConfig({
   sourceLocale: 'en',
@@ -9,9 +9,9 @@ export default defineConfig({
   buckets: [
     {
       include: ['src/**/*.{ts,tsx}'],
-      output: 'src/locales/{locale}/messages.{extension}',
-      formatter: createPoFormatter(),
-      transformer: [createJsTransformer(), createJsxTransformer()],
+      output: 'src/locales/{locale}.{extension}',
+      formatter: po(),
+      transformer: [js(), jsx()],
     },
   ],
 });

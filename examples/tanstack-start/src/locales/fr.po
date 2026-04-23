@@ -2,14 +2,13 @@ msgid ""
 msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Language: en\n"
 "X-Generator: saykit\n"
 
 msgid "Count: {count}"
-msgstr "Count: {count}"
+msgstr "Compteur : {count}"
 
 msgid "Increment"
-msgstr "Increment"
+msgstr "Incrémenter"
 
 msgid "Reset"
-msgstr "Reset"
+msgstr "Réinitialiser"
