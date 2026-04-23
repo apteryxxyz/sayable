@@ -4,7 +4,6 @@ import {
   CheckCircle2,
   Code2,
   Languages,
-  PackageCheck,
   Rocket,
   ScanSearch,
   SquareTerminal,
@@ -14,7 +13,7 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { createHighlighter } from 'shiki';
 
-const frameworks = ['React', 'Next.js', 'Expo', 'Carbon'];
+const frameworks = ['React', 'Next.js', 'TanStack Start', 'React Native', 'Expo', 'Carbon'];
 
 const workflow = [
   {
@@ -30,18 +29,14 @@ const workflow = [
   {
     name: 'Translate',
     icon: Languages,
-    description: 'Hand translators clean PO files with comments, context, and stable identifiers.',
-  },
-  {
-    name: 'Compile',
-    icon: PackageCheck,
-    description: 'Build locale catalogs into runtime-ready message bundles for your app.',
+    description:
+      'Hand translators clean, structured translation files with comments, context, and stable identifiers.',
   },
   {
     name: 'Deploy',
     icon: Rocket,
     description:
-      'Ship small runtime helpers while keeping extraction and transforms in build time.',
+      'Import translation files directly into your app, no compile step, no extra build-time transform. Ship small runtime helpers and keep extraction at dev time.',
   },
 ] satisfies { name: string; icon: React.ElementType; description: string }[];
 
@@ -49,7 +44,8 @@ const features = [
   'Compile-time extraction from JS, TS, JSX, and TSX',
   'ICU MessageFormat support for plurals, ordinals, and select',
   'Framework-agnostic core runtime with adapters where needed',
-  'Typed config and CLI for extract, compile, and build',
+  'Import translation files directly, no compile step, no build-time transform',
+  'Typed config and CLI with watch mode for instant feedback',
 ];
 
 const CODE_EXAMPLE = `import { Say } from '@saykit/react';
@@ -85,17 +81,15 @@ function Pill({ children }: { children: ReactNode }) {
   );
 }
 
+const highlighter = await createHighlighter({
+  themes: Object.values(SHIKI_THEMES),
+  langs: ['tsx'],
+});
+const highlight = (code: string, lang: 'tsx') =>
+  highlighter.codeToHtml(code, { lang, themes: SHIKI_THEMES, defaultColor: false });
+const codeHtml = highlight(CODE_EXAMPLE, 'tsx');
+
 export default async function HomePage() {
-  const highlighter = await createHighlighter({
-    themes: Object.values(SHIKI_THEMES),
-    langs: ['tsx'],
-  });
-
-  const highlight = (code: string, lang: 'tsx') =>
-    highlighter.codeToHtml(code, { lang, themes: SHIKI_THEMES, defaultColor: false });
-
-  const codeHtml = highlight(CODE_EXAMPLE, 'tsx');
-
   return (
     <main className="relative overflow-x-hidden">
       <div
@@ -189,13 +183,7 @@ export default async function HomePage() {
                   <span className="text-fd-foreground">saykit extract</span>
                 </p>
                 <p className="text-emerald-500">✓ 2 messages extracted</p>
-                <p className="text-fd-muted-foreground"> → locales/en.po</p>
-                <p className="mt-2">
-                  <span className="text-fd-muted-foreground">$ </span>
-                  <span className="text-fd-foreground">saykit compile</span>
-                </p>
-                <p className="text-emerald-500">✓ 3 locales compiled</p>
-                <p className="text-fd-muted-foreground"> → locales/en.json, fr.json, ja.json</p>
+                <p className="text-fd-muted-foreground"> → locales/en, fr, ja</p>
               </div>
             </div>
           </div>
