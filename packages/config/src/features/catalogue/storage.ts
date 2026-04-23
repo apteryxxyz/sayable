@@ -1,7 +1,12 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
-import { dirname } from 'node:path';
+import { dirname, join } from 'node:path';
 import type { Bucket, Message } from '~/shapes.js';
-import { expandBucketOutputPath } from './path.js';
+import { expandBucketOutputIgnoreDirectory, expandBucketOutputPath } from './path.js';
+
+const DECLARATION_CONTENT = `
+declare const translations: Record<string, string>;
+export default translations;
+`.trim();
 
 export async function readCatalogueMessages(
   bucket: Bucket,
@@ -10,7 +15,7 @@ export async function readCatalogueMessages(
 ) {
   const content = await readFile(path, 'utf8').catch(() => '');
   if (!content) return [];
-  return bucket.formatter.parse(content, { locale });
+  return bucket.formatter.parse(content);
 }
 
 export async function writeCatalogueMessages(
@@ -19,7 +24,17 @@ export async function writeCatalogueMessages(
   messages: Message[],
   path = expandBucketOutputPath(bucket, locale),
 ) {
-  const content = bucket.formatter.stringify(messages, { locale });
+  const catalogueContent = bucket.formatter.stringify(messages);
+  const declarationPath = `${path}.d.ts`;
+  const ignoreDirectory = expandBucketOutputIgnoreDirectory(bucket);
+  const ignorePath = join(ignoreDirectory, '.gitignore');
+  const ignoreContent = `.gitignore\n*.d.ts`;
+
   await mkdir(dirname(path), { recursive: true });
-  await writeFile(path, content);
+  await mkdir(ignoreDirectory, { recursive: true });
+  await Promise.all([
+    writeFile(path, catalogueContent),
+    writeFile(declarationPath, DECLARATION_CONTENT),
+    writeFile(ignorePath, ignoreContent),
+  ]);
 }

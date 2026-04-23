@@ -1,14 +1,14 @@
-import { extractMessagesFromFile } from '~/features/catalogue/extractor.js';
-import { mergeExtractedMessages, reconcileLocaleMessages } from '~/features/catalogue/merge.js';
-import { readCatalogueMessages, writeCatalogueMessages } from '~/features/catalogue/storage.js';
-import { globBucket } from '~/features/watch.js';
-import type { Message } from '~/shapes.js';
-import { BucketWorker, normalisePathForLogs } from './shared.js';
+import { join } from 'node:path';
+import type { Message } from '~/shapes';
+import { extractMessagesFromFile } from '../catalogue/extractor';
+import { mergeExtractedMessages, reconcileLocaleMessages } from '../catalogue/merge';
+import { readCatalogueMessages, writeCatalogueMessages } from '../catalogue/storage';
+import { globBucket, watchDebounced } from '../watch';
+import { BucketWorker, normalisePathForLogs } from './shared';
 
 export class BucketExtractWorker extends BucketWorker {
   #indexedMessagesByPath = new Map<string, Message[]>();
-
-  get messages(): Message[] {
+  get #indexedMessages() {
     return Array.from(this.#indexedMessagesByPath.values()).flat();
   }
 
@@ -31,18 +31,18 @@ export class BucketExtractWorker extends BucketWorker {
     return true;
   }
 
-  async scanAll() {
+  async scan() {
     this.logger.info(`Scanning bucket: ${this.bucket.include}`);
 
     const paths = await globBucket(this.bucket);
     this.logger.step(`Found ${paths.length} file(s)`);
-    await Promise.all(paths.map((path) => this.#indexPath(path)));
+    await Promise.all(paths.map((p) => this.#indexPath(p)));
 
-    this.logger.info(`Total extracted messages: ${this.messages.length}`);
+    this.logger.info(`Total extracted messages: ${this.#indexedMessages.length}`);
   }
 
-  async writeAll() {
-    const mergedMessages = mergeExtractedMessages(this.messages);
+  async write() {
+    const mergedMessages = mergeExtractedMessages(this.#indexedMessages);
     this.logger.info(`Writing ${mergedMessages.length} messages to locales`);
 
     for (const locale of this.config.locales) {
@@ -60,9 +60,19 @@ export class BucketExtractWorker extends BucketWorker {
     this.logger.success(`Extraction complete for bucket: ${this.bucket.include}`);
   }
 
-  async updatePath(path: string) {
+  async update(path: string) {
     const changed = await this.#indexPath(path);
-    if (changed) await this.writeAll();
+    if (changed) await this.write();
     return changed;
+  }
+
+  async watch() {
+    this.logger.header(`👀 Watching bucket for changes: ${this.bucket.include}`);
+
+    for await (const event of watchDebounced('.', { recursive: true })) {
+      if (!event.filename || !this.bucket.match(event.filename)) continue;
+      const path = join(process.cwd(), event.filename);
+      await this.update(path);
+    }
   }
 }
