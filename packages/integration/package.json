@@ -38,7 +38,7 @@
   "scripts": {
     "check": "tsc --noEmit",
     "build": "tsdown",
-    "prepack": "pnpm build"
+    "prepack": "bun run build"
   },
   "dependencies": {
     "@messageformat/icu-messageformat-1": "^0.12.0"

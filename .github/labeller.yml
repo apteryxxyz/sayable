@@ -1,6 +1,6 @@
 'dependencies':
   - changed-files:
-      - any-glob-to-any-file: ['pnpm-lock.yaml']
+      - any-glob-to-any-file: ['bun.lock']
 
 'examples':
   - changed-files:

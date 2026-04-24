@@ -47,7 +47,7 @@
     "test": "vitest",
     "coverage": "vitest run --coverage",
     "build": "tsdown",
-    "prepack": "pnpm build"
+    "prepack": "bun run build"
   },
   "dependencies": {
     "@babel/generator": "^7.29.1",

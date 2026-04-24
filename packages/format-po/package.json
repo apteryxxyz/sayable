@@ -37,7 +37,7 @@
   "scripts": {
     "check": "tsc --noEmit",
     "build": "tsdown",
-    "prepack": "pnpm build"
+    "prepack": "bun run build"
   },
   "dependencies": {
     "pofile": "^1.1.4"

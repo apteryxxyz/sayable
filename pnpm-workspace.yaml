@@ -1,7 +1,0 @@
-packages:
-  - examples/*
-  - packages/*
-  - website
-
-onlyBuiltDependencies:
-  - esbuild

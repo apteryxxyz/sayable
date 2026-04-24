@@ -45,7 +45,7 @@
   "scripts": {
     "check": "tsc --noEmit",
     "build": "tsdown",
-    "prepack": "pnpm build"
+    "prepack": "bun run build"
   },
   "dependencies": {
     "server-only": "^0.0.1"

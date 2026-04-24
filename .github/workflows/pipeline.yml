@@ -4,8 +4,8 @@ on:
     branches: [main]
     paths:
       - 'package.json'
-      - 'pnpm-lock.yaml'
-      - 'pnpm-workspace.yaml'
+      - 'bun-lock.yaml'
+      - 'bun-workspace.yaml'
       - 'turbo.json'
       - 'packages/**/src/**'
       - 'packages/**/package.json'
@@ -16,8 +16,8 @@ on:
     types: [opened, synchronize, reopened]
     paths:
       - 'package.json'
-      - 'pnpm-lock.yaml'
-      - 'pnpm-workspace.yaml'
+      - 'bun-lock.yaml'
+      - 'bun-workspace.yaml'
       - 'turbo.json'
       - 'packages/**/src/**'
       - 'packages/**/package.json'
@@ -39,11 +39,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: ./.github/actions/node
+      - name: Setup Bun
+        uses: ./.github/actions/bun
 
       - name: Build all packages
-        run: pnpm build
+        run: bun run build
 
       - name: Upload dist artifacts
         uses: actions/upload-artifact@v4
@@ -60,8 +60,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: ./.github/actions/node
+      - name: Setup Bun
+        uses: ./.github/actions/bun
 
       - name: Download dist artifacts
         uses: actions/download-artifact@v4
@@ -70,7 +70,7 @@ jobs:
           path: packages
 
       - name: Run the type checker
-        run: pnpm check --filter "./packages/*"
+        run: bun run check --filter "./packages/*"
 
   lint:
     name: Linting
@@ -80,8 +80,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: ./.github/actions/node
+      - name: Setup Bun
+        uses: ./.github/actions/bun
 
       - name: Download dist artifacts
         uses: actions/download-artifact@v4
@@ -90,7 +90,7 @@ jobs:
           path: packages
 
       - name: Run the linter
-        run: pnpm lint
+        run: bun run lint
 
   test:
     name: Testing
@@ -101,8 +101,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: ./.github/actions/node
+      - name: Setup Bun
+        uses: ./.github/actions/bun
 
       - name: Download dist artifacts
         uses: actions/download-artifact@v4
@@ -111,7 +111,7 @@ jobs:
           path: packages
 
       - name: Run tests
-        run: pnpm test
+        run: bun run test
 
       - name: Upload coverage
         if: always()
@@ -137,15 +137,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: ./.github/actions/node
+      - name: Setup Bun
+        uses: ./.github/actions/bun
 
       - name: Process changesets
         id: changesets
         uses: changesets/action@v1
         with:
-          version: pnpm run release:version
-          publish: pnpm run release:publish
+          version: bun run release:version
+          publish: bun run release:publish
           title: 'Pending Releases'
           commit: 'Update changelog and release'
 
@@ -165,10 +165,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: ./.github/actions/node
+      - name: Setup Bun
+        uses: ./.github/actions/bun
 
       - name: Publish snapshot version
         run: |
-          pnpm run release:snapshot:version
-          pnpm run release:snapshot:publish
+          bun run release:snapshot:version
+          bun run release:snapshot:publish
