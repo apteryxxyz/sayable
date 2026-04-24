@@ -40,7 +40,7 @@
 
 'package: unplugin':
   - changed-files:
-      - any-glob-to-any-file: ['packages/unplugin/**']
+      - any-glob-to-any-file: ['packages/plugin-unplugin/**']
 
 'package: transform-js':
   - changed-files:
