@@ -30,9 +30,11 @@ export default (): PluginObj => {
     visitor: {
       // TODO: This is fragile, it does not work with dynamic imports, document this
       ImportDeclaration(path, state) {
+        const importee = path.node.source.value;
+        if (!importee.startsWith('.')) return;
         const importer = state.filename ?? state.file.opts.filename;
         if (!importer) return;
-        const id_ = resolve(dirname(importer), path.node.source.value);
+        const id_ = resolve(dirname(importer), importee);
 
         const id = relative(process.cwd(), id_).replaceAll('\\', '/').split('?')[0]!;
         const bucket = config.buckets.find((b) => b.output.match(id));
