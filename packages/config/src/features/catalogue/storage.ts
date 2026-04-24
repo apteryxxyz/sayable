@@ -28,7 +28,7 @@ export async function writeCatalogueMessages(
   const declarationPath = `${path}.d.ts`;
   const ignoreDirectory = expandBucketOutputIgnoreDirectory(bucket);
   const ignorePath = join(ignoreDirectory, '.gitignore');
-  const ignoreContent = `.gitignore\n*.d.ts`;
+  const ignoreContent = `.gitignore\n*.${bucket.formatter.extension.slice(1)}.d.ts`;
 
   await mkdir(dirname(path), { recursive: true });
   await mkdir(ignoreDirectory, { recursive: true });
