@@ -41,10 +41,10 @@
     "prepack": "bun run build"
   },
   "dependencies": {
-    "@babel/core": "^7.29.0",
+    "@babel/core": "catalog:",
     "@saykit/config": "workspace:^"
   },
   "devDependencies": {
-    "@types/babel__core": "^7.20.5"
+    "@types/babel__core": "catalog:"
   }
 }
