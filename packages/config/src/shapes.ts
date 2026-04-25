@@ -14,7 +14,9 @@ export type Message = z.infer<typeof Message>;
 export const Formatter = z.object({
   extension: z.templateLiteral(['.', z.string()]),
   parse: z.custom<(content: string) => Message[]>((v) => typeof v === 'function'),
-  stringify: z.custom<(messages: Message[]) => string>((v) => typeof v === 'function'),
+  stringify: z.custom<
+    (messages: Message[], context: { locale: string; existingContent?: string }) => string
+  >((v) => typeof v === 'function'),
 });
 export type Formatter = z.infer<typeof Formatter>;
 

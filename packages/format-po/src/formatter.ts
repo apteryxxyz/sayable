@@ -39,12 +39,17 @@ function createPoFormatter(options: FormatterOptions = {}): Formatter {
       });
     },
 
-    stringify(messages) {
+    stringify(messages, { locale, existingContent }) {
       const po = new PO();
+      if (existingContent) {
+        const existing = PO.parse(existingContent);
+        Object.assign(po.headers, existing.headers);
+      }
 
-      po.headers['Content-Type'] = 'text/plain; charset=UTF-8';
-      po.headers['Content-Transfer-Encoding'] = '8bit';
-      po.headers['X-Generator'] = 'saykit';
+      po.headers['Content-Type'] ||= 'text/plain; charset=UTF-8';
+      po.headers['Content-Transfer-Encoding'] ||= '8bit';
+      po.headers['Language'] ||= locale;
+      po.headers['X-Generator'] ||= 'saykit';
 
       for (const message of messages.sort((a, b) => a.message.localeCompare(b.message))) {
         const item = new PO.Item();

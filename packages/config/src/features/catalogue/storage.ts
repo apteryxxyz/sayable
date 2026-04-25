@@ -24,7 +24,8 @@ export async function writeCatalogueMessages(
   messages: Message[],
   path = expandBucketOutputPath(bucket, locale),
 ) {
-  const catalogueContent = bucket.formatter.stringify(messages);
+  const existingContent = await readFile(path, 'utf8').catch(() => undefined);
+  const catalogueContent = bucket.formatter.stringify(messages, { locale, existingContent });
   const declarationPath = `${path}.d.ts`;
   const ignoreDirectory = expandBucketOutputIgnoreDirectory(bucket);
   const ignorePath = join(ignoreDirectory, '.gitignore');
