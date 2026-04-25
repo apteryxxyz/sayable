@@ -7,5 +7,9 @@ export function generateHash(input: string, context?: string) {
 
   const elements = result.match(/.{1,2}/g)?.map((b) => parseInt(b, 16)) || [];
   const bytes = Uint8Array.from(elements);
-  return btoa(String.fromCharCode(...bytes)).slice(0, 6);
+  return btoa(String.fromCharCode(...bytes))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '')
+    .slice(0, 6);
 }
