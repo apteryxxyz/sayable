@@ -13,18 +13,7 @@ export default new Command('extract')
     const logger = new Logger(options);
     logger.header('🛠 Extracting Messages');
 
-    const tasks = config.buckets.map(async (b) => {
-      const worker = new BucketExtractWorker(config, b, logger);
-      await worker.scan();
-      await worker.write();
-      if (options.watch) await worker.watch();
-    });
-
-    const results = await Promise.allSettled(tasks);
-    const failures = results.filter((r): r is PromiseRejectedResult => r.status === 'rejected');
-    if (failures.length > 0)
-      throw new AggregateError(
-        failures.map((f) => f.reason),
-        'One or more buckets failed to extract',
-      );
+    const workers = config.buckets.map((b) => new BucketExtractWorker(config, b, logger));
+    await Promise.all(workers.map((w) => w.scan().then(() => w.write())));
+    if (options.watch) await Promise.all(workers.map((w) => w.watch()));
   });
