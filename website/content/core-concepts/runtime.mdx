@@ -153,14 +153,3 @@ say.call({
 ```
 
 In normal application code you usually do not write this by hand. Instead, the compiler transform rewrites <code>say\`Hello, \$\{name}!\`</code> into the appropriate runtime call for you.
-
-## Fallbacks
-
-There are two different fallback ideas in SayKit:
-
-- runtime locale matching, handled by `say.match()`
-- translation fallback chains, configured with `fallbackLocales` in your config
-
-Today, the `Say` instance itself does not walk a per-message fallback chain at runtime. Instead, fallback translations are applied during extraction, based on [`fallbackLocales`](/core-concepts/configuration).
-
-That means the runtime instance is responsible for selecting and using one locale, while extraction is responsible for building the final translation catalogue for that locale.
