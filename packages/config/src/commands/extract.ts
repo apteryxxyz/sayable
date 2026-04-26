@@ -20,5 +20,11 @@ export default new Command('extract')
       if (options.watch) await worker.watch();
     });
 
-    await Promise.all(tasks);
+    const results = await Promise.allSettled(tasks);
+    const failures = results.filter((r): r is PromiseRejectedResult => r.status === 'rejected');
+    if (failures.length > 0)
+      throw new AggregateError(
+        failures.map((f) => f.reason),
+        'One or more buckets failed to extract',
+      );
   });
