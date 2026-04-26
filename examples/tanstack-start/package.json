@@ -6,7 +6,6 @@
   "scripts": {
     "check": "tsc --noEmit",
     "extract": "saykit extract",
-    "compile": "saykit compile",
     "build": "vite build && tsc --noEmit",
     "dev": "vite dev"
   },

@@ -1,5 +1,5 @@
 import { Command } from '@commander-js/extra-typings';
-import { resolveConfig } from '~/features/loader/resolve.js';
+import { resolveConfig } from '~/features/loader/index.js';
 import Logger from '~/features/logger.js';
 import { BucketExtractWorker } from '~/features/workers/extract-worker.js';
 
@@ -7,21 +7,13 @@ export default new Command('extract')
   .description('Extract messages from source files')
   .option('-v, --verbose', 'enable verbose logging', false)
   .option('-q, --quiet', 'suppress all logging', false)
+  .option('-w, --watch', 'watch source files for changes', false)
   .action(async (options) => {
-    const config = await resolveConfig('saykit');
+    const config = resolveConfig();
     const logger = new Logger(options);
     logger.header('🛠 Extracting Messages');
 
-    const tasks = config.buckets.map(async (bucket) => {
-      const worker = new BucketExtractWorker(config, bucket, logger);
-      await worker.scanAll();
-      await worker.writeAll();
-    });
-
-    const results = await Promise.allSettled(tasks);
-    const rejections = results.filter((r): r is PromiseRejectedResult => r.status === 'rejected');
-    if (rejections.length > 0) {
-      const errors = rejections.map((r) => r.reason).join('\n');
-      throw new Error(`Bucket extraction failed:\n${errors}`);
-    }
+    const workers = config.buckets.map((b) => new BucketExtractWorker(config, b, logger));
+    await Promise.all(workers.map((w) => w.scan().then(() => w.write())));
+    if (options.watch) await Promise.all(workers.map((w) => w.watch()));
   });

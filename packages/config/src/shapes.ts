@@ -13,12 +13,10 @@ export type Message = z.infer<typeof Message>;
 
 export const Formatter = z.object({
   extension: z.templateLiteral(['.', z.string()]),
-  parse: z.custom<(content: string, context: { locale: string }) => Message[]>(
-    (v) => typeof v === 'function',
-  ),
-  stringify: z.custom<(messages: Message[], context: { locale: string }) => string>(
-    (v) => typeof v === 'function',
-  ),
+  parse: z.custom<(content: string) => Message[]>((v) => typeof v === 'function'),
+  stringify: z.custom<
+    (messages: Message[], context: { locale: string; existingContent?: string }) => string
+  >((v) => typeof v === 'function'),
 });
 export type Formatter = z.infer<typeof Formatter>;
 
@@ -51,17 +49,21 @@ export const Bucket = z
   .transform((v) => ({
     ...v,
     match: picomatch(v.include, { ignore: v.exclude }) as (id: string) => boolean,
+    output: Object.assign(v.output, {
+      match: picomatch(
+        v.output.replace('{locale}', '*').replace('{extension}', v.formatter.extension.slice(1)),
+      ),
+    }),
   }));
 export type Bucket = z.infer<typeof Bucket>;
 
-export const Configuration = z
+export const Config = z
   .object({
     sourceLocale: z.string(),
     locales: z.tuple([z.string()], z.string()),
-    fallbackLocales: z.record(z.string(), z.string().array()).optional(),
     buckets: Bucket.array(),
   })
   .refine((config) => config.sourceLocale === config.locales[0], {
     error: 'sourceLocale must be the same as locales[0]',
   });
-export type Configuration = z.infer<typeof Configuration>;
+export type Config = z.infer<typeof Config>;
