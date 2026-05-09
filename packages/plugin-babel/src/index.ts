@@ -1,16 +1,19 @@
 import { readFileSync } from 'node:fs';
 import { dirname, relative, resolve } from 'node:path';
-import { types as t, type PluginObj, type parse as Parse } from '@babel/core';
+import { types as t, type PluginObj, type PluginAPI, type parse as Parse } from '@babel/core';
 import { resolveConfig } from '@saykit/config/features/loader';
 import { generateHash } from '@saykit/config/features/messages';
 
 declare module '@babel/core' {
+  interface PluginAPI {
+    addExternalDependency(ref: string): void;
+  }
   interface PluginObj {
     parserOverride(code: string, opts: TransformOptions, parse: typeof Parse): ParseResult | null;
   }
 }
 
-export default (): PluginObj => {
+export default (api: PluginAPI): PluginObj => {
   const config = resolveConfig();
 
   return {
@@ -45,6 +48,10 @@ export default (): PluginObj => {
           throw path.buildCodeFrameError('SayKit inline imports require a default import');
 
         const content = readFileSync(id, 'utf8');
+        try {
+          api.addExternalDependency(id_);
+        } catch {}
+
         const messages = bucket.formatter.parse(content);
         const entries = messages.map(
           (m) => [m.id || generateHash(m.message, m.context), m.translation || m.message] as const,
