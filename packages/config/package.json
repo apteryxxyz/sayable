@@ -28,16 +28,34 @@
   "type": "module",
   "exports": {
     ".": {
-      "types": "./dist/index.d.mts",
-      "default": "./dist/index.mjs"
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      },
+      "import": {
+        "types": "./dist/index.d.mts",
+        "default": "./dist/index.mjs"
+      }
     },
     "./features/loader": {
-      "types": "./dist/features/loader/index.d.mts",
-      "default": "./dist/features/loader/index.mjs"
+      "require": {
+        "types": "./dist/features/loader/index.d.cts",
+        "default": "./dist/features/loader/index.cjs"
+      },
+      "import": {
+        "types": "./dist/features/loader/index.d.mts",
+        "default": "./dist/features/loader/index.mjs"
+      }
     },
     "./features/messages": {
-      "types": "./dist/features/messages/index.d.mts",
-      "default": "./dist/features/messages/index.mjs"
+      "require": {
+        "types": "./dist/features/messages/index.d.cts",
+        "default": "./dist/features/messages/index.cjs"
+      },
+      "import": {
+        "types": "./dist/features/messages/index.d.mts",
+        "default": "./dist/features/messages/index.mjs"
+      }
     }
   },
   "publishConfig": {

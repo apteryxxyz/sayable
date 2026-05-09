@@ -7,4 +7,6 @@ export default defineConfig({
     'src/features/loader/index.ts',
     'src/features/messages/index.ts',
   ],
+  format: ['esm', 'cjs'],
+  dts: true,
 });
