@@ -14,6 +14,17 @@ import { dirname, join, parse } from 'node:path';
 
 export type Loader = (path: string) => unknown;
 
+function findNearestTsConfig(fromPath: string) {
+  let dir = dirname(fromPath);
+  const { root } = parse(dir);
+  while (true) {
+    const candidate = join(dir, 'tsconfig.json');
+    if (existsSync(candidate)) return candidate;
+    if (dir === root) return null;
+    dir = dirname(dir);
+  }
+}
+
 function findCacheDir(fromPath: string) {
   let dir = dirname(fromPath);
   const { root } = parse(dir);
@@ -25,9 +36,8 @@ function findCacheDir(fromPath: string) {
   }
 }
 
-function transpile(path: string, require: NodeRequire) {
+function transpile(path: string, tsConfigPath: string | null, require: NodeRequire) {
   const ts = require('typescript');
-  const tsConfigPath = ts.findConfigFile(dirname(path), ts.sys.fileExists);
   const { config: tsConfig, error } = tsConfigPath
     ? ts.readConfigFile(tsConfigPath, ts.sys.readFile)
     : { config: {}, error: null };
@@ -49,14 +59,19 @@ function transpile(path: string, require: NodeRequire) {
 function loadWithCache(path: string) {
   const require = createRequire(path);
   const mtimeMs = statSync(path).mtimeMs;
-  const hash = createHash('sha1').update(path).digest('hex').slice(0, 16);
+  const tsConfigPath = findNearestTsConfig(path);
+  const tsConfigMtimeMs = tsConfigPath ? statSync(tsConfigPath).mtimeMs : 0;
+  const hash = createHash('sha1')
+    .update(`${path}\0${tsConfigPath ?? ''}\0${tsConfigMtimeMs}`)
+    .digest('hex')
+    .slice(0, 16);
   const cacheDir = findCacheDir(path);
   const cachePath = join(cacheDir, `${hash}.${mtimeMs}.cjs`);
 
   try {
     if (!existsSync(cachePath)) {
       mkdirSync(cacheDir, { recursive: true });
-      writeFileSync(cachePath, transpile(path, require));
+      writeFileSync(cachePath, transpile(path, tsConfigPath, require));
 
       if (existsSync(cacheDir)) {
         for (const entry of readdirSync(cacheDir)) {
