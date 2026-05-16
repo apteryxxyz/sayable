@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 
 const SUPPORTED_CONFIG_FILES = [
@@ -17,12 +17,7 @@ export function getConfigFileCandidates(name: string) {
 export function findConfigFile(moduleName: string, projectDir: string) {
   for (const fileName of getConfigFileCandidates(moduleName)) {
     const id = join(projectDir, fileName);
-    if (!existsSync(id)) continue;
-
-    return {
-      id,
-      content: readFileSync(id, 'utf8'),
-    };
+    if (existsSync(id)) return { id };
   }
 
   return null;

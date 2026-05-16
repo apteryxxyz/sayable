@@ -11,7 +11,7 @@ export function resolveConfig(name = 'saykit') {
   const load = ext in configLoaders ? configLoaders[ext as keyof typeof configLoaders] : null;
   if (!load) throw new Error(`Unsupported config file type "${ext}" for "${name}"`);
 
-  let config = load(file.id, file.content);
+  const config = load(file.id);
   if (!config || typeof config !== 'object') throw new Error(`Invalid config file for "${name}"`);
 
   return config as Config;
