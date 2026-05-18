@@ -28,7 +28,6 @@ import js from '@saykit/transform-js';
 import jsx from '@saykit/transform-jsx';
 
 export default defineConfig({
-  sourceLocale: 'en',
   locales: ['en', 'fr'],
   buckets: [
     {
@@ -43,7 +42,7 @@ export default defineConfig({
 
 This tells SayKit:
 
-- The source locale is `en`, and we also want `fr`.
+- The source locale is `en` (the first entry), and we also want `fr`.
 - Look for messages in any `.ts`/`.tsx` file under `src/`.
 - Write extracted messages to `src/locales/en.po` and `src/locales/fr.po`.
 - Use the PO formatter and the JS + JSX transformers.

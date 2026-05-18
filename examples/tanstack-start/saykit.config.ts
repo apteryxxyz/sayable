@@ -4,7 +4,6 @@ import js from '@saykit/transform-js';
 import jsx from '@saykit/transform-jsx';
 
 export default defineConfig({
-  sourceLocale: 'en',
   locales: ['en', 'fr'],
   buckets: [
     {
