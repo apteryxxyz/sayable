@@ -1,0 +1,232 @@
+---
+title: '@saykit/config'
+description: API reference for the configuration package and CLI building blocks
+---
+
+`@saykit/config` exports the `defineConfig` helper, the underlying Zod schemas / types, and a small set of building blocks used by the CLI and plugins.
+
+```ts
+import { defineConfig } from '@saykit/config';
+import type { Config, Bucket, Formatter, Transformer, Message } from '@saykit/config';
+```
+
+Most application code only ever uses `defineConfig` and the types. The other exports exist for plugin and transformer authors.
+
+## `defineConfig(config)`
+
+Validate a SayKit configuration against the Zod schema and return the normalised result.
+
+```ts title="saykit.config.ts"
+import { defineConfig } from '@saykit/config';
+import po from '@saykit/format-po';
+import js from '@saykit/transform-js';
+
+export default defineConfig({
+  sourceLocale: 'en',
+  locales: ['en', 'fr'],
+  buckets: [
+    {
+      include: ['src/**/*.ts'],
+      output: 'src/locales/{locale}.{extension}',
+      formatter: po(),
+      transformer: js(),
+    },
+  ],
+});
+```
+
+Returns the parsed `Config`. Throws if validation fails (with a Zod error containing the path and reason).
+
+## Types
+
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+### `Config`
+
+<TypeTable
+  type={{
+    sourceLocale: {
+      description: 'The source locale (must equal `locales[0]`).',
+      type: 'string',
+      required: true,
+    },
+    locales: {
+      description: 'All supported locales.',
+      type: '[string, ...string[]]',
+      required: true,
+    },
+    buckets: {
+      description: 'Extraction buckets.',
+      type: 'Bucket[]',
+      required: true,
+    },
+  }}
+/>
+
+### `Bucket`
+
+<TypeTable
+  type={{
+    include: {
+      description: 'Globs to extract from.',
+      type: 'string[]',
+      required: true,
+    },
+    exclude: {
+      description: 'Globs to skip.',
+      type: 'string[]',
+    },
+    output: {
+      description: 'Output path template with `{locale}` and `{extension}` placeholders.',
+      type: '`${string}{locale}${string}{extension}`',
+      required: true,
+    },
+    formatter: {
+      description: 'The Formatter for this bucket.',
+      type: 'Formatter',
+      required: true,
+    },
+    transformer: {
+      description: 'A Transformer, or array of Transformers.',
+      type: 'Transformer | Transformer[]',
+      required: true,
+    },
+  }}
+/>
+
+After parsing, each bucket also exposes `match(id)` and an `output` value with a `match(id)` helper. Plugin authors can use these to test whether a file belongs to a bucket:
+
+```ts
+config.buckets[0]!.match('src/app/page.tsx'); // true if matched by include
+config.buckets[0]!.output.match('src/locales/en.po'); // true if it's a translation file
+```
+
+### `Formatter`
+
+<TypeTable
+  type={{
+    extension: {
+      description: 'File extension including the dot (e.g. `.po`).',
+      type: '`.${string}`',
+      required: true,
+    },
+    parse: {
+      description: 'Parse a catalogue file into `Message[]`.',
+      type: '(content: string) => Message[]',
+      required: true,
+    },
+    stringify: {
+      description: 'Serialise `Message[]` into the catalogue file format.',
+      type: '(messages: Message[], context: { locale: string; existingContent?: string }) => string',
+      required: true,
+    },
+  }}
+/>
+
+### `Transformer`
+
+<TypeTable
+  type={{
+    match: {
+      description: 'Does this transformer handle the given file id?',
+      type: '(id: string) => boolean',
+      required: true,
+    },
+    extract: {
+      description: 'Extract messages from a file (synchronously).',
+      type: '(code: string, id: string) => Message[]',
+      required: true,
+    },
+    transform: {
+      description: 'Rewrite a file, lowering macros to runtime calls (synchronously).',
+      type: '(code: string, id: string) => string',
+      required: true,
+    },
+  }}
+/>
+
+### `Message`
+
+<TypeTable
+  type={{
+    message: {
+      description: 'The ICU MessageFormat string.',
+      type: 'string',
+      required: true,
+    },
+    translation: {
+      description: 'The translation, if any.',
+      type: 'string',
+    },
+    id: {
+      description: 'Custom id, if provided in a descriptor.',
+      type: 'string',
+    },
+    context: {
+      description: 'Descriptor context, if any.',
+      type: 'string',
+    },
+    comments: {
+      description: 'Translator comments.',
+      type: 'string[]',
+    },
+    references: {
+      description: 'Source references as `file:line`.',
+      type: 'string[]',
+    },
+  }}
+/>
+
+## Subpath exports
+
+`@saykit/config` also exposes a few subpaths used by plugins and transformer authors.
+
+### `@saykit/config/features/loader`
+
+```ts
+import { resolveConfig } from '@saykit/config/features/loader';
+```
+
+#### `resolveConfig(name?)`
+
+Search up from `process.cwd()` for `saykit.config.{ts,mts,cts,js,mjs,cjs}` (or `${name}.config.*`), transpile it if necessary, and return the validated `Config`.
+
+```ts
+const config = resolveConfig(); // looks for saykit.config.*
+const config = resolveConfig('my-tool'); // looks for my-tool.config.*
+```
+
+Used by:
+
+- the `saykit` CLI
+- `unplugin-saykit`
+- `babel-plugin-saykit`
+
+Transpiled TS configs are cached in `node_modules/.cache/saykit/config/`, keyed by the config file's mtime and the workspace's `tsconfig.json` mtimes.
+
+### `@saykit/config/features/messages`
+
+```ts
+import {
+  generateHash,
+  assignSequenceIdentifiers,
+  CompositeMessage,
+  LiteralMessage,
+  ArgumentMessage,
+  ChoiceMessage,
+  ElementMessage,
+} from '@saykit/config/features/messages';
+```
+
+The internal `Message` types used by transformers (different from the public catalogue `Message` shape), plus helpers:
+
+- `generateHash(text, context?)`, produces the same 6-character id SayKit uses elsewhere
+- `assignSequenceIdentifiers(message, { current: 0 })`, numbers positional placeholders depth-first
+
+These exist so that custom transformers can produce the same id and placeholder shape the built-in transformers do.
+
+## Next
+
+- [Configuration guide](/core-concepts/configuration), how this schema is used in practice
+- [Custom formatter](/guides/custom-formatter), implementing `Formatter`
+- [Custom transformer](/guides/custom-transformer), implementing `Transformer`

@@ -1,6 +1,6 @@
 {
   "title": "Integrations",
   "icon": "Puzzle",
-  "pages": ["react", "carbon"],
+  "pages": ["react", "carbon", "vite", "babel"],
   "collapsible": false
 }

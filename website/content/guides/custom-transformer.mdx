@@ -1,0 +1,180 @@
+---
+title: Custom transformer
+description: Write a transformer for a new source language or DSL
+---
+
+A SayKit `Transformer` is the bridge between **source code** and **messages**. It tells the bucket which files it handles, how to extract messages from them, and how to rewrite macros into runtime calls.
+
+The built-in `@saykit/transform-js` and `@saykit/transform-jsx` cover JavaScript, TypeScript, JSX, and TSX. If you want SayKit messages in another language (Vue SFCs, Svelte, MDX, an internal DSL), you write a transformer.
+
+<Callout type="info">
+  Writing a transformer is the most involved customisation in SayKit. Read
+  [messages](/core-concepts/messages) and [architecture](/core-concepts/architecture) first.
+</Callout>
+
+## The shape
+
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+```ts
+import type { Transformer } from '@saykit/config';
+
+const transformer: Transformer = {
+  match(id: string): boolean {
+    /* ... */
+  },
+  extract(code: string, id: string): Message[] {
+    /* ... */
+  },
+  transform(code: string, id: string): string {
+    /* ... */
+  },
+};
+```
+
+<TypeTable
+  type={{
+    match: {
+      description:
+        'Predicate: should this transformer handle the given file? Usually based on file extension.',
+      type: '(id: string) => boolean',
+      required: true,
+    },
+    extract: {
+      description:
+        'Walk the source and return every message you find. Must be synchronous. Used by the CLI at extract time.',
+      type: '(code: string, id: string) => Message[]',
+      required: true,
+    },
+    transform: {
+      description:
+        'Rewrite macros in the source into runtime calls. Must be synchronous. Used by the build-tool plugin at build time.',
+      type: '(code: string, id: string) => string',
+      required: true,
+    },
+  }}
+/>
+
+## How the built-in transformers work
+
+For reference, the JS transformer:
+
+1. Parses source with `@babel/parser` (with `'typescript'` plugin).
+2. Walks the AST with `@babel/traverse`.
+3. For each `Expression`:
+   - Tries to interpret it as a `say` macro (tagged template, or `say.plural` / `say.ordinal` / `say.select` call).
+   - If it is one, builds a `CompositeMessage` from the AST.
+4. On `extract`, collects every `CompositeMessage` and converts each to the `Message` shape (with ICU string, comments, references).
+5. On `transform`, replaces each matched expression with a `say.call({ id, ...args })` call expression.
+
+The JSX transformer does the same plus a `JSXElement` visitor for `<Say>` components.
+
+## Reusing the building blocks
+
+Most of the parsing work is reusable. `@saykit/config/features/messages` exposes:
+
+- `CompositeMessage`, `LiteralMessage`, `ArgumentMessage`, `ChoiceMessage`, `ElementMessage`
+- `assignSequenceIdentifiers(message, { current: 0 })`, numbers positional placeholders
+- `generateHash(text, context)`, produces the same 6-char id SayKit uses elsewhere
+
+And `@saykit/transform-js` exposes its parser and generator:
+
+```ts
+import { parseExpression } from '@saykit/transform-js/parser';
+import { generateSayCallExpression } from '@saykit/transform-js/generator';
+```
+
+`parseExpression(babelNode)` recognises `say` macros in a Babel expression and returns a `CompositeMessage`.
+`generateSayCallExpression(message)` turns it back into a `say.call(...)` Babel expression.
+
+This makes it relatively cheap to write a transformer for a new language that _embeds_ JS expressions, you reuse the JS recognition logic for inner expressions.
+
+## Sketch: a Vue SFC transformer
+
+The general shape, in pseudocode:
+
+```ts
+import type { Transformer } from '@saykit/config';
+import { parse as parseSfc } from '@vue/compiler-sfc';
+import jsTransformer from '@saykit/transform-js';
+
+export default function vue(): Transformer {
+  const js = jsTransformer();
+
+  return {
+    match(id) {
+      return id.endsWith('.vue');
+    },
+
+    extract(code, id) {
+      const { descriptor } = parseSfc(code);
+      const scripts = [descriptor.script?.content, descriptor.scriptSetup?.content].filter(Boolean);
+      const messages = scripts.flatMap((s) => js.extract(s!, id));
+      // TODO: also walk descriptor.template for {{ say`...` }} macros
+      return messages;
+    },
+
+    transform(code, id) {
+      const { descriptor } = parseSfc(code);
+      // Re-stitch the SFC with transformed <script>/<script setup>
+      // and a transformed <template>.
+      // ...
+    },
+  };
+}
+```
+
+The hard parts are usually:
+
+- **synchronous parsing**, both `extract` and `transform` are sync, by contract
+- **source maps**, if you stitch a custom format back together, source map fidelity matters
+- **placeholder names**, pull them out of identifier nodes when you can, fall back to positional
+
+## The `extract` &harr; `transform` contract
+
+`extract` and `transform` see the _same_ AST shape; they only differ in what they do with matched nodes:
+
+- `extract` reads them and appends to a list.
+- `transform` rewrites them and returns the new source.
+
+A common pattern: a single internal parser that runs once per macro, returning a `CompositeMessage`. Both `extract` and `transform` use that result, `extract` converts it to the catalogue shape, `transform` generates a `say.call(...)`.
+
+## Synchronous-only
+
+Both methods must be synchronous. This is a deliberate constraint:
+
+- the CLI runs many files in parallel and benefits from straight-line execution
+- bundler plugins (especially Babel) often expect synchronous transforms
+- async I/O inside a transformer almost always means you're doing the wrong thing, do it in the formatter or outside the build
+
+If you genuinely need async (e.g. for an external service lookup), pre-resolve it once at config load time and pass the data into the transformer factory.
+
+## Registering
+
+```ts title="saykit.config.ts"
+import { defineConfig } from '@saykit/config';
+import po from '@saykit/format-po';
+import js from '@saykit/transform-js';
+import vue from './my-transform-vue';
+
+export default defineConfig({
+  sourceLocale: 'en',
+  locales: ['en', 'fr'],
+  buckets: [
+    {
+      include: ['src/**/*.{ts,vue}'],
+      output: 'src/locales/{locale}.{extension}',
+      formatter: po(),
+      transformer: [js(), vue()],
+    },
+  ],
+});
+```
+
+Each file goes to the first transformer whose `match()` returns true, or, if multiple match, the bucket runs all of them and unions the results.
+
+## Next
+
+- [Architecture](/core-concepts/architecture), how transformers fit into the pipeline
+- [Configuration](/core-concepts/configuration), bucket and transformer shapes
+- [API reference](/reference/api/config), the underlying types

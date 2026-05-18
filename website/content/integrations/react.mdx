@@ -1,18 +1,28 @@
 ---
 title: React
-description: Use SayKit with React to localise your app
+description: Use SayKit with React, components, hooks, and server runtime
 ---
 
-SayKit includes a React integration via `@saykit/react`.
+`@saykit/react` is the React integration for SayKit. It does three things:
 
-The React integration does two things:
+1. Provides a `<Say>` component for rendering translated content, with sub-components for plurals, ordinals, and select.
+2. Provides a `<SayProvider>` and `useSay()` for client components.
+3. Provides a small server runtime (`setSay`, `getSay`, `unstable_createWithSay`) for server-rendered apps.
 
-- provides a `<Say>` component for rendering translated JSX in both server and client components
-- provides a `<SayProvider>` context that supplies the active locale and messages to client components
+The package uses the `react-server` export condition, so `<Say>` works in both server and client components without two different imports.
+
+## Install
+
+```sh
+pnpm add @saykit/react saykit
+pnpm add -D @saykit/config @saykit/format-po @saykit/transform-js @saykit/transform-jsx unplugin-saykit
+```
+
+Then add a SayKit build-tool plugin: [`unplugin-saykit`](/integrations/vite) for Vite/Rollup/etc. (including TanStack Start), or [`babel-plugin-saykit`](/integrations/babel) for Babel-based pipelines like Next.js, React Native, and Expo.
 
 ## `<Say>`
 
-`<Say>` is the primary way to render translated content, and works in both server and client components via the `react-server` export condition. Write your content naturally as JSX children, variables and elements are both supported.
+`<Say>` is the primary way to render translated content. Write your text and embedded variables naturally; the transform extracts the literal text and rewrites the element to render the translation.
 
 ```tsx
 import { Say } from '@saykit/react';
@@ -21,14 +31,20 @@ function CheckoutSummary({ items, total }: { items: number; total: string }) {
   return (
     <p>
       <Say>
-        {items} items · total <strong>{total}</strong>
+        {items} items &middot; total <strong>{total}</strong>
       </Say>
     </p>
   );
 }
 ```
 
-`<Say>` also exposes sub-components for pluralisation, ordinals, and select messages:
+Variables become named ICU placeholders (`{items}`, `{total}`). JSX elements inside `<Say>` become numbered tags (`<0>{total}</0>`) so translators can reorder them.
+
+`<Say>` works equally in server and client components, the package switches implementation based on the `react-server` condition.
+
+### Plurals, ordinals, select
+
+`<Say>` exposes sub-components for ICU branching:
 
 ```tsx
 <Say.Plural _={count} one="# item in your cart" other="# items in your cart" />
@@ -39,12 +55,22 @@ function CheckoutSummary({ items, total }: { items: number; total: string }) {
 ```
 
 <Callout type="info">
-  `Say`, `Say.Plural`, `Say.Ordinal`, and `Say.Select` are macros, they must be used with the
-  relevant SayKit plugin for your build tool. See the [configuration
-  guide](/core-concepts/configuration) for setup.
+  JSX prop names can't start with a digit, so numeric branch keys (`1`, `2`, &hellip;) get a
+  leading underscore (`_1`, `_2`). SayKit strips the underscore during extraction, so the resulting
+  ICU is `1 {...}`, `2 {...}`.
 </Callout>
 
-## Client Components
+### Descriptors
+
+To attach metadata to a JSX message, a custom id or context, pass it as a prop:
+
+```tsx
+<Say context="noun">Post</Say>
+<Say context="verb">Post</Say>
+<Say id="checkout.review">Review your order</Say>
+```
+
+## Client components
 
 ```ts
 import { SayProvider, useSay } from '@saykit/react/client';
@@ -52,62 +78,132 @@ import { SayProvider, useSay } from '@saykit/react/client';
 
 ### `<SayProvider>`
 
-Render `SayProvider` once near the top of your client tree, passing in the `locale` string and the `messages` catalogue for that locale.
+Render `SayProvider` once near the top of your client tree, with the active locale and its messages:
 
-```tsx
+```tsx title="src/main.tsx"
 import { SayProvider } from '@saykit/react/client';
+import say from './i18n';
 
-const locale = say.match(...);
-await say.load(locale);
+const locale = say.match([navigator.language]);
 say.activate(locale);
-const messages = say.messages;
 
-<SayProvider locale={locale} messages={messages}>
-  {children}
-</SayProvider>
+<SayProvider locale={locale} messages={say.messages}>
+  <App />
+</SayProvider>;
 ```
 
-Any client component below the provider can use `<Say>` directly, with no additional setup.
+Internally, `SayProvider` constructs a frozen `Say` instance scoped to the locale you pass in. Anything beneath it, `<Say>`, `<Say.Plural>`, `useSay()`, resolves against that locale.
 
 ### `useSay`
 
-If you need access to the `Say` instance itself in a client component, use `useSay()`. Keep in mind it will return a frozen `Say` instance, reflecting the locale and messages passed into the nearest `SayProvider`.
+If you need the `Say` instance itself in a client component (for example, to compose a runtime string in an event handler), call `useSay()`:
 
 ```tsx
 function ConfirmButton({ count }: { count: number }) {
   const say = useSay();
-  const handleClick = () => window.alert(say`Delete ${count} items?`);
+
   return (
-    <button onClick={handleClick}>
+    <button onClick={() => alert(say`Delete ${count} items?`)}>
       <Say>Delete</Say>
     </button>
   );
 }
 ```
 
-## Server Usage
+`useSay()` returns a frozen `Say`, you can read messages and format strings from it, but you can't activate a different locale or load more messages.
+
+## Server runtime
 
 ```ts
 import { setSay, getSay, unstable_createWithSay } from '@saykit/react/server';
 ```
 
-<Callout type="warning">
-  Server support is experimental. The exact integration API differs between frameworks, and
-  `unstable_createWithSay` may change before a stable release.
-</Callout>
+Server rendering uses React's per-request `cache()` to register a `Say` instance for the current request.
 
 ### `setSay`
 
-Call `setSay()` with your activated `Say` instance before any `<Say>` components render for the current request. It must be called before rendering, server components that use `<Say>` will throw if no instance has been registered.
+Call `setSay()` once per request, before any server component renders a `<Say>`:
+
+```ts
+import { setSay } from '@saykit/react/server';
+import { Say } from 'saykit';
+
+const say = new Say({ locales: ['en', 'fr'], messages: { en, fr } });
+say.activate('fr');
+
+setSay(say);
+```
+
+`setSay()` clones and freezes whatever you pass, the registered instance is request-scoped and won't mutate any shared state.
 
 ### `getSay`
 
-`getSay()` returns the `Say` instance registered for the current request by `setSay()`. It is the server equivalent of `useSay()`, useful when you need access to the instance itself rather than rendering through `<Say>`.
+`getSay()` returns the registered instance for the current request. It's the server equivalent of `useSay()`:
 
-## Mental Model
+```tsx
+import { getSay } from '@saykit/react/server';
 
-A simple way to think about the integration is:
+export default async function Page() {
+  const say = getSay();
+  return <h1>{say`Welcome back!`}</h1>;
+}
+```
 
-- render translated strings and JSX with `<Say>` in any component, server or client
-- on the server, a `Say` instance is registered per-request so server components can resolve translations without a provider
-- on the client, `SayProvider` supplies the same locale and messages so client components hydrate correctly
+### `unstable_createWithSay`
+
+For frameworks that pass props into root components (a route's layout, a page component), `unstable_createWithSay` builds a `withSay()` higher-order component that handles the per-request dance:
+
+```ts title="src/i18n.ts"
+import 'server-only';
+import { unstable_createWithSay } from '@saykit/react/server';
+import { Say } from 'saykit';
+import en from './locales/en.po';
+import fr from './locales/fr.po';
+
+const say = new Say({ locales: ['en', 'fr'], messages: { en, fr } });
+export const withSay = unstable_createWithSay(say);
+export default say;
+```
+
+```tsx
+import { SayProvider } from '@saykit/react/client';
+import say, { withSay } from './i18n';
+
+async function RootLayout({ locale, messages, children, ...props }) {
+  return (
+    <html lang={locale}>
+      <body>
+        <SayProvider locale={locale} messages={messages}>
+          {children}
+        </SayProvider>
+      </body>
+    </html>
+  );
+}
+
+export default withSay(RootLayout, (props) => getLocaleFrom(props));
+```
+
+`withSay(Component, getLocale)`:
+
+1. calls `getLocale(props)` and `match()`es it against your configured locales
+2. loads the matched locale's messages
+3. activates the locale on the shared `Say`
+4. registers it via `setSay()`
+5. renders the wrapped component with `locale` and `messages` injected
+
+The component then passes those into `<SayProvider>` so client components hydrate correctly.
+
+## Mental model
+
+A simple way to think about the integration:
+
+- render translated content with `<Say>` in any component, server or client
+- on the server, one `Say` is registered per request so server components can resolve translations
+- on the client, `SayProvider` supplies the same locale + messages so the tree hydrates consistently
+
+## Next
+
+- [Vite (unplugin)](/integrations/vite): the build-tool plugin
+- [Babel](/integrations/babel): for React Native, Expo, and other Babel pipelines
+- [API reference](/reference/api/react): every export

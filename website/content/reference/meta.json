@@ -1,0 +1,6 @@
+{
+  "title": "Reference",
+  "icon": "Library",
+  "pages": ["cli", "api"],
+  "collapsible": false
+}

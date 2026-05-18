@@ -1,0 +1,6 @@
+{
+  "title": "API",
+  "icon": "Code",
+  "pages": ["saykit", "react", "carbon", "config"],
+  "collapsible": true
+}

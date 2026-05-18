@@ -1,70 +1,94 @@
 ---
 title: Introduction
-description: Framework-agnostic i18n translation framework with compile-time message extraction and type-safe configuration
+description: Compile-time i18n for JavaScript, TypeScript, React, and beyond
 ---
 
 # Welcome to SayKit
 
-SayKit is a modern, framework-agnostic internationalisation (i18n) framework that brings compile-time message extraction and type-safe configuration to your applications.
+SayKit is a framework-agnostic internationalisation toolkit built around **compile-time message extraction**, **typed configuration**, and **small runtime primitives**.
 
-<Callout type="info">
-  SayKit is currently in active development (WIP). APIs may change before the stable 1.0 release.
+You author messages inline with tagged templates or JSX. A build-tool plugin extracts them to translation files and rewrites your source to small runtime calls. At runtime, a tiny `Say` instance formats those messages using ICU MessageFormat, with plurals, ordinals, and select, against whichever locale you've activated.
+
+<Callout type="warn">
+  SayKit is in active development (pre-1.0). Public APIs may change before the stable 1.0 release.
 </Callout>
 
-## Key Features
+## Why SayKit?
 
-import { Braces, WandSparkles, Puzzle, Languages } from 'lucide-react';
+import { Braces, WandSparkles, Puzzle, Languages, Boxes, FileType2 } from 'lucide-react';
 
 <Cards>
   <Card
     icon={<Braces />}
-    title="Template Literal Syntax"
-    description="Define messages using intuitive template literal syntax with compile-time macro expansion"
+    title="Author in code"
+    description="Write messages inline with tagged templates or JSX. No keys, no string tables, no juggling translation IDs by hand."
   />
   <Card
     icon={<WandSparkles />}
-    title="Compile-Time Extraction"
-    description="Automatically extract translatable messages from your source code during build"
-  />
-  <Card
-    icon={<Puzzle />}
-    title="Framework Agnostic"
-    description="Works with React, Carbon, and any framework that supports plugins"
+    title="Compile-time extraction"
+    description="A Babel or unplugin transform extracts messages during build. Your source stays small and ergonomic."
   />
   <Card
     icon={<Languages />}
     title="ICU MessageFormat"
-    description="Full support for pluralisation, ordinals, and select messages using ICU standards"
+    description="Full support for plurals, ordinals, and select using the ICU standard the rest of the i18n world already uses."
+  />
+  <Card
+    icon={<Puzzle />}
+    title="Framework agnostic"
+    description="A small core runtime, plus adapters for React, Next.js, TanStack Start, Carbon, Expo, and anything else with a build plugin."
+  />
+  <Card
+    icon={<Boxes />}
+    title="Typed config"
+    description="A Zod-validated saykit.config.ts file defines locales, buckets, formatters, and transformers, all under TypeScript."
+  />
+  <Card
+    icon={<FileType2 />}
+    title="Plain translation files"
+    description="Import .po files (or your own format) directly. Bundlers turn them into JS catalogues, no shipped extractor, no extra runtime."
   />
 </Cards>
 
-## Next Steps
+## How it works
 
-<Steps>
-<Step>
-### Install SayKit
+SayKit has four moving parts that wire up like this:
 
-Add SayKit to your project using your preferred package manager
+1. You **author** messages with `` say`...` `` or `<Say>...</Say>` in source files.
+2. The `saykit` CLI **extracts** them into per-locale files (`src/locales/en.po`, `fr.po`, &hellip;).
+3. Translators (or you) fill in the translations in those files.
+4. At build time a SayKit plugin **transforms** your source, macros become small runtime calls, and `import en from './locales/en.po'` becomes a plain JS object.
+5. At runtime, a `Say` instance picks a locale and **formats** messages on demand.
 
-[Installation Guide →](/getting-started/installation)
+There's no SaaS, no proxy, no extra service. Translation files live in your repo, next to the code they describe.
 
-</Step>
-<Step>
-### Configure Your Project
+## Where to next?
 
-Set up your configuration file to define locales and message extraction rules
+import { Rocket, BookOpen, Boxes as BoxesIcon, Puzzle as PuzzleIcon } from 'lucide-react';
 
-</Step>
-<Step>
-### Add a Framework Integration
-
-Install the React, Babel, or unplugin integration for your build setup
-
-</Step>
-<Step>
-### Extract Messages
-
-Use the CLI to extract messages from your source files.
-
-</Step>
-</Steps>
+<Cards>
+  <Card
+    icon={<Rocket />}
+    title="Installation"
+    href="/getting-started/installation"
+    description="Add SayKit to your project for your stack of choice."
+  />
+  <Card
+    icon={<BookOpen />}
+    title="Quickstart"
+    href="/getting-started/quickstart"
+    description="A five-minute end-to-end walkthrough from zero to translated output."
+  />
+  <Card
+    icon={<BoxesIcon />}
+    title="Architecture"
+    href="/core-concepts/architecture"
+    description="How the runtime, config, transformers, formatters, and plugins fit together."
+  />
+  <Card
+    icon={<PuzzleIcon />}
+    title="Integrations"
+    href="/integrations/react"
+    description="React, Carbon, Vite, Babel, or just the core runtime."
+  />
+</Cards>

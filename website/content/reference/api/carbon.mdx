@@ -1,0 +1,140 @@
+---
+title: '@saykit/carbon'
+description: API reference for the Carbon integration
+---
+
+```ts
+import { SayPlugin, withSay } from '@saykit/carbon';
+```
+
+## `SayPlugin`
+
+A Carbon `Plugin` that registers a shared `Say` instance globally and applies the interaction- and guild-level extensions.
+
+```ts
+import { Client } from '@buape/carbon';
+import { SayPlugin } from '@saykit/carbon';
+
+const client = new Client(
+  {
+    /* ... */
+  },
+  {
+    /* ... */
+  },
+  [new SayPlugin(say)],
+);
+```
+
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+### Constructor
+
+<TypeTable
+  type={{
+    say: {
+      description:
+        'The shared `Say` instance to register. Should be the same instance you use to construct commands and components.',
+      type: 'Say',
+      required: true,
+    },
+  }}
+/>
+
+`SayPlugin` does three things on construction:
+
+1. Stores the `Say` in a global slot keyed by an internal symbol.
+2. Applies the `BaseInteraction.prototype.say` extension.
+3. Applies the `Guild.prototype.say` extension.
+
+The plugin has no other lifecycle methods, once you've constructed it and passed it to the `Client`, you can forget about it.
+
+## `withSay(BaseClass)`
+
+A higher-order class that decorates a Carbon class with SayKit support. The exact behaviour depends on what you pass in.
+
+### For `BaseCommand` subclasses
+
+When the base class extends `BaseCommand` (`Command`, `CommandWithSubcommands`, &hellip;), the resulting constructor accepts a `Say` and a mapping function:
+
+```ts
+class PingCommand extends withSay(Command) {
+  constructor(say: Say) {
+    super(say, (say) => ({
+      name: say`ping`,
+      description: say`Ping the bot!`,
+    }));
+  }
+}
+```
+
+The mapping function runs once per locale. SayKit then combines those results into Carbon's per-locale command metadata so Discord can render the command in each user's locale.
+
+Localisable keys:
+
+- `name`
+- `description`
+- `label`
+- `title`
+- `placeholder`
+- `content`
+- `options` (with their own `name` / `description` / `placeholder`)
+- `components`
+- `subcommands`
+- `subcommandGroups`
+
+### For `BaseComponent` and `Modal` subclasses
+
+For components (`Button`, `StringSelect`, &hellip;) and modals, `withSay` produces a constructor that takes the translated props directly, no per-locale mapping, since Discord doesn't localise component metadata per-user the way it does commands:
+
+```ts
+class RollAgainButton extends withSay(Button) {
+  customId = 'roll-again';
+  constructor(say: Say) {
+    super({ label: say`Roll Again` });
+  }
+}
+```
+
+### Caching
+
+`withSay()` caches its output class per base class, calling `withSay(Command)` twice returns the same generated class, so `instanceof` and identity checks still work.
+
+## Extensions
+
+When `SayPlugin` is registered, these extensions are applied to Carbon's prototypes:
+
+### `BaseInteraction.prototype.say`
+
+```ts
+interface BaseInteraction<T> {
+  get say(): Say;
+}
+```
+
+Returns a `Say` clone activated to the interaction's `locale`. Cached on the interaction instance, so subsequent accesses re-use the same clone.
+
+### `Guild.prototype.say`
+
+```ts
+interface Guild {
+  get say(): Say;
+}
+```
+
+Returns a `Say` clone activated to the guild's `preferred_locale`. Cached on the guild instance.
+
+## Type imports
+
+The package also re-exports type augmentations for completeness:
+
+```ts
+import type {} from '@saykit/carbon'; // augments @buape/carbon types
+```
+
+You don't need this for normal use, it's automatic when you import any value from the package.
+
+## Next
+
+- [Integration guide](/integrations/carbon), full walkthrough
+- [API: saykit](/reference/api/saykit), the `Say` class

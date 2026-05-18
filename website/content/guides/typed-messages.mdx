@@ -1,0 +1,97 @@
+---
+title: Typed messages
+description: How translation file imports are typed, and how to push typing further
+---
+
+SayKit emits a `.d.ts` file alongside every translation file so that importing it from your source compiles without complaint:
+
+```text
+src/locales/
+  en.po
+  en.po.d.ts
+  fr.po
+  fr.po.d.ts
+  .gitignore     # marks *.po.d.ts as generated
+```
+
+```ts
+import en from './locales/en.po';
+// en is typed as: Record<string, string>
+```
+
+The auto-generated declaration is intentionally simple:
+
+```ts title="src/locales/en.po.d.ts"
+declare const translations: Record<string, string>;
+export default translations;
+```
+
+That's enough to make the import type-check, even before your build plugin has run, and it's the only `.po.d.ts` shape your tooling needs to handle.
+
+## Why generic?
+
+You'll notice the declaration is `Record<string, string>` rather than something narrow like `{ "abc123": string; "def456": string }`. That's deliberate:
+
+- Identifiers are content hashes by default. They're stable, but not meant to be consumed by hand.
+- The macros (`` say`...` ``, `<Say>`) are what your application code writes. The transform inserts the right id at build time, so your code never needs to know about hashes.
+- Narrowing the type to specific keys would force the type to stay in lock-step with extraction, saving and re-running would constantly create diffs.
+
+In short: **you never reference an id from application code**. The build does that for you.
+
+## Committing translation files
+
+The `.gitignore` next to your translation files looks like this:
+
+```text title="src/locales/.gitignore"
+.gitignore
+*.po.d.ts
+```
+
+That means:
+
+- **Commit** the `.po` files. They're the canonical translations.
+- **Ignore** the `.po.d.ts` files. SayKit regenerates them on every extraction.
+
+If you ever rename your formatter's extension, the `*.po.d.ts` line will update on the next extraction.
+
+## Importing in different bundlers
+
+The actual JS module is produced by the SayKit build-tool plugin (or the formatter, at extraction time, indirectly). All of these work:
+
+```ts
+// Bundled at build time, synchronous, in the initial chunk
+import en from './locales/en.po';
+```
+
+```ts
+// Code-split, dynamic import per locale
+const en = await import('./locales/en.po').then((m) => m.default);
+```
+
+```ts
+// Per-locale loader function (recommended for many locales)
+new Say({
+  loader: (l) => import(`./locales/${l}.po`).then((m) => m.default),
+});
+```
+
+See [dynamic loading](/guides/dynamic-loading) for the lazy patterns.
+
+## Custom-id messages
+
+When you assign a custom id via a descriptor, that id ends up as the key in the catalogue:
+
+```ts
+say({ id: 'greeting.hello' })`Hello!`;
+```
+
+```text
+greeting.hello → "Hello!"
+```
+
+The runtime `say.call({ id: 'greeting.hello' })` works exactly the same way as for hashed ids; nothing in your app code touches it directly. The id only matters to translators, who'll see it in the catalogue.
+
+## Next
+
+- [Extraction](/core-concepts/extraction): how files are generated
+- [Custom formatter](/guides/custom-formatter): if you want different generated declarations

@@ -1,0 +1,113 @@
+---
+title: CLI
+description: The saykit command-line interface, every command and flag
+---
+
+The `saykit` CLI extracts messages from your source files. It's installed with `@saykit/config` and exposes one command today: `extract`.
+
+```sh
+saykit --help
+saykit help [command]
+```
+
+## `saykit extract`
+
+Walk every bucket in `saykit.config.ts`, extract messages from the files matched by `include`, and write catalogue files per locale.
+
+```sh
+saykit extract
+saykit extract --watch
+saykit extract --verbose
+saykit extract --quiet
+```
+
+### Options
+
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+<TypeTable
+  type={{
+    '--watch, -w': {
+      description:
+        'After the initial scan, watch the working tree for changes and re-extract on file changes. Survives until you stop it.',
+      type: 'boolean',
+      default: 'false',
+    },
+    '--verbose, -v': {
+      description: 'Print per-file step logs in addition to summaries.',
+      type: 'boolean',
+      default: 'false',
+    },
+    '--quiet, -q': {
+      description: 'Suppress all logging. Useful in CI for keeping output tidy.',
+      type: 'boolean',
+      default: 'false',
+    },
+  }}
+/>
+
+### What it does
+
+For each bucket:
+
+1. Globs `include` (and excludes `exclude`).
+2. Asks each transformer to parse each file and return a list of messages.
+3. Merges entries with the same text + context, unioning their references.
+4. Hashes ids for messages without a custom id.
+5. Reconciles target locales against the source, preserving existing translations, adding new entries, removing stale ones.
+6. Writes one catalogue file per locale via the bucket's formatter.
+7. Writes a `.d.ts` declaration next to each catalogue, and a `.gitignore` next to those.
+
+### Exit codes
+
+| Code | Meaning                                           |
+| ---- | ------------------------------------------------- |
+| 0    | Success.                                          |
+| 1    | Failure during config load, extraction, or write. |
+
+The CLI throws on unrecoverable errors (missing config, invalid config, formatter parse failure). Use `--verbose` to see the full stack.
+
+## Configuration discovery
+
+The CLI searches for `saykit.config.{ts,mts,cts,js,mjs,cjs}` starting from the current working directory and walking up the tree. The first match wins.
+
+TypeScript configs are transpiled on the fly with results cached under `node_modules/.cache/saykit/config/`. The cache is invalidated when:
+
+- the config file's `mtime` changes
+- any `tsconfig.json` between the config and the workspace root changes
+
+You usually don't need to think about this, the first run is a little slower, subsequent runs are fast.
+
+## Running from `package.json`
+
+A typical setup wires the CLI into npm scripts so you don't have to remember the binary path:
+
+```json title="package.json"
+{
+  "scripts": {
+    "extract": "saykit extract",
+    "extract:watch": "saykit extract --watch"
+  }
+}
+```
+
+```sh
+pnpm extract
+pnpm extract:watch
+```
+
+## CI usage
+
+The most common CI check is: extraction has been run, and translations are up-to-date with code:
+
+```yaml
+- run: pnpm install
+- run: pnpm saykit extract
+- run: git diff --exit-code -- 'src/locales/*'
+```
+
+This fails the build if anyone forgot to run `extract` after changing or adding messages.
+
+## Future commands
+
+The CLI is intentionally tiny today. New commands (compile, lint, stats) may land before 1.0. Anything published outside `extract` will go through the same `saykit <command> --help` discovery.

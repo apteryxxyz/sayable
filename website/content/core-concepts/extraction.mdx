@@ -1,0 +1,134 @@
+---
+title: Extraction
+description: How the saykit CLI scans your source and produces translation files
+---
+
+The `saykit` CLI scans your source files for macros, normalises them to ICU MessageFormat, and writes one translation file per locale per bucket. It's the only SayKit tool that touches your disk, the runtime never does.
+
+```sh
+pnpm saykit extract
+```
+
+## What it does
+
+For each bucket in your config the CLI:
+
+1. **Globs** all files matching `include` (and not `exclude`).
+2. **Asks each transformer** to parse each file and extract messages.
+3. **Merges and de-duplicates** messages across files. Identical text + context get one entry with all source references combined.
+4. **Hashes** each message into a 6-character id (unless you provided a custom one in a descriptor).
+5. **Writes** one catalogue file per locale via the bucket's formatter.
+
+The end result is a set of files like:
+
+```
+src/locales/
+  en.po         # source locale, freshly generated from your source
+  en.po.d.ts    # auto-generated TS declaration for *.po imports
+  fr.po         # other locales, reconciled with the source, your translations preserved
+  fr.po.d.ts
+  .gitignore    # marks generated declaration files
+```
+
+<Callout type="info">
+  The `.po.d.ts` files are emitted next to each catalogue so that `import en from './locales/en.po'`
+  type-checks even without a build plugin running. See [typed messages](/guides/typed-messages).
+</Callout>
+
+## Reconciliation
+
+The first run writes both source and target locale files from scratch.
+
+Subsequent runs treat the source locale as the truth, and reconcile each target locale against it:
+
+- New source messages get added to every target locale, with an empty `msgstr`.
+- Source messages that no longer exist get dropped from target locales.
+- Translations for messages that still exist are **preserved**.
+- The target file's headers (PO `Language:`, etc.) are kept across runs.
+
+You can run `saykit extract` as often as you like, your translators' work is never overwritten.
+
+## Watch mode
+
+For iterative development, use `--watch`:
+
+```sh
+pnpm saykit extract --watch
+```
+
+The CLI does an initial scan, then watches the working directory for changes. When a file inside any bucket changes, it re-extracts from that file and re-writes the catalogue. Removed files are also detected and their entries dropped.
+
+Watch mode is debounced and bucket-aware, files outside any bucket's globs are ignored.
+
+## Logging
+
+```sh
+pnpm saykit extract             # default, concise output
+pnpm saykit extract --verbose   # include per-file step logging
+pnpm saykit extract --quiet     # suppress all logs
+```
+
+A normal run looks like:
+
+```text
+🛠 Extracting Messages
+  Scanning bucket: src/**/*.{ts,tsx}
+    Found 42 file(s)
+  Total extracted messages: 137
+  Writing 137 messages to locales
+    Writing locale file for en to disk
+    Writing locale file for fr to disk
+  ✓ Extraction complete for bucket: src/**/*.{ts,tsx}
+```
+
+## Buckets and multi-bucket projects
+
+When you have multiple buckets, each is processed independently, in parallel for the initial scan, and independently for watch. Different buckets can use different formatters and transformers, and produce entirely separate translation files.
+
+```ts title="saykit.config.ts"
+buckets: [
+  {
+    include: ['src/app/**/*.{ts,tsx}'],
+    output: 'src/locales/{locale}.{extension}',
+    formatter: po(),
+    transformer: [js(), jsx()],
+  },
+  {
+    include: ['src/emails/**/*.ts'],
+    output: 'src/emails/locales/{locale}.{extension}',
+    formatter: po(),
+    transformer: js(),
+  },
+];
+```
+
+A message authored in both buckets ends up in both catalogues. That's usually what you want for shared strings, but if you'd rather keep them separate, narrow your `include` globs.
+
+## CI
+
+For continuous integration, extract once and verify the result is clean:
+
+```yaml
+- run: pnpm saykit extract
+- run: git diff --exit-code
+```
+
+This fails the build if anyone forgot to run extraction, useful for keeping translation files in sync with code.
+
+## What gets generated
+
+For each bucket output:
+
+| File               | Purpose                                                             |
+| ------------------ | ------------------------------------------------------------------- |
+| `{locale}.po`      | The catalogue, in whatever format the bucket's formatter produces   |
+| `{locale}.po.d.ts` | Generic TS declaration so `import en from './locales/en.po'` types  |
+| `.gitignore`       | Marks `*.po.d.ts` as generated (commit `.po` files, ignore `.d.ts`) |
+
+The `.gitignore` is written to the output directory automatically. You can override or extend it, SayKit will only write a missing one.
+
+## Next
+
+- [Formats](/core-concepts/formats), PO and writing your own
+- [Configuration](/core-concepts/configuration), bucket fields and the output template
+- [CLI reference](/reference/cli), every command and flag

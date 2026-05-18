@@ -1,0 +1,110 @@
+---
+title: Babel
+description: Use SayKit with Babel for Next.js, React Native, Metro, Expo, or any Babel-driven pipeline
+---
+
+`babel-plugin-saykit` is the Babel counterpart to [`unplugin-saykit`](/integrations/vite). Use it when your build runs Babel directly: Next.js (via `.babelrc`), React Native, Expo, Metro, or your own Babel setup.
+
+## Install
+
+```sh
+pnpm add -D babel-plugin-saykit
+```
+
+And the supporting packages:
+
+```sh
+pnpm add -D @saykit/config @saykit/format-po @saykit/transform-js @saykit/transform-jsx
+```
+
+## Use
+
+### Next.js
+
+```json title=".babelrc"
+{
+  "presets": ["next/babel"],
+  "plugins": ["saykit"]
+}
+```
+
+Adding a `.babelrc` switches Next.js from SWC to Babel for compilation. SayKit doesn't have a SWC plugin, so this is the supported way to use SayKit with Next.js today.
+
+### Generic Babel
+
+```js title="babel.config.js"
+export default {
+  plugins: ['saykit'],
+};
+```
+
+Or with an explicit import:
+
+```js
+export default {
+  plugins: ['babel-plugin-saykit'],
+};
+```
+
+### React Native / Metro
+
+React Native uses Babel via Metro. Add the plugin to your Babel config:
+
+```js title="babel.config.js"
+module.exports = {
+  presets: ['module:metro-react-native-babel-preset'],
+  plugins: ['saykit'],
+};
+```
+
+### Expo
+
+Expo uses `babel-preset-expo`. Add the plugin alongside:
+
+```js title="babel.config.js"
+module.exports = function (api) {
+  api.cache(true);
+  return {
+    presets: ['babel-preset-expo'],
+    plugins: ['saykit'],
+  };
+};
+```
+
+## What it does
+
+For every non-`node_modules` source file passed through Babel, the plugin:
+
+1. Runs the matching SayKit transformer over the source, rewriting macros to `say.call(...)` invocations.
+2. Watches for static imports of translation files (e.g. `import en from './locales/en.po'`), parses them with the bucket's formatter, and inlines the catalogue as a JS object literal in place of the import.
+
+The result: no `.po` file at runtime, no SayKit extractor in the bundle, just small `say.call()` calls and plain JS objects.
+
+<Callout type="warn">
+  The plugin currently only rewrites **static** imports. `import('./locales/en.po')` (dynamic
+  import) is not yet replaced. For dynamic locale loading, use a `Say` loader and let your bundler
+  handle the imports.
+</Callout>
+
+## `unplugin` vs Babel: which one?
+
+import { Hammer, Zap } from 'lucide-react';
+
+<Cards>
+  <Card icon={<Zap />} title="Use unplugin-saykit when…" description="Your bundler is Vite, Rollup, Rolldown, Webpack, Rspack, esbuild, Farm, or Bun, and you're not pinned to Babel.">
+
+[Go to Vite (unplugin)](/integrations/vite)
+
+  </Card>
+
+  <Card icon={<Hammer />} title="Use babel-plugin-saykit when…" description="Your build pipeline runs Babel directly: Next.js, React Native, Expo, Metro, or your own Babel config.">
+
+[Go to React (with Babel)](/integrations/react)
+
+  </Card>
+</Cards>
+
+## Next
+
+- [React integration](/integrations/react): hooks, components, server runtime
+- [Configuration](/core-concepts/configuration): what to put in `saykit.config.ts`

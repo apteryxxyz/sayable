@@ -1,0 +1,145 @@
+---
+title: Locale detection
+description: Patterns for picking a locale from headers, cookies, URL segments, or the browser
+---
+
+SayKit doesn't take an opinion on **where** the locale comes from. You feed `say.match()` one or more guesses, and it returns the best supported locale. That makes it easy to layer detection strategies.
+
+```ts
+say.match(['fr-CA', 'en-US']);
+// → 'fr' if your configured locales include 'fr'
+```
+
+This guide walks through the common sources and how to combine them.
+
+## How `match()` works
+
+For each guess, in order, `match()` tries two things:
+
+1. **Exact** match against your configured `locales`.
+2. **Language-prefix** match (`fr-CA` to `fr`, or `fr` to `fr-CA`).
+
+The first guess that satisfies either step wins. If no guess matches, the first configured locale is returned as a fallback.
+
+```ts
+const say = new Say({ locales: ['en', 'fr'], messages: { en, fr } });
+
+say.match(['de', 'fr-CA', 'en']); // 'fr'
+// 'de': no exact, no prefix
+// 'fr-CA': no exact, prefix matches 'fr' → returns 'fr'
+```
+
+This means an earlier guess always wins, even when a later guess would have matched exactly. Order your guesses by trust, not by closeness.
+
+`match()` accepts strings and arrays interchangeably:
+
+```ts
+say.match('fr-CA', 'en-US');
+say.match(['fr-CA', 'en-US']);
+say.match(headerLocales, [cookieLocale], 'en');
+```
+
+## Sources
+
+### Browser
+
+In a browser-only app, the user's preferred languages come from `navigator.languages`:
+
+```ts
+const locale = say.match(navigator.languages);
+say.activate(locale);
+```
+
+`navigator.languages` is already a most-preferred-first list, which is exactly what `match()` wants.
+
+### `Accept-Language` header
+
+On the server, parse the `Accept-Language` header:
+
+```ts
+function parseAcceptLanguage(header: string): string[] {
+  return header
+    .split(',')
+    .map((s) => {
+      const [tag, q] = s.split(';q=');
+      return { tag: tag!.trim(), q: q ? Number(q) : 1 };
+    })
+    .sort((a, b) => b.q - a.q)
+    .map((entry) => entry.tag);
+}
+
+const guesses = parseAcceptLanguage(request.headers.get('accept-language') ?? '');
+const locale = say.match(guesses);
+```
+
+### Cookie
+
+Use this to remember the user's choice across sessions:
+
+```ts
+const fromCookie = request.cookies.get('locale')?.value;
+const locale = say.match([fromCookie, ...headerGuesses]);
+```
+
+When a user switches locale, write the cookie:
+
+```ts
+response.cookies.set('locale', newLocale, { path: '/', maxAge: 60 * 60 * 24 * 365 });
+```
+
+### URL segment
+
+The clearest, most shareable option, the locale is in the path:
+
+```text
+/             → default
+/fr           → fr
+/fr/about     → fr
+/en/about     → en
+```
+
+```ts
+const fromUrl = url.pathname.split('/')[1];
+const locale = say.match([fromUrl, ...cookieAndHeaderGuesses]);
+```
+
+How you read the segment is framework-specific (a route parameter, a slice of `request.url`, an `Astro.params` entry, etc.), but the `match()` call is the same.
+
+## Combining sources
+
+The strongest signal usually wins. A good default ordering:
+
+```ts
+const locale = say.match(
+  [urlLocale], // explicit URL > everything
+  [cookieLocale], // remembered preference
+  acceptLanguageGuesses, // hint from the browser
+  ['en'], // last-resort default
+);
+```
+
+`match()` processes each guess fully (exact, then prefix) before moving on, so the URL guess can match by prefix and still beat a later exact match from a cookie.
+
+## Switching locales
+
+Persist the choice (cookie, profile, &hellip;) and either:
+
+- **Reload**: simplest, works with any routing strategy.
+- **Re-route**: for URL-based locales, push the new path.
+- **Re-render**: call `activate(newLocale)` on a top-level `Say` and re-render the tree.
+
+```tsx
+function LocaleSwitcher() {
+  return (
+    <select onChange={(e) => navigate(`/${e.target.value}`)}>
+      <option value="en">English</option>
+      <option value="fr">Fran&ccedil;ais</option>
+    </select>
+  );
+}
+```
+
+## Next
+
+- [Runtime](/core-concepts/runtime): cloning per-request, freezing
+- [Dynamic loading](/guides/dynamic-loading): lazy-load catalogues to keep bundles small

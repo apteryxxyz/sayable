@@ -1,0 +1,236 @@
+---
+title: saykit
+description: API reference for the saykit core runtime
+---
+
+The `saykit` package exports the `Say` class and a handful of supporting types.
+
+```ts
+import { Say } from 'saykit';
+import type { ReadonlySay } from 'saykit';
+```
+
+## `Say`
+
+A container for locales, messages, the active locale, and formatting.
+
+### `new Say(options)`
+
+```ts
+new Say<Locale, Loader>(options: Say.Options<Locale, Loader>);
+```
+
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+<TypeTable
+  type={{
+    locales: {
+      description: 'All supported locales. The first is treated as the source locale.',
+      type: 'Locale[]',
+      required: true,
+    },
+    messages: {
+      description:
+        'Inline message catalogues, keyed by locale. Required if no `loader` is provided.',
+      type: 'Partial<Record<Locale, Say.Messages>>',
+    },
+    loader: {
+      description:
+        'Optional function that returns messages for a locale. Can be sync or async. Required if `messages` is not exhaustive.',
+      type: '(locale: Locale) => Say.Messages | Promise<Say.Messages>',
+    },
+  }}
+/>
+
+### Properties
+
+<TypeTable
+  type={{
+    locales: {
+      description: 'All configured locales.',
+      type: 'Locale[]',
+    },
+    locale: {
+      description: 'The currently active locale. Throws if no locale is active.',
+      type: 'Locale',
+    },
+    messages: {
+      description:
+        'The message catalogue for the active locale. Throws if no locale is active or catalogue is missing.',
+      type: 'Say.Messages',
+    },
+  }}
+/>
+
+### `load(...locales)`
+
+Loads message catalogues for the given locales through the configured loader. With no arguments, loads every configured locale.
+
+```ts
+say.load();
+say.load('fr');
+say.load('fr', 'ja');
+```
+
+Already-loaded locales are skipped. If a loader is required but missing, throws. Returns `this` synchronously if all loaders are sync, or a promise resolving to `this` otherwise.
+
+### `assign(locale, messages)` / `assign(record)`
+
+Directly attach messages without going through a loader.
+
+```ts
+say.assign('fr', { abc123: 'Bonjour !' });
+say.assign({ en: { ... }, fr: { ... } });
+```
+
+Returns `this`.
+
+### `activate(locale)`
+
+Set the active locale. The locale must be loaded or assigned first.
+
+```ts
+say.activate('fr');
+```
+
+Returns `this`.
+
+### `match(...guesses)`
+
+Pick the best supported locale from one or more guesses. Each argument can be a string or array of strings; all guesses are flattened in order.
+
+```ts
+say.match('fr-CA', 'en');
+say.match(['fr-CA', 'en-US'], 'de');
+```
+
+Matching order:
+
+1. exact match against `locales`
+2. language-prefix match (`fr-CA` &rarr; `fr`)
+3. the first configured locale, as a final fallback
+
+Returns the matched locale.
+
+### `clone()`
+
+Returns a new `Say` with the same locales, messages, and loader. The new instance is independent, activating a locale on it doesn't affect the original.
+
+### `freeze()`
+
+Returns a `ReadonlySay` view. Frozen instances can still read state and format messages, but cannot `load`, `assign`, or `activate`.
+
+```ts
+const readonly = say.clone().activate('fr').freeze();
+```
+
+### `call(descriptor)`
+
+Format a compiled message descriptor against the active locale's catalogue.
+
+```ts
+say.call({ id: 'abc123', name: 'Ada' }); // → "Hello, Ada!"
+```
+
+The descriptor must have an `id`. Extra properties are ICU placeholder values.
+
+In normal application code, you don't write this, the build transform emits it from your `` say`...` `` macros.
+
+### Iteration
+
+`Say` instances are iterable. They yield `[frozenLocaleSay, locale]` pairs for every configured locale.
+
+```ts
+for (const [localised, locale] of say) {
+  console.log(locale, localised`Hello!`);
+}
+```
+
+Each `localised` is a frozen clone with that locale already activated.
+
+## Macros
+
+These methods are recognised by the SayKit build-tool plugins and rewritten into `say.call(...)` invocations. Calling them at runtime without a plugin throws.
+
+### `` say`template` ``
+
+The tagged-template macro.
+
+```ts
+say`Hello, ${name}!`;
+```
+
+### `say({ id, context })`
+
+Descriptor form, returns a callable that you tag the template against.
+
+```ts
+say({ id: 'greeting' })`Hello!`;
+say({ context: 'direction' })`Right`;
+```
+
+### `say.plural(value, options)`
+
+```ts
+say.plural(count, {
+  one: 'You have 1 item',
+  other: 'You have # items',
+});
+```
+
+### `say.ordinal(value, options)`
+
+```ts
+say.ordinal(position, {
+  1: '#st',
+  2: '#nd',
+  3: '#rd',
+  other: '#th',
+});
+```
+
+### `say.select(value, options)`
+
+```ts
+say.select(gender, {
+  male: 'He liked it',
+  female: 'She liked it',
+  other: 'They liked it',
+});
+```
+
+## Types
+
+### `Say.Messages`
+
+```ts
+namespace Say {
+  type Messages = { [key: string]: string };
+}
+```
+
+### `Say.Loader<Locale>`
+
+```ts
+namespace Say {
+  type Loader<Locale extends string> = (locale: Locale) => Messages | Promise<Messages>;
+}
+```
+
+### `Say.Options<Locale, Loader>`
+
+Either `messages` is required (and `loader` optional), or `loader` is required (and `messages` optional).
+
+### `ReadonlySay<Locale, Loader>`
+
+`Say` with `load`, `assign`, and `activate` typed as `never`. Returned by `say.freeze()`.
+
+### `NumeralOptions` / `SelectOptions`
+
+Option-bag types for `plural`, `ordinal`, and `select`. Both require an `other` key.
+
+## Next
+
+- [Runtime concepts](/core-concepts/runtime), how to use these APIs in practice
+- [API: @saykit/react](/reference/api/react)
+- [API: @saykit/carbon](/reference/api/carbon)

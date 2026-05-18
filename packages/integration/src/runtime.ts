@@ -210,10 +210,8 @@ export class Say<
 
     for (const guess of flat) {
       if (this.#locales.includes(guess as Locale)) return guess as Locale;
-    }
-
-    for (const guess of flat) {
-      const prefix = guess.split('-')[0]!;
+      const prefix = guess.split('-')[0];
+      if (!prefix) continue;
       const match = this.#locales.find((l) => l.startsWith(prefix));
       if (match) return match;
     }

@@ -1,23 +1,30 @@
 ---
 title: Messages
-description: Learn how to define translatable messages using Saykit's macro syntax
+description: Authoring translatable text, templates, plurals, ordinals, select, and descriptors
 ---
 
-Saykit provides several ways to define translatable messages using **macros** that are transformed at compile time by the Babel plugin.
+SayKit's authoring API is small. Almost everything you write is one of:
 
-For JSX and TSX, see the [React integrations `<Say>` component](/integrations/react#say).
+- a `` say`...` `` tagged template
+- a `say.plural(...)`, `say.ordinal(...)`, or `say.select(...)` call
+- a `<Say>...</Say>` JSX element (with `<Say.Plural>`, `<Say.Ordinal>`, `<Say.Select>`)
 
-## Basic Messages
+These are all **macros**. A SayKit build-tool plugin rewrites them into runtime calls during the build. They look like normal expressions at the call site, but everything you put in them is extracted and translated.
 
-The most common way to define a message is using the `say` tagged template.
+<Callout type="info">
+  Macros work only when paired with a SayKit plugin (`unplugin-saykit` or `babel-plugin-saykit`).
+  Without one, runtime calls like `say.plural(...)` will throw at runtime.
+</Callout>
+
+## Basic messages
 
 ```ts
-const greeting = say`Hello, world!`;
-const personalized = say`Hello, ${name}!`;
-const message = say`Your order of ${quantity} ${item} is ready!`;
+say`Hello, world!`;
+say`Hello, ${name}!`;
+say`Your order of ${quantity} ${item} is ready!`;
 ```
 
-Extracted format:
+Extracted as ICU MessageFormat:
 
 ```text
 Hello, world!
@@ -25,33 +32,35 @@ Hello, {name}!
 Your order of {quantity} {item} is ready!
 ```
 
-During compilation:
+The transform does five things:
 
-1. The Babel plugin detects the `say` tagged template.
-2. The message text is extracted (e.g. `"Hello, {name}!"`).
-3. A **stable hash ID** is generated from the message.
-4. The template is replaced with a `say.call()` invocation.
-
-This keeps runtime code small while allowing translation tooling to extract messages automatically.
-
-Template variables become **named placeholders** in the extracted message.  
-If a variable name cannot be determined, Saykit falls back to an **index-based placeholder**.
+1. Reads the literal text and placeholders out of the template.
+2. Converts them to ICU MessageFormat.
+3. Generates a stable 6-character hash id from the message text + context.
+4. Records the file and line as a translator reference.
+5. Replaces the source expression with a `say.call({ id, ...values })` call.
 
 <Callout type="info">
-  SayKit looks for the `say` identifier when transforming messages. To have a string extracted and
-  compiled, write it with `say`, such as <code>say\`Hello\`</code> or{' '}
-  <code>interaction.say\`Hello\`</code>.
+  SayKit looks for the identifier `say` when transforming messages. Anything named `say` works ,
+  `say`, `interaction.say`, `useSay()`, as long as the local binding is called `say`.
 </Callout>
 
----
+## Placeholder names
 
-## Advanced Messages
+Placeholder names come from the identifier SayKit sees at the call site. Plain identifiers become named placeholders; complex expressions fall back to positional placeholders.
 
-Saykit also supports more complex message patterns such as **plurals, ordinals, and conditional selections**.
+```ts
+const name = user.profile.name ?? 'Anonymous';
+say`Signed in as ${name}`; // → "Signed in as {name}"
 
-### Plurals
+say`Signed in as ${user.profile.name ?? 'Anonymous'}`; // → "Signed in as {0}"
+```
 
-Plural messages allow text to vary based on a numeric value using **CLDR plural rules**.
+Pull values into local variables before interpolating them, translators get readable placeholders, and the message stays stable across refactors.
+
+## Plurals
+
+Branch on a count using CLDR plural categories:
 
 ```ts
 say.plural(quantity, {
@@ -60,7 +69,7 @@ say.plural(quantity, {
 });
 ```
 
-Extracted format:
+Extracted:
 
 ```text
 {quantity, plural,
@@ -69,7 +78,9 @@ Extracted format:
 }
 ```
 
-Saykit supports all CLDR plural categories:
+The `#` placeholder is replaced with the numeric value at runtime.
+
+All CLDR categories are supported:
 
 ```ts
 say.plural(count, {
@@ -82,12 +93,7 @@ say.plural(count, {
 });
 ```
 
-<Callout type="info">
-  Plural categories vary by locale. English uses **one** and **other**, while languages such as
-  Arabic use all six categories.
-</Callout>
-
-You can also match specific numbers explicitly:
+You can also branch on exact numbers:
 
 ```ts
 say.plural(count, {
@@ -97,9 +103,14 @@ say.plural(count, {
 });
 ```
 
-### Ordinals
+<Callout type="info">
+  Plural categories vary by locale. English uses **one** and **other**, while Arabic uses all six.
+  The runtime picks the right branch based on the active locale.
+</Callout>
 
-Ordinal formatting is used for numbers like **1st**, **2nd**, and **3rd**.
+## Ordinals
+
+Numbers like "1st", "2nd", "3rd":
 
 ```ts
 say.ordinal(position, {
@@ -110,7 +121,7 @@ say.ordinal(position, {
 });
 ```
 
-CLDR categories can also be used:
+CLDR categories work here too:
 
 ```ts
 say.ordinal(position, {
@@ -121,9 +132,9 @@ say.ordinal(position, {
 });
 ```
 
-### Select
+## Select
 
-`select` messages branch based on a **string value**.
+Branch on an arbitrary string:
 
 ```ts
 say.select(gender, {
@@ -133,7 +144,7 @@ say.select(gender, {
 });
 ```
 
-Extracted format:
+Extracted:
 
 ```text
 {gender, select,
@@ -143,52 +154,44 @@ Extracted format:
 }
 ```
 
----
+## Descriptors
 
-## Message Descriptors
+A descriptor is an object passed to `say` before the template. It carries metadata that affects extraction.
 
-Descriptors allow you to attach additional metadata to a message, such as a **custom ID** or **context**.
+### Custom ids
 
-### Custom IDs
-
-By default, Saykit generates a hash-based ID.  
-You can provide your own semantic ID instead:
+By default ids are content-hashed. Provide your own to get a stable, semantic id:
 
 ```ts
 say({ id: 'greeting.hello' })`Hello!`;
 say({ id: 'button.submit' })`Submit`;
 ```
 
-Custom IDs are useful when:
+Custom ids are useful when:
 
-- you want **stable identifiers across refactors**
-- translators rely on **human-readable message IDs**
-- messages are **shared between projects**
+- you want stable ids across major refactors
+- translators rely on human-readable ids
+- you share messages between projects
 
 ### Context
 
-Context helps distinguish identical strings with different meanings.
+Identical source strings can mean different things. Context disambiguates them so translators can pick the right wording:
 
 ```ts
-// "Right" as a direction
 say({ context: 'direction' })`Right`;
-
-// "Right" meaning correct
 say({ context: 'correctness' })`Right`;
 ```
 
-Extraction example:
+Both extract as `"Right"`, but they get distinct ids and live as separate entries in the catalogue. Translators see the context and can translate accordingly.
 
-```text
-Right
-Right
+```ts
+say({ context: 'noun' })`Post`;
+say({ context: 'verb' })`Post`;
 ```
 
----
+## Translator comments
 
-## Translator Comments
-
-Translator comments provide context for translators.
+Comments on a `// TRANSLATORS:` line above a message get attached to the entry in the catalogue:
 
 ```ts
 // TRANSLATORS: This appears on the login button
@@ -198,79 +201,110 @@ say`Sign in`;
 say`Username`;
 ```
 
-Use translator comments when:
+In a PO file:
 
-- the meaning of a message may be unclear
-- placeholders need explanation
-- grammar or tone matters
-- the message references UI elements
-
-## Placeholder Names
-
-Placeholder names come from the identifier that Saykit can see at compile time.
-
-```ts
-const name = user.profile.name ?? 'Anonymous';
-say`Signed in as ${name}`; // good
-say`Signed in as ${user.profile.name ?? 'Anonymous'}`; // avoid
+```po
+#. This appears on the login button
+msgid "Sign in"
+msgstr "Sign in"
 ```
 
-Extracted format:
+Use them when:
+
+- the meaning of a message isn't obvious from the text
+- placeholders need explanation ("`#` is the user's score")
+- tone or length constraints matter ("Keep under 20 characters")
+- the message references a specific UI element
+
+## JSX
+
+In React, write messages as JSX with the `<Say>` component:
+
+```tsx
+<Say>Hello, {name}!</Say>
+
+<Say>
+  {items} items &middot; total <strong>{total}</strong>
+</Say>
+```
+
+JSX elements inside `<Say>` are preserved across translations as numbered tags:
 
 ```text
-Signed in as {name}
-Signed in as {0}
+{items} items · total <0>{total}</0>
 ```
 
-If the expression is a plain identifier like `name`, that identifier becomes the placeholder name. If the expression is something more complex, Saykit falls back to a positional placeholder such as `{0}` instead.
+Translators can move `<0>...</0>` around to fit the target language's grammar, and SayKit re-renders it with the original element at runtime.
 
-If you want stable, readable placeholder names for translators, assign the value to a variable before interpolating it.
+`<Say>` also exposes sub-components for plurals, ordinals, and select:
 
----
+```tsx
+<Say.Plural _={count} one="# item" other="# items" />
 
-## Best Practices
+<Say.Ordinal _={position} _1="1st" _2="2nd" _3="3rd" other="#th" />
 
-import { MessageSquareMore, MessageCircleQuestion, Link, Variable } from 'lucide-react';
+<Say.Select _={gender} male="He liked it" female="She liked it" other="They liked it" />
+```
+
+<Callout type="info">
+  Branch keys that start with a digit get a leading underscore in JSX (`_1`, `_2`) because JSX prop
+  names can't start with a number. SayKit strips the underscore at extract time.
+</Callout>
+
+See [React integration](/integrations/react) for the full setup.
+
+## Best practices
+
+import { MessageSquareMore, MessageCircleQuestion, Link2, Variable } from 'lucide-react';
 
 <Cards>
-<Card title="Disambiguate Reused Words" icon={<MessageSquareMore />}>
-When the same source string can mean different things, add context so translators can choose the right wording.
+  <Card title="Disambiguate reused words" icon={<MessageSquareMore />}>
+
+When the same string means different things, add context so translators can pick the right wording.
 
 ```ts
 say({ context: 'noun' })`Post`;
 say({ context: 'verb' })`Post`;
 ```
 
-</Card>
+  </Card>
 
-<Card title="Leave Notes for Translators" icon={<MessageCircleQuestion />}>
-Add comments when meaning, tone, or UI constraints would not be obvious from the message alone.
+  <Card title="Leave notes for translators" icon={<MessageCircleQuestion />}>
+
+Add comments when meaning, tone, or UI constraints would surprise a translator.
 
 ```ts
 // TRANSLATORS: Button text, keep under 20 characters
 say`Continue`;
 ```
 
-</Card>
+  </Card>
 
-<Card title="Prepare Values Before Interpolation" icon={<Variable />}>
-Compute values first, then interpolate them, so placeholders stay readable and the message stays easy to translate.
+  <Card title="Prepare values first" icon={<Variable />}>
+
+Lift values into local variables so placeholders stay readable.
 
 ```ts
 const name = user.profile.name ?? 'Anonymous';
-say`Hello, ${name}`; // OK
-say`Hello, ${user.profile.name ?? 'Anonymous'}`; // avoid
+say`Hello, ${name}`;
 ```
 
-</Card>
+  </Card>
 
-<Card title="Write Complete Messages" icon={<Link />}>
-Keep the full sentence inside a single `say` template instead of splitting it across string concatenation.
+  <Card title="Keep messages whole" icon={<Link2 />}>
+
+Don't split messages across string concatenation, translators need full sentences.
 
 ```ts
-say`Hello, ${name}`; // OK
-say`Hello, ` + name; // avoid
+say`Hello, ${name}`; // ✓
+say`Hello, ` + name; // ✗
 ```
 
-</Card>
+  </Card>
 </Cards>
+
+## Next
+
+- [Runtime](/core-concepts/runtime), loading and activating locales, formatting at runtime
+- [Extraction](/core-concepts/extraction), running the CLI, watch mode, reconciliation
+- [React](/integrations/react), `<Say>` in detail
