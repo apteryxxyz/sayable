@@ -1,0 +1,7 @@
+pre-commit:
+  commands:
+    format:
+      glob: '*.{js,ts,tsx,jsx,json,md}'
+      run: |
+        pnpm oxfmt {staged_files}
+        git add {staged_files}
