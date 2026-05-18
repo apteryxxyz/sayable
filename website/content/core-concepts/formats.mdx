@@ -1,0 +1,152 @@
+---
+title: Formats
+description: PO and other translation file formats, and how to write your own
+---
+
+A **formatter** in SayKit is a pluggable adapter that knows how to parse and stringify one translation file format. The bucket calls it during extraction (to write) and during build (to read), but it's completely up to the formatter what file format ends up on disk.
+
+```ts title="saykit.config.ts"
+import po from '@saykit/format-po';
+
+buckets: [
+  {
+    // ...
+    formatter: po(),
+  },
+];
+```
+
+The default and only first-party formatter is **PO** (Gettext Portable Object). It's the format every SayKit example uses, and the one most translation tools and translators already understand.
+
+## PO
+
+PO files look like this:
+
+```po title="src/locales/fr.po"
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"Language: fr\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"X-Generator: saykit\n"
+
+#. Translator comment from the source
+#: src/app/page.tsx:14
+#: src/app/inbox.tsx:8
+msgid "Hello, {name}!"
+msgstr "Bonjour, {name} !"
+
+msgid "Inbox"
+msgctxt "noun"
+msgstr "Boîte de réception"
+```
+
+Each entry has:
+
+- `msgid`, the source string (or ICU MessageFormat for plural/select)
+- `msgstr`, the translation (empty for new entries)
+- `msgctxt`, the descriptor's context, if any
+- `#.`, translator comments (from `// TRANSLATORS:` lines)
+- `#:`, source references (file:line)
+- `#. id:xxxx`, SayKit's stable id (for messages without a custom id)
+
+### Why PO?
+
+import { Globe, FileText, GitCompare, Wrench } from 'lucide-react';
+
+<Cards>
+  <Card icon={<Globe />} title="Universal" description="Decades of tooling. POEdit, Crowdin, Lokalise, Weblate, Transifex all speak PO natively." />
+  <Card icon={<FileText />} title="Human-readable" description="A reviewer can read a PO diff. Translators can edit them in any text editor if needed." />
+  <Card icon={<GitCompare />} title="Diff-friendly" description="Line-based and entry-aligned. PRs reviewing translations are sensible to read." />
+  <Card icon={<Wrench />} title="Tooling" description="Lots of CLI utilities exist (msgmerge, msgfmt, msgcat) if you ever need to munge PO files outside SayKit." />
+</Cards>
+
+### Options
+
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+<TypeTable
+  type={{
+    includeReferences: {
+      description: 'Include source references (`#: file:line`) in the output.',
+      type: 'boolean',
+      default: 'true',
+    },
+    includeLineNumbers: {
+      description:
+        'Include line numbers in source references. Set to false for cleaner diffs when only references churn.',
+      type: 'boolean',
+      default: 'true',
+    },
+  }}
+/>
+
+```ts
+formatter: po({ includeReferences: true, includeLineNumbers: false });
+```
+
+Dropping line numbers is a popular choice once a project is large, references still tell translators which files use a string, but `.po` diffs no longer churn every time a line moves.
+
+## Other formats
+
+PO is the only formatter shipped today. If you need JSON, YAML, XLIFF, or a custom format, you can write one yourself.
+
+A `Formatter` is just an object:
+
+```ts
+import type { Formatter } from '@saykit/config';
+
+const json: Formatter = {
+  extension: '.json',
+  parse(content) {
+    /* return Message[] */
+  },
+  stringify(messages, { locale, existingContent }) {
+    /* return string */
+  },
+};
+```
+
+See the [custom formatter guide](/guides/custom-formatter) for a complete walkthrough.
+
+## The `Message` shape
+
+Formatters work with this shape:
+
+
+<TypeTable
+  type={{
+    message: {
+      description: 'The ICU MessageFormat string for the entry.',
+      type: 'string',
+      required: true,
+    },
+    translation: {
+      description: 'The translation, if any. Empty string or undefined for new entries.',
+      type: 'string',
+    },
+    id: {
+      description: 'Custom id if provided in a descriptor; otherwise undefined (hashed at write time).',
+      type: 'string',
+    },
+    context: {
+      description: 'The descriptor context, if any.',
+      type: 'string',
+    },
+    comments: {
+      description: 'Translator comments, from `// TRANSLATORS:` lines or your own.',
+      type: 'string[]',
+    },
+    references: {
+      description: 'Source locations as `file:line` strings.',
+      type: 'string[]',
+    },
+  }}
+/>
+
+Your formatter receives an array of these on `stringify`, and must return an array of them on `parse`. Anything you can map back-and-forth, you can support.
+
+## Next
+
+- [Custom formatter guide](/guides/custom-formatter), write your own
+- [Configuration](/core-concepts/configuration), where formatters plug in

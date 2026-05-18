@@ -1,0 +1,203 @@
+---
+title: Quickstart
+description: Build a SayKit project end-to-end in a few minutes
+---
+
+This walks through a complete SayKit setup (config, source, extraction, runtime) using a small Vite + React app. The exact framework doesn't matter much; only the bundler plugin and provider change between stacks.
+
+<Callout type="info">
+  The full source for this and other stacks lives in the [SayKit
+  examples](https://github.com/k0d13/saykit/tree/main/examples).
+</Callout>
+
+## 1. Install
+
+```sh
+pnpm add saykit @saykit/react
+pnpm add -D @saykit/config @saykit/format-po @saykit/transform-js @saykit/transform-jsx unplugin-saykit
+```
+
+## 2. Configure SayKit
+
+Create `saykit.config.ts` in your project root:
+
+```ts title="saykit.config.ts"
+import { defineConfig } from '@saykit/config';
+import po from '@saykit/format-po';
+import js from '@saykit/transform-js';
+import jsx from '@saykit/transform-jsx';
+
+export default defineConfig({
+  sourceLocale: 'en',
+  locales: ['en', 'fr'],
+  buckets: [
+    {
+      include: ['src/**/*.{ts,tsx}'],
+      output: 'src/locales/{locale}.{extension}',
+      formatter: po(),
+      transformer: [js(), jsx()],
+    },
+  ],
+});
+```
+
+This tells SayKit:
+
+- The source locale is `en`, and we also want `fr`.
+- Look for messages in any `.ts`/`.tsx` file under `src/`.
+- Write extracted messages to `src/locales/en.po` and `src/locales/fr.po`.
+- Use the PO formatter and the JS + JSX transformers.
+
+## 3. Wire up the bundler
+
+For Vite, register `unplugin-saykit` in your config:
+
+```ts title="vite.config.ts"
+import saykit from 'unplugin-saykit/vite';
+import react from '@vitejs/plugin-react';
+import { defineConfig } from 'vite';
+
+export default defineConfig({
+  plugins: [saykit(), react()],
+});
+```
+
+<Callout type="info">
+  Using **Next.js**, React Native, Expo, or another Babel-driven pipeline? Add `babel-plugin-saykit`
+  to your Babel config instead. See the [Babel integration](/integrations/babel).
+</Callout>
+
+## 4. Author some messages
+
+Write messages inline using the `say` tagged template (or `<Say>` in JSX):
+
+```tsx title="src/app.tsx"
+import { Say, SayProvider } from '@saykit/react/client';
+import { useState } from 'react';
+
+function Counter({ name }: { name: string }) {
+  const [count, setCount] = useState(0);
+
+  return (
+    <div>
+      <p>
+        <Say>Hello, {name}!</Say>
+      </p>
+      <p>
+        <Say.Plural _={count} one="You have 1 message" other="You have # messages" />
+      </p>
+      <button onClick={() => setCount(count + 1)}>
+        <Say>Add one</Say>
+      </button>
+    </div>
+  );
+}
+```
+
+You can also use the runtime form when you need a string:
+
+```ts
+import { useSay } from '@saykit/react/client';
+
+const say = useSay();
+const greeting = say`Hello, ${name}!`;
+```
+
+## 5. Extract messages
+
+Run the CLI:
+
+```sh
+pnpm saykit extract
+```
+
+SayKit walks your source, finds every macro, and writes the catalogue files:
+
+```
+src/locales/
+  en.po         # source locale, generated from your source
+  en.po.d.ts    # auto-generated TS declaration
+  fr.po         # other locales, ready for translation
+  fr.po.d.ts
+  .gitignore    # marks generated declaration files
+```
+
+For iterative development, use watch mode:
+
+```sh
+pnpm saykit extract --watch
+```
+
+`en.po` will look something like this:
+
+```po title="src/locales/en.po"
+msgid "Hello, {name}!"
+msgstr "Hello, {name}!"
+
+msgid "{count, plural,\n  one {You have 1 message}\n  other {You have # messages}\n}"
+msgstr "{count, plural,\n  one {You have 1 message}\n  other {You have # messages}\n}"
+
+msgid "Add one"
+msgstr "Add one"
+```
+
+## 6. Translate
+
+Open `fr.po` and fill in `msgstr` for each entry:
+
+```po title="src/locales/fr.po"
+msgid "Hello, {name}!"
+msgstr "Bonjour, {name} !"
+
+msgid "Add one"
+msgstr "Ajouter un"
+```
+
+Future `extract` runs reconcile new and removed messages without overwriting your translations.
+
+## 7. Provide a `Say` at runtime
+
+Create one `Say` instance for your app:
+
+```tsx title="src/i18n.ts"
+import { Say } from 'saykit';
+import en from './locales/en.po';
+import fr from './locales/fr.po';
+
+const say = new Say({
+  locales: ['en', 'fr'],
+  messages: { en, fr },
+});
+
+export default say;
+```
+
+Activate a locale and wrap your tree in `SayProvider`:
+
+```tsx title="src/main.tsx"
+import { SayProvider } from '@saykit/react/client';
+import { createRoot } from 'react-dom/client';
+import App from './app';
+import say from './i18n';
+
+const locale = say.match([navigator.language]);
+say.activate(locale);
+
+createRoot(document.getElementById('root')!).render(
+  <SayProvider locale={locale} messages={say.messages}>
+    <App />
+  </SayProvider>,
+);
+```
+
+That's it. Your app now renders in the matched locale, and switching locales is just an
+`activate()` + re-render away.
+
+## Where to next?
+
+<Cards>
+  <Card title="Architecture" href="/core-concepts/architecture" description="Understand the pieces: runtime, config, transformer, formatter, plugin." />
+  <Card title="Messages" href="/core-concepts/messages" description="Plurals, ordinals, select, descriptors, comments, placeholder names." />
+  <Card title="React integration" href="/integrations/react" description="<Say />, SayProvider, server components." />
+  <Card title="Locale detection" href="/guides/locale-detection" description="Headers, cookies, URL segments. Pick a locale the right way." />
+</Cards>

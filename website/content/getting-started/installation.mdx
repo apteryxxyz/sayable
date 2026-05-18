@@ -1,30 +1,167 @@
 ---
 title: Installation
-description: Install SayKit and set up internationalisation in your project
+description: Install SayKit and its supporting packages
 ---
 
-## Available Packages
+SayKit is split into a small core runtime and a set of optional packages for configuration, formatters, transformers, and framework integrations. Pick the pieces you need.
 
-### Core Packages
+## What to install
 
-- `saykit` - Core runtime library with the Say class and message formatting
-- `@saykit/config` - Configuration schema and CLI tools for extracting translations
+Every SayKit project needs the same set of pieces:
 
-### Framework Integrations
+| Package                | Why                                                            |
+| ---------------------- | -------------------------------------------------------------- |
+| `saykit`               | The core runtime, the `Say` class and ICU formatting    |
+| `@saykit/config`       | The config schema (`defineConfig`) and the `saykit` CLI        |
+| One **formatter**      | Reads and writes your translation files (e.g. `@saykit/format-po`) |
+| One or more **transformers** | Extracts and rewrites macros from your source files          |
+| One **build-tool plugin**    | Wires the transformer into your bundler                      |
 
-- `@saykit/carbon` - Carbon integration for Discord bots with command localisation support
-- `@saykit/react` - React integration for SayKit, i18n hooks and components
+<Callout type="info">
+  The build-tool plugin and the transformers do different jobs: the **transformer** knows how to
+  parse and rewrite `.ts`/`.tsx` source, the **plugin** knows how to hook your bundler. You usually
+  install both.
+</Callout>
 
-### Build Tools
+## Quick install
 
-- `unplugin-saykit` - Universal plugin for Vite, Webpack, Rollup, esbuild, and more
-- `babel-plugin-saykit` - Babel plugin for SayKit
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
 
-### Transformers
+For a **React + Vite** project, including **TanStack Start** (or any other [unplugin](/integrations/vite)-compatible bundler):
 
-- `@saykit/transform-js` - JavaScript and TypeScript transformer for SayKit
-- `@saykit/transform-jsx` - JSX and TSX source transformer for SayKit
+<Tabs items={['pnpm', 'npm', 'yarn', 'bun']}>
+  <Tab value="pnpm">
+```sh
+pnpm add saykit @saykit/react
+pnpm add -D @saykit/config @saykit/format-po @saykit/transform-js @saykit/transform-jsx unplugin-saykit
+```
+  </Tab>
+  <Tab value="npm">
+```sh
+npm install saykit @saykit/react
+npm install -D @saykit/config @saykit/format-po @saykit/transform-js @saykit/transform-jsx unplugin-saykit
+```
+  </Tab>
+  <Tab value="yarn">
+```sh
+yarn add saykit @saykit/react
+yarn add -D @saykit/config @saykit/format-po @saykit/transform-js @saykit/transform-jsx unplugin-saykit
+```
+  </Tab>
+  <Tab value="bun">
+```sh
+bun add saykit @saykit/react
+bun add -D @saykit/config @saykit/format-po @saykit/transform-js @saykit/transform-jsx unplugin-saykit
+```
+  </Tab>
+</Tabs>
 
-### Translation Formats
+For a **Next.js, React Native, Expo, or other Babel-driven** project:
 
-- `@saykit/format-po` - Default PO (Portable Object) file format parser and serializer
+<Tabs items={['pnpm', 'npm', 'yarn', 'bun']}>
+  <Tab value="pnpm">
+```sh
+pnpm add saykit @saykit/react
+pnpm add -D @saykit/config @saykit/format-po @saykit/transform-js @saykit/transform-jsx babel-plugin-saykit
+```
+  </Tab>
+  <Tab value="npm">
+```sh
+npm install saykit @saykit/react
+npm install -D @saykit/config @saykit/format-po @saykit/transform-js @saykit/transform-jsx babel-plugin-saykit
+```
+  </Tab>
+  <Tab value="yarn">
+```sh
+yarn add saykit @saykit/react
+yarn add -D @saykit/config @saykit/format-po @saykit/transform-js @saykit/transform-jsx babel-plugin-saykit
+```
+  </Tab>
+  <Tab value="bun">
+```sh
+bun add saykit @saykit/react
+bun add -D @saykit/config @saykit/format-po @saykit/transform-js @saykit/transform-jsx babel-plugin-saykit
+```
+  </Tab>
+</Tabs>
+
+For a **Carbon Discord bot** (with tsdown + Cloudflare Workers):
+
+<Tabs items={['pnpm', 'npm', 'yarn', 'bun']}>
+  <Tab value="pnpm">
+```sh
+pnpm add saykit @saykit/carbon
+pnpm add -D @saykit/config @saykit/format-po @saykit/transform-js unplugin-saykit
+```
+  </Tab>
+  <Tab value="npm">
+```sh
+npm install saykit @saykit/carbon
+npm install -D @saykit/config @saykit/format-po @saykit/transform-js unplugin-saykit
+```
+  </Tab>
+  <Tab value="yarn">
+```sh
+yarn add saykit @saykit/carbon
+yarn add -D @saykit/config @saykit/format-po @saykit/transform-js unplugin-saykit
+```
+  </Tab>
+  <Tab value="bun">
+```sh
+bun add saykit @saykit/carbon
+bun add -D @saykit/config @saykit/format-po @saykit/transform-js unplugin-saykit
+```
+  </Tab>
+</Tabs>
+
+## Package directory
+
+import { Boxes, Cog, Atom, Bot, Hammer, FileType2 } from 'lucide-react';
+
+<Cards>
+
+<Card icon={<Boxes />} title="saykit" href="/reference/api/saykit">
+The core runtime. Exports the `Say` class. Almost every SayKit app depends on it.
+</Card>
+
+<Card icon={<Cog />} title="@saykit/config" href="/reference/api/config">
+The config schema, the `saykit` CLI, and shared building blocks used by plugins and custom transformers.
+</Card>
+
+<Card icon={<Atom />} title="@saykit/react" href="/integrations/react">
+React integration. `<Say>`, `SayProvider`, `useSay`, server runtime helpers.
+</Card>
+
+<Card icon={<Bot />} title="@saykit/carbon" href="/integrations/carbon">
+[Carbon](https://carbon.buape.com) Discord-bot integration. `SayPlugin`, `withSay`, locale-aware `interaction.say`.
+</Card>
+
+<Card icon={<Hammer />} title="unplugin-saykit" href="/integrations/vite">
+Universal bundler plugin: Vite, Rollup, Rolldown, Webpack, Rspack, esbuild, Farm, Bun.
+</Card>
+
+<Card icon={<Hammer />} title="babel-plugin-saykit" href="/integrations/babel">
+Babel plugin. Use this for Next.js, React Native, Metro, Expo, or any Babel-driven pipeline.
+</Card>
+
+<Card icon={<FileType2 />} title="@saykit/format-po">
+Gettext PO formatter, the default for SayKit examples.
+</Card>
+
+<Card icon={<FileType2 />} title="@saykit/transform-js / -jsx">
+The macro transformers for `.js`/`.ts` and `.jsx`/`.tsx`. Used by the build-tool plugins.
+</Card>
+
+</Cards>
+
+## Peer dependencies
+
+A few packages have peer requirements worth knowing about:
+
+- `@saykit/react` peers `react` and `saykit`. The package uses the `react-server` export condition for server rendering, so React 18+ is required and React 19+ is recommended.
+- `@saykit/carbon` peers `@buape/carbon` and `saykit`.
+- `babel-plugin-saykit` expects `@babel/core` (you almost certainly already have it).
+
+## Next: quickstart
+
+If this is your first SayKit project, the [quickstart](/getting-started/quickstart) walks through the whole loop (config, source, extraction, and runtime) in a few minutes.

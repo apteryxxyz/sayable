@@ -1,21 +1,17 @@
 ---
 title: Runtime
-description: Learn how the Say instance loads messages, activates locales, matches guesses, and becomes read-only
+description: The Say class, locales, messages, activation, matching, freezing
 ---
 
-The `Say` instance is the runtime core of SayKit.
+The `Say` class is SayKit's runtime. It holds your locales and message catalogues, tracks the active locale, and formats compiled messages on demand.
 
-It is responsible for:
+```ts
+import { Say } from 'saykit';
+```
 
-- storing your available locales
-- loading and assigning messages
-- activating the current locale
-- matching locale guesses to supported locales
-- formatting compiled message descriptors at runtime
+You usually create one `Say` per app. Framework integrations wrap that instance, `SayProvider` in React, `SayPlugin` in Carbon, but the underlying API is the same everywhere.
 
-## Create a `Say` Instance
-
-You create a `Say` instance with a list of supported locales, plus either preloaded `messages`, a `loader`, or both.
+## Creating an instance
 
 ```ts
 import { Say } from 'saykit';
@@ -28,40 +24,62 @@ const say = new Say({
 });
 ```
 
-Use inline `messages` when some translations are already available at startup, and a `loader` when you want to fetch or import locale data on demand.
+You can pass:
 
-## Read Runtime State
+- inline `messages`, useful when catalogues are bundled at build time
+- a `loader` function, useful when you want to fetch or import on demand
+- both, preload some, lazy-load the rest
 
-A `Say` instance exposes three key pieces of state:
+```ts
+const say = new Say({
+  locales: ['en', 'fr', 'ja'],
+  messages: { en },
+  loader: async (locale) => {
+    const mod = await import(`./locales/${locale}.po`);
+    return mod.default;
+  },
+});
+```
 
-- `say.locales` is the full list of supported locales
-- `say.locale` is the currently active locale
-- `say.messages` is the message catalogue for the active locale
+See [dynamic loading](/guides/dynamic-loading) for a deeper look at the loader pattern.
 
-<Callout type="info">
-  `say.locale` and `say.messages` require an active locale. `say.messages` also requires messages
-  for that locale to be loaded.
+## Reading state
+
+A `Say` instance exposes three properties:
+
+```ts
+say.locales; // ['en', 'fr']
+say.locale; // 'en' (currently active)
+say.messages; // { 'abc123': 'Hello!', ... } (for the active locale)
+```
+
+<Callout type="warn">
+  `say.locale` throws if no locale is active. `say.messages` throws if no catalogue is loaded for
+  the active locale. Activate a locale before reading either.
 </Callout>
 
-## Load Messages
+## Loading messages
 
-Use `load()` to fetch message catalogues through the configured loader.
+`load()` runs your configured loader for the given locales:
 
 ```ts
 await say.load('fr');
+await say.load('fr', 'ja');
 ```
 
-If you call `load()` with no arguments, SayKit loads every configured locale.
+With no arguments, every configured locale is loaded:
 
 ```ts
 await say.load();
 ```
 
-If a locale is already loaded, it is skipped. If no loader was provided, calling `load()` throws.
+Locales that are already loaded are skipped. Calling `load()` without a configured loader throws.
 
-## Assign Messages Manually
+If your loader is synchronous, `load()` is synchronous too. If your loader returns a promise, so does `load()`.
 
-Use `assign()` when you already have message data and want to attach it directly.
+## Assigning messages
+
+Use `assign()` when you already have messages in hand and want to attach them directly, no loader required.
 
 ```ts
 say.assign('fr', {
@@ -69,7 +87,7 @@ say.assign('fr', {
 });
 ```
 
-You can also assign multiple locales at once:
+Or for multiple locales at once:
 
 ```ts
 say.assign({
@@ -78,78 +96,150 @@ say.assign({
 });
 ```
 
-This is useful when messages are embedded in the bundle or when another part of your app has already loaded them.
+This is useful when messages are embedded in the bundle, hydrated from a server, or pulled from another store.
 
-## Activate a Locale
+## Activating a locale
 
-Use `activate()` to make one loaded locale current.
+A locale must be loaded (or assigned) before you can activate it:
 
 ```ts
 await say.load('fr');
 say.activate('fr');
 ```
 
-The locale must already be loaded before you activate it.
-
 ```ts
 say.activate('fr'); // throws if `fr` has not been loaded or assigned
 ```
 
-Once a locale is active, compiled messages resolve against that locale.
+Once a locale is active, compiled `say.call(...)` invocations resolve against its catalogue.
 
-## Match Locale Guesses
+## Matching guesses
 
-Use `match()` to choose the best supported locale from a list of guesses, such as browser or platform locales.
+Use `match()` to pick the best supported locale from a list of guesses, browser locales, an `Accept-Language` header, a URL segment, whatever:
 
 ```ts
-const locale = say.match(['fr-CA', 'en-US']);
-// -> 'fr' if your configured locales include 'fr'
+say.match(['fr-CA', 'en-US']);
+// → 'fr' if your configured locales include 'fr'
 ```
 
-Matching works in this order:
+Matching prefers in order:
 
-1. exact locale match
-2. language-prefix match such as `fr-CA` -> `fr`
-3. the first configured locale as a final fallback
+1. exact match against `locales`
+2. language-prefix match (`fr-CA` &rarr; `fr`)
+3. the first configured locale as final fallback
 
-That makes it a good fit for turning runtime guesses into one of your supported locales before calling `load()` or `activate()`.
+`match()` takes any number of strings or arrays of strings; everything is flattened:
 
-## Clone Instances
+```ts
+say.match('fr-CA', 'en-US');
+say.match(['fr-CA', 'en-US']);
+say.match(headerLocales, [cookieLocale]);
+```
 
-Use `clone()` when you want a separate `Say` instance with the same locales, messages, and loader.
+See [locale detection](/guides/locale-detection) for usage patterns.
+
+## Cloning
+
+`clone()` returns a fresh `Say` with the same locales, messages, and loader:
 
 ```ts
 const requestSay = say.clone();
 requestSay.activate('fr');
 ```
 
-Cloning is useful when each request, interaction, or render context should have its own active locale without mutating a shared instance.
+Cloning is the right way to handle a per-request, per-interaction, or per-render locale without mutating a shared instance. The Carbon and React server integrations do this for you under the hood.
 
-## Freeze Instances
+## Freezing
 
-Use `freeze()` to make a `Say` instance read-only.
+`freeze()` returns a read-only view:
 
 ```ts
 const readonlySay = say.clone().activate('fr').freeze();
 ```
 
-A frozen instance can still read messages and format descriptors, but it can no longer:
+A frozen `Say` can still:
+
+- read `locale`, `locales`, `messages`
+- call `match()`
+- format messages via `say.call(...)`
+
+But it can no longer:
 
 - `load()`
 - `assign()`
 - `activate()`
 
-This is useful when you want to pass a `Say` instance around safely after locale selection is complete.
+Freezing is how the React integration hands a `Say` to client components, safely scoped to one locale, with no way to mutate it accidentally.
 
-## Formatting Messages
+## Iterating locales
 
-At runtime, compiled message macros end up calling `say.call()` with a descriptor object.
+A `Say` instance is iterable. It yields `[frozenSay, locale]` for every configured locale, with each `frozenSay` already activated to that locale:
+
+```ts
+for (const [localised, locale] of say) {
+  console.log(locale, localised`Hello!`);
+}
+```
+
+This is how the Carbon integration generates per-locale command names and descriptions in one pass.
+
+## Formatting
+
+Compiled macros end up calling `say.call(descriptor)`:
 
 ```ts
 say.call({
-  id: 'greeting',
+  id: 'abc123',
   name: 'Ada',
 });
+// → "Hello, Ada!"
 ```
 
-In normal application code you usually do not write this by hand. Instead, the compiler transform rewrites <code>say\`Hello, \$\{name}!\`</code> into the appropriate runtime call for you.
+In application code you rarely write this directly, the build transform generates it from your `` say`...` `` and `<Say>` macros. The descriptor always has an `id`; extra properties become ICU placeholders.
+
+## Putting it together
+
+A typical client-side bootstrap:
+
+```ts title="src/i18n.ts"
+import { Say } from 'saykit';
+import en from './locales/en.po';
+import fr from './locales/fr.po';
+
+const say = new Say({
+  locales: ['en', 'fr'],
+  messages: { en, fr },
+});
+
+const guess = navigator.language ?? 'en';
+say.activate(say.match(guess));
+
+export default say;
+```
+
+A typical per-request server-side bootstrap:
+
+```ts title="src/server-i18n.ts"
+import { Say } from 'saykit';
+
+const baseSay = new Say({
+  locales: ['en', 'fr'],
+  loader: (l) => import(`./locales/${l}.po`).then((m) => m.default),
+});
+
+export async function getSayFor(headers: Headers) {
+  const acceptLang = headers.get('accept-language') ?? '';
+  const guesses = acceptLang.split(',').map((s) => s.split(';')[0]!.trim());
+
+  const requestSay = baseSay.clone();
+  const locale = requestSay.match(guesses);
+  await requestSay.load(locale);
+  return requestSay.activate(locale).freeze();
+}
+```
+
+## Next
+
+- [Locale detection](/guides/locale-detection), matching browser, header, cookie, and URL inputs
+- [Dynamic loading](/guides/dynamic-loading), lazy locale loading patterns
+- [React integration](/integrations/react), `SayProvider`, `useSay`, server runtime

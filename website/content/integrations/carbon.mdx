@@ -1,51 +1,105 @@
 ---
 title: Carbon
-description: Use SayKit with Carbon to localise commands, components, and replies
+description: Use SayKit with Carbon, localise Discord commands, components, and replies
 ---
 
-SayKit includes a [Carbon](https://carbon.buape.com) integration via `@saykit/carbon`.
+[Carbon](https://carbon.buape.com) is a Discord bot framework. `@saykit/carbon` is its SayKit integration:
 
-The Carbon integration does three things:
+- registers a shared `Say` with your Carbon client
+- helps command, component, and modal classes expose translated metadata
+- adds locale-aware `interaction.say` and `guild.say` properties
 
-- registers a shared `Say` instance with your Carbon app
-- helps command and component classes expose translated metadata
-- gives interactions and guilds a locale-aware `say` helper
+The result: commands appear in Discord's localised UI per user, and replies match the user's locale.
 
-## How It Works
+## Install
 
-`@saykit/carbon` is built around two pieces:
-
-- `SayPlugin`, which installs your shared `Say` instance into Carbon
-- `withSay()`, which helps you attach translated properties to Carbon classes
-
-Once the plugin is registered:
-
-- interactions get `interaction.locale`-aware `interaction.say`
-- guilds get `guild.preferredLocale`-aware `guild.say`
-
-## Register the Plugin
-
-Create your `Say` instance once, then register `SayPlugin` when you create the Carbon client.
-
-```ts
-import { Client } from '@buape/carbon'
-import { SayPlugin } from '@saykit/carbon'
-import say from './i18n'
-
-const client = new Client(
-  { ... },
-  { ... },
-  [new SayPlugin(say)],
-)
+```sh
+pnpm add saykit @saykit/carbon
+pnpm add -D @saykit/config @saykit/format-po @saykit/transform-js unplugin-saykit
 ```
 
-If your app registers commands, components, or modals separately, keep using the same shared `say` instance for all of them.
+The Carbon example builds with [`tsdown`](https://github.com/rolldown/tsdown), so it uses `unplugin-saykit/rolldown`. Any Carbon-compatible bundler works, pick the matching entry point from [`unplugin-saykit`](/integrations/vite).
 
-## Localising Commands
+## Configure
 
-For commands, `withSay()` accepts your shared `Say` instance and a mapping function. That mapping function runs for each locale and is used to build Carbon's localisation data.
+### `saykit.config.ts`
 
-```ts
+```ts title="saykit.config.ts"
+import { defineConfig } from '@saykit/config';
+import po from '@saykit/format-po';
+import js from '@saykit/transform-js';
+
+export default defineConfig({
+  sourceLocale: 'en',
+  locales: ['en', 'fr'],
+  buckets: [
+    {
+      include: ['src/**/*.ts'],
+      output: 'src/locales/{locale}.{extension}',
+      formatter: po(),
+      transformer: js(),
+    },
+  ],
+});
+```
+
+### `tsdown.config.ts`
+
+```ts title="tsdown.config.ts"
+import { defineConfig } from 'tsdown';
+import saykit from 'unplugin-saykit/rolldown';
+
+export default defineConfig({
+  entry: ['src/entry.ts'],
+  plugins: [saykit()],
+});
+```
+
+## App setup
+
+### A shared `Say`
+
+Eagerly load locales so the bot can answer immediately on cold start:
+
+```ts title="src/i18n.ts"
+import { Say } from 'saykit';
+
+const say = new Say({
+  locales: ['en', 'fr'],
+  messages: {
+    en: await import('./locales/en.po').then((m) => m.default),
+    fr: await import('./locales/fr.po').then((m) => m.default),
+  },
+});
+
+say.load();
+say.activate('en');
+
+export default say;
+```
+
+### Register `SayPlugin`
+
+```ts title="src/index.ts"
+import { Client } from '@buape/carbon';
+import { SayPlugin } from '@saykit/carbon';
+import { PingCommand } from './commands/ping.js';
+import say from './i18n.js';
+
+const client = new Client(
+  { /* options */ },
+  { commands: [new PingCommand(say)] },
+  [new SayPlugin(say)],
+);
+```
+
+`SayPlugin` installs the `Say` instance into the global registry and applies extensions so `interaction.say` and `guild.say` work.
+
+## Localising commands
+
+`withSay()` wraps a Carbon class with a constructor that accepts a `Say` and a mapping function. The mapping function runs **once per locale**; SayKit uses the results to populate Carbon's per-locale command metadata.
+
+```ts title="src/commands/ping.ts"
 import { Command, type CommandInteraction } from '@buape/carbon';
 import { withSay } from '@saykit/carbon';
 import type { Say } from 'saykit';
@@ -66,32 +120,82 @@ export class PingCommand extends withSay(Command) {
 }
 ```
 
-<Callout type="info">
-  SayKit looks for the `say` identifier when transforming messages. To have a string extracted and
-  compiled, write it with `say`, such as <code>say\`ping\`</code> or{' '}
-  <code>interaction.say\`Pong!\`</code>.
-</Callout>
+When you register `PingCommand`, Carbon receives every translation of `name` and `description` at once, Discord then renders the command in whichever locale each user has.
 
-Once your commands are defined, register them with Carbon passing your shared `say` instance as needed.
+### Subcommands and options
 
-```ts title="index.ts"
-// ...
-const client = new Client(
-  { ... },
-  { commands: [new PingCommand(say), ...] },
-  [new SayPlugin(say)],
-)
-// ...
+`CommandWithSubcommands` works the same way:
+
+```ts
+export class MathsCommand extends withSay(CommandWithSubcommands) {
+  constructor(say: Say) {
+    super(say, (say) => ({
+      name: say`maths`,
+      description: say`Maths commands!`,
+      subcommands: [new AddCommand(say), new SubtractCommand(say)],
+    }));
+  }
+}
 ```
 
----
+Options work too, everything visible in the Discord UI is localisable:
 
-Carbon still owns registration and execution. SayKit just provides the translated strings and locale-aware formatting.
+```ts
+super(say, (say) => ({
+  name: say`add`,
+  description: say`Add two numbers!`,
+  options: [
+    {
+      name: say`a`,
+      description: say`The first number.`,
+      type: ApplicationCommandOptionType.Number,
+      required: true,
+    },
+  ],
+}));
+```
 
-## Mental Model
+### Components and modals
 
-A simple way to think about the integration is:
+For `BaseComponent` and `Modal` subclasses, `withSay` accepts the translated props directly, no per-locale mapping, because Discord doesn't localise component metadata the way it does commands:
 
-- define translated metadata with `say`
-- reply to the current Discord context with `interaction.say` or `guild.say`
-- pass one shared `Say` instance through the parts of your app that Carbon registers
+```ts
+import { Button } from '@buape/carbon';
+
+export class RollAgainButton extends withSay(Button) {
+  customId = 'roll-again';
+  constructor(say: Say) {
+    super({ label: say`Roll Again` });
+  }
+}
+```
+
+## `interaction.say` and `guild.say`
+
+Once `SayPlugin` is registered:
+
+- `interaction.say` is a `Say` cloned and activated for the interaction's locale
+- `guild.say` is a `Say` cloned and activated for the guild's preferred locale
+
+Use either anywhere you'd normally use `say`:
+
+```ts
+await interaction.reply({
+  content: interaction.say`The dice rolled ${result}!`,
+});
+```
+
+```ts
+await someOperation(guild.say`Welcome to ${guildName}!`);
+```
+
+The clone is cached on the interaction or guild instance, subsequent accesses re-use it.
+
+## Live example
+
+The [`examples/carbon`](https://github.com/k0d13/saykit/tree/main/examples/carbon) package is a working Cloudflare Workers bot with localised commands.
+
+## Next
+
+- [Runtime](/core-concepts/runtime), cloning and freezing patterns
+- [Carbon API reference](/reference/api/carbon), every export

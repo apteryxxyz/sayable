@@ -1,6 +1,6 @@
 {
   "title": "Core Concepts",
   "icon": "Boxes",
-  "pages": ["architecture", "configuration", "messages", "runtime"],
+  "pages": ["architecture", "configuration", "messages", "runtime", "extraction", "formats"],
   "collapsible": false
 }

@@ -1,0 +1,203 @@
+---
+title: Custom formatter
+description: Write a formatter for JSON, YAML, or your own translation file format
+---
+
+A SayKit `Formatter` is a small object, an extension, a `parse()`, and a `stringify()`. If you can map your format to and from SayKit's `Message[]` shape, you can plug it in.
+
+This guide walks through writing a JSON formatter, then covers a few patterns and edge cases.
+
+## The shape
+
+```ts
+import type { Formatter } from '@saykit/config';
+
+const formatter: Formatter = {
+  extension: '.json',
+
+  parse(content: string): Message[] {
+    /* ... */
+  },
+
+  stringify(messages: Message[], context: { locale: string; existingContent?: string }): string {
+    /* ... */
+  },
+};
+```
+
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+<TypeTable
+  type={{
+    extension: {
+      description:
+        'The file extension, including the leading dot. SayKit uses this for the `{extension}` placeholder in `output`.',
+      type: '`.${string}`',
+      required: true,
+    },
+    parse: {
+      description:
+        'Parse a catalogue file into Message[]. Called when reading existing translations.',
+      type: '(content: string) => Message[]',
+      required: true,
+    },
+    stringify: {
+      description:
+        'Serialise Message[] back into the file format. Receives the existing file content (if any) so you can preserve headers or formatting.',
+      type: '(messages: Message[], ctx: { locale: string; existingContent?: string }) => string',
+      required: true,
+    },
+  }}
+/>
+
+## The `Message` shape
+
+```ts
+interface Message {
+  message: string; // ICU MessageFormat
+  translation?: string; // empty for new entries
+  id?: string; // custom id (undefined → use a hash)
+  context?: string; // descriptor context
+  comments: string[]; // translator comments
+  references: string[]; // source references as `file:line`
+}
+```
+
+Your formatter:
+
+- on `parse`, returns one `Message` per catalogue entry
+- on `stringify`, receives them all and produces the file contents
+
+If your format doesn't natively support every field, you can choose what to drop, e.g. JSON typically loses comments and references unless you encode them into the structure.
+
+## Example: JSON formatter
+
+A minimal JSON formatter that maps catalogue entries to a flat object:
+
+```ts title="my-format-json.ts"
+import type { Formatter, Message } from '@saykit/config';
+import { generateHash } from '@saykit/config/features/messages';
+
+interface JsonEntry {
+  message: string;
+  translation: string;
+  context?: string;
+  comments?: string[];
+  references?: string[];
+}
+
+export default function json(): Formatter {
+  return {
+    extension: '.json',
+
+    parse(content) {
+      if (!content.trim()) return [];
+      const raw: Record<string, JsonEntry> = JSON.parse(content);
+
+      return Object.entries(raw).map(([id, entry]) => ({
+        id,
+        message: entry.message,
+        translation: entry.translation,
+        context: entry.context,
+        comments: entry.comments ?? [],
+        references: entry.references ?? [],
+      }));
+    },
+
+    stringify(messages, { locale }) {
+      const out: Record<string, JsonEntry> = {};
+
+      for (const msg of messages.sort((a, b) => a.message.localeCompare(b.message))) {
+        const id = msg.id || generateHash(msg.message, msg.context);
+        out[id] = {
+          message: msg.message,
+          translation: msg.translation ?? '',
+          ...(msg.context ? { context: msg.context } : {}),
+          ...(msg.comments.length ? { comments: msg.comments } : {}),
+          ...(msg.references.length ? { references: msg.references } : {}),
+        };
+      }
+
+      return JSON.stringify({ locale, messages: out }, null, 2);
+    },
+  };
+}
+```
+
+Use it in `saykit.config.ts`:
+
+```ts
+import json from './my-format-json';
+
+buckets: [
+  {
+    include: ['src/**/*.ts'],
+    output: 'src/locales/{locale}.{extension}',
+    formatter: json(),
+    transformer: js(),
+  },
+];
+```
+
+Resulting files:
+
+```text
+src/locales/
+  en.json
+  en.json.d.ts
+  fr.json
+  fr.json.d.ts
+```
+
+## Preserving existing content
+
+`stringify` receives `existingContent`, useful if your format has headers, comments, or ordering you want to keep across runs.
+
+The built-in PO formatter uses this to preserve `Language:`, `Project-Id-Version:`, and any other PO headers:
+
+```ts
+stringify(messages, { locale, existingContent }) {
+  const po = new PO();
+  if (existingContent) {
+    const existing = PO.parse(existingContent);
+    Object.assign(po.headers, existing.headers);
+  }
+  // ...
+}
+```
+
+## Generating ids
+
+By default, SayKit hashes `message + context` into a 6-character id. The `generateHash` helper is exposed for formatters that need to compute ids during `stringify`:
+
+```ts
+import { generateHash } from '@saykit/config/features/messages';
+
+const id = msg.id || generateHash(msg.message, msg.context);
+```
+
+If your format has its own id convention (e.g. dotted path keys), you can use that on `parse` and `stringify` regardless of what SayKit would have hashed to.
+
+## Ordering and stability
+
+For a clean Git diff, sort entries deterministically. The PO formatter sorts by message text:
+
+```ts
+messages.sort((a, b) => a.message.localeCompare(b.message));
+```
+
+You can also sort by id, by `references[0]`, or however else makes sense for your format.
+
+## Multi-file formats
+
+The `Formatter` API assumes one file per locale. If your tooling expects multiple files per locale (e.g. one JSON per namespace), you have two options:
+
+- use **multiple buckets**, one per namespace, each pointing at a different output path
+- use a flat one-file format and post-process in CI
+
+The first is usually simpler.
+
+## Next
+
+- [Formats](/core-concepts/formats), PO and the Formatter contract
+- [Configuration](/core-concepts/configuration), how formatters plug in

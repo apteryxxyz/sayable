@@ -30,22 +30,22 @@ const workflow = [
     name: 'Translate',
     icon: Languages,
     description:
-      'Hand translators clean, structured translation files with comments, context, and stable identifiers.',
+      'Hand translators structured files with comments, context, and stable identifiers.',
   },
   {
     name: 'Deploy',
     icon: Rocket,
     description:
-      'Import translation files directly into your app, no compile step, no extra build-time transform. Ship small runtime helpers and keep extraction at dev time.',
+      'Import translation files directly. No compile step, no extra build-time transform, no shipped extractor.',
   },
 ] satisfies { name: string; icon: React.ElementType; description: string }[];
 
 const features = [
   'Compile-time extraction from JS, TS, JSX, and TSX',
-  'ICU MessageFormat support for plurals, ordinals, and select',
-  'Framework-agnostic core runtime with adapters where needed',
-  'Import translation files directly, no compile step, no build-time transform',
-  'Typed config and CLI with watch mode for instant feedback',
+  'ICU MessageFormat for plurals, ordinals, and select',
+  'Framework-agnostic core, with adapters for React and Carbon',
+  'Translation files are plain modules, importable directly',
+  'Typed config, fast CLI, watch mode for instant feedback',
 ];
 
 const CODE_EXAMPLE = `import { Say } from '@saykit/react';
@@ -161,7 +161,7 @@ export default async function HomePage() {
           <div className="flex flex-col gap-4">
             <div className="rounded-3xl border border-fd-border bg-fd-card p-5">
               <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-fd-muted-foreground">
-                Why it feels good
+                Why SayKit
               </h2>
               <ul className="mt-4 space-y-3 text-sm leading-6 text-fd-foreground">
                 {features.map((f) => (
@@ -182,8 +182,8 @@ export default async function HomePage() {
                   <span className="text-fd-muted-foreground">$ </span>
                   <span className="text-fd-foreground">saykit extract</span>
                 </p>
-                <p className="text-emerald-500">✓ 2 messages extracted</p>
-                <p className="text-fd-muted-foreground"> → locales/en, fr, ja</p>
+                <p className="text-emerald-500">✓ 12 messages extracted</p>
+                <p className="text-fd-muted-foreground"> → src/locales/en.po, fr.po</p>
               </div>
             </div>
           </div>
@@ -195,14 +195,14 @@ export default async function HomePage() {
         <div className="mx-auto max-w-3xl">
           <div className="mb-8 space-y-3">
             <p className="text-sm font-semibold uppercase tracking-[0.22em] text-fd-muted-foreground">
-              End to end workflow
+              End-to-end workflow
             </p>
             <h2 className="text-3xl font-semibold tracking-tight text-fd-foreground">
-              A simple translation pipeline that stays close to your codebase
+              A translation pipeline that stays close to your codebase
             </h2>
             <p className="text-base leading-7 text-fd-muted-foreground">
-              SayKit is designed for the whole path from authoring to deployment, without pushing
-              app teams into a heavyweight platform.
+              From authoring to deployment, without pushing app teams onto a heavyweight platform
+              or a third-party service.
             </p>
           </div>
 
@@ -241,8 +241,8 @@ export default async function HomePage() {
               Start with the docs, then adapt the example closest to your stack.
             </h2>
             <p className="text-base leading-7 text-fd-muted-foreground">
-              The repo already includes examples for Next.js, TanStack Start, and Carbon, and the
-              core package is intended to stay useful even outside framework-specific adapters.
+              The repo includes working examples for Next.js, TanStack Start, and Carbon. The core
+              runtime stays useful even outside framework-specific adapters.
             </p>
           </div>
           <div className="flex flex-wrap gap-3">

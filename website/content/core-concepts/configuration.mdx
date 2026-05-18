@@ -1,227 +1,212 @@
 ---
 title: Configuration
-description: Configure SayKit's extraction, compilation, and locale management
+description: The saykit.config.ts file, locales, buckets, formatters, transformers
 ---
 
-SayKit uses a `saykit.config.ts` file to define your internationalisation setup. This configuration controls message extraction, locale management, and output formatting.
+Every SayKit project has a `saykit.config.ts` (or `.js`) in its root. It's a single source of truth for locales, which files to extract from, where translations live, and how they're parsed and serialised.
 
-## Configuration File
-
-Create a `saykit.config.ts` in your project root:
-
-```ts title='saykit.config.ts'
+```ts title="saykit.config.ts"
 import { defineConfig } from '@saykit/config';
 import po from '@saykit/format-po';
 import js from '@saykit/transform-js';
+import jsx from '@saykit/transform-jsx';
 
 export default defineConfig({
   sourceLocale: 'en',
-  locales: ['en', 'fr', 'es'],
+  locales: ['en', 'fr', 'ja'],
   buckets: [
     {
       include: ['src/**/*.{ts,tsx}'],
       output: 'src/locales/{locale}.{extension}',
-      transformer: js(),
       formatter: po(),
+      transformer: [js(), jsx()],
     },
   ],
 });
 ```
 
-### Configuration Type
+The config is validated by Zod at load time, mistakes get caught with a clear error.
+
+<Callout type="info">
+  `defineConfig()` doesn't just type the config, it also runs it through the Zod schema and
+  returns the normalised result. Use it for both the type hints and the validation.
+</Callout>
+
+## Loading
+
+The CLI and the build-tool plugins both load your config via `resolveConfig()` from
+`@saykit/config/features/loader`. It searches up from the current working directory for
+`saykit.config.{ts,mts,cts,js,mjs,cjs}` and transpiles TypeScript automatically.
+
+Transpiled output is cached in `node_modules/.cache/saykit/config/` and invalidated when:
+
+- the config file's `mtime` changes, or
+- a `tsconfig.json` between the config and the workspace root changes.
+
+## Top-level schema
 
 import { TypeTable } from 'fumadocs-ui/components/type-table';
-
-#### Configuration
-
-The configuration is type-checked using Zod schemas at runtime:
 
 <TypeTable
   type={{
     sourceLocale: {
       description:
-        'The source locale for your application. This must match the first locale in the locales array.',
+        'The locale that source code is written in. Must equal the first entry of `locales`.',
       type: 'string',
       required: true,
     },
     locales: {
-      description: 'Array of supported locales. The first locale must be the source locale.',
+      description: 'Every locale your app supports, source first.',
       type: '[string, ...string[]]',
       required: true,
     },
     buckets: {
       description:
-        'Array of bucket configurations that define which files to extract from and where to output translations.',
-      type: (
-        <>
-          <a className="text-blue-400" href="#bucket">
-            Bucket
-          </a>
-          []
-        </>
-      ),
+        'One or more extraction buckets. Each bucket scans a set of files and writes one translation file per locale.',
+      type: 'Bucket[]',
       required: true,
     },
   }}
 />
 
-#### Bucket
+## Locales
 
-Buckets group related messages and control extraction and output:
+Locales are arbitrary strings. SayKit doesn't care whether you use BCP 47 (`en-GB`), ISO 639 (`en`), or your own naming, whatever you pick is the key it uses everywhere.
+
+```ts
+locales: ['en', 'fr-CA', 'es-419'];
+```
+
+The **source locale** must be first. It's the locale your code is written in, and it's the one SayKit will rewrite into when it generates translation files from scratch.
+
+<Callout type="warn">
+  Changing `sourceLocale` after you've written code in another language means SayKit will treat
+  your existing source messages as if they were the new source locale. Plan this early.
+</Callout>
+
+## Buckets
+
+A bucket is a unit of "files in &rarr; translation file out". Most projects have one bucket. Use more when different parts of your app need their own translation files (UI vs emails, client vs server, &hellip;).
 
 <TypeTable
   type={{
     include: {
-      description: 'Glob patterns for files to extract messages from.',
+      description: 'Glob patterns of files to extract from.',
       type: 'string[]',
       required: true,
     },
     exclude: {
-      description: 'Glob patterns for files to exclude from extraction.',
+      description: 'Glob patterns to skip.',
       type: 'string[]',
-      required: false,
     },
     output: {
       description: (
         <>
-          Output path template with <code>{'{locale}'}</code> and <code>{'{extension}'}</code>{' '}
-          placeholders.
+          Output path template. Must contain <code>{'{locale}'}</code> and{' '}
+          <code>{'{extension}'}</code>.
         </>
       ),
       type: '`${string}{locale}${string}{extension}`',
       required: true,
     },
+    formatter: {
+      description: 'A Formatter that reads and writes the chosen translation file format.',
+      type: 'Formatter',
+      required: true,
+    },
     transformer: {
       description:
-        'Transformer or array of Transformers for message extraction and transformation.',
-      type: (
-        <>
-          <a className="text-blue-400" href="#transformer">
-            Transformer
-          </a>{' '}
-          |{' '}
-          <a className="text-blue-400" href="#transformer">
-            Transformer
-          </a>
-          []
-        </>
-      ),
-      required: true,
-    },
-    formatter: {
-      description: 'Formatter for message serialisation.',
-      type: (
-        <>
-          <a className="text-blue-400" href="#formatter">
-            Formatter
-          </a>
-        </>
-      ),
+        'A Transformer, or array of Transformers, that handle extraction and macro rewriting.',
+      type: 'Transformer | Transformer[]',
       required: true,
     },
   }}
 />
 
-#### Transformer
+### Output template
 
-Transformers control how messages are extracted and transformed:
+The `output` template names where translation files go. Two placeholders are required:
 
-<TypeTable
-  type={{
-    match: {
-      description: 'Function to match file paths.',
-      type: '(id: string) => boolean',
-      required: true,
-    },
-    extract: {
-      description:
-        'Function to extract messages from file content. Must be synchronous - cannot return Promise.',
-      type: (
-        <>
-          (code: string, id: string) {'=>'}{' '}
-          <a className="text-blue-400" href="#message">
-            Message
-          </a>
-          []
-        </>
-      ),
-      required: true,
-    },
-  }}
-/>
+- `{locale}`, replaced with each locale string
+- `{extension}`, replaced with the formatter's extension (no leading dot)
 
-#### Formatter
+```ts
+output: 'src/locales/{locale}.{extension}';
+// → src/locales/en.po, src/locales/fr.po
+```
 
-Formatters control how messages are serialized to disk:
+```ts
+output: 'translations/{locale}/messages.{extension}';
+// → translations/en/messages.po, translations/fr/messages.po
+```
 
-<TypeTable
-  type={{
-    extension: {
-      description: 'File extension.',
-      type: 'string',
-      required: true,
-    },
-    parse: {
-      description:
-        'Function to parse file content into messages. Must be synchronous - cannot return Promise.',
-      type: (
-        <>
-          (content: string) {'=>'}{' '}
-          <a className="text-blue-400" href="#message">
-            Message
-          </a>
-          []
-        </>
-      ),
-      required: true,
-    },
-    stringify: {
-      description:
-        'Function to serialize messages to file content. Must be synchronous - cannot return Promise.',
-      type: (
-        <>
-          (messages:{' '}
-          <a className="text-blue-400" href="#message">
-            Message
-          </a>
-          []) {'=>'} string
-        </>
-      ),
-      required: true,
-    },
-  }}
-/>
+### Multiple transformers
 
-#### Message
+Pass an array when you want different languages in the same bucket:
 
-Messages follow this structure during extraction:
+```ts
+transformer: [js(), jsx()];
+```
 
-<TypeTable
-  type={{
-    message: {
-      description: 'The ICU MessageFormat string.',
-      type: 'string',
-      required: true,
+Each transformer decides which files it handles via its `match()` function. The bucket dispatches files to the matching transformer transparently.
+
+## Formatters
+
+A `Formatter` knows how to parse and stringify a particular translation file format.
+
+```ts
+import po from '@saykit/format-po';
+
+formatter: po();
+formatter: po({ includeReferences: false });
+```
+
+PO is the default and what every SayKit example uses. You can also [write your own](/guides/custom-formatter), for example, JSON or YAML.
+
+## Transformers
+
+A `Transformer` knows how to parse a source language. It declares which files it handles, how to extract messages from them, and how to rewrite macros to runtime calls.
+
+```ts
+import js from '@saykit/transform-js';
+import jsx from '@saykit/transform-jsx';
+
+transformer: [js(), jsx()];
+```
+
+Most projects use the two built-in transformers. You can also [write your own](/guides/custom-transformer) for new file types or DSLs.
+
+## Full example: multiple buckets
+
+```ts title="saykit.config.ts"
+import { defineConfig } from '@saykit/config';
+import po from '@saykit/format-po';
+import js from '@saykit/transform-js';
+import jsx from '@saykit/transform-jsx';
+
+export default defineConfig({
+  sourceLocale: 'en',
+  locales: ['en', 'fr', 'ja'],
+  buckets: [
+    {
+      include: ['src/app/**/*.{ts,tsx}'],
+      exclude: ['**/*.test.*', '**/*.stories.*'],
+      output: 'src/locales/{locale}.{extension}',
+      formatter: po(),
+      transformer: [js(), jsx()],
     },
-    translation: {
-      description: 'The translated version (if available).',
-      type: 'string',
+    {
+      include: ['src/emails/**/*.ts'],
+      output: 'src/emails/locales/{locale}.{extension}',
+      formatter: po(),
+      transformer: js(),
     },
-    id: {
-      description: 'Custom ID or generated hash.',
-      type: 'string',
-    },
-    context: {
-      description: 'Disambiguation context.',
-      type: 'string',
-    },
-    comments: {
-      description: 'Translator comments from code.',
-      type: 'string[]',
-    },
-    references: {
-      description: 'Source file locations (file:line).',
-      type: 'string[]',
-    },
-  }}
-/>
+  ],
+});
+```
+
+## Next
+
+- [Messages](/core-concepts/messages), what you can author
+- [Extraction](/core-concepts/extraction), running the CLI, watch mode, reconciliation
+- [Formats](/core-concepts/formats), PO and writing your own

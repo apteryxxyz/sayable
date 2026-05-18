@@ -1,0 +1,218 @@
+---
+title: '@saykit/react'
+description: API reference for the React integration
+---
+
+`@saykit/react` is split across three entry points:
+
+```ts
+import { Say } from '@saykit/react'; // shared (server + client)
+import { SayProvider, useSay } from '@saykit/react/client'; // client only
+import { setSay, getSay, unstable_createWithSay } from '@saykit/react/server'; // server only
+```
+
+The default `@saykit/react` import uses the `react-server` export condition to swap between the server and client implementations of `<Say>` automatically.
+
+## `@saykit/react`
+
+### `<Say>`
+
+The primary translation component. Author content as children.
+
+```tsx
+<Say>Hello, {name}!</Say>
+```
+
+Props:
+
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+<TypeTable
+  type={{
+    children: {
+      description: 'The message content. Strings and JSX elements both work.',
+      type: 'ReactNode',
+    },
+    context: {
+      description: 'Disambiguation context. Matches the `say({ context })` descriptor.',
+      type: 'string',
+    },
+    id: {
+      description:
+        'Custom id. When omitted, SayKit hashes the message text. Mutually exclusive with `context` is not enforced; both can be present.',
+      type: 'string',
+    },
+  }}
+/>
+
+`<Say>` is a macro, the build-tool plugin reads the JSX, extracts the message, and rewrites the element to render `say.call(...)`.
+
+### `<Say.Plural>`
+
+```tsx
+<Say.Plural _={count} one="1 item" other="# items" />
+```
+
+Props:
+
+<TypeTable
+  type={{
+    _: {
+      description: 'The numeric value to branch on.',
+      type: 'number',
+      required: true,
+    },
+    'one, two, few, many, zero, other': {
+      description: 'CLDR plural-category branches. `other` is required.',
+      type: 'string',
+    },
+    '_1, _2, …': {
+      description:
+        'Exact-number branches. JSX prop keys cannot start with a digit, so they are prefixed with an underscore; extraction strips the prefix.',
+      type: 'string',
+    },
+  }}
+/>
+
+### `<Say.Ordinal>`
+
+```tsx
+<Say.Ordinal _={position} _1="1st" _2="2nd" _3="3rd" other="#th" />
+```
+
+Same props as `<Say.Plural>`, CLDR plural categories plus exact-number branches.
+
+### `<Say.Select>`
+
+```tsx
+<Say.Select _={gender} male="He liked it" female="She liked it" other="They liked it" />
+```
+
+Props:
+
+<TypeTable
+  type={{
+    _: {
+      description: 'The string value to branch on.',
+      type: 'string',
+      required: true,
+    },
+    '[selector]': {
+      description: 'One branch per possible value. `other` is required.',
+      type: 'string',
+    },
+  }}
+/>
+
+## `@saykit/react/client`
+
+### `<SayProvider>`
+
+Wraps a client tree with a locale and message catalogue. Required before any client-side use of `<Say>` or `useSay()`.
+
+```tsx
+<SayProvider locale={locale} messages={messages}>
+  {children}
+</SayProvider>
+```
+
+Props:
+
+<TypeTable
+  type={{
+    locale: {
+      description: 'The active locale string.',
+      type: 'string',
+      required: true,
+    },
+    messages: {
+      description: 'The message catalogue for the locale.',
+      type: 'Say.Messages',
+      required: true,
+    },
+    children: {
+      description: 'The tree to provide a `Say` to.',
+      type: 'ReactNode',
+    },
+  }}
+/>
+
+Internally constructs a frozen `Say` scoped to the locale.
+
+### `useSay()`
+
+Returns the frozen `Say` from the nearest `<SayProvider>`. Throws if no provider is in the tree.
+
+```ts
+function fn() {
+  const say = useSay();
+  return say`Hello, ${name}!`;
+}
+```
+
+## `@saykit/react/server`
+
+### `setSay(say)`
+
+Register a `Say` instance for the current request. Must be called before any server component renders `<Say>`.
+
+```ts
+setSay(activeSayInstance);
+setSay(() => buildSayInstance()); // also accepts a thunk
+```
+
+The instance is cloned and frozen on registration, mutations to the original after this call don't leak in.
+
+### `getSay()`
+
+Returns the registered `Say` for the current request. Throws if none has been registered.
+
+```ts
+const say = getSay();
+```
+
+The server equivalent of `useSay()`.
+
+### `unstable_createWithSay(say)`
+
+Returns a `withSay()` higher-order component factory bound to a `Say` instance.
+
+```ts
+const withSay = unstable_createWithSay(say);
+```
+
+`withSay(Component, getLocale)`:
+
+<TypeTable
+  type={{
+    Component: {
+      description: 'A server component to wrap. Receives `locale` and `messages` props plus the originals.',
+      type: '(props: P & { locale: string; messages: Say.Messages }) => ReactNode',
+      required: true,
+    },
+    getLocale: {
+      description:
+        'A function that produces the locale guess (string or promise-of-string) from the original props.',
+      type: '(props: P) => string | Promise<string>',
+      required: true,
+    },
+  }}
+/>
+
+The wrapper runs `match()`, `load()`, `activate()`, and `setSay()` before rendering. Useful in App Router layouts and pages where the URL param dictates the locale.
+
+## Types
+
+### `PropsWithSay<P>`
+
+```ts
+type PropsWithSay<P = unknown> = P & { locale: string; messages: Say.Messages };
+```
+
+The shape `withSay`-wrapped components receive.
+
+## Next
+
+- [Integration guide](/integrations/react): usage patterns
+- [Vite (unplugin)](/integrations/vite): the build-tool plugin
+- [Babel](/integrations/babel): for React Native, Expo, and other Babel pipelines

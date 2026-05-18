@@ -1,0 +1,12 @@
+{
+  "title": "Guides",
+  "icon": "BookOpen",
+  "pages": [
+    "locale-detection",
+    "dynamic-loading",
+    "typed-messages",
+    "custom-formatter",
+    "custom-transformer"
+  ],
+  "collapsible": false
+}
