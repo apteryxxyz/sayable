@@ -22,7 +22,6 @@ import po from '@saykit/format-po';
 import js from '@saykit/transform-js';
 
 export default defineConfig({
-  sourceLocale: 'en',
   locales: ['en', 'fr'],
   buckets: [
     {
@@ -45,13 +44,9 @@ import { TypeTable } from 'fumadocs-ui/components/type-table';
 
 <TypeTable
   type={{
-    sourceLocale: {
-      description: 'The source locale (must equal `locales[0]`).',
-      type: 'string',
-      required: true,
-    },
     locales: {
-      description: 'All supported locales.',
+      description:
+        'All supported locales. The first entry is the source locale (the language your code is written in).',
       type: '[string, ...string[]]',
       required: true,
     },

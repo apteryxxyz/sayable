@@ -50,7 +50,7 @@ export class BucketExtractWorker extends BucketWorker {
 
       const existingMessages = await readCatalogueMessages(this.bucket, locale);
       const nextMessages =
-        locale === this.config.sourceLocale
+        locale === this.config.locales[0]
           ? mergedMessages
           : reconcileLocaleMessages(existingMessages, mergedMessages);
 

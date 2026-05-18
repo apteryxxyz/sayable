@@ -57,13 +57,8 @@ export const Bucket = z
   }));
 export type Bucket = z.infer<typeof Bucket>;
 
-export const Config = z
-  .object({
-    sourceLocale: z.string(),
-    locales: z.tuple([z.string()], z.string()),
-    buckets: Bucket.array(),
-  })
-  .refine((config) => config.sourceLocale === config.locales[0], {
-    error: 'sourceLocale must be the same as locales[0]',
-  });
+export const Config = z.object({
+  locales: z.tuple([z.string()], z.string()),
+  buckets: Bucket.array(),
+});
 export type Config = z.infer<typeof Config>;
