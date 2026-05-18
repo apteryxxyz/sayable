@@ -13,6 +13,10 @@
       "@saykit/transform-jsx"
     ]
   ],
+  "privatePackages": {
+    "tag": false,
+    "version": false
+  },
   "linked": [],
   "access": "public",
   "baseBranch": "main",

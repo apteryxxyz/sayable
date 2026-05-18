@@ -1,6 +1,6 @@
 # unplugin-saykit
 
-## 1.0.0
+## 0.1.0
 
 ### Minor Changes
 
@@ -17,4 +17,4 @@
 - Updated dependencies [7b75d7c]
 - Updated dependencies [d7101cb]
 - Updated dependencies [292a0de]
-  - @saykit/config@1.0.0
+  - @saykit/config@0.1.0

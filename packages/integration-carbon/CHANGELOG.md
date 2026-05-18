@@ -1,6 +1,6 @@
 # @saykit/carbon
 
-## 1.0.0
+## 0.1.0
 
 ### Minor Changes
 
@@ -11,4 +11,4 @@
 - 7f680cd: Initial release
 - Updated dependencies [ba51e2f]
 - Updated dependencies [7f680cd]
-  - saykit@1.0.0
+  - saykit@0.1.0
