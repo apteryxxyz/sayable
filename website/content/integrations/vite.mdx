@@ -63,9 +63,10 @@ export default defineConfig({
 const saykit = require('unplugin-saykit/webpack').default;
 
 module.exports = {
-  plugins: [saykit()],
+plugins: [saykit()],
 };
-```
+
+````
 </Tab>
 
 <Tab value="Rspack">
@@ -75,7 +76,8 @@ const saykit = require('unplugin-saykit/rspack').default;
 module.exports = {
   plugins: [saykit()],
 };
-```
+````
+
 </Tab>
 
 <Tab value="esbuild">
@@ -84,9 +86,10 @@ import saykit from 'unplugin-saykit/esbuild';
 import { build } from 'esbuild';
 
 await build({
-  plugins: [saykit()],
+plugins: [saykit()],
 });
-```
+
+````
 </Tab>
 
 <Tab value="Farm">
@@ -96,7 +99,8 @@ import saykit from 'unplugin-saykit/farm';
 export default {
   plugins: [saykit()],
 };
-```
+````
+
 </Tab>
 
 <Tab value="Bun">
@@ -104,8 +108,9 @@ export default {
 import saykit from 'unplugin-saykit/bun';
 
 await Bun.build({
-  plugins: [saykit()],
+plugins: [saykit()],
 });
+
 ```
 </Tab>
 
@@ -147,3 +152,4 @@ Sufficient for libraries but limited: esbuild's plugin API can't always produce 
 
 - [Configuration](/core-concepts/configuration): tell the plugin what to look at
 - [Babel plugin](/integrations/babel): when you need Babel instead
+```

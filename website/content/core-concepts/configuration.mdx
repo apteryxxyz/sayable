@@ -28,8 +28,8 @@ export default defineConfig({
 The config is validated by Zod at load time, mistakes get caught with a clear error.
 
 <Callout type="info">
-  `defineConfig()` doesn't just type the config, it also runs it through the Zod schema and
-  returns the normalised result. Use it for both the type hints and the validation.
+  `defineConfig()` doesn't just type the config, it also runs it through the Zod schema and returns
+  the normalised result. Use it for both the type hints and the validation.
 </Callout>
 
 ## Loading
@@ -80,8 +80,8 @@ locales: ['en', 'fr-CA', 'es-419'];
 The **source locale** must be first. It's the locale your code is written in, and it's the one SayKit will rewrite into when it generates translation files from scratch.
 
 <Callout type="warn">
-  Changing `sourceLocale` after you've written code in another language means SayKit will treat
-  your existing source messages as if they were the new source locale. Plan this early.
+  Changing `sourceLocale` after you've written code in another language means SayKit will treat your
+  existing source messages as if they were the new source locale. Plan this early.
 </Callout>
 
 ## Buckets

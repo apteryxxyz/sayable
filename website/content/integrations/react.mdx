@@ -173,7 +173,9 @@ async function RootLayout({ locale, messages, children, ...props }) {
   return (
     <html lang={locale}>
       <body>
-        <SayProvider locale={locale} messages={messages}>{children}</SayProvider>
+        <SayProvider locale={locale} messages={messages}>
+          {children}
+        </SayProvider>
       </body>
     </html>
   );

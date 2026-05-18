@@ -78,9 +78,9 @@ The shape of the dynamic import (`./locales/${locale}.po`) matters, most bundler
 
 <Callout type="warn">
   `babel-plugin-saykit` currently rewrites **static** `import en from './locales/en.po'` only. For
-  dynamic imports, the bundler does the work, the formatter still parses the file, but
-  through the bundler's loader pipeline rather than SayKit's. This works fine for `unplugin-saykit`
-  (Vite, Rolldown, Rollup, Webpack, &hellip;).
+  dynamic imports, the bundler does the work, the formatter still parses the file, but through the
+  bundler's loader pipeline rather than SayKit's. This works fine for `unplugin-saykit` (Vite,
+  Rolldown, Rollup, Webpack, &hellip;).
 </Callout>
 
 ## Hybrid pattern
@@ -122,10 +122,7 @@ In a locale switcher, prefetch the catalogue on hover so the actual switch is in
 function LocaleOption({ locale }: { locale: string }) {
   const say = useSay();
   return (
-    <a
-      href={`/${locale}`}
-      onMouseEnter={() => say.load(locale)}
-    >
+    <a href={`/${locale}`} onMouseEnter={() => say.load(locale)}>
       {locale}
     </a>
   );

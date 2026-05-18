@@ -28,17 +28,17 @@ Full docs live at [saykit.js.org](https://saykit.js.org) (or run the [`website`]
 
 This is a pnpm monorepo. The published packages live in [`packages/*`](./packages).
 
-| Package                                                      | Description                                                          |
-| ------------------------------------------------------------ | -------------------------------------------------------------------- |
-| [`saykit`](./packages/integration)                           | Core runtime: the `Say` class, macros, and ICU formatting     |
-| [`@saykit/config`](./packages/config)                        | Config schema (`defineConfig`) and the `saykit` CLI                  |
-| [`@saykit/react`](./packages/integration-react)              | React integration: `<Say>`, `SayProvider`, server helpers     |
-| [`@saykit/carbon`](./packages/integration-carbon)            | Carbon Discord-bot integration                                       |
-| [`unplugin-saykit`](./packages/plugin-unplugin)              | Universal bundler plugin (Vite, Rollup, Webpack, esbuild, Rspack, …) |
-| [`babel-plugin-saykit`](./packages/plugin-babel)             | Babel plugin for SayKit                                              |
-| [`@saykit/transform-js`](./packages/transform-js)            | JS/TS macro transformer (used by plugins)                            |
-| [`@saykit/transform-jsx`](./packages/transform-jsx)          | JSX/TSX macro transformer (used by plugins)                          |
-| [`@saykit/format-po`](./packages/format-po)                  | Gettext PO formatter                                                 |
+| Package                                             | Description                                                          |
+| --------------------------------------------------- | -------------------------------------------------------------------- |
+| [`saykit`](./packages/integration)                  | Core runtime: the `Say` class, macros, and ICU formatting            |
+| [`@saykit/config`](./packages/config)               | Config schema (`defineConfig`) and the `saykit` CLI                  |
+| [`@saykit/react`](./packages/integration-react)     | React integration: `<Say>`, `SayProvider`, server helpers            |
+| [`@saykit/carbon`](./packages/integration-carbon)   | Carbon Discord-bot integration                                       |
+| [`unplugin-saykit`](./packages/plugin-unplugin)     | Universal bundler plugin (Vite, Rollup, Webpack, esbuild, Rspack, …) |
+| [`babel-plugin-saykit`](./packages/plugin-babel)    | Babel plugin for SayKit                                              |
+| [`@saykit/transform-js`](./packages/transform-js)   | JS/TS macro transformer (used by plugins)                            |
+| [`@saykit/transform-jsx`](./packages/transform-jsx) | JSX/TSX macro transformer (used by plugins)                          |
+| [`@saykit/format-po`](./packages/format-po)         | Gettext PO formatter                                                 |
 
 ## Examples
 

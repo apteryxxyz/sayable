@@ -41,8 +41,8 @@ The transform does five things:
 5. Replaces the source expression with a `say.call({ id, ...values })` call.
 
 <Callout type="info">
-  SayKit looks for the identifier `say` when transforming messages. Anything named `say` works
- , `say`, `interaction.say`, `useSay()`, as long as the local binding is called `say`.
+  SayKit looks for the identifier `say` when transforming messages. Anything named `say` works ,
+  `say`, `interaction.say`, `useSay()`, as long as the local binding is called `say`.
 </Callout>
 
 ## Placeholder names
@@ -247,8 +247,8 @@ Translators can move `<0>...</0>` around to fit the target language's grammar, a
 ```
 
 <Callout type="info">
-  Branch keys that start with a digit get a leading underscore in JSX (`_1`, `_2`) because JSX
-  prop names can't start with a number. SayKit strips the underscore at extract time.
+  Branch keys that start with a digit get a leading underscore in JSX (`_1`, `_2`) because JSX prop
+  names can't start with a number. SayKit strips the underscore at extract time.
 </Callout>
 
 See [React integration](/integrations/react) for the full setup.

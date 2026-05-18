@@ -201,8 +201,8 @@ export default async function HomePage() {
               A translation pipeline that stays close to your codebase
             </h2>
             <p className="text-base leading-7 text-fd-muted-foreground">
-              From authoring to deployment, without pushing app teams onto a heavyweight platform
-              or a third-party service.
+              From authoring to deployment, without pushing app teams onto a heavyweight platform or
+              a third-party service.
             </p>
           </div>
 

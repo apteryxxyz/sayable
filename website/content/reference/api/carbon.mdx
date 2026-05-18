@@ -15,7 +15,15 @@ A Carbon `Plugin` that registers a shared `Say` instance globally and applies th
 import { Client } from '@buape/carbon';
 import { SayPlugin } from '@saykit/carbon';
 
-const client = new Client({ /* ... */ }, { /* ... */ }, [new SayPlugin(say)]);
+const client = new Client(
+  {
+    /* ... */
+  },
+  {
+    /* ... */
+  },
+  [new SayPlugin(say)],
+);
 ```
 
 import { TypeTable } from 'fumadocs-ui/components/type-table';

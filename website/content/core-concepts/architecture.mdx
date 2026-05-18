@@ -10,11 +10,31 @@ SayKit is a small toolkit, not a framework. It has a few pieces that compose cle
 import { Code2, Cog, Wand2, FileType2, Plug } from 'lucide-react';
 
 <Cards>
-  <Card icon={<Code2 />} title="Runtime" description="The Say class. Holds locales, messages, and the active locale. Formats compiled message descriptors." />
-  <Card icon={<Cog />} title="Config" description="A typed saykit.config.ts. Tells the CLI and plugins which files to scan, which transformers to apply, and where to write translations." />
-  <Card icon={<Wand2 />} title="Transformer" description="Knows how to parse a source language. Extracts messages from source, and rewrites macros to runtime calls." />
-  <Card icon={<FileType2 />} title="Formatter" description="Knows how to read and write a translation file format (PO by default)." />
-  <Card icon={<Plug />} title="Plugin" description="Glue for your bundler. unplugin-saykit covers Vite/Rollup/etc; babel-plugin-saykit covers Babel-driven pipelines." />
+  <Card
+    icon={<Code2 />}
+    title="Runtime"
+    description="The Say class. Holds locales, messages, and the active locale. Formats compiled message descriptors."
+  />
+  <Card
+    icon={<Cog />}
+    title="Config"
+    description="A typed saykit.config.ts. Tells the CLI and plugins which files to scan, which transformers to apply, and where to write translations."
+  />
+  <Card
+    icon={<Wand2 />}
+    title="Transformer"
+    description="Knows how to parse a source language. Extracts messages from source, and rewrites macros to runtime calls."
+  />
+  <Card
+    icon={<FileType2 />}
+    title="Formatter"
+    description="Knows how to read and write a translation file format (PO by default)."
+  />
+  <Card
+    icon={<Plug />}
+    title="Plugin"
+    description="Glue for your bundler. unplugin-saykit covers Vite/Rollup/etc; babel-plugin-saykit covers Babel-driven pipelines."
+  />
 </Cards>
 
 ## How they fit together
@@ -150,8 +170,24 @@ Translation catalogues are emitted as plain JS modules, tree-shakable, code-spli
 ## Where to next?
 
 <Cards>
-  <Card title="Configuration" href="/core-concepts/configuration" description="The full saykit.config.ts schema." />
-  <Card title="Messages" href="/core-concepts/messages" description="Plurals, ordinals, select, descriptors, comments." />
-  <Card title="Runtime" href="/core-concepts/runtime" description="Creating a Say, loading messages, activating locales." />
-  <Card title="Extraction" href="/core-concepts/extraction" description="The CLI, watch mode, reconciliation." />
+  <Card
+    title="Configuration"
+    href="/core-concepts/configuration"
+    description="The full saykit.config.ts schema."
+  />
+  <Card
+    title="Messages"
+    href="/core-concepts/messages"
+    description="Plurals, ordinals, select, descriptors, comments."
+  />
+  <Card
+    title="Runtime"
+    href="/core-concepts/runtime"
+    description="Creating a Say, loading messages, activating locales."
+  />
+  <Card
+    title="Extraction"
+    href="/core-concepts/extraction"
+    description="The CLI, watch mode, reconciliation."
+  />
 </Cards>

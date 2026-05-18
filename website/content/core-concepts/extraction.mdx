@@ -119,11 +119,11 @@ This fails the build if anyone forgot to run extraction, useful for keeping tran
 
 For each bucket output:
 
-| File              | Purpose                                                              |
-| ----------------- | -------------------------------------------------------------------- |
-| `{locale}.po`     | The catalogue, in whatever format the bucket's formatter produces    |
-| `{locale}.po.d.ts`| Generic TS declaration so `import en from './locales/en.po'` types |
-| `.gitignore`      | Marks `*.po.d.ts` as generated (commit `.po` files, ignore `.d.ts`)  |
+| File               | Purpose                                                             |
+| ------------------ | ------------------------------------------------------------------- |
+| `{locale}.po`      | The catalogue, in whatever format the bucket's formatter produces   |
+| `{locale}.po.d.ts` | Generic TS declaration so `import en from './locales/en.po'` types  |
+| `.gitignore`       | Marks `*.po.d.ts` as generated (commit `.po` files, ignore `.d.ts`) |
 
 The `.gitignore` is written to the output directory automatically. You can override or extend it, SayKit will only write a missing one.
 

@@ -186,7 +186,8 @@ const withSay = unstable_createWithSay(say);
 <TypeTable
   type={{
     Component: {
-      description: 'A server component to wrap. Receives `locale` and `messages` props plus the originals.',
+      description:
+        'A server component to wrap. Receives `locale` and `messages` props plus the originals.',
       type: '(props: P & { locale: string; messages: Say.Messages }) => ReactNode',
       required: true,
     },

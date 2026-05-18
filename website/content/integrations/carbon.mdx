@@ -87,7 +87,9 @@ import { PingCommand } from './commands/ping.js';
 import say from './i18n.js';
 
 const client = new Client(
-  { /* options */ },
+  {
+    /* options */
+  },
   { commands: [new PingCommand(say)] },
   [new SayPlugin(say)],
 );

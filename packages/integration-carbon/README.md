@@ -32,7 +32,9 @@ class PingCommand extends withSay(Command) {
 }
 
 const client = new Client(
-  { /* options */ },
+  {
+    /* options */
+  },
   { commands: [new PingCommand(say)] },
   [new SayPlugin(say)],
 );

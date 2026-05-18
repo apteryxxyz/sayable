@@ -55,10 +55,26 @@ Each entry has:
 import { Globe, FileText, GitCompare, Wrench } from 'lucide-react';
 
 <Cards>
-  <Card icon={<Globe />} title="Universal" description="Decades of tooling. POEdit, Crowdin, Lokalise, Weblate, Transifex all speak PO natively." />
-  <Card icon={<FileText />} title="Human-readable" description="A reviewer can read a PO diff. Translators can edit them in any text editor if needed." />
-  <Card icon={<GitCompare />} title="Diff-friendly" description="Line-based and entry-aligned. PRs reviewing translations are sensible to read." />
-  <Card icon={<Wrench />} title="Tooling" description="Lots of CLI utilities exist (msgmerge, msgfmt, msgcat) if you ever need to munge PO files outside SayKit." />
+  <Card
+    icon={<Globe />}
+    title="Universal"
+    description="Decades of tooling. POEdit, Crowdin, Lokalise, Weblate, Transifex all speak PO natively."
+  />
+  <Card
+    icon={<FileText />}
+    title="Human-readable"
+    description="A reviewer can read a PO diff. Translators can edit them in any text editor if needed."
+  />
+  <Card
+    icon={<GitCompare />}
+    title="Diff-friendly"
+    description="Line-based and entry-aligned. PRs reviewing translations are sensible to read."
+  />
+  <Card
+    icon={<Wrench />}
+    title="Tooling"
+    description="Lots of CLI utilities exist (msgmerge, msgfmt, msgcat) if you ever need to munge PO files outside SayKit."
+  />
 </Cards>
 
 ### Options
@@ -113,7 +129,6 @@ See the [custom formatter guide](/guides/custom-formatter) for a complete walkth
 
 Formatters work with this shape:
 
-
 <TypeTable
   type={{
     message: {
@@ -126,7 +141,8 @@ Formatters work with this shape:
       type: 'string',
     },
     id: {
-      description: 'Custom id if provided in a descriptor; otherwise undefined (hashed at write time).',
+      description:
+        'Custom id if provided in a descriptor; otherwise undefined (hashed at write time).',
       type: 'string',
     },
     context: {

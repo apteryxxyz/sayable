@@ -8,8 +8,8 @@ A SayKit `Transformer` is the bridge between **source code** and **messages**. I
 The built-in `@saykit/transform-js` and `@saykit/transform-jsx` cover JavaScript, TypeScript, JSX, and TSX. If you want SayKit messages in another language (Vue SFCs, Svelte, MDX, an internal DSL), you write a transformer.
 
 <Callout type="info">
-  Writing a transformer is the most involved customisation in SayKit. Read [messages](/core-concepts/messages)
-  and [architecture](/core-concepts/architecture) first.
+  Writing a transformer is the most involved customisation in SayKit. Read
+  [messages](/core-concepts/messages) and [architecture](/core-concepts/architecture) first.
 </Callout>
 
 ## The shape
@@ -87,7 +87,7 @@ import { generateSayCallExpression } from '@saykit/transform-js/generator';
 `parseExpression(babelNode)` recognises `say` macros in a Babel expression and returns a `CompositeMessage`.
 `generateSayCallExpression(message)` turns it back into a `say.call(...)` Babel expression.
 
-This makes it relatively cheap to write a transformer for a new language that *embeds* JS expressions, you reuse the JS recognition logic for inner expressions.
+This makes it relatively cheap to write a transformer for a new language that _embeds_ JS expressions, you reuse the JS recognition logic for inner expressions.
 
 ## Sketch: a Vue SFC transformer
 
@@ -132,7 +132,7 @@ The hard parts are usually:
 
 ## The `extract` &harr; `transform` contract
 
-`extract` and `transform` see the *same* AST shape; they only differ in what they do with matched nodes:
+`extract` and `transform` see the _same_ AST shape; they only differ in what they do with matched nodes:
 
 - `extract` reads them and appends to a list.
 - `transform` rewrites them and returns the new source.

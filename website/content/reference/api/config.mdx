@@ -97,7 +97,7 @@ import { TypeTable } from 'fumadocs-ui/components/type-table';
 After parsing, each bucket also exposes `match(id)` and an `output` value with a `match(id)` helper. Plugin authors can use these to test whether a file belongs to a bucket:
 
 ```ts
-config.buckets[0]!.match('src/app/page.tsx');         // true if matched by include
+config.buckets[0]!.match('src/app/page.tsx'); // true if matched by include
 config.buckets[0]!.output.match('src/locales/en.po'); // true if it's a translation file
 ```
 
