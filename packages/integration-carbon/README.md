@@ -15,6 +15,7 @@ pnpm add @saykit/carbon saykit @buape/carbon
 ```ts
 import { Client, Command, type CommandInteraction } from '@buape/carbon';
 import { SayPlugin, withSay } from '@saykit/carbon';
+import { type Say } from 'saykit';
 import say from './i18n.js';
 
 class PingCommand extends withSay(Command) {

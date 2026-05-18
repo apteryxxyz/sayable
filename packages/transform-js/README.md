@@ -22,6 +22,10 @@ transformer: js();
 For JSX/TSX, combine with [`@saykit/transform-jsx`](https://github.com/k0d13/saykit/tree/main/packages/transform-jsx):
 
 ```ts
+import js from '@saykit/transform-js';
+import jsx from '@saykit/transform-jsx';
+
+// inside a bucket:
 transformer: [js(), jsx()];
 ```
 

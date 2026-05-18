@@ -17,7 +17,7 @@ import js from '@saykit/transform-js';
 import jsx from '@saykit/transform-jsx';
 
 // inside a bucket:
-transformer: [js(), jsx()];
+transformer: [js(), jsx()],
 ```
 
 ## Documentation
