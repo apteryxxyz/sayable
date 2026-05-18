@@ -8,7 +8,6 @@
 "saykit": minor
 "@saykit/format-po": minor
 "@saykit/config": minor
-"website": minor
 ---
 
 First numbered release
