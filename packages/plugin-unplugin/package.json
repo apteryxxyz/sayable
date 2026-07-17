@@ -1,6 +1,6 @@
 {
   "name": "unplugin-saykit",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Universal build tool plugin for saykit (Vite, Rollup, Webpack, esbuild)",
   "keywords": [
     "i18n",
