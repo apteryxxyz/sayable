@@ -15,12 +15,11 @@
     "saykit": "workspace:^"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20260518.1",
     "@saykit/config": "workspace:^",
     "@saykit/format-po": "workspace:^",
     "@saykit/transform-js": "workspace:^",
     "typescript": "^6.0.3",
     "unplugin-saykit": "workspace:^",
-    "wrangler": "^4.92.0"
+    "wrangler": "^4.111.0"
   }
 }
