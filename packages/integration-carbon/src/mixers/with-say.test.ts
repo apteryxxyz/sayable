@@ -14,7 +14,11 @@ describe('withSay', () => {
   it('caches the derived class per base class', () => {
     class Cmd extends BaseCommand {
       name = 'cmd';
-      description = 'desc';
+      override description = 'desc';
+      type = 1 as never;
+      serializeOptions() {
+        return undefined;
+      }
       async run() {}
     }
     const A = withSay(Cmd);
@@ -25,7 +29,11 @@ describe('withSay', () => {
   it('builds a command with localizations from every locale', () => {
     class Cmd extends BaseCommand {
       name = 'placeholder';
-      description = 'placeholder';
+      override description = 'placeholder';
+      type = 1 as never;
+      serializeOptions() {
+        return undefined;
+      }
       async run() {}
     }
     const SayCommand = withSay(Cmd) as unknown as new (
@@ -45,6 +53,9 @@ describe('withSay', () => {
   it('builds a component and assigns the given properties', () => {
     class Button extends BaseComponent {
       customId = 'btn';
+      readonly type = 2 as never;
+      readonly isV2 = false;
+      serialize = () => ({}) as never;
     }
     const SayButton = withSay(Button) as unknown as new (props?: {
       label?: string;
