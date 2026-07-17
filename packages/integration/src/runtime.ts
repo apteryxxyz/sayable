@@ -85,6 +85,9 @@ export class Say<
    * @throws If no messages are available for the active locale
    */
   get messages() {
+    // Defensive: `activate` already refuses locales without messages, so an
+    // active locale always has an entry here. Kept as a guard, hence ignored.
+    /* v8 ignore next */
     if (!this.#messages.has(this.locale)) throw new Error('No messages loaded for locale');
     return this.#messages.get(this.locale)!;
   }

@@ -1,6 +1,7 @@
 import * as t from '@babel/types';
 import {
   ArgumentMessage,
+  AUTO_INCREMENT_IDENTIFIER,
   ChoiceMessage,
   CompositeMessage,
   ElementMessage,
@@ -100,9 +101,49 @@ describe('parseJSXContainerElement', () => {
     expect(result!.descriptor).toEqual({ id: 'msg', context: 'nav' });
   });
 
+  it('drops text children that are only whitespace', () => {
+    // The trailing whitespace-only text node trims to empty and is dropped.
+    const result = parser.parseJSXContainerElement(
+      makeSayContainer([t.jsxExpressionContainer(t.identifier('name')), t.jsxText('   \n  ')]),
+    );
+    expect(result!.children).toHaveLength(1);
+    expect(result!.children[0]).toBeInstanceOf(ArgumentMessage);
+  });
+
+  it('ignores expression containers that hold no expression', () => {
+    const empty = t.jsxExpressionContainer(t.jsxEmptyExpression());
+    const result = parser.parseJSXContainerElement(makeSayContainer([empty]));
+    expect(result!.children).toHaveLength(0);
+  });
+
+  it('ignores an id attribute whose value is not a string literal', () => {
+    const result = parser.parseJSXContainerElement(
+      makeSayContainer([t.jsxText('Hi')], [exprAttr('id', t.identifier('dynamic'))]),
+    );
+    expect(result!.descriptor.id).toBeUndefined();
+  });
+
+  it('ignores a whitespace attribute whose value is not a boolean literal', () => {
+    const result = parser.parseJSXContainerElement(
+      makeSayContainer([t.jsxText('Hi')], [exprAttr('whitespace', t.identifier('dynamic'))]),
+    );
+    expect(result!.whitespace).toBeUndefined();
+  });
+
   it('leaves descriptor fields undefined when attributes are absent', () => {
     const result = parser.parseJSXContainerElement(makeSayContainer([t.jsxText('Hi')]));
     expect(result!.descriptor).toEqual({ id: undefined, context: undefined });
+  });
+
+  it('ignores spread attributes when reading descriptors and whitespace', () => {
+    const spread = t.jsxSpreadAttribute(t.identifier('rest'));
+    const el = makeSayContainer([t.jsxText('Hi')], [
+      spread,
+      strAttr('id', 'msg'),
+    ] as unknown as t.JSXAttribute[]);
+    const result = parser.parseJSXContainerElement(el);
+    expect(result!.descriptor).toEqual({ id: 'msg', context: undefined });
+    expect(result!.whitespace).toBeUndefined();
   });
 
   it('leaves whitespace undefined when the attribute is absent', () => {
@@ -206,6 +247,34 @@ describe('parseJSXOpeningElement', () => {
     expect(choice.branches[0]!.value).toBeInstanceOf(ElementMessage);
   });
 
+  it('skips branch attributes with no value', () => {
+    const el = makeSaySelfClosing('plural', [
+      exprAttr('_', t.identifier('count')),
+      attr('one', null),
+      strAttr('other', 'items'),
+    ]);
+    const choice = parser.parseJSXOpeningElement(el)!.children[0] as ChoiceMessage;
+    // The valueless `one` attribute is dropped, leaving only `other`.
+    expect(choice.branches).toHaveLength(1);
+    expect(choice.branches[0]!.identifier).toBe('other');
+  });
+
+  it('skips branch attributes whose container holds no expression', () => {
+    const el = makeSaySelfClosing('plural', [
+      exprAttr('_', t.identifier('count')),
+      attr('one', t.jsxExpressionContainer(t.jsxEmptyExpression())),
+      strAttr('other', 'items'),
+    ]);
+    const choice = parser.parseJSXOpeningElement(el)!.children[0] as ChoiceMessage;
+    expect(choice.branches).toHaveLength(1);
+    expect(choice.branches[0]!.identifier).toBe('other');
+  });
+
+  it('returns null when the `_` initialiser has no usable value', () => {
+    const el = makeSaySelfClosing('plural', [attr('_', null), strAttr('one', 'item')]);
+    expect(parser.parseJSXOpeningElement(el)).toBeNull();
+  });
+
   it('accepts an expression as a branch value (ArgumentMessage)', () => {
     const el = makeSaySelfClosing('plural', [
       exprAttr('_', t.identifier('count')),
@@ -226,6 +295,37 @@ describe('parseJSXOpeningElement', () => {
       id: 'item-count',
       context: 'shop',
     });
+  });
+
+  it('ignores spread attributes among the branches and descriptors', () => {
+    const spread = t.jsxSpreadAttribute(t.identifier('rest'));
+    const name = t.jsxMemberExpression(t.jsxIdentifier('Say'), t.jsxIdentifier('plural'));
+    const el = t.jsxOpeningElement(
+      name,
+      [spread, exprAttr('_', t.identifier('count')), strAttr('one', 'item')],
+      true,
+    );
+    const choice = parser.parseJSXOpeningElement(el)!.children[0] as ChoiceMessage;
+    expect(choice.identifier).toBe('count');
+    expect(choice.branches).toHaveLength(1);
+    expect(choice.branches[0]!.identifier).toBe('one');
+  });
+
+  it('reads the branch name from a namespaced attribute', () => {
+    const namespaced = t.jsxAttribute(
+      t.jsxNamespacedName(t.jsxIdentifier('ns'), t.jsxIdentifier('one')),
+      t.stringLiteral('item'),
+    );
+    const el = makeSaySelfClosing('plural', [exprAttr('_', t.identifier('count')), namespaced]);
+    const choice = parser.parseJSXOpeningElement(el)!.children[0] as ChoiceMessage;
+    expect(choice.branches[0]!.identifier).toBe('one');
+  });
+
+  it('accepts a string-literal `_` initialiser (auto-increment identifier)', () => {
+    const el = makeSaySelfClosing('plural', [strAttr('_', 'count'), strAttr('one', 'item')]);
+    const choice = parser.parseJSXOpeningElement(el)!.children[0] as ChoiceMessage;
+    // A string-literal initialiser has no identifier, so it auto-increments.
+    expect(choice.identifier).toBe(AUTO_INCREMENT_IDENTIFIER);
   });
 });
 

@@ -45,8 +45,6 @@
   "scripts": {
     "check": "tsc --noEmit",
     "build": "tsdown",
-    "test": "vitest",
-    "coverage": "vitest run --coverage",
     "prepack": "pnpm build"
   },
   "dependencies": {
@@ -54,7 +52,9 @@
   },
   "devDependencies": {
     "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
     "react": "^19.2.7",
+    "react-dom": "^19.2.7",
     "saykit": "workspace:^"
   },
   "peerDependencies": {

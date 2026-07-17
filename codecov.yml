@@ -1,0 +1,74 @@
+comment: false
+
+coverage:
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 1%
+    patch:
+      default:
+        target: auto
+
+# One flag per tested package so each can carry its own badge and only counts
+# its own sources. `carryforward` keeps a flag's last coverage when a build did
+# not touch that package.
+flag_management:
+  default_rules:
+    carryforward: true
+
+flags:
+  config:
+    paths:
+      - packages/config/
+  integration:
+    paths:
+      - packages/integration/
+  integration-react:
+    paths:
+      - packages/integration-react/
+  transform-js:
+    paths:
+      - packages/transform-js/
+  transform-jsx:
+    paths:
+      - packages/transform-jsx/
+
+# Components are path-based slices of the single merged report (no extra
+# uploads). They drive per-package PR status checks and dashboard breakdown.
+# Every package is listed so untested ones stay visible as we push toward full
+# coverage. Statuses are informational so a 0% package never blocks a PR.
+component_management:
+  default_rules:
+    statuses:
+      - type: project
+        target: auto
+        informational: true
+  individual_components:
+    - component_id: config
+      name: config
+      paths: [packages/config/**]
+    - component_id: format-po
+      name: format-po
+      paths: [packages/format-po/**]
+    - component_id: integration
+      name: integration
+      paths: [packages/integration/**]
+    - component_id: integration-carbon
+      name: integration-carbon
+      paths: [packages/integration-carbon/**]
+    - component_id: integration-react
+      name: integration-react
+      paths: [packages/integration-react/**]
+    - component_id: plugin-babel
+      name: plugin-babel
+      paths: [packages/plugin-babel/**]
+    - component_id: plugin-unplugin
+      name: plugin-unplugin
+      paths: [packages/plugin-unplugin/**]
+    - component_id: transform-js
+      name: transform-js
+      paths: [packages/transform-js/**]
+    - component_id: transform-jsx
+      name: transform-jsx
+      paths: [packages/transform-jsx/**]
