@@ -1,5 +1,14 @@
 # @saykit/format-po
 
+## 0.2.0
+
+### Patch Changes
+
+- Updated dependencies [84550a2]
+- Updated dependencies [60a8deb]
+- Updated dependencies [44f6f29]
+  - @saykit/config@0.2.0
+
 ## 0.1.0
 
 ### Minor Changes

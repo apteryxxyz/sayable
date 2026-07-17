@@ -1,5 +1,11 @@
 # @saykit/carbon
 
+## 0.2.0
+
+### Patch Changes
+
+- saykit@0.2.0
+
 ## 0.1.0
 
 ### Minor Changes
