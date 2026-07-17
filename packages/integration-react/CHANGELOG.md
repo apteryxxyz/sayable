@@ -1,6 +1,6 @@
 # @saykit/react
 
-## 1.0.0
+## 0.2.0
 
 ### Minor Changes
 
@@ -23,7 +23,7 @@
 
 ### Patch Changes
 
-- saykit@1.0.0
+- saykit@0.2.0
 
 ## 0.1.0
 
