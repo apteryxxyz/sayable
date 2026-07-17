@@ -95,9 +95,9 @@ describe('Renderer element resolution', () => {
     expect(types(tree)).toEqual(['strong', '1']);
   });
 
-  it('falls back to Fragment when a function resolver and tag both yield nothing', () => {
+  it('preserves the parsed numeric tag when a function resolver returns undefined', () => {
     const tree = Renderer({ html: 'plain <0/>', components: () => undefined });
-    // No tag name on a self-closing numeric slot resolves to Fragment.
+    // Unresolved self-closing numeric slot keeps its parsed tag name '0'.
     expect(types(tree)[0]).toBe('0');
   });
 });

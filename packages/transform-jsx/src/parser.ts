@@ -164,7 +164,7 @@ export function parseJSXElement(element: t.JSXElement, fallback?: boolean): Mess
   );
   // `parseJSXElement(fake, true)` always resolves (the synthesised element is a
   // `Say` container), so the wrapped message is never null.
-  const wrapped = parseJSXElement(fake, true);
+  const wrapped = parseJSXElement(fake, true)!;
   return new ElementMessage(AUTO_INCREMENT_IDENTIFIER, [wrapped], element);
 }
 

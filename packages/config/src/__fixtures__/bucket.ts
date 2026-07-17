@@ -12,8 +12,6 @@ export function makeBucket(
     extract?: (code: string, id: string) => Message[];
   } = {},
 ) {
-  const store: Message[] = [];
-
   return Bucket.parse({
     include: overrides.include ?? ['src/**/*.ts'],
     exclude: overrides.exclude,
@@ -28,9 +26,9 @@ export function makeBucket(
       extract:
         overrides.extract ??
         ((code: string) => {
-          store.length = 0;
+          const messages: Message[] = [];
           if (code.includes('say')) {
-            store.push({
+            messages.push({
               message: 'Hello',
               translation: undefined,
               id: 'greeting',
@@ -39,7 +37,7 @@ export function makeBucket(
               references: ['src/app.ts:1'],
             });
           }
-          return store;
+          return messages;
         }),
       transform: (code: string) => code,
     },
