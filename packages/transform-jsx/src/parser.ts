@@ -162,16 +162,15 @@ export function parseJSXElement(element: t.JSXElement, fallback?: boolean): Mess
     t.jsxClosingElement(t.jsxIdentifier('Say')),
     element.children,
   );
+  // `parseJSXElement(fake, true)` always resolves (the synthesised element is a
+  // `Say` container), so the wrapped message is never null.
   const wrapped = parseJSXElement(fake, true);
-  if (wrapped) return new ElementMessage(AUTO_INCREMENT_IDENTIFIER, [wrapped], element);
-
-  return null;
+  return new ElementMessage(AUTO_INCREMENT_IDENTIFIER, [wrapped], element);
 }
 
 function getAttributeNameAsString(attribute: t.JSXAttribute) {
-  if (t.isJSXIdentifier(attribute.name)) return attribute.name.name;
-  if (t.isJSXNamespacedName(attribute.name)) return attribute.name.name.name;
-  return undefined as never;
+  // A JSX attribute name is always an identifier or a namespaced name.
+  return t.isJSXIdentifier(attribute.name) ? attribute.name.name : attribute.name.name.name;
 }
 
 function findAttributeValueIfStringLiteralAsString(
@@ -222,6 +221,9 @@ function findAttributeValueAsBoolean(
 
 function getExpressionAsIdentifier(node: t.Node) {
   if (t.isIdentifier(node)) return node.name;
+  // Initialiser and argument nodes are always plain expressions here, never a
+  // bare JSX identifier, so this branch is unreachable in practice.
+  /* v8 ignore next */
   if (t.isJSXIdentifier(node)) return node.name;
   return AUTO_INCREMENT_IDENTIFIER;
 }

@@ -122,6 +122,10 @@ export function processExpression(
 
 function getExpressionAsKey(node: t.Node) {
   if (t.isIdentifier(node)) return node.name;
+  // JSX identifiers never reach this JS-only parser (they are rejected as
+  // non-expression call arguments upstream), but the guard mirrors the JSX
+  // parser for parity.
+  /* v8 ignore next */
   if (t.isJSXIdentifier(node)) return node.name;
   return AUTO_INCREMENT_IDENTIFIER;
 }

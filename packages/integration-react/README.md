@@ -2,6 +2,8 @@
 
 > React integration for [SayKit](https://saykit.js.org).
 
+[![Coverage](https://codecov.io/gh/k0d13/saykit/graph/badge.svg?flag=integration-react)](https://codecov.io/gh/k0d13/saykit?flags%5B0%5D=integration-react)
+
 A `<Say>` component for rendering translated content in server and client components, a `<SayProvider>` and `useSay()` for client trees, and a small server runtime (`setSay`, `getSay`, `unstable_createWithSay`).
 
 ## Install

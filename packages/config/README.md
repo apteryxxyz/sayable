@@ -2,6 +2,8 @@
 
 > Configuration schema and CLI for [SayKit](https://saykit.js.org).
 
+[![Coverage](https://codecov.io/gh/k0d13/saykit/graph/badge.svg?flag=config)](https://codecov.io/gh/k0d13/saykit?flags%5B0%5D=config)
+
 Provides the `defineConfig` helper, the Zod-validated schema for `saykit.config.ts`, and the `saykit` CLI used to extract messages from your source.
 
 ## Install

@@ -2,6 +2,8 @@
 
 > Type-safe i18n library with compile-time macro transforms.
 
+[![Coverage](https://codecov.io/gh/k0d13/saykit/graph/badge.svg?flag=integration)](https://codecov.io/gh/k0d13/saykit?flags%5B0%5D=integration)
+
 The core runtime for [SayKit](https://saykit.js.org). Exports the `Say` class, which stores your locales, loads message catalogues, and formats messages using ICU MessageFormat.
 
 You author messages with the `` say`...` `` tagged template (and `say.plural`, `say.ordinal`, `say.select`); a SayKit build-tool plugin rewrites them at build time into small runtime calls.

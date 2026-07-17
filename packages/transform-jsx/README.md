@@ -2,6 +2,8 @@
 
 > JSX and TSX transformer for [SayKit](https://saykit.js.org).
 
+[![Coverage](https://codecov.io/gh/k0d13/saykit/graph/badge.svg?flag=transform-jsx)](https://codecov.io/gh/k0d13/saykit?flags%5B0%5D=transform-jsx)
+
 Extracts and rewrites the `<Say>` macro (and its `<Say.Plural>`, `<Say.Ordinal>`, `<Say.Select>` sub-components) in `.jsx` and `.tsx` files. Used inside a `saykit.config.ts` bucket alongside [`@saykit/transform-js`](https://github.com/k0d13/saykit/tree/main/packages/transform-js).
 
 ## Install

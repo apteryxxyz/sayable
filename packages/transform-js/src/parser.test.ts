@@ -342,6 +342,43 @@ describe('parseCallExpression', () => {
     expect(result).toBeNull();
   });
 
+  it('should handle bigint identifiers as exact matches', () => {
+    const sayIdentifier = t.identifier('say');
+    const pluralMember = t.memberExpression(sayIdentifier, t.identifier('plural'));
+    const countIdentifier = t.identifier('count');
+    const choicesObject = t.objectExpression([
+      t.objectProperty(t.bigIntLiteral('1'), t.stringLiteral('one')),
+      t.objectProperty(t.stringLiteral('other'), t.stringLiteral('many')),
+    ]);
+    const callExpression = t.callExpression(pluralMember, [countIdentifier, choicesObject]);
+
+    const result = parser.parseCallExpression(callExpression);
+
+    const choiceMessage = result!.children[0] as ChoiceMessage;
+    expect(choiceMessage.branches[0]!.identifier).toBe('1');
+  });
+
+  it('falls back to the auto-increment identifier for computed keys', () => {
+    const sayIdentifier = t.identifier('say');
+    const pluralMember = t.memberExpression(sayIdentifier, t.identifier('plural'));
+    const countIdentifier = t.identifier('count');
+    const computedKey = t.objectProperty(
+      t.memberExpression(t.identifier('a'), t.identifier('b')),
+      t.stringLiteral('x'),
+      true,
+    );
+    const choicesObject = t.objectExpression([
+      computedKey,
+      t.objectProperty(t.stringLiteral('other'), t.stringLiteral('many')),
+    ]);
+    const callExpression = t.callExpression(pluralMember, [countIdentifier, choicesObject]);
+
+    const result = parser.parseCallExpression(callExpression);
+
+    const choiceMessage = result!.children[0] as ChoiceMessage;
+    expect(choiceMessage.branches[0]!.identifier).toBe(AUTO_INCREMENT_IDENTIFIER);
+  });
+
   it('should handle numeric identifiers as exact matches', () => {
     const sayIdentifier = t.identifier('say');
     const pluralMember = t.memberExpression(sayIdentifier, t.identifier('plural'));
@@ -367,6 +404,99 @@ describe('parseCallExpression', () => {
     expect(choiceMessage.branches[1]!.value).toEqual({ text: 'one' });
     expect(choiceMessage.branches[2]!.identifier).toBe('other');
     expect(choiceMessage.branches[2]!.value).toEqual({ text: 'many' });
+  });
+});
+
+describe('parseCallExpression guards', () => {
+  const obj = t.objectExpression([
+    t.objectProperty(t.stringLiteral('other'), t.stringLiteral('x')),
+  ]);
+
+  it('returns null when the callee is not a say expression', () => {
+    const call = t.callExpression(
+      t.memberExpression(t.identifier('other'), t.identifier('plural')),
+      [t.identifier('count'), obj],
+    );
+    expect(parser.parseCallExpression(call)).toBeNull();
+  });
+
+  it('returns null when the first argument is not an expression', () => {
+    const pluralMember = t.memberExpression(t.identifier('say'), t.identifier('plural'));
+    const call = t.callExpression(pluralMember, [t.spreadElement(t.identifier('args')), obj]);
+    expect(parser.parseCallExpression(call)).toBeNull();
+  });
+
+  it('returns null when the second argument is not an object', () => {
+    const pluralMember = t.memberExpression(t.identifier('say'), t.identifier('plural'));
+    const call = t.callExpression(pluralMember, [t.identifier('count'), t.identifier('notObject')]);
+    expect(parser.parseCallExpression(call)).toBeNull();
+  });
+
+  it('skips choice properties that are not plain object properties', () => {
+    const pluralMember = t.memberExpression(t.identifier('say'), t.identifier('plural'));
+    const choices = t.objectExpression([
+      t.spreadElement(t.identifier('rest')),
+      t.objectProperty(t.stringLiteral('other'), t.stringLiteral('x')),
+    ]);
+    const call = t.callExpression(pluralMember, [t.identifier('count'), choices]);
+    const result = parser.parseCallExpression(call);
+    const choice = result!.children[0] as ChoiceMessage;
+    // The spread element is ignored, leaving only the `other` branch.
+    expect(choice.branches).toHaveLength(1);
+    expect(choice.branches[0]!.identifier).toBe('other');
+  });
+
+  it('ignores descriptor spread properties when reading id/context', () => {
+    const descriptor = t.objectExpression([
+      t.spreadElement(t.identifier('rest')),
+      t.objectProperty(t.identifier('id'), t.stringLiteral('kept')),
+    ]);
+    const sayCall = t.callExpression(t.identifier('say'), [descriptor]);
+    const pluralMember = t.memberExpression(sayCall, t.identifier('plural'));
+    const call = t.callExpression(pluralMember, [t.identifier('count'), obj]);
+    const result = parser.parseCallExpression(call);
+    expect(result!.descriptor).toEqual({ id: 'kept', context: undefined });
+  });
+});
+
+describe('processExpression edge cases', () => {
+  it('resolves a computed member whose property is `say`', () => {
+    // `foo[say]` — the property expression itself resolves to the say accessor.
+    const member = t.memberExpression(t.identifier('foo'), t.identifier('say'), true);
+    const result = parser.processExpression(member);
+    expect(result).toEqual([member, null, null]);
+  });
+
+  it('resolves a say call with no arguments', () => {
+    // `say()` — inner resolves but there is no descriptor object argument.
+    const call = t.callExpression(t.identifier('say'), []);
+    expect(parser.processExpression(call)).toEqual([t.identifier('say'), null, null]);
+  });
+
+  it('returns null for a call whose callee does not resolve', () => {
+    // `notSay()` — the callee is not a say expression, so nothing resolves.
+    const call = t.callExpression(t.identifier('notSay'), []);
+    expect(parser.processExpression(call)).toBeNull();
+  });
+});
+
+describe('parseTaggedTemplateExpression edge cases', () => {
+  it('falls back to the raw quasi value when cooked is undefined', () => {
+    const quasi = t.templateElement({ raw: 'Raw only' });
+    quasi.value.cooked = undefined;
+    const tagged = t.taggedTemplateExpression(t.identifier('say'), t.templateLiteral([quasi], []));
+    const result = parser.parseTaggedTemplateExpression(tagged);
+    expect(result!.children[0]).toEqual({ text: 'Raw only' });
+  });
+
+  it('ignores non-translator leading comments', () => {
+    const tagged = t.taggedTemplateExpression(
+      t.identifier('say'),
+      t.templateLiteral([t.templateElement({ raw: 'Hi', cooked: 'Hi' })], []),
+    );
+    tagged.leadingComments = [{ type: 'CommentLine', value: ' just a note' }] as t.Comment[];
+    const result = parser.parseTaggedTemplateExpression(tagged);
+    expect(result!.comments).toEqual([]);
   });
 });
 

@@ -2,6 +2,8 @@
 
 > JavaScript and TypeScript transformer for [SayKit](https://saykit.js.org).
 
+[![Coverage](https://codecov.io/gh/k0d13/saykit/graph/badge.svg?flag=transform-js)](https://codecov.io/gh/k0d13/saykit?flags%5B0%5D=transform-js)
+
 Extracts and rewrites SayKit macros in `.js`, `.cjs`, `.mjs`, `.ts`, `.mts`, and `.cts` files. Used inside a `saykit.config.ts` bucket.
 
 ## Install
