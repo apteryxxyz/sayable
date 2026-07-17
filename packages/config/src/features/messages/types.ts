@@ -59,6 +59,7 @@ export class CompositeMessage extends Base {
     public readonly references: string[],
     public readonly children: Message[],
     public readonly accessor: any,
+    public readonly whitespace?: boolean,
   ) {
     super();
   }

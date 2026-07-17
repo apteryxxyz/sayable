@@ -10,7 +10,21 @@ type ComponentsMap = Record<string | number, string | ComponentType<PropsWithChi
 type ComponentResolver = (tag?: string) => string | ComponentType<PropsWithChildren> | undefined;
 type ComponentsProp = ComponentsMap | ComponentResolver;
 
-export function Renderer({ html, components }: { html: string; components: ComponentsProp }) {
+export function Renderer({
+  html,
+  components,
+  whitespace = true,
+}: {
+  html: string;
+  components: ComponentsProp;
+  /**
+   * Whether to keep whitespace-only text nodes in the rendered output.
+   * Defaults to `true`. Set to `false` to drop them, which is useful in
+   * environments like React Native where bare strings cannot sit between
+   * elements.
+   */
+  whitespace?: boolean;
+}) {
   function getComponent(tag?: string) {
     if (typeof components === 'function') return components(tag) ?? tag ?? Fragment;
     return tag && tag in components ? components[tag]! : Fragment;
@@ -55,7 +69,7 @@ export function Renderer({ html, components }: { html: string; components: Compo
         let textEnd = input.indexOf('<', i);
         if (textEnd === -1) textEnd = input.length;
         const text = input.slice(i, textEnd);
-        current.push(text);
+        if (whitespace || text.trim() !== '') current.push(text);
         i = textEnd;
       }
     }

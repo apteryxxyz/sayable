@@ -13,6 +13,14 @@ export function generateSayJSXElement(message: CompositeMessage) {
 
   const attributes = [
     t.jsxAttribute(t.jsxIdentifier('id'), t.stringLiteral(id)),
+    ...(message.whitespace === undefined
+      ? []
+      : [
+          t.jsxAttribute(
+            t.jsxIdentifier('whitespace'),
+            t.jsxExpressionContainer(t.booleanLiteral(message.whitespace)),
+          ),
+        ]),
     ...children.map(([k, e]) =>
       t.jsxAttribute(t.jsxIdentifier(Number.isNaN(+k) ? k : `_${k}`), t.jsxExpressionContainer(e)),
     ),
