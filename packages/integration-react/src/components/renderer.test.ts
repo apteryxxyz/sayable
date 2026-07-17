@@ -23,7 +23,8 @@ const components = { 0: 'span', 1: 'span' } as const;
 function leaves(node: ReactNode): ReactNode[] {
   if (node == null || typeof node === 'boolean') return [];
   if (Array.isArray(node)) return node.flatMap(leaves);
-  if (isValidElement(node)) return [node, ...leaves((node.props as { children?: ReactNode }).children)];
+  if (isValidElement(node))
+    return [node, ...leaves((node.props as { children?: ReactNode }).children)];
   return [node];
 }
 

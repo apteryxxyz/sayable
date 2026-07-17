@@ -1,5 +1,3 @@
-import type { ExecutionContext } from '@cloudflare/workers-types';
-
 declare global {
   namespace NodeJS {
     interface ProcessEnv extends Record<string, string | undefined> {}

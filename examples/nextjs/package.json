@@ -11,9 +11,9 @@
   },
   "dependencies": {
     "@saykit/react": "workspace:^",
-    "next": "16.2.4",
-    "react": "^19.2.6",
-    "react-dom": "^19.2.6",
+    "next": "16.2.10",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
     "saykit": "workspace:^",
     "server-only": "^0.0.1"
   },
@@ -22,8 +22,8 @@
     "@saykit/format-po": "workspace:^",
     "@saykit/transform-js": "workspace:^",
     "@saykit/transform-jsx": "workspace:^",
-    "@types/node": "^25.8.0",
-    "@types/react": "^19.2.14",
+    "@types/node": "^26.1.1",
+    "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "babel-plugin-saykit": "workspace:^"
   }

@@ -211,7 +211,10 @@ function findAttributeValueAsBoolean(
     if (!t.isJSXIdentifier(attribute.name) || attribute.name.name !== identifier) continue;
     // Bare attribute (e.g. `whitespace`) implies `true`.
     if (attribute.value == null) return true;
-    if (t.isJSXExpressionContainer(attribute.value) && t.isBooleanLiteral(attribute.value.expression))
+    if (
+      t.isJSXExpressionContainer(attribute.value) &&
+      t.isBooleanLiteral(attribute.value.expression)
+    )
       return attribute.value.expression.value;
   }
   return undefined;

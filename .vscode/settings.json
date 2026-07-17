@@ -24,8 +24,8 @@
   "cSpell.words": ["saykit", "unplugin"],
 
   // Todo Tree
-  "todo-tree.general.tags": ["=====", "TODO"],
-  "todo-tree.highlights.customHighlight": {
+  "better-todo-tree.general.tags": ["=====", "TODO"],
+  "better-todo-tree.highlights.customHighlight": {
     "=====": {
       "type": "whole-line",
       "icon": "bookmark",
