@@ -104,6 +104,25 @@ describe('parseJSXContainerElement', () => {
     const result = parser.parseJSXContainerElement(makeSayContainer([t.jsxText('Hi')]));
     expect(result!.descriptor).toEqual({ id: undefined, context: undefined });
   });
+
+  it('leaves whitespace undefined when the attribute is absent', () => {
+    const result = parser.parseJSXContainerElement(makeSayContainer([t.jsxText('Hi')]));
+    expect(result!.whitespace).toBeUndefined();
+  });
+
+  it('reads whitespace={false} attribute as a boolean', () => {
+    const result = parser.parseJSXContainerElement(
+      makeSayContainer([t.jsxText('Hi')], [exprAttr('whitespace', t.booleanLiteral(false))]),
+    );
+    expect(result!.whitespace).toBe(false);
+  });
+
+  it('treats a bare whitespace attribute as true', () => {
+    const result = parser.parseJSXContainerElement(
+      makeSayContainer([t.jsxText('Hi')], [attr('whitespace', null)]),
+    );
+    expect(result!.whitespace).toBe(true);
+  });
 });
 
 // ─── parseJSXOpeningElement ──────────────────────────────────────────────────

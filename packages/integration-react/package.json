@@ -45,14 +45,16 @@
   "scripts": {
     "check": "tsc --noEmit",
     "build": "tsdown",
+    "test": "vitest",
+    "coverage": "vitest run --coverage",
     "prepack": "pnpm build"
   },
   "dependencies": {
     "server-only": "^0.0.1"
   },
   "devDependencies": {
-    "@types/react": "^19.2.14",
-    "react": "^19.2.6",
+    "@types/react": "^19.2.17",
+    "react": "^19.2.7",
     "saykit": "workspace:^"
   },
   "peerDependencies": {

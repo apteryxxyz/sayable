@@ -11,7 +11,6 @@ src/locales/
   en.po.d.ts
   fr.po
   fr.po.d.ts
-  .gitignore     # marks *.po.d.ts as generated
 ```
 
 ```ts
@@ -40,19 +39,12 @@ In short: **you never reference an id from application code**. The build does th
 
 ## Committing translation files
 
-The `.gitignore` next to your translation files looks like this:
-
-```text title="src/locales/.gitignore"
-.gitignore
-*.po.d.ts
-```
-
-That means:
+SayKit doesn't manage a `.gitignore` for you — it's up to you which generated files to commit or ignore. A common setup:
 
 - **Commit** the `.po` files. They're the canonical translations.
-- **Ignore** the `.po.d.ts` files. SayKit regenerates them on every extraction.
+- Either commit or ignore the `.po.d.ts` files. SayKit regenerates them on every extraction, so ignoring them keeps diffs quiet; committing them lets CI type-check without an extra extraction step.
 
-If you ever rename your formatter's extension, the `*.po.d.ts` line will update on the next extraction.
+If you want to ignore the declarations, add a line like `*.po.d.ts` to your project's `.gitignore`.
 
 ## Importing in different bundlers
 

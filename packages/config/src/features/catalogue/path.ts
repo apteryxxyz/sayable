@@ -11,8 +11,3 @@ export function expandBucketOutputPath(
     .replaceAll('{extension}', extension.slice(1));
   return resolve(outputMessageTemplate);
 }
-
-export function expandBucketOutputIgnoreDirectory(bucket: Bucket) {
-  const [prefix] = bucket.output.split('{locale}');
-  return resolve(prefix || '.');
-}
