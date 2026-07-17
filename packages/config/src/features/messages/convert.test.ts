@@ -118,4 +118,8 @@ describe('convertMessageToIcu', () => {
     expect(convertMessageToIcu(message)) //
       .toMatchInlineSnapshot('"Hello, {name}!"');
   });
+
+  it('throws for an unknown message type', () => {
+    expect(() => convertMessageToIcu({} as never)).toThrow('Unknown message type');
+  });
 });

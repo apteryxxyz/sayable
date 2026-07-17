@@ -65,3 +65,39 @@ describe('Renderer whitespace handling', () => {
     expect(strings(tree)).toEqual(['Hello']);
   });
 });
+
+describe('Renderer element resolution', () => {
+  /** Element types produced inside the tree (excluding the outer wrapper Fragment). */
+  function types(node: ReactNode): unknown[] {
+    return leaves(node)
+      .filter(isValidElement)
+      .map((n) => n.type)
+      .slice(1);
+  }
+
+  it('renders self-closing slots as elements', () => {
+    const tree = Renderer({ html: 'Take a <0/> break', components: { 0: 'br' } });
+    expect(types(tree)).toEqual(['br']);
+    expect(strings(tree)).toEqual(['Take a ', ' break']);
+  });
+
+  it('falls back to a Fragment for slots missing from a components map', () => {
+    const tree = Renderer({ html: '<9>orphan</9>', components: { 0: 'span' } });
+    // Unknown slot 9 resolves to Fragment (Symbol), still wrapping its text.
+    expect(typeof types(tree)[0]).toBe('symbol');
+    expect(strings(tree)).toEqual(['orphan']);
+  });
+
+  it('resolves components from a function, using the tag fallback', () => {
+    const resolver = (tag?: string) => (tag === '0' ? 'strong' : undefined);
+    const tree = Renderer({ html: '<0>bold</0> <1>x</1>', components: resolver });
+    // Slot 0 -> 'strong'; slot 1 -> resolver returns undefined -> tag '1'.
+    expect(types(tree)).toEqual(['strong', '1']);
+  });
+
+  it('falls back to Fragment when a function resolver and tag both yield nothing', () => {
+    const tree = Renderer({ html: 'plain <0/>', components: () => undefined });
+    // No tag name on a self-closing numeric slot resolves to Fragment.
+    expect(types(tree)[0]).toBe('0');
+  });
+});

@@ -1,0 +1,17 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: fr\n"
+
+#. id:greeting
+#. A friendly hello
+#: src/app.ts:10
+#: src/app.ts:42
+msgid "Hello"
+msgstr "Bonjour"
+
+#. id:farewell
+msgctxt "formal"
+#: src/bye.ts:3
+msgid "Goodbye"
+msgstr "Au revoir"

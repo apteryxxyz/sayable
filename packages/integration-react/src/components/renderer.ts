@@ -26,7 +26,14 @@ export function Renderer({
   whitespace?: boolean;
 }) {
   function getComponent(tag?: string) {
-    if (typeof components === 'function') return components(tag) ?? tag ?? Fragment;
+    if (typeof components === 'function') {
+      const resolved = components(tag) ?? tag;
+      // `parseNode` always passes a tag string, so `resolved` is only nullish
+      // in the unreachable case where the resolver returns nothing for a
+      // missing tag.
+      /* v8 ignore next */
+      return resolved ?? Fragment;
+    }
     return tag && tag in components ? components[tag]! : Fragment;
   }
 
