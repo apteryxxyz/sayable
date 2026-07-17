@@ -45,6 +45,8 @@
   "scripts": {
     "check": "tsc --noEmit",
     "build": "tsdown",
+    "test": "vitest",
+    "coverage": "vitest run --coverage",
     "prepack": "pnpm build"
   },
   "dependencies": {

@@ -17,7 +17,7 @@ export function baseOptions(): BaseLayoutProps {
     links: [
       {
         text: 'Community',
-        url: 'https://discord.gg/vGFBFf3K2',
+        url: 'https://discord.gg/bqgAj65Em5',
         icon: <MessageCircleMore />,
       },
     ],
