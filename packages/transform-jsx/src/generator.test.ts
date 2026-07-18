@@ -9,7 +9,6 @@ import {
 import { describe, expect, it } from 'vitest';
 import { generateSayJSXElement } from './generator.js';
 
-/** Attribute names on the generated `<Say ... />` element. */
 function attrNames(el: t.JSXElement) {
   return el.openingElement.attributes.map(
     (a) => ((a as t.JSXAttribute).name as t.JSXIdentifier).name,

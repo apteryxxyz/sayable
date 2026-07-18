@@ -4,8 +4,6 @@ import { join } from 'node:path';
 import { generateHash } from '@saykit/config/features/messages';
 import { afterAll, describe, expect, it, vi } from 'vitest';
 
-// The plugin resolves the saykit config at construction; stand in a fake one
-// that only implements what the plugin actually calls.
 const config = {
   buckets: [
     {
