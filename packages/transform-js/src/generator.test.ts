@@ -9,7 +9,6 @@ import {
 import { describe, expect, it } from 'vitest';
 import { generateSayCallExpression } from './generator.js';
 
-/** Keys of the object literal passed to `say.call({ ... })`. */
 function callKeys(node: t.CallExpression) {
   const object = node.arguments[0] as t.ObjectExpression;
   return object.properties.map((p) => ((p as t.ObjectProperty).key as t.Identifier).name);

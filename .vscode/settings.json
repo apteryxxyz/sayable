@@ -3,7 +3,7 @@
   "explorer.fileNesting.enabled": true,
   "explorer.fileNesting.patterns": {
     "package.json": "pnpm-lock.yaml, pnpm-workspace.yaml",
-    "*.ts": "$(capture).test.ts",
+    "*.ts": "$(capture).test.ts, $(capture).test.tsx",
     "*.js": "$(capture).js.map, $(capture).d.ts, $(capture).d.ts.map, $(capture).cjs",
     "*.cjs": "$(capture).cjs.map, $(capture).d.cts, $(capture).d.cts.map"
   },
@@ -21,23 +21,5 @@
 
   // Code Spell Checker
   "cSpell.language": "en-GB",
-  "cSpell.words": ["saykit", "unplugin"],
-
-  // Todo Tree
-  "todo-tree.general.tags": ["=====", "TODO"],
-  "todo-tree.highlights.customHighlight": {
-    "=====": {
-      "type": "whole-line",
-      "icon": "bookmark",
-      "foreground": "#dadada",
-      "gutterIcon": true,
-      "hideFromTree": true
-    },
-    "TODO": {
-      "type": "whole-line",
-      "icon": "check",
-      "foreground": "#ff9900",
-      "gutterIcon": true
-    }
-  }
+  "cSpell.words": ["saykit", "unplugin"]
 }

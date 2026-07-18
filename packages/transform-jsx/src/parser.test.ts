@@ -1,3 +1,4 @@
+import { parseExpression } from '@babel/parser';
 import * as t from '@babel/types';
 import {
   ArgumentMessage,
@@ -10,192 +11,135 @@ import {
 import { describe, expect, it } from 'vitest';
 import * as parser from './parser.js';
 
-// ─── Helpers ────────────────────────────────────────────────────────────────
-
-function makeSayContainer(
-  children: (
-    | t.JSXElement
-    | t.JSXExpressionContainer
-    | t.JSXFragment
-    | t.JSXSpreadChild
-    | t.JSXText
-  )[],
-  attrs: t.JSXAttribute[] = [],
-) {
-  const id = t.jsxIdentifier('Say');
-  return t.jsxElement(t.jsxOpeningElement(id, attrs, false), t.jsxClosingElement(id), children);
+// Parse a snippet of real JSX into its element node, the way the transformer
+// does (see index.ts) — the `jsx` plugin is what makes `<Say />` an expression.
+function jsx(strings: TemplateStringsArray): t.JSXElement {
+  return parseExpression(strings.join(''), {
+    plugins: ['jsx', 'typescript'],
+  }) as unknown as t.JSXElement;
 }
-
-function makeSaySelfClosing(kind: string, attrs: t.JSXAttribute[]) {
-  const name = t.jsxMemberExpression(t.jsxIdentifier('Say'), t.jsxIdentifier(kind));
-  return t.jsxOpeningElement(name, attrs, true);
-}
-
-function attr(name: string, value: t.JSXAttribute['value']) {
-  return t.jsxAttribute(t.jsxIdentifier(name), value);
-}
-
-function exprAttr(name: string, expr: t.Expression) {
-  return attr(name, t.jsxExpressionContainer(expr));
-}
-
-function strAttr(name: string, value: string) {
-  return attr(name, t.stringLiteral(value));
-}
-
-// ─── parseJSXContainerElement ────────────────────────────────────────────────
 
 describe('parseJSXContainerElement', () => {
   it('returns null for self-closing elements', () => {
-    const id = t.jsxIdentifier('Say');
-    const el = t.jsxElement(t.jsxOpeningElement(id, [], true), null, []);
-    expect(parser.parseJSXContainerElement(el)).toBeNull();
+    expect(parser.parseJSXContainerElement(jsx`<Say />`)).toBeNull();
   });
 
   it('returns null for non-Say elements', () => {
-    const id = t.jsxIdentifier('div');
-    const el = t.jsxElement(t.jsxOpeningElement(id, [], false), t.jsxClosingElement(id), []);
-    expect(parser.parseJSXContainerElement(el)).toBeNull();
+    expect(parser.parseJSXContainerElement(jsx`<div></div>`)).toBeNull();
   });
 
   it('parses text children as LiteralMessage', () => {
-    const result = parser.parseJSXContainerElement(makeSayContainer([t.jsxText('Hello')]));
+    const result = parser.parseJSXContainerElement(jsx`<Say>Hello</Say>`);
     expect(result).toBeInstanceOf(CompositeMessage);
     expect(result!.children[0]).toEqual(new LiteralMessage('Hello'));
   });
 
   it('normalises whitespace in text children', () => {
-    const result = parser.parseJSXContainerElement(
-      makeSayContainer([t.jsxText('\n  Hello,  \n  world!  \n')]),
-    );
+    const result = parser.parseJSXContainerElement(jsx`
+      <Say>
+        Hello,
+        world!
+      </Say>
+    `);
     expect((result!.children[0] as LiteralMessage).text).toBe('Hello, world!');
   });
 
   it('parses expression children as ArgumentMessage', () => {
-    const result = parser.parseJSXContainerElement(
-      makeSayContainer([t.jsxExpressionContainer(t.identifier('name'))]),
-    );
+    const result = parser.parseJSXContainerElement(jsx`<Say>{name}</Say>`);
     expect(result!.children[0]).toBeInstanceOf(ArgumentMessage);
     expect((result!.children[0] as ArgumentMessage).identifier).toBe('name');
   });
 
   it('parses fragment children as ElementMessage', () => {
-    const fragment = t.jsxFragment(t.jsxOpeningFragment(), t.jsxClosingFragment(), []);
-    const result = parser.parseJSXContainerElement(makeSayContainer([fragment]));
+    const result = parser.parseJSXContainerElement(jsx`<Say><></></Say>`);
     expect(result!.children[0]).toBeInstanceOf(ElementMessage);
   });
 
   it('parses nested JSX children as ElementMessage (non-Say fallback)', () => {
-    const inner = t.jsxIdentifier('strong');
-    const nested = t.jsxElement(t.jsxOpeningElement(inner, [], false), t.jsxClosingElement(inner), [
-      t.jsxText('bold'),
-    ]);
-    const result = parser.parseJSXContainerElement(makeSayContainer([nested]));
+    const result = parser.parseJSXContainerElement(jsx`
+      <Say>
+        <strong>bold</strong>
+      </Say>
+    `);
     expect(result!.children[0]).toBeInstanceOf(ElementMessage);
   });
 
   it('reads id and context descriptor attributes', () => {
-    const result = parser.parseJSXContainerElement(
-      makeSayContainer([t.jsxText('Hi')], [strAttr('id', 'msg'), strAttr('context', 'nav')]),
-    );
+    const result = parser.parseJSXContainerElement(jsx`<Say id="msg" context="nav">Hi</Say>`);
     expect(result!.descriptor).toEqual({ id: 'msg', context: 'nav' });
   });
 
   it('drops text children that are only whitespace', () => {
-    // The trailing whitespace-only text node trims to empty and is dropped.
-    const result = parser.parseJSXContainerElement(
-      makeSayContainer([t.jsxExpressionContainer(t.identifier('name')), t.jsxText('   \n  ')]),
-    );
+    const result = parser.parseJSXContainerElement(jsx`<Say>{name}   </Say>`);
     expect(result!.children).toHaveLength(1);
     expect(result!.children[0]).toBeInstanceOf(ArgumentMessage);
   });
 
   it('ignores expression containers that hold no expression', () => {
-    const empty = t.jsxExpressionContainer(t.jsxEmptyExpression());
-    const result = parser.parseJSXContainerElement(makeSayContainer([empty]));
+    const result = parser.parseJSXContainerElement(jsx`<Say>{/* empty */}</Say>`);
     expect(result!.children).toHaveLength(0);
   });
 
   it('ignores an id attribute whose value is not a string literal', () => {
-    const result = parser.parseJSXContainerElement(
-      makeSayContainer([t.jsxText('Hi')], [exprAttr('id', t.identifier('dynamic'))]),
-    );
+    const result = parser.parseJSXContainerElement(jsx`<Say id={dynamic}>Hi</Say>`);
     expect(result!.descriptor.id).toBeUndefined();
   });
 
   it('ignores a whitespace attribute whose value is not a boolean literal', () => {
-    const result = parser.parseJSXContainerElement(
-      makeSayContainer([t.jsxText('Hi')], [exprAttr('whitespace', t.identifier('dynamic'))]),
-    );
+    const result = parser.parseJSXContainerElement(jsx`<Say whitespace={dynamic}>Hi</Say>`);
     expect(result!.whitespace).toBeUndefined();
   });
 
   it('leaves descriptor fields undefined when attributes are absent', () => {
-    const result = parser.parseJSXContainerElement(makeSayContainer([t.jsxText('Hi')]));
+    const result = parser.parseJSXContainerElement(jsx`<Say>Hi</Say>`);
     expect(result!.descriptor).toEqual({ id: undefined, context: undefined });
   });
 
   it('ignores spread attributes when reading descriptors and whitespace', () => {
-    const spread = t.jsxSpreadAttribute(t.identifier('rest'));
-    const el = makeSayContainer([t.jsxText('Hi')], [
-      spread,
-      strAttr('id', 'msg'),
-    ] as unknown as t.JSXAttribute[]);
-    const result = parser.parseJSXContainerElement(el);
+    const result = parser.parseJSXContainerElement(jsx`<Say {...rest} id="msg">Hi</Say>`);
     expect(result!.descriptor).toEqual({ id: 'msg', context: undefined });
     expect(result!.whitespace).toBeUndefined();
   });
 
   it('leaves whitespace undefined when the attribute is absent', () => {
-    const result = parser.parseJSXContainerElement(makeSayContainer([t.jsxText('Hi')]));
+    const result = parser.parseJSXContainerElement(jsx`<Say>Hi</Say>`);
     expect(result!.whitespace).toBeUndefined();
   });
 
   it('reads whitespace={false} attribute as a boolean', () => {
-    const result = parser.parseJSXContainerElement(
-      makeSayContainer([t.jsxText('Hi')], [exprAttr('whitespace', t.booleanLiteral(false))]),
-    );
+    const result = parser.parseJSXContainerElement(jsx`<Say whitespace={false}>Hi</Say>`);
     expect(result!.whitespace).toBe(false);
   });
 
   it('treats a bare whitespace attribute as true', () => {
-    const result = parser.parseJSXContainerElement(
-      makeSayContainer([t.jsxText('Hi')], [attr('whitespace', null)]),
-    );
+    const result = parser.parseJSXContainerElement(jsx`<Say whitespace>Hi</Say>`);
     expect(result!.whitespace).toBe(true);
   });
 });
 
-// ─── parseJSXOpeningElement ──────────────────────────────────────────────────
-
 describe('parseJSXOpeningElement', () => {
   it('returns null for non-self-closing elements', () => {
-    const el = t.jsxOpeningElement(t.jsxIdentifier('Say'), [], false);
-    expect(parser.parseJSXOpeningElement(el)).toBeNull();
+    expect(parser.parseJSXOpeningElement(jsx`<Say></Say>`.openingElement)).toBeNull();
   });
 
   it('returns null for non-Say elements', () => {
-    const el = t.jsxOpeningElement(t.jsxIdentifier('div'), [], true);
-    expect(parser.parseJSXOpeningElement(el)).toBeNull();
+    expect(parser.parseJSXOpeningElement(jsx`<div />`.openingElement)).toBeNull();
   });
 
   it('returns null for unknown Say member (e.g. Say.foo)', () => {
-    const el = makeSaySelfClosing('foo', []);
-    expect(parser.parseJSXOpeningElement(el)).toBeNull();
+    expect(parser.parseJSXOpeningElement(jsx`<Say.foo />`.openingElement)).toBeNull();
   });
 
   it('returns null when _ initialiser attribute is missing', () => {
-    const el = makeSaySelfClosing('plural', [strAttr('one', 'item')]);
-    expect(parser.parseJSXOpeningElement(el)).toBeNull();
+    expect(parser.parseJSXOpeningElement(jsx`<Say.plural one="item" />`.openingElement)).toBeNull();
   });
 
   it('parses Say.plural with string literal branches', () => {
-    const el = makeSaySelfClosing('plural', [
-      exprAttr('_', t.identifier('count')),
-      strAttr('one', 'item'),
-      strAttr('other', 'items'),
-    ]);
-    const result = parser.parseJSXOpeningElement(el);
+    const result = parser.parseJSXOpeningElement(
+      jsx`
+      <Say.plural _={count} one="item" other="items" />
+    `.openingElement,
+    );
     expect(result).toBeInstanceOf(CompositeMessage);
     const choice = result!.children[0] as ChoiceMessage;
     expect(choice).toBeInstanceOf(ChoiceMessage);
@@ -207,164 +151,145 @@ describe('parseJSXOpeningElement', () => {
   });
 
   it('parses Say.select and Say.ordinal variants', () => {
-    for (const kind of ['select', 'ordinal'] as const) {
-      const el = makeSaySelfClosing(kind, [exprAttr('_', t.identifier('val')), strAttr('a', 'A')]);
-      const result = parser.parseJSXOpeningElement(el);
-      expect((result!.children[0] as ChoiceMessage).kind).toBe(kind);
-    }
+    const select = parser.parseJSXOpeningElement(jsx`<Say.select _={val} a="A" />`.openingElement);
+    expect((select!.children[0] as ChoiceMessage).kind).toBe('select');
+
+    const ordinal = parser.parseJSXOpeningElement(
+      jsx`<Say.ordinal _={val} a="A" />`.openingElement,
+    );
+    expect((ordinal!.children[0] as ChoiceMessage).kind).toBe('ordinal');
   });
 
   it('strips leading underscore from numeric branch names (e.g. _0 → 0)', () => {
-    const el = makeSaySelfClosing('plural', [
-      exprAttr('_', t.identifier('count')),
-      strAttr('_0', 'zero'),
-      strAttr('other', 'many'),
-    ]);
-    const choice = parser.parseJSXOpeningElement(el)!.children[0] as ChoiceMessage;
+    const result = parser.parseJSXOpeningElement(
+      jsx`
+      <Say.plural _={count} _0="zero" other="many" />
+    `.openingElement,
+    );
+    const choice = result!.children[0] as ChoiceMessage;
     expect(choice.branches[0]!.identifier).toBe('0');
   });
 
   it('accepts a JSX element expression as a branch value', () => {
-    const inner = t.jsxIdentifier('b');
-    const nested = t.jsxElement(t.jsxOpeningElement(inner, [], false), t.jsxClosingElement(inner), [
-      t.jsxText('Bold'),
-    ]);
-    const el = makeSaySelfClosing('plural', [
-      exprAttr('_', t.identifier('count')),
-      attr('one', t.jsxExpressionContainer(nested)),
-    ]);
-    const choice = parser.parseJSXOpeningElement(el)!.children[0] as ChoiceMessage;
+    const result = parser.parseJSXOpeningElement(
+      jsx`
+      <Say.plural _={count} one={<b>Bold</b>} />
+    `.openingElement,
+    );
+    const choice = result!.children[0] as ChoiceMessage;
     expect(choice.branches[0]!.value).toBeInstanceOf(ElementMessage);
   });
 
   it('accepts a JSX fragment expression as a branch value', () => {
-    const fragment = t.jsxFragment(t.jsxOpeningFragment(), t.jsxClosingFragment(), []);
-    const el = makeSaySelfClosing('plural', [
-      exprAttr('_', t.identifier('count')),
-      attr('one', t.jsxExpressionContainer(fragment)),
-    ]);
-    const choice = parser.parseJSXOpeningElement(el)!.children[0] as ChoiceMessage;
+    const result = parser.parseJSXOpeningElement(
+      jsx`
+      <Say.plural _={count} one={<></>} />
+    `.openingElement,
+    );
+    const choice = result!.children[0] as ChoiceMessage;
     expect(choice.branches[0]!.value).toBeInstanceOf(ElementMessage);
   });
 
   it('skips branch attributes with no value', () => {
-    const el = makeSaySelfClosing('plural', [
-      exprAttr('_', t.identifier('count')),
-      attr('one', null),
-      strAttr('other', 'items'),
-    ]);
-    const choice = parser.parseJSXOpeningElement(el)!.children[0] as ChoiceMessage;
-    // The valueless `one` attribute is dropped, leaving only `other`.
+    const result = parser.parseJSXOpeningElement(
+      jsx`
+      <Say.plural _={count} one other="items" />
+    `.openingElement,
+    );
+    const choice = result!.children[0] as ChoiceMessage;
     expect(choice.branches).toHaveLength(1);
     expect(choice.branches[0]!.identifier).toBe('other');
   });
 
   it('skips branch attributes whose container holds no expression', () => {
-    const el = makeSaySelfClosing('plural', [
-      exprAttr('_', t.identifier('count')),
-      attr('one', t.jsxExpressionContainer(t.jsxEmptyExpression())),
-      strAttr('other', 'items'),
-    ]);
-    const choice = parser.parseJSXOpeningElement(el)!.children[0] as ChoiceMessage;
+    // Real JSX forbids an empty attribute expression (`one={}`), so the empty
+    // container is injected directly onto an otherwise-parsed element.
+    const opening = jsx`<Say.plural _={count} other="items" />`.openingElement;
+    opening.attributes.push(
+      t.jsxAttribute(t.jsxIdentifier('one'), t.jsxExpressionContainer(t.jsxEmptyExpression())),
+    );
+    const choice = parser.parseJSXOpeningElement(opening)!.children[0] as ChoiceMessage;
     expect(choice.branches).toHaveLength(1);
     expect(choice.branches[0]!.identifier).toBe('other');
   });
 
   it('returns null when the `_` initialiser has no usable value', () => {
-    const el = makeSaySelfClosing('plural', [attr('_', null), strAttr('one', 'item')]);
-    expect(parser.parseJSXOpeningElement(el)).toBeNull();
+    expect(
+      parser.parseJSXOpeningElement(jsx`<Say.plural _ one="item" />`.openingElement),
+    ).toBeNull();
   });
 
   it('accepts an expression as a branch value (ArgumentMessage)', () => {
-    const el = makeSaySelfClosing('plural', [
-      exprAttr('_', t.identifier('count')),
-      exprAttr('one', t.identifier('label')),
-    ]);
-    const choice = parser.parseJSXOpeningElement(el)!.children[0] as ChoiceMessage;
+    const result = parser.parseJSXOpeningElement(
+      jsx`
+      <Say.plural _={count} one={label} />
+    `.openingElement,
+    );
+    const choice = result!.children[0] as ChoiceMessage;
     expect(choice.branches[0]!.value).toBeInstanceOf(ArgumentMessage);
   });
 
   it('reads id and context descriptor attributes', () => {
-    const el = makeSaySelfClosing('plural', [
-      strAttr('id', 'item-count'),
-      strAttr('context', 'shop'),
-      exprAttr('_', t.identifier('count')),
-      strAttr('one', 'item'),
-    ]);
-    expect(parser.parseJSXOpeningElement(el)!.descriptor).toEqual({
-      id: 'item-count',
-      context: 'shop',
-    });
+    const result = parser.parseJSXOpeningElement(
+      jsx`
+      <Say.plural id="item-count" context="shop" _={count} one="item" />
+    `.openingElement,
+    );
+    expect(result!.descriptor).toEqual({ id: 'item-count', context: 'shop' });
   });
 
   it('ignores spread attributes among the branches and descriptors', () => {
-    const spread = t.jsxSpreadAttribute(t.identifier('rest'));
-    const name = t.jsxMemberExpression(t.jsxIdentifier('Say'), t.jsxIdentifier('plural'));
-    const el = t.jsxOpeningElement(
-      name,
-      [spread, exprAttr('_', t.identifier('count')), strAttr('one', 'item')],
-      true,
+    const result = parser.parseJSXOpeningElement(
+      jsx`
+      <Say.plural {...rest} _={count} one="item" />
+    `.openingElement,
     );
-    const choice = parser.parseJSXOpeningElement(el)!.children[0] as ChoiceMessage;
+    const choice = result!.children[0] as ChoiceMessage;
     expect(choice.identifier).toBe('count');
     expect(choice.branches).toHaveLength(1);
     expect(choice.branches[0]!.identifier).toBe('one');
   });
 
   it('reads the branch name from a namespaced attribute', () => {
-    const namespaced = t.jsxAttribute(
-      t.jsxNamespacedName(t.jsxIdentifier('ns'), t.jsxIdentifier('one')),
-      t.stringLiteral('item'),
+    const result = parser.parseJSXOpeningElement(
+      jsx`
+      <Say.plural _={count} ns:one="item" />
+    `.openingElement,
     );
-    const el = makeSaySelfClosing('plural', [exprAttr('_', t.identifier('count')), namespaced]);
-    const choice = parser.parseJSXOpeningElement(el)!.children[0] as ChoiceMessage;
+    const choice = result!.children[0] as ChoiceMessage;
     expect(choice.branches[0]!.identifier).toBe('one');
   });
 
   it('accepts a string-literal `_` initialiser (auto-increment identifier)', () => {
-    const el = makeSaySelfClosing('plural', [strAttr('_', 'count'), strAttr('one', 'item')]);
-    const choice = parser.parseJSXOpeningElement(el)!.children[0] as ChoiceMessage;
-    // A string-literal initialiser has no identifier, so it auto-increments.
+    const result = parser.parseJSXOpeningElement(
+      jsx`<Say.plural _="count" one="item" />`.openingElement,
+    );
+    const choice = result!.children[0] as ChoiceMessage;
     expect(choice.identifier).toBe(AUTO_INCREMENT_IDENTIFIER);
   });
 });
 
-// ─── parseJSXElement ─────────────────────────────────────────────────────────
-
 describe('parseJSXElement', () => {
   it('delegates to container parser for non-self-closing Say', () => {
-    const result = parser.parseJSXElement(makeSayContainer([t.jsxText('Hi')]));
+    const result = parser.parseJSXElement(jsx`<Say>Hi</Say>`);
     expect(result).toBeInstanceOf(CompositeMessage);
     expect((result as CompositeMessage).children[0]).toEqual(new LiteralMessage('Hi'));
   });
 
   it('delegates to opening parser for self-closing Say.plural', () => {
-    const opening = makeSaySelfClosing('plural', [
-      exprAttr('_', t.identifier('n')),
-      strAttr('one', 'item'),
-    ]);
-    const el = t.jsxElement(opening, null, []);
-    const result = parser.parseJSXElement(el);
+    const result = parser.parseJSXElement(jsx`<Say.plural _={n} one="item" />`);
     expect((result as CompositeMessage).children[0]).toBeInstanceOf(ChoiceMessage);
   });
 
   it('returns null (no fallback) for unrecognised element', () => {
-    const id = t.jsxIdentifier('span');
-    const el = t.jsxElement(t.jsxOpeningElement(id, [], true), null, []);
-    expect(parser.parseJSXElement(el)).toBeNull();
+    expect(parser.parseJSXElement(jsx`<span />`)).toBeNull();
   });
 
   it('returns ElementMessage (fallback=true) for unrecognised self-closing element', () => {
-    const id = t.jsxIdentifier('br');
-    const el = t.jsxElement(t.jsxOpeningElement(id, [], true), null, []);
-    expect(parser.parseJSXElement(el, true)).toBeInstanceOf(ElementMessage);
+    expect(parser.parseJSXElement(jsx`<br />`, true)).toBeInstanceOf(ElementMessage);
   });
 
   it('returns ElementMessage (fallback=true) for unrecognised container element', () => {
-    const id = t.jsxIdentifier('span');
-    const el = t.jsxElement(t.jsxOpeningElement(id, [], false), t.jsxClosingElement(id), [
-      t.jsxText('text'),
-    ]);
-    expect(parser.parseJSXElement(el, true)).toBeInstanceOf(ElementMessage);
+    expect(parser.parseJSXElement(jsx`<span>text</span>`, true)).toBeInstanceOf(ElementMessage);
   });
 });
