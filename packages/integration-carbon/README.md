@@ -2,6 +2,8 @@
 
 > [Carbon](https://carbon.buape.com) Discord bot integration for [SayKit](https://saykit.js.org).
 
+[![Coverage](https://codecov.io/gh/k0d13/saykit/graph/badge.svg?flag=integration-carbon)](https://codecov.io/gh/k0d13/saykit?flags%5B0%5D=integration-carbon)
+
 Registers a shared `Say` with your Carbon client, helps command and component classes expose translated metadata, and adds locale-aware `interaction.say` and `guild.say` properties.
 
 ## Install

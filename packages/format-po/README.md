@@ -2,6 +2,8 @@
 
 > Gettext PO file formatter for [SayKit](https://saykit.js.org).
 
+[![Coverage](https://codecov.io/gh/k0d13/saykit/graph/badge.svg?flag=format-po)](https://codecov.io/gh/k0d13/saykit?flags%5B0%5D=format-po)
+
 The default formatter used in every SayKit example.
 
 ## Install

@@ -113,40 +113,15 @@ jobs:
       - name: Run tests with coverage
         run: pnpm coverage
 
-      - name: Upload config coverage to Codecov
-        uses: codecov/codecov-action@v5
+      # Single upload of the merged report, tagged with every package flag.
+      # Each flag's `paths:` in codecov.yml slices the report server-side, so
+      # one upload feeds all the per-package coverage badges.
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v7
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: .coverage/lcov.info
-          flags: config
-
-      - name: Upload integration coverage to Codecov
-        uses: codecov/codecov-action@v5
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: .coverage/lcov.info
-          flags: integration
-
-      - name: Upload integration-react coverage to Codecov
-        uses: codecov/codecov-action@v5
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: .coverage/lcov.info
-          flags: integration-react
-
-      - name: Upload transform-js coverage to Codecov
-        uses: codecov/codecov-action@v5
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: .coverage/lcov.info
-          flags: transform-js
-
-      - name: Upload transform-jsx coverage to Codecov
-        uses: codecov/codecov-action@v5
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: .coverage/lcov.info
-          flags: transform-jsx
+          flags: config,format-po,integration,integration-carbon,integration-react,plugin-babel,plugin-unplugin,transform-js,transform-jsx
 
       - name: Upload coverage artifacts
         if: always()

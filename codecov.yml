@@ -21,12 +21,24 @@ flags:
   config:
     paths:
       - packages/config/
+  format-po:
+    paths:
+      - packages/format-po/
   integration:
     paths:
       - packages/integration/
+  integration-carbon:
+    paths:
+      - packages/integration-carbon/
   integration-react:
     paths:
       - packages/integration-react/
+  plugin-babel:
+    paths:
+      - packages/plugin-babel/
+  plugin-unplugin:
+    paths:
+      - packages/plugin-unplugin/
   transform-js:
     paths:
       - packages/transform-js/

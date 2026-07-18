@@ -2,6 +2,8 @@
 
 > Babel plugin for [SayKit](https://saykit.js.org).
 
+[![Coverage](https://codecov.io/gh/k0d13/saykit/graph/badge.svg?flag=plugin-babel)](https://codecov.io/gh/k0d13/saykit?flags%5B0%5D=plugin-babel)
+
 Use this for Next.js (`.babelrc`), React Native, Expo, Metro, or any Babel-driven pipeline. For Vite, Rollup, Webpack, esbuild, and similar bundlers, use [`unplugin-saykit`](https://github.com/k0d13/saykit/tree/main/packages/plugin-unplugin) instead.
 
 ## Install

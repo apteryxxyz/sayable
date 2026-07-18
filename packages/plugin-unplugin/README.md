@@ -2,6 +2,8 @@
 
 > Universal build-tool plugin for [SayKit](https://saykit.js.org).
 
+[![Coverage](https://codecov.io/gh/k0d13/saykit/graph/badge.svg?flag=plugin-unplugin)](https://codecov.io/gh/k0d13/saykit?flags%5B0%5D=plugin-unplugin)
+
 Works with Vite, Rollup, Rolldown, Webpack, Rspack, esbuild, Farm, and Bun via [unplugin](https://github.com/unjs/unplugin).
 
 ## Install
