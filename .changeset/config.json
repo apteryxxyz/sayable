@@ -6,6 +6,7 @@
     ["saykit", "@saykit/carbon", "@saykit/react"],
     [
       "@saykit/config",
+      "@saykit/format-json",
       "@saykit/format-po",
       "babel-plugin-saykit",
       "unplugin-saykit",

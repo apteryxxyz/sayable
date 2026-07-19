@@ -1,0 +1,10 @@
+{
+  "@@locale": "fr",
+  "farewell": "Au revoir",
+  "greeting": "Bonjour",
+  "@greeting": {
+    "description": "A friendly hello",
+    "x-saykit-context": "formal",
+    "x-saykit-references": ["src/app.ts:10"]
+  }
+}
