@@ -1,0 +1,47 @@
+{
+  "name": "@saykit/format-json",
+  "version": "0.2.0",
+  "description": "JSON file formatter for saykit",
+  "keywords": [
+    "formatter",
+    "i18n",
+    "json",
+    "saykit"
+  ],
+  "homepage": "https://github.com/k0d13/saykit#readme",
+  "bugs": {
+    "url": "https://github.com/k0d13/saykit/issues"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/k0d13/saykit.git",
+    "directory": "packages/format-json"
+  },
+  "files": [
+    "dist",
+    "!dist/**/*.map"
+  ],
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/formatter.d.mts",
+      "default": "./dist/formatter.mjs"
+    }
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "scripts": {
+    "check": "tsc --noEmit",
+    "build": "tsdown",
+    "prepack": "pnpm build"
+  },
+  "devDependencies": {
+    "@saykit/config": "workspace:^"
+  },
+  "peerDependencies": {
+    "@saykit/config": "*"
+  }
+}

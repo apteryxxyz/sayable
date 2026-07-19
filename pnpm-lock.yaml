@@ -205,6 +205,12 @@ importers:
         specifier: ^4.0.3
         version: 4.0.3
 
+  packages/format-json:
+    devDependencies:
+      '@saykit/config':
+        specifier: workspace:^
+        version: link:../config
+
   packages/format-po:
     dependencies:
       pofile:

@@ -1,0 +1,11 @@
+{
+  "farewell": {
+    "message": "Au revoir"
+  },
+  "greeting": {
+    "message": "Bonjour",
+    "description": "A friendly hello",
+    "x-saykit-context": "formal",
+    "x-saykit-references": ["src/app.ts:10"]
+  }
+}

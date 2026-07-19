@@ -21,6 +21,9 @@ flags:
   config:
     paths:
       - packages/config/
+  format-json:
+    paths:
+      - packages/format-json/
   format-po:
     paths:
       - packages/format-po/
@@ -60,6 +63,9 @@ component_management:
     - component_id: config
       name: config
       paths: [packages/config/**]
+    - component_id: format-json
+      name: format-json
+      paths: [packages/format-json/**]
     - component_id: format-po
       name: format-po
       paths: [packages/format-po/**]

@@ -44,6 +44,10 @@
   description: Related to @saykit/config and the CLI
   color: f97316
 
+- name: 'package: format-json'
+  description: Related to @saykit/format-json
+  color: eab308
+
 - name: 'package: format-po'
   description: Related to @saykit/format-po
   color: 84cc16
