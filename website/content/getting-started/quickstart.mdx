@@ -116,9 +116,11 @@ SayKit walks your source, finds every macro, and writes the catalogue files:
 src/locales/
   en.po         # source locale, generated from your source
   en.po.d.ts    # auto-generated TS declaration
-  fr.po         # other locales, ready for translation
+  fr.po         # other locales, created empty (header only)
   fr.po.d.ts
 ```
+
+Extraction only writes the **source** locale (`en`). Other locales are created empty the first time and then left untouched, translated content is owned by your translation management system, and untranslated keys fall back to the source string automatically. See [extraction](/core-concepts/extraction) for the full picture.
 
 For iterative development, use watch mode:
 
@@ -141,7 +143,13 @@ msgstr "Add one"
 
 ## 6. Translate
 
-Open `fr.po` and fill in `msgstr` for each entry:
+Your `fr.po` starts empty. If you manage translations by hand rather than through a TMS, seed it with the source keys using `saykit clean`:
+
+```sh
+pnpm saykit clean
+```
+
+Then open `fr.po` and fill in `msgstr` for each entry:
 
 ```po title="src/locales/fr.po"
 msgid "Hello, {name}!"
@@ -151,7 +159,7 @@ msgid "Add one"
 msgstr "Ajouter un"
 ```
 
-Future `extract` runs reconcile new and removed messages without overwriting your translations.
+`extract` only ever writes the source locale, so your translations are never touched. Run `saykit clean` again whenever you want to pull new source keys into your locale files and drop removed ones, existing translations are preserved. Any key you leave untranslated falls back to the source string.
 
 ## 7. Provide a `Say` at runtime
 

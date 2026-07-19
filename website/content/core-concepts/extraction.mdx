@@ -3,7 +3,7 @@ title: Extraction
 description: How the saykit CLI scans your source and produces translation files
 ---
 
-The `saykit` CLI scans your source files for macros, normalises them to ICU MessageFormat, and writes one translation file per locale per bucket. It's the only SayKit tool that touches your disk, the runtime never does.
+The `saykit` CLI scans your source files for macros, normalises them to ICU MessageFormat, and writes the source-locale translation file for each bucket. It's the only SayKit tool that touches your disk, the runtime never does.
 
 ```sh
 pnpm saykit extract
@@ -17,7 +17,7 @@ For each bucket in your config the CLI:
 2. **Asks each transformer** to parse each file and extract messages.
 3. **Merges and de-duplicates** messages across files. Identical text + context get one entry with all source references combined.
 4. **Hashes** each message into a 6-character id (unless you provided a custom one in a descriptor).
-5. **Writes** one catalogue file per locale via the bucket's formatter.
+5. **Writes** the **source** locale catalogue via the bucket's formatter, and creates an empty placeholder file for any locale that doesn't have one yet.
 
 The end result is a set of files like:
 
@@ -25,7 +25,7 @@ The end result is a set of files like:
 src/locales/
   en.po         # source locale, freshly generated from your source
   en.po.d.ts    # auto-generated TS declaration for *.po imports
-  fr.po         # other locales, reconciled with the source, your translations preserved
+  fr.po         # other locales, left untouched (or created empty if missing)
   fr.po.d.ts
 ```
 
@@ -34,18 +34,32 @@ src/locales/
   type-checks even without a build plugin running. See [typed messages](/guides/typed-messages).
 </Callout>
 
-## Reconciliation
+## Source-only writes
 
-The first run writes both source and target locale files from scratch.
+Extraction writes **only** the source locale (the first entry in `locales`). It never edits your other locale files.
 
-Subsequent runs treat the source locale as the truth, and reconcile each target locale against it:
+- The source catalogue is regenerated from your code on every run.
+- A locale that has **no file yet** is bootstrapped with an empty, header-only catalogue so a TMS like Weblate can register it.
+- Locales that **already have a file** are left completely untouched, no keys added, none removed.
 
-- New source messages get added to every target locale, with an empty `msgstr`.
-- Source messages that no longer exist get dropped from target locales.
-- Translations for messages that still exist are **preserved**.
-- The target file's headers (PO `Language:`, etc.) are kept across runs.
+This keeps diffs small (changing one string touches one file) and treats translated content as owned by your translation management system, not by extraction. You can run `saykit extract` as often as you like; your translators' work is never touched.
 
-You can run `saykit extract` as often as you like, your translators' work is never overwritten.
+### Fallback at load time
+
+Because non-source files no longer carry the source strings, an untranslated (or missing) key is resolved through a **fallback chain** when the build plugin loads a catalogue, not at runtime. By default the chain ends at the source locale, so an untranslated key renders the source string. You can insert intermediate locales with [`fallbackLocales`](/core-concepts/configuration#fallback-locales):
+
+```ts title="saykit.config.ts"
+fallbackLocales: {
+  'en-NZ': ['en-GB'], // en-NZ → en-GB → en (source)
+  'es-MX': 'es',      // es-MX → es → en (source)
+},
+```
+
+The chain is baked into the emitted JS module at build time, so the runtime still loads a single locale. See [Vite](/integrations/vite) / [Babel](/integrations/babel) for how loading works.
+
+### Reconciling other locales yourself
+
+If you'd rather propagate source changes into your other locale files directly (instead of leaving it to a TMS), run [`saykit clean`](/reference/cli#saykit-clean). It reconciles every non-source locale against the current source catalogue: adds missing keys (untranslated), drops keys that no longer exist in the source, and preserves existing translations.
 
 ## Watch mode
 
@@ -74,9 +88,9 @@ A normal run looks like:
   Scanning bucket: src/**/*.{ts,tsx}
     Found 42 file(s)
   Total extracted messages: 137
-  Writing 137 messages to locales
+  Writing 137 messages to en
     Writing locale file for en to disk
-    Writing locale file for fr to disk
+    Skipping existing locale file for fr
   ✓ Extraction complete for bucket: src/**/*.{ts,tsx}
 ```
 

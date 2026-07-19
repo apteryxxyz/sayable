@@ -56,7 +56,7 @@ Two distinct workflows share the same config:
 └──────────────┘    └────────────┘    └──────────────┘
 ```
 
-The CLI reads `saykit.config.ts`, walks the bucket globs, asks each transformer to extract messages, and asks the formatter to write them to disk. New runs reconcile against existing files, your translations are never overwritten.
+The CLI reads `saykit.config.ts`, walks the bucket globs, asks each transformer to extract messages, and asks the formatter to write the **source** locale to disk. Other locale files are never touched by extraction (`saykit clean` reconciles them on demand), so your translations are never overwritten.
 
 ### Build (your bundler runs this)
 
@@ -188,6 +188,6 @@ Translation catalogues are emitted as plain JS modules, tree-shakable, code-spli
   <Card
     title="Extraction"
     href="/core-concepts/extraction"
-    description="The CLI, watch mode, reconciliation."
+    description="The CLI, watch mode, source-only writes, fallback."
   />
 </Cards>

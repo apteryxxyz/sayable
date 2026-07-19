@@ -37,13 +37,11 @@ export function reconcileLocaleMessages(existingMessages: Message[], nextMessage
     const existingMessage = existingMessagesByKey.get(key);
 
     map.set(key, {
-      message: message.message,
-      translation: undefined,
-      ...existingMessage,
-      id: message.id,
-      context: message.context,
-      comments: message.comments,
-      references: message.references,
+      // Refresh every field from the source of truth, but keep any existing
+      // translation. Keys absent from `next` are dropped (orphans), keys new to
+      // the source arrive untranslated.
+      ...message,
+      translation: existingMessage?.translation,
     });
 
     return map;

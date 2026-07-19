@@ -76,9 +76,9 @@ module.exports = function (api) {
 For every non-`node_modules` source file passed through Babel, the plugin:
 
 1. Runs the matching SayKit transformer over the source, rewriting macros to `say.call(...)` invocations.
-2. Watches for static imports of translation files (e.g. `import en from './locales/en.po'`), parses them with the bucket's formatter, and inlines the catalogue as a JS object literal in place of the import.
+2. Watches for static imports of translation files (e.g. `import fr from './locales/fr.po'`), resolves that locale's [fallback chain](/core-concepts/configuration#fallback-locales), parses each file in it with the bucket's formatter, and inlines the merged catalogue as a JS object literal in place of the import, untranslated keys falling back through the chain to the source string.
 
-The result: no `.po` file at runtime, no SayKit extractor in the bundle, just small `say.call()` calls and plain JS objects.
+The result: no `.po` file at runtime, no SayKit extractor in the bundle, just small `say.call()` calls and plain JS objects, one locale per module. Each file in the chain is registered as an external dependency so Babel re-runs when the source locale changes.
 
 <Callout type="warn">
   The plugin currently only rewrites **static** imports. `import('./locales/en.po')` (dynamic

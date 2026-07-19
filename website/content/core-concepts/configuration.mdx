@@ -24,7 +24,7 @@ export default defineConfig({
 });
 ```
 
-The first locale in `locales` is treated as the **source locale**: the language your code is written in, and the one extraction writes through as-is. Other locales are reconciled against it on every run. The config is validated by Zod at load time, mistakes get caught with a clear error.
+The first locale in `locales` is treated as the **source locale**: the language your code is written in, and the only one extraction writes to. Other locale files are left to your translation management system; untranslated keys resolve through a [fallback chain](#fallback-locales) at load time. The config is validated by Zod at load time, mistakes get caught with a clear error.
 
 <Callout type="info">
   `defineConfig()` doesn't just type the config, it also runs it through the Zod schema and returns
@@ -54,9 +54,14 @@ import { TypeTable } from 'fumadocs-ui/components/type-table';
       type: '[string, ...string[]]',
       required: true,
     },
+    fallbackLocales: {
+      description:
+        'Per-locale fallback chains, most specific first. The source locale is always appended as the final fallback.',
+      type: 'Record<string, string | string[]>',
+    },
     buckets: {
       description:
-        'One or more extraction buckets. Each bucket scans a set of files and writes one translation file per locale.',
+        'One or more extraction buckets. Each bucket scans a set of files and writes the source-locale translation file.',
       type: 'Bucket[]',
       required: true,
     },
@@ -76,6 +81,31 @@ The **source locale** is whichever entry you list first. It's the locale your co
 <Callout type="warn">
   Reordering `locales` so that a different entry sits first means SayKit will treat your existing
   source messages as if they were in the new source locale. Plan this early.
+</Callout>
+
+## Fallback locales
+
+Because [extraction](/core-concepts/extraction) only writes the source locale, non-source catalogues carry just their real translations. A key that hasn't been translated in a locale is resolved through a **fallback chain** when the build plugin loads the catalogue.
+
+By default every locale falls back straight to the source. `fallbackLocales` lets you insert intermediate locales first, most specific first:
+
+```ts title="saykit.config.ts"
+export default defineConfig({
+  locales: ['en', 'en-GB', 'en-NZ', 'es-MX', 'es'],
+  fallbackLocales: {
+    'en-NZ': ['en-GB'], // en-NZ → en-GB → en (source)
+    'es-MX': 'es', // es-MX → es → en (source)
+  },
+  buckets: [/* … */],
+});
+```
+
+A single fallback can be a bare string; multiple fallbacks are an array. SayKit always appends the source locale as the final entry, so an untranslated key ultimately renders the source string, no locale ever resolves to a missing message.
+
+<Callout type="info">
+  The chain is resolved and baked into the emitted JS at build time, so the runtime still loads a
+  single locale. Nothing about fallbacks reaches `Say`. See
+  [Extraction → fallback at load time](/core-concepts/extraction#fallback-at-load-time).
 </Callout>
 
 ## Buckets
@@ -201,5 +231,5 @@ export default defineConfig({
 ## Next
 
 - [Messages](/core-concepts/messages), what you can author
-- [Extraction](/core-concepts/extraction), running the CLI, watch mode, reconciliation
+- [Extraction](/core-concepts/extraction), running the CLI, watch mode, source-only writes
 - [Formats](/core-concepts/formats), PO and writing your own

@@ -3,7 +3,7 @@ title: CLI
 description: The saykit command-line interface, every command and flag
 ---
 
-The `saykit` CLI extracts messages from your source files. It's installed with `@saykit/config` and exposes one command today: `extract`.
+The `saykit` CLI extracts messages from your source files. It's installed with `@saykit/config` and exposes two commands: `extract` and `clean`.
 
 ```sh
 saykit --help
@@ -12,7 +12,7 @@ saykit help [command]
 
 ## `saykit extract`
 
-Walk every bucket in `saykit.config.ts`, extract messages from the files matched by `include`, and write catalogue files per locale.
+Walk every bucket in `saykit.config.ts`, extract messages from the files matched by `include`, and write the **source** locale catalogue. Other locales are never edited; a locale with no file yet is created empty so a TMS can register it.
 
 ```sh
 saykit extract
@@ -54,9 +54,8 @@ For each bucket:
 2. Asks each transformer to parse each file and return a list of messages.
 3. Merges entries with the same text + context, unioning their references.
 4. Hashes ids for messages without a custom id.
-5. Reconciles target locales against the source, preserving existing translations, adding new entries, removing stale ones.
-6. Writes one catalogue file per locale via the bucket's formatter.
-7. Writes a `.d.ts` declaration next to each catalogue.
+5. Writes the **source** locale catalogue via the bucket's formatter, and creates an empty placeholder for any locale that has no file yet. Existing non-source files are left untouched.
+6. Writes a `.d.ts` declaration next to each catalogue.
 
 ### Exit codes
 
@@ -66,6 +65,45 @@ For each bucket:
 | 1    | Failure during config load, extraction, or write. |
 
 The CLI throws on unrecoverable errors (missing config, invalid config, formatter parse failure). Use `--verbose` to see the full stack.
+
+## `saykit clean`
+
+Reconcile every non-source locale file against the current source catalogue. Since `extract` only writes the source locale, `clean` is how you propagate source changes into your other locale files yourself, rather than leaving it to a translation management system.
+
+```sh
+saykit clean
+saykit clean --verbose
+saykit clean --quiet
+```
+
+For each bucket, and each locale after the source, `clean`:
+
+- **adds** keys present in the source but missing from the locale, with an empty translation,
+- **drops** keys that no longer exist in the source,
+- **preserves** existing translations for keys that still exist,
+- refreshes the source-of-truth fields (message text, context, comments, references) from the source.
+
+### Options
+
+<TypeTable
+  type={{
+    '--verbose, -v': {
+      description: 'Print per-locale step logs in addition to summaries.',
+      type: 'boolean',
+      default: 'false',
+    },
+    '--quiet, -q': {
+      description: 'Suppress all logging.',
+      type: 'boolean',
+      default: 'false',
+    },
+  }}
+/>
+
+<Callout type="info">
+  `clean` is optional. If your TMS already manages orphaned keys and untranslated entries, you may
+  never need it, extraction plus load-time fallback is enough on its own.
+</Callout>
 
 ## Configuration discovery
 
@@ -110,4 +148,4 @@ This fails the build if anyone forgot to run `extract` after changing or adding 
 
 ## Future commands
 
-The CLI is intentionally tiny today. New commands (compile, lint, stats) may land before 1.0. Anything published outside `extract` will go through the same `saykit <command> --help` discovery.
+The CLI is intentionally small today. New commands (compile, lint, stats) may land before 1.0. Anything published outside `extract` and `clean` will go through the same `saykit <command> --help` discovery.
