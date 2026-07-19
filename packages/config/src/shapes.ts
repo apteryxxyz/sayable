@@ -59,6 +59,13 @@ export type Bucket = z.infer<typeof Bucket>;
 
 export const Config = z.object({
   locales: z.tuple([z.string()], z.string()),
+  /**
+   * Per-locale fallback chains, most specific first, e.g.
+   * `{ 'en-NZ': ['en-GB'], 'es-MX': 'es' }`. The source locale (the first entry
+   * in {@link Config.locales}) is always appended as the final fallback, so an
+   * untranslated key ultimately resolves to the source string.
+   */
+  fallbackLocales: z.record(z.string(), z.string().or(z.string().array())).optional(),
   buckets: Bucket.array(),
 });
 export type Config = z.infer<typeof Config>;

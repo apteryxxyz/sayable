@@ -5,13 +5,19 @@ import { transformSync } from '@babel/core';
 import { generateHash } from '@saykit/config/features/messages';
 import { afterAll, describe, expect, it, vi } from 'vitest';
 
+const dir = mkdtempSync(join(tmpdir(), 'saykit-babel-'));
+
 const config = {
+  locales: ['en', 'fr'],
   buckets: [
     {
       match: (id: string) => id.endsWith('.ts'),
-      output: { match: (id: string) => id.endsWith('.json') },
+      output: Object.assign(join(dir, '{locale}.{extension}'), {
+        match: (id: string) => id.endsWith('.json'),
+      }),
       transformer: { transform: (code: string) => code.replace('MARK', 'DONE') },
       formatter: {
+        extension: '.json',
         parse: (content: string) =>
           JSON.parse(content) as { message: string; translation?: string; id?: string }[],
       },
@@ -23,7 +29,6 @@ vi.mock('@saykit/config/features/loader', () => ({ resolveConfig: () => config }
 
 const { default: plugin } = await import('./index.js');
 
-const dir = mkdtempSync(join(tmpdir(), 'saykit-babel-'));
 afterAll(() => rmSync(dir, { recursive: true, force: true }));
 
 const run = (code: string, filename: string) =>
@@ -48,9 +53,8 @@ describe('plugin-babel parserOverride', () => {
 
 describe('plugin-babel inline imports', () => {
   it('replaces a default import of a catalogue with an inlined record', () => {
-    const cat = join(dir, 'messages.json');
     writeFileSync(
-      cat,
+      join(dir, 'messages.json'),
       JSON.stringify([
         { message: 'Hello', translation: 'Bonjour', id: 'greeting' },
         { message: 'Bye', translation: '' },
@@ -61,6 +65,24 @@ describe('plugin-babel inline imports', () => {
     expect(out).toContain('Bonjour');
     // No id + empty translation -> hashed key with the source text.
     expect(out).toContain(generateHash('Bye', undefined));
+  });
+
+  it('falls back to the source locale for keys untranslated in a non-source locale', () => {
+    writeFileSync(
+      join(dir, 'en.json'),
+      JSON.stringify([
+        { message: 'Hello', id: 'greeting' },
+        { message: 'Bye', id: 'farewell' },
+      ]),
+    );
+    writeFileSync(
+      join(dir, 'fr.json'),
+      JSON.stringify([{ message: 'Hello', translation: 'Bonjour', id: 'greeting' }]),
+    );
+
+    const out = run(`import m from './fr.json';\nexport default m;`, join(dir, 'app.ts'));
+    expect(out).toContain('Bonjour'); // real translation
+    expect(out).toContain('Bye'); // untranslated -> source fallback
   });
 
   it('ignores bare (non-relative) imports', () => {

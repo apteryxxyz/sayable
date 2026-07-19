@@ -1,8 +1,11 @@
 import { readFileSync } from 'node:fs';
 import { dirname, relative, resolve } from 'node:path';
 import { types as t, type PluginObj, type PluginAPI, type parse as Parse } from '@babel/core';
+import {
+  assembleCatalogueRecord,
+  resolveCatalogueSources,
+} from '@saykit/config/features/catalogue';
 import { resolveConfig } from '@saykit/config/features/loader';
-import { generateHash } from '@saykit/config/features/messages';
 
 declare module '@babel/core' {
   interface PluginAPI {
@@ -47,15 +50,24 @@ export default (api: PluginAPI): PluginObj => {
         if (!specifier)
           throw path.buildCodeFrameError('SayKit inline imports require a default import');
 
-        const content = readFileSync(id, 'utf8');
-        try {
-          api.addExternalDependency(id_);
-        } catch {}
+        // Merge the fallback chain (configured fallbacks + the source locale)
+        // so untranslated keys resolve to a fallback string at build time.
+        const { sources } = resolveCatalogueSources(config, bucket, id);
+        const contents = sources.map((source) => {
+          try {
+            return readFileSync(source, 'utf8');
+          } catch {
+            return '';
+          }
+        });
 
-        const messages = bucket.formatter.parse(content);
-        const entries = messages.map(
-          (m) => [m.id || generateHash(m.message, m.context), m.translation || m.message] as const,
-        );
+        for (const source of sources) {
+          try {
+            api.addExternalDependency(source);
+          } catch {}
+        }
+
+        const entries = Object.entries(assembleCatalogueRecord(bucket, contents));
 
         path.replaceWith(
           t.variableDeclaration('const', [

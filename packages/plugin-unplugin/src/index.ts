@@ -1,8 +1,11 @@
 import { readFile } from 'node:fs/promises';
 import { relative } from 'node:path';
+import {
+  assembleCatalogueRecord,
+  resolveCatalogueSources,
+} from '@saykit/config/features/catalogue';
 import { resolveConfig } from '@saykit/config/features/loader';
-import { generateHash } from '@saykit/config/features/messages';
-import { createUnplugin } from 'unplugin';
+import { createUnplugin, type UnpluginBuildContext } from 'unplugin';
 
 export default createUnplugin((_options?: never) => {
   const config = resolveConfig();
@@ -23,18 +26,24 @@ export default createUnplugin((_options?: never) => {
     load: {
       // TODO: Can bucket output be used in this filter?
       filter: { id: { exclude: /node_modules/ } },
-      handler: async (id_) => {
+      handler: async function (this: UnpluginBuildContext, id_: string) {
         const id = relative(process.cwd(), id_).replaceAll('\\', '/').split('?')[0]!;
         const bucket = config.buckets.find((b) => b.output.match(id));
         if (!bucket) return;
 
-        const content = await readFile(id, 'utf8');
-        const messages = bucket.formatter.parse(content);
-        const entries = messages.map(
-          (m) => [m.id || generateHash(m.message, m.context), m.translation || m.message] as const,
+        // The fallback chain (configured fallbacks + the source locale) is
+        // merged in here at load time so an untranslated key resolves to a
+        // fallback string while the runtime still loads a single locale module.
+        const { sources } = resolveCatalogueSources(config, bucket, id);
+        const contents = await Promise.all(
+          sources.map((source) => readFile(source, 'utf8').catch(() => '')),
         );
 
-        return `export default ${JSON.stringify(Object.fromEntries(entries))}`;
+        // Fallback files feed this module, so editing them should invalidate it.
+        for (const source of sources) this.addWatchFile?.(source);
+
+        const record = assembleCatalogueRecord(bucket, contents);
+        return `export default ${JSON.stringify(record)}`;
       },
     },
   };

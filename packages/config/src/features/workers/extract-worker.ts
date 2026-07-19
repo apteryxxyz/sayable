@@ -1,10 +1,19 @@
+import { access } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { Message } from '~/shapes';
 import { extractMessagesFromFile } from '../catalogue/extractor';
-import { mergeExtractedMessages, reconcileLocaleMessages } from '../catalogue/merge';
-import { readCatalogueMessages, writeCatalogueMessages } from '../catalogue/storage';
+import { mergeExtractedMessages } from '../catalogue/merge';
+import { expandBucketOutputPath } from '../catalogue/path';
+import { writeCatalogueMessages } from '../catalogue/storage';
 import { globBucket, watchDebounced } from '../watch';
 import { BucketWorker, normalisePathForLogs } from './shared';
+
+function exists(path: string) {
+  return access(path).then(
+    () => true,
+    () => false,
+  );
+}
 
 export class BucketExtractWorker extends BucketWorker {
   #indexedMessagesByPath = new Map<string, Message[]>();
@@ -43,18 +52,28 @@ export class BucketExtractWorker extends BucketWorker {
 
   async write() {
     const mergedMessages = mergeExtractedMessages(this.#indexedMessages);
-    this.logger.info(`Writing ${mergedMessages.length} messages to locales`);
+    const [sourceLocale, ...otherLocales] = this.config.locales;
 
-    for (const locale of this.config.locales) {
-      this.logger.step(`Writing locale file for ${locale} to disk`);
+    // Extraction only ever writes the source locale's messages. Non-source
+    // locales are owned by the TMS, so we never add, change, or remove their
+    // strings here — doing so produces huge diffs and destroys orphaned
+    // translations the TMS is responsible for cleaning up.
+    this.logger.info(`Writing ${mergedMessages.length} messages to ${sourceLocale}`);
+    this.logger.step(`Writing locale file for ${sourceLocale} to disk`);
+    await writeCatalogueMessages(this.bucket, sourceLocale, mergedMessages);
 
-      const existingMessages = await readCatalogueMessages(this.bucket, locale);
-      const nextMessages =
-        locale === this.config.locales[0]
-          ? mergedMessages
-          : reconcileLocaleMessages(existingMessages, mergedMessages);
+    // Bootstrap any locale that does not have a file yet with a minimal,
+    // message-less catalogue (just a header) so a TMS like Weblate can register
+    // the locale. Existing non-source files are left completely untouched.
+    for (const locale of otherLocales) {
+      const path = expandBucketOutputPath(this.bucket, locale);
+      if (await exists(path)) {
+        this.logger.step(`Skipping existing locale file for ${locale}`);
+        continue;
+      }
 
-      await writeCatalogueMessages(this.bucket, locale, nextMessages);
+      this.logger.step(`Creating empty locale file for ${locale}`);
+      await writeCatalogueMessages(this.bucket, locale, []);
     }
 
     this.logger.success(`Extraction complete for bucket: ${this.bucket.include}`);
