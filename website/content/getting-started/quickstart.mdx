@@ -115,9 +115,9 @@ SayKit walks your source, finds every macro, and writes the catalogue files:
 ```
 src/locales/
   en.po         # source locale, generated from your source
-  en.po.d.ts    # auto-generated TS declaration
+  en.d.po.ts    # auto-generated TS declaration
   fr.po         # other locales, created empty (header only)
-  fr.po.d.ts
+  fr.d.po.ts
 ```
 
 Extraction only writes the **source** locale (`en`). Other locales are created empty the first time and then left untouched, translated content is owned by your translation management system, and untranslated keys fall back to the source string automatically. See [extraction](/core-concepts/extraction) for the full picture.

@@ -63,9 +63,9 @@ importers:
       '@saykit/config':
         specifier: workspace:^
         version: link:../../packages/config
-      '@saykit/format-po':
+      '@saykit/format-json':
         specifier: workspace:^
-        version: link:../../packages/format-po
+        version: link:../../packages/format-json
       '@saykit/transform-js':
         specifier: workspace:^
         version: link:../../packages/transform-js
@@ -152,9 +152,9 @@ importers:
       '@saykit/config':
         specifier: workspace:^
         version: link:../../packages/config
-      '@saykit/format-po':
+      '@saykit/format-json':
         specifier: workspace:^
-        version: link:../../packages/format-po
+        version: link:../../packages/format-json
       '@saykit/transform-js':
         specifier: workspace:^
         version: link:../../packages/transform-js

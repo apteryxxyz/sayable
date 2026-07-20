@@ -68,7 +68,7 @@ describe('BucketExtractWorker.write', () => {
     await extract([msg({ message: 'Hello', id: 'greeting' })]);
 
     expect(readLocale('de')).toEqual([]);
-    expect(existsSync(`${localePath('de')}.d.ts`)).toBe(true);
+    expect(existsSync(join(dir, 'de', 'messages.d.json.ts'))).toBe(true);
   });
 
   it('leaves an existing non-source locale completely untouched', async () => {

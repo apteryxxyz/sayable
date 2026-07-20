@@ -3,14 +3,14 @@ title: Typed messages
 description: How translation file imports are typed, and how to push typing further
 ---
 
-SayKit emits a `.d.ts` file alongside every translation file so that importing it from your source compiles without complaint:
+SayKit emits a declaration file alongside every translation file so that importing it from your source compiles without complaint:
 
 ```text
 src/locales/
   en.po
-  en.po.d.ts
+  en.d.po.ts
   fr.po
-  fr.po.d.ts
+  fr.d.po.ts
 ```
 
 ```ts
@@ -20,12 +20,32 @@ import en from './locales/en.po';
 
 The auto-generated declaration is intentionally simple:
 
-```ts title="src/locales/en.po.d.ts"
+```ts title="src/locales/en.d.po.ts"
 declare const translations: Record<string, string>;
 export default translations;
 ```
 
-That's enough to make the import type-check, even before your build plugin has run, and it's the only `.po.d.ts` shape your tooling needs to handle.
+That's enough to make the import type-check, even before your build plugin has run, and it's the only declaration shape your tooling needs to handle.
+
+## The `.d.{extension}.ts` name
+
+The name isn't arbitrary. To type an import of `./locales/en.po`, TypeScript strips the extension it's given and looks for `en.d.po.ts` — the sibling-declaration convention for non-TypeScript files. A file named `en.po.d.ts` is *not* consulted for a specifier TypeScript recognises, so it would silently do nothing.
+
+For any extension other than `.json`, this also requires a compiler flag:
+
+```json title="tsconfig.json"
+{
+  "compilerOptions": {
+    "allowArbitraryExtensions": true
+  }
+}
+```
+
+Without it, `import en from './locales/en.po'` fails to resolve no matter what the declaration is called. JSON catalogues need `resolveJsonModule` instead, which `moduleResolution: "bundler"` already implies.
+
+<Callout type="warn">
+  Versions before `@saykit/config@0.3.0` emitted `{locale}.{extension}.d.ts`. That name happened to work for `.po` (TypeScript falls back to appending `.d.ts` for extensions it doesn't know) but was ignored for `.json`, so JSON catalogues got the literal type inferred from the file's current contents. Delete any leftover `*.*.d.ts` files after upgrading.
+</Callout>
 
 ## Why generic?
 
@@ -42,9 +62,9 @@ In short: **you never reference an id from application code**. The build does th
 SayKit doesn't manage a `.gitignore` for you — it's up to you which generated files to commit or ignore. A common setup:
 
 - **Commit** the `.po` files. They're the canonical translations.
-- Either commit or ignore the `.po.d.ts` files. SayKit regenerates them on every extraction, so ignoring them keeps diffs quiet; committing them lets CI type-check without an extra extraction step.
+- Either commit or ignore the `.d.po.ts` files. SayKit regenerates them on every extraction, so ignoring them keeps diffs quiet; committing them lets CI type-check without an extra extraction step.
 
-If you want to ignore the declarations, add a line like `*.po.d.ts` to your project's `.gitignore`.
+If you want to ignore the declarations, add a line like `*.d.po.ts` to your project's `.gitignore`.
 
 ## Importing in different bundlers
 

@@ -28,10 +28,11 @@ const message = {
 describe('writeCatalogueMessages / readCatalogueMessages', () => {
   it('writes the catalogue and its .d.ts declaration', async () => {
     const path = join(dir, 'fr.json');
+    const declaration = join(dir, 'fr.d.json.ts');
     await writeCatalogueMessages(bucket, 'fr', [message], path);
     expect(existsSync(path)).toBe(true);
-    expect(existsSync(`${path}.d.ts`)).toBe(true);
-    expect(readFileSync(`${path}.d.ts`, 'utf8')).toContain('export default messages');
+    expect(existsSync(declaration)).toBe(true);
+    expect(readFileSync(declaration, 'utf8')).toContain('export default messages');
   });
 
   it('round-trips through read', async () => {

@@ -49,4 +49,27 @@ describe('assembleCatalogueRecord', () => {
 
     expect(record).toEqual({ a: 'A', c: 'C-NZ' });
   });
+
+  it('keeps a fallback translation when the more specific locale is untranslated', () => {
+    // PO carries the source text in `msgid` even when `msgstr` is empty, so an
+    // untranslated en-NZ entry must not displace the en-GB translation.
+    const record = assembleCatalogueRecord(bucket, [
+      JSON.stringify([{ message: 'Hello', translation: '', id: 'greeting' }]),
+      JSON.stringify([{ message: 'Hello', translation: 'Hi mate', id: 'greeting' }]),
+      JSON.stringify([{ message: 'Hello', translation: 'Hello', id: 'greeting' }]),
+    ]);
+
+    expect(record).toEqual({ greeting: 'Hi mate' });
+  });
+
+  it('keeps the fallback when a locale reports a key as entirely empty', () => {
+    // Single-value formats (JSON) surface an untranslated key as an empty
+    // message and translation, which must not blank out the source string.
+    const record = assembleCatalogueRecord(bucket, [
+      JSON.stringify([{ message: '', translation: '', id: 'greeting' }]),
+      JSON.stringify([{ message: 'Hello', translation: 'Hello', id: 'greeting' }]),
+    ]);
+
+    expect(record).toEqual({ greeting: 'Hello' });
+  });
 });

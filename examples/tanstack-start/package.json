@@ -20,7 +20,7 @@
   },
   "devDependencies": {
     "@saykit/config": "workspace:^",
-    "@saykit/format-po": "workspace:^",
+    "@saykit/format-json": "workspace:^",
     "@saykit/transform-js": "workspace:^",
     "@saykit/transform-jsx": "workspace:^",
     "@types/node": "^25.9.5",

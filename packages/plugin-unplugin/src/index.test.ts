@@ -27,6 +27,19 @@ const config = {
           }[],
       },
     },
+    // A non-JSON output, to cover the ESM-wrapper branch of `load`. The
+    // formatter still parses JSON; only the extension matters here.
+    {
+      match: (id: string) => id.endsWith('.ts'),
+      output: Object.assign(join(dir, '{locale}', 'messages.{extension}'), {
+        match: (id: string) => id.endsWith('messages.po'),
+      }),
+      transformer: { transform: (code: string) => code },
+      formatter: {
+        extension: '.po',
+        parse: (content: string) => (content ? JSON.parse(content) : []),
+      },
+    },
   ],
 };
 
@@ -40,8 +53,8 @@ const plugin = unplugin.raw(undefined, { framework: 'rollup' } as never) as {
 
 afterAll(() => rmSync(dir, { recursive: true, force: true }));
 
-const write = (locale: string, content: unknown) => {
-  const file = join(dir, locale, 'messages.json');
+const write = (locale: string, content: unknown, extension = 'json') => {
+  const file = join(dir, locale, `messages.${extension}`);
   mkdirSync(dirname(file), { recursive: true });
   writeFileSync(file, typeof content === 'string' ? content : JSON.stringify(content));
   return file;
@@ -60,14 +73,15 @@ describe('unplugin transform', () => {
 });
 
 describe('unplugin load', () => {
-  it('loads the source locale into a default-exported record', async () => {
+  it('loads the source locale into a record', async () => {
     const file = write('en', [
       { message: 'Hello', translation: '', id: 'greeting' },
       { message: 'Bye', translation: '' },
     ]);
 
     const output = await plugin.load.handler(file);
-    expect(output).toContain('export default');
+    // A `.json` id is left as bare JSON for the bundler's own JSON handling.
+    expect(output).not.toContain('export default');
     const messages = record(output);
     expect(messages.greeting).toBe('Hello');
     // No id and empty translation -> hashed key, source text as value.
@@ -110,6 +124,14 @@ describe('unplugin load', () => {
     expect(messages.a).toBe('A'); // only in the source
     expect(messages.b).toBe('B-GB'); // from the en-GB fallback
     expect(messages.c).toBe('C-NZ'); // en-NZ wins over en-GB and the source
+  });
+
+  it('wraps a non-JSON catalogue in a default export', async () => {
+    const file = write('en', [{ message: 'Hello', id: 'greeting' }], 'po');
+
+    const output = await plugin.load.handler(file);
+    expect(output).toContain('export default');
+    expect(record(output).greeting).toBe('Hello');
   });
 
   it('returns undefined when the id does not match a bucket output', async () => {
