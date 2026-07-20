@@ -49,4 +49,15 @@ describe('assembleCatalogueRecord', () => {
 
     expect(record).toEqual({ a: 'A', c: 'C-NZ' });
   });
+
+  it('keeps the fallback when a locale reports a key as entirely empty', () => {
+    // Single-value formats (JSON) surface an untranslated key as an empty
+    // message and translation, which must not blank out the source string.
+    const record = assembleCatalogueRecord(bucket, [
+      JSON.stringify([{ message: '', translation: '', id: 'greeting' }]),
+      JSON.stringify([{ message: 'Hello', translation: 'Hello', id: 'greeting' }]),
+    ]);
+
+    expect(record).toEqual({ greeting: 'Hello' });
+  });
 });
