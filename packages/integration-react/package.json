@@ -27,7 +27,7 @@
     ".": {
       "types": "./dist/index.d.mts",
       "react-server": "./dist/index.server.mjs",
-      "default": "./dist/index.client.mjs"
+      "default": "./dist/index.mjs"
     },
     "./client": {
       "types": "./dist/client.d.mts",
