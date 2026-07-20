@@ -43,12 +43,19 @@ export function assembleCatalogueRecord(bucket: Bucket, contents: string[]) {
     if (!content) continue;
     for (const message of bucket.formatter.parse(content)) {
       const key = message.id || generateHash(message.message, message.context);
-      // Formats with a single value slot per key (JSON, unlike PO's separate
-      // msgid/msgstr) report an untranslated key as an empty message *and* an
-      // empty translation. Skipping empties keeps the fallback already applied
-      // from a less specific locale rather than blanking it out.
-      const value = message.translation || message.message;
-      if (value) record[key] = value;
+
+      // A real translation always wins, so the most specific locale that has
+      // one decides the key.
+      if (message.translation) {
+        record[key] = message.translation;
+        continue;
+      }
+
+      // Otherwise this locale is untranslated for the key. PO still carries the
+      // source text in `msgid`, and JSON reports the key as empty entirely, but
+      // neither may displace a translation already applied from a less specific
+      // locale — only fill a key nothing has answered yet.
+      if (!record[key] && message.message) record[key] = message.message;
     }
   }
 
