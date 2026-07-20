@@ -16,7 +16,7 @@
   },
   "devDependencies": {
     "@saykit/config": "workspace:^",
-    "@saykit/format-po": "workspace:^",
+    "@saykit/format-json": "workspace:^",
     "@saykit/transform-js": "workspace:^",
     "typescript": "^6.0.3",
     "unplugin-saykit": "workspace:^",

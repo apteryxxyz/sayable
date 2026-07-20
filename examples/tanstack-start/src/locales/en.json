@@ -1,0 +1,9 @@
+{
+  "@@locale": "en",
+  "9WBS3k": "Reset",
+  "@9WBS3k": {
+    "x-saykit-context": "counter"
+  },
+  "kdkZBD": "Increment",
+  "Pou3Ol": "Count: {count}"
+}
