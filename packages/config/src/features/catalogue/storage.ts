@@ -6,7 +6,7 @@ import { declarationPathFor, expandBucketOutputPath } from './path.js';
 const DECLARATION_CONTENT = `
 declare const messages: Record<string, string>;
 export default messages;
-`.trim();
+`.trimStart();
 
 export async function readCatalogueMessages(
   bucket: Bucket,

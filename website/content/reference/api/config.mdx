@@ -233,7 +233,7 @@ import {
   resolveFallbackChain,
   resolveCatalogueSources,
   assembleCatalogueRecord,
-  reconcileLocaleMessages,
+  pruneLocaleMessages,
 } from '@saykit/config/features/catalogue';
 ```
 
@@ -243,7 +243,7 @@ Catalogue path and fallback helpers shared by the build plugins. Most apps never
 - `resolveFallbackChain(config, locale)`, the ordered list of locales to try, ending at the source.
 - `resolveCatalogueSources(config, bucket, id)`, resolves an imported catalogue path to its `{ locale, sources }` (fallback files, most specific first).
 - `assembleCatalogueRecord(bucket, contents)`, merges parsed catalogue contents into a single `id → string` record, most specific winning.
-- `reconcileLocaleMessages(existing, source)`, the reconciliation used by `saykit clean`.
+- `pruneLocaleMessages(existing, source)`, the filter used by `saykit clean`, drops orphaned and untranslated entries and adds nothing.
 
 ## Next
 

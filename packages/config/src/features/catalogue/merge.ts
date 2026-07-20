@@ -26,26 +26,14 @@ export function mergeExtractedMessages(messages: Message[]) {
   return Array.from(mergedMessages.values());
 }
 
-export function reconcileLocaleMessages(existingMessages: Message[], nextMessages: Message[]) {
-  const existingMessagesByKey = existingMessages.reduce((map, message) => {
-    map.set(getMessageKey(message), message);
-    return map;
-  }, new Map<string, Message>());
+export function pruneLocaleMessages(existingMessages: Message[], sourceMessages: Message[]) {
+  const sourceKeys = new Set(sourceMessages.map(getMessageKey));
 
-  const reconciledMessages = nextMessages.reduce((map, message) => {
-    const key = getMessageKey(message);
-    const existingMessage = existingMessagesByKey.get(key);
-
-    map.set(key, {
-      // Refresh every field from the source of truth, but keep any existing
-      // translation. Keys absent from `next` are dropped (orphans), keys new to
-      // the source arrive untranslated.
-      ...message,
-      translation: existingMessage?.translation,
-    });
-
-    return map;
-  }, new Map<string, Message>());
-
-  return Array.from(reconciledMessages.values());
+  // Cleaning only ever subtracts. Entries are dropped when the source no longer
+  // has the key (orphans) or when they carry no translation (dead weight, the
+  // loader falls back to the source string anyway). Source keys missing from
+  // this locale are deliberately *not* added, that's the TMS's job.
+  return existingMessages.filter(
+    (message) => sourceKeys.has(getMessageKey(message)) && Boolean(message.translation),
+  );
 }

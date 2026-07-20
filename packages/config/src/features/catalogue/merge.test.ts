@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Message } from '~/shapes.js';
-import { mergeExtractedMessages, reconcileLocaleMessages } from './merge.js';
+import { mergeExtractedMessages, pruneLocaleMessages } from './merge.js';
 
 const msg = (m: Partial<Message> & { message: string }): Message => ({
   comments: [],
@@ -33,8 +33,8 @@ describe('mergeExtractedMessages', () => {
   });
 });
 
-describe('reconcileLocaleMessages', () => {
-  const next = [
+describe('pruneLocaleMessages', () => {
+  const source = [
     msg({
       message: 'Hello',
       id: 'greeting',
@@ -45,7 +45,7 @@ describe('reconcileLocaleMessages', () => {
     msg({ message: 'New string', id: 'fresh' }),
   ];
 
-  it('preserves existing translations while refreshing source metadata', () => {
+  it('keeps translated entries exactly as they are on disk', () => {
     const existing = [
       msg({
         message: 'Hello (old)',
@@ -56,28 +56,29 @@ describe('reconcileLocaleMessages', () => {
       }),
     ];
 
-    const reconciled = reconcileLocaleMessages(existing, next);
-    const greeting = reconciled.find((m) => m.id === 'greeting')!;
+    const pruned = pruneLocaleMessages(existing, source);
 
-    expect(greeting.translation).toBe('Bonjour'); // translation kept
-    expect(greeting.message).toBe('Hello'); // source text refreshed
-    expect(greeting.context).toBe('top');
-    expect(greeting.comments).toEqual(['new']);
-    expect(greeting.references).toEqual(['a.ts:1']);
+    expect(pruned).toEqual(existing);
   });
 
-  it('adds untranslated entries for new source keys', () => {
-    const reconciled = reconcileLocaleMessages([], next);
-    const fresh = reconciled.find((m) => m.id === 'fresh')!;
-
-    expect(fresh.translation).toBeUndefined();
+  it('never adds source keys the locale does not already have', () => {
+    expect(pruneLocaleMessages([], source)).toEqual([]);
   });
 
   it('drops entries that no longer exist in the source', () => {
     const existing = [msg({ message: 'Gone', id: 'orphan', translation: 'Parti' })];
 
-    const reconciled = reconcileLocaleMessages(existing, next);
+    const pruned = pruneLocaleMessages(existing, source);
 
-    expect(reconciled.some((m) => m.id === 'orphan')).toBe(false);
+    expect(pruned.some((m) => m.id === 'orphan')).toBe(false);
+  });
+
+  it('drops entries with no translation', () => {
+    const existing = [
+      msg({ message: 'Hello', id: 'greeting' }),
+      msg({ message: 'New string', id: 'fresh', translation: '' }),
+    ];
+
+    expect(pruneLocaleMessages(existing, source)).toEqual([]);
   });
 });

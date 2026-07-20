@@ -92,8 +92,8 @@ pnpm saykit extract
 Extraction only writes the source locale (the first entry in `locales`); new locales get an empty
 placeholder file and existing translation files are left untouched, keeping diffs small and leaving
 translated content to your TMS. Untranslated keys fall back to a configurable fallback chain (and
-ultimately the source string) at load time, and `saykit clean` can reconcile other locale files
-against the source when you want to manage them yourself.
+ultimately the source string) at load time, and `saykit clean` can prune orphaned and untranslated
+entries from other locale files when your TMS doesn't do it for you.
 
 For framework-specific setup, see the React and Carbon integration docs.
 

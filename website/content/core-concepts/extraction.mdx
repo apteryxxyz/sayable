@@ -59,9 +59,9 @@ fallbackLocales: {
 
 The chain is baked into the emitted JS module at build time, so the runtime still loads a single locale. See [Vite](/integrations/vite) / [Babel](/integrations/babel) for how loading works.
 
-### Reconciling other locales yourself
+### Pruning other locales yourself
 
-If you'd rather propagate source changes into your other locale files directly (instead of leaving it to a TMS), run [`saykit clean`](/reference/cli#saykit-clean). It reconciles every non-source locale against the current source catalogue: adds missing keys (untranslated), drops keys that no longer exist in the source, and preserves existing translations.
+If your TMS does not tidy up after itself, run [`saykit clean`](/reference/cli#saykit-clean). It removes entries from every non-source locale that no longer exist in the source catalogue, along with entries that were never translated. It only ever subtracts, missing keys are never added back.
 
 ## Watch mode
 

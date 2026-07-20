@@ -56,7 +56,7 @@ Two distinct workflows share the same config:
 └──────────────┘    └────────────┘    └──────────────┘
 ```
 
-The CLI reads `saykit.config.ts`, walks the bucket globs, asks each transformer to extract messages, and asks the formatter to write the **source** locale to disk. Other locale files are never touched by extraction (`saykit clean` reconciles them on demand), so your translations are never overwritten.
+The CLI reads `saykit.config.ts`, walks the bucket globs, asks each transformer to extract messages, and asks the formatter to write the **source** locale to disk. Other locale files are never touched by extraction (`saykit clean` prunes dead entries from them on demand), so your translations are never overwritten.
 
 ### Build (your bundler runs this)
 

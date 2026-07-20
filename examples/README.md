@@ -31,8 +31,9 @@ pnpm --filter carbon-example         build
 ```
 
 `extract` only ever writes the source locale (`en`). Other locales are created
-empty on first run and then left alone; `saykit clean` reconciles them against
-the source, which is also what regenerates their `.d.{extension}.ts` files.
+empty on first run and then left alone; `saykit clean` prunes orphaned and
+untranslated entries from them, which is also what regenerates their
+`.d.{extension}.ts` files.
 
 ### Verifying the fallback chain
 

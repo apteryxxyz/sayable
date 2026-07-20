@@ -68,7 +68,7 @@ The CLI throws on unrecoverable errors (missing config, invalid config, formatte
 
 ## `saykit clean`
 
-Reconcile every non-source locale file against the current source catalogue. Since `extract` only writes the source locale, `clean` is how you propagate source changes into your other locale files yourself, rather than leaving it to a translation management system.
+Remove dead entries from every non-source locale file. `clean` only ever subtracts, it never writes new keys into a locale, so running it can only shrink your locale files.
 
 ```sh
 saykit clean
@@ -78,10 +78,11 @@ saykit clean --quiet
 
 For each bucket, and each locale after the source, `clean`:
 
-- **adds** keys present in the source but missing from the locale, with an empty translation,
-- **drops** keys that no longer exist in the source,
-- **preserves** existing translations for keys that still exist,
-- refreshes the source-of-truth fields (message text, context, comments, references) from the source.
+- **drops** keys that no longer exist in the source catalogue (orphans),
+- **drops** entries with an empty translation, which resolve through [fallback](/core-concepts/runtime) anyway,
+- **leaves** every remaining entry byte-for-byte as it is on disk.
+
+Keys that exist in the source but not in a locale file are deliberately left alone, adding them is your translation management system's job.
 
 ### Options
 
@@ -101,8 +102,8 @@ For each bucket, and each locale after the source, `clean`:
 />
 
 <Callout type="info">
-  `clean` is optional. If your TMS already manages orphaned keys and untranslated entries, you may
-  never need it, extraction plus load-time fallback is enough on its own.
+  `clean` is optional and never required for correctness. If your TMS already prunes orphaned keys,
+  you may never need it, extraction plus load-time fallback is enough on its own.
 </Callout>
 
 ## Configuration discovery

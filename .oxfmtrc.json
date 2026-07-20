@@ -1,5 +1,5 @@
 {
-  "ignorePatterns": [".changeset/*.md", "*.gen.ts", "*.po.d.ts"],
+  "ignorePatterns": [".changeset/*.md", "*.gen.ts", "*.d.*.ts"],
   "singleQuote": true,
   "experimentalSortImports": {
     "groups": ["builtin", "external", "internal", "parent", "sibling", "index", "unknown"],

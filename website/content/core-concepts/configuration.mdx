@@ -96,7 +96,9 @@ export default defineConfig({
     'en-NZ': ['en-GB'], // en-NZ → en-GB → en (source)
     'es-MX': 'es', // es-MX → es → en (source)
   },
-  buckets: [/* … */],
+  buckets: [
+    /* … */
+  ],
 });
 ```
 
@@ -104,8 +106,8 @@ A single fallback can be a bare string; multiple fallbacks are an array. SayKit 
 
 <Callout type="info">
   The chain is resolved and baked into the emitted JS at build time, so the runtime still loads a
-  single locale. Nothing about fallbacks reaches `Say`. See
-  [Extraction → fallback at load time](/core-concepts/extraction#fallback-at-load-time).
+  single locale. Nothing about fallbacks reaches `Say`. See [Extraction → fallback at load
+  time](/core-concepts/extraction#fallback-at-load-time).
 </Callout>
 
 ## Buckets

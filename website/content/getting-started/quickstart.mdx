@@ -143,13 +143,7 @@ msgstr "Add one"
 
 ## 6. Translate
 
-Your `fr.po` starts empty. If you manage translations by hand rather than through a TMS, seed it with the source keys using `saykit clean`:
-
-```sh
-pnpm saykit clean
-```
-
-Then open `fr.po` and fill in `msgstr` for each entry:
+Your `fr.po` starts empty. A translation management system fills it in for you, or, if you translate by hand, copy the `msgid` lines you want to translate out of `en.po` and write the `msgstr`:
 
 ```po title="src/locales/fr.po"
 msgid "Hello, {name}!"
@@ -159,7 +153,13 @@ msgid "Add one"
 msgstr "Ajouter un"
 ```
 
-`extract` only ever writes the source locale, so your translations are never touched. Run `saykit clean` again whenever you want to pull new source keys into your locale files and drop removed ones, existing translations are preserved. Any key you leave untranslated falls back to the source string.
+You only need the entries you have actually translated, anything missing falls back to the source string.
+
+`extract` only ever writes the source locale, so your translations are never touched. When source strings get removed or reworded, run [`saykit clean`](/reference/cli#saykit-clean) to strip the entries in `fr.po` that no longer match anything in `en.po`:
+
+```sh
+pnpm saykit clean
+```
 
 ## 7. Provide a `Say` at runtime
 

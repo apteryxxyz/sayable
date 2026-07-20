@@ -1,9 +1,6 @@
 {
   "@@locale": "fr",
   "9WBS3k": "Réinitialiser",
-  "@9WBS3k": {
-    "x-saykit-context": "counter"
-  },
   "kdkZBD": "Incrémenter",
   "Pou3Ol": "Compteur : {count}"
 }

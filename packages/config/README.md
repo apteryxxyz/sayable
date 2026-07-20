@@ -43,7 +43,7 @@ export default defineConfig({
 ```sh
 saykit extract           # extract messages once
 saykit extract --watch   # extract and watch for changes
-saykit clean             # reconcile other locales against the source
+saykit clean             # prune dead entries from other locales
 ```
 
 Extraction only writes the **source** locale (the first entry in `locales`). Locales that don't
@@ -54,10 +54,9 @@ At load time (via the unplugin or Babel plugin), each locale module is filled fr
 chain, so an untranslated key resolves to a fallback locale and ultimately the source string — the
 runtime still loads a single locale.
 
-`saykit clean` reconciles every non-source locale against the current source catalogue: it adds
-missing keys (untranslated), drops entries that no longer exist in the source, and preserves any
-existing translations. Use it when you want to propagate source changes into locale files yourself
-rather than leaving it to your TMS.
+`saykit clean` only ever subtracts from non-source locales: it drops entries that no longer exist in
+the source catalogue and entries with an empty translation, and leaves everything else exactly as it
+is. It never adds source keys to a locale file, that stays your TMS's job.
 
 ## Documentation
 

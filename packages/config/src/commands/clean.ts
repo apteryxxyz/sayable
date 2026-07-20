@@ -1,11 +1,11 @@
 import { Command } from '@commander-js/extra-typings';
-import { reconcileLocaleMessages } from '~/features/catalogue/merge.js';
+import { pruneLocaleMessages } from '~/features/catalogue/merge.js';
 import { readCatalogueMessages, writeCatalogueMessages } from '~/features/catalogue/storage.js';
 import { resolveConfig } from '~/features/loader/index.js';
 import Logger from '~/features/logger.js';
 
 export default new Command('clean')
-  .description('Reconcile non-source locale files against the source locale')
+  .description('Remove orphaned and untranslated entries from non-source locale files')
   .option('-v, --verbose', 'enable verbose logging', false)
   .option('-q, --quiet', 'suppress all logging', false)
   .action(async (options) => {
@@ -17,13 +17,16 @@ export default new Command('clean')
 
     for (const bucket of config.buckets) {
       const sourceMessages = await readCatalogueMessages(bucket, sourceLocale);
-      logger.info(`Reconciling ${otherLocales.length} locale(s) against ${sourceLocale}`);
+      logger.info(`Cleaning ${otherLocales.length} locale(s) against ${sourceLocale}`);
 
       for (const locale of otherLocales) {
-        logger.step(`Reconciling ${locale}`);
+        logger.step(`Cleaning ${locale}`);
         const existingMessages = await readCatalogueMessages(bucket, locale);
-        const reconciledMessages = reconcileLocaleMessages(existingMessages, sourceMessages);
-        await writeCatalogueMessages(bucket, locale, reconciledMessages);
+        const prunedMessages = pruneLocaleMessages(existingMessages, sourceMessages);
+        logger.step(
+          `Removed ${existingMessages.length - prunedMessages.length} entries from ${locale}`,
+        );
+        await writeCatalogueMessages(bucket, locale, prunedMessages);
       }
     }
 
