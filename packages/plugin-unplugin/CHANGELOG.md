@@ -1,5 +1,15 @@
 # unplugin-saykit
 
+## 0.4.0
+
+### Patch Changes
+
+- b4f44a0: Load `.json` catalogues as bare JSON instead of an ESM module.
+- Updated dependencies [ccaa461]
+- Updated dependencies [326a4d9]
+- Updated dependencies [0e96dec]
+  - @saykit/config@0.4.0
+
 ## 0.3.0
 
 ### Minor Changes
