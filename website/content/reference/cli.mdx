@@ -55,7 +55,7 @@ For each bucket:
 3. Merges entries with the same text + context, unioning their references.
 4. Hashes ids for messages without a custom id.
 5. Writes the **source** locale catalogue via the bucket's formatter, and creates an empty placeholder for any locale that has no file yet. Existing non-source files are left untouched.
-6. Writes a `.d.ts` declaration next to each catalogue.
+6. Writes a `{locale}.d.{extension}.ts` declaration next to each catalogue.
 
 ### Exit codes
 

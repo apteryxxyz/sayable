@@ -1,7 +1,7 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import type { Bucket, Message } from '~/shapes.js';
-import { expandBucketOutputPath } from './path.js';
+import { declarationPathFor, expandBucketOutputPath } from './path.js';
 
 const DECLARATION_CONTENT = `
 declare const messages: Record<string, string>;
@@ -26,7 +26,7 @@ export async function writeCatalogueMessages(
 ) {
   const existingContent = await readFile(path, 'utf8').catch(() => undefined);
   const catalogueContent = bucket.formatter.stringify(messages, { locale, existingContent });
-  const declarationPath = `${path}.d.ts`;
+  const declarationPath = declarationPathFor(path);
 
   await mkdir(dirname(path), { recursive: true });
   await Promise.all([
