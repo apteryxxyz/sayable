@@ -1,5 +1,11 @@
 # @saykit/react
 
+## 0.2.1
+
+### Patch Changes
+
+- ec1c06d: Ship the default entry as `dist/index.mjs` rather than `dist/index.client.mjs`.
+
 ## 0.2.0
 
 ### Minor Changes

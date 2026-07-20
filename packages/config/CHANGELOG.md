@@ -1,5 +1,18 @@
 # @saykit/config
 
+## 0.4.0
+
+### Minor Changes
+
+- ccaa461: Make `saykit clean` only remove orphaned and untranslated entries instead of prefilling locales with source keys.
+- 326a4d9: Emit catalogue declarations as `{locale}.d.{extension}.ts` instead of `{locale}.{extension}.d.ts`.
+
+  Delete any leftover `{locale}.{extension}.d.ts` files after upgrading; they are not migrated automatically, and a stale one will shadow the new declaration.
+
+### Patch Changes
+
+- 0e96dec: Stop an untranslated locale from displacing a translation resolved from its fallbacks.
+
 ## 0.3.0
 
 ### Minor Changes
