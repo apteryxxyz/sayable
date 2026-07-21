@@ -2,24 +2,30 @@ import type { PathLike } from 'node:fs';
 import {
   type FileChangeInfo,
   glob,
+  stat,
   type WatchOptionsWithStringEncoding,
   watch,
 } from 'node:fs/promises';
-import { join } from 'node:path';
 import type { Bucket } from '~/shapes.js';
 
 /**
  * Expand a buckets include and exclude patterns into a flat list of file paths.
+ *
+ * We stat each match instead of using `glob`'s `withFileTypes` option, which
+ * Bun's `node:fs/promises` compatibility layer does not yet support.
  */
 export async function globBucket(bucket: Bucket) {
   const paths: string[] = [];
-  for await (const file of glob(bucket.include, {
-    exclude: bucket.exclude,
-    withFileTypes: true,
-  }))
-    if (file.isFile()) {
-      paths.push(join(file.parentPath, file.name));
+  for await (const path of glob(bucket.include, { exclude: bucket.exclude })) {
+    try {
+      if ((await stat(path)).isFile()) {
+        paths.push(path);
+      }
+    } catch (error) {
+      // Ignore files removed between glob and stat, rethrow anything else.
+      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
     }
+  }
   return paths;
 }
 
