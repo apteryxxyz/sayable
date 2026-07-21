@@ -17,8 +17,13 @@ import type { Bucket } from '~/shapes.js';
 export async function globBucket(bucket: Bucket) {
   const paths: string[] = [];
   for await (const path of glob(bucket.include, { exclude: bucket.exclude })) {
-    if ((await stat(path)).isFile()) {
-      paths.push(path);
+    try {
+      if ((await stat(path)).isFile()) {
+        paths.push(path);
+      }
+    } catch (error) {
+      // Ignore files removed between glob and stat, rethrow anything else.
+      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
     }
   }
   return paths;
