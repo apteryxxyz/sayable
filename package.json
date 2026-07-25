@@ -17,7 +17,7 @@
     "dev": "turbo watch build --filter=\"./packages/*\"",
     "release:version": "changeset version",
     "release:snapshot:version": "changeset version --snapshot beta",
-    "release:publish": "pnpm build && changeset publish",
+    "release:publish": "pnpm build && changeset publish --no-git-tag",
     "release:snapshot:publish": "pnpm build && changeset publish --tag beta --no-git-tag"
   },
   "devDependencies": {
