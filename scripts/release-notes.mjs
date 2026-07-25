@@ -69,10 +69,15 @@ if (packages.length === 0) {
 
 const versions = [...new Set(packages.map((pkg) => pkg.version))];
 
+// A single tag only makes sense once the whole workspace shares a version.
+// Packages predating the merged `fixed` group are still on their old versions
+// until the next release bumps everything in lockstep, so emit nothing and let
+// the caller skip tagging rather than failing the pipeline.
 if (versions.length > 1) {
-  throw new Error(
-    `Expected every publishable package to share one version, found: ${versions.join(', ')}`,
+  process.stderr.write(
+    `Skipping release notes: packages are on mixed versions (${versions.join(', ')}).\n`,
   );
+  process.exit(0);
 }
 
 const [version] = versions;

@@ -136,7 +136,7 @@ jobs:
     needs: [check, lint, test]
     runs-on: ubuntu-latest
     outputs:
-      published: ${{ steps.publish.outputs.published || 'false' }}
+      hasChangesets: ${{ steps.changesets.outputs.hasChangesets }}
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     permissions:
       contents: write
@@ -161,40 +161,53 @@ jobs:
           title: 'Pending Releases'
           commit: 'Update changelog and release'
 
+      # `changeset publish` skips anything already on the registry, so this is
+      # safe to re-run: a rerun after a partial failure publishes the remainder.
       - name: Publish packages
-        id: publish
         if: ${{ steps.changesets.outputs.hasChangesets == 'false' }}
-        run: |
-          set -o pipefail
-          pnpm run release:publish | tee publish.log
-          if grep -q 'packages published successfully' publish.log; then
-            echo 'published=true' >> "$GITHUB_OUTPUT"
-          else
-            echo 'published=false' >> "$GITHUB_OUTPUT"
-          fi
+        run: pnpm run release:publish
 
       - name: Build release notes
         id: notes
-        if: ${{ steps.publish.outputs.published == 'true' }}
+        if: ${{ steps.changesets.outputs.hasChangesets == 'false' }}
         run: node scripts/release-notes.mjs
 
+      # Driven by the version on disk rather than by whether this run happened
+      # to publish, so a rerun can finish a release whose tag or GitHub release
+      # was left behind by an earlier failure. Both are no-ops once they exist.
       - name: Tag and create release
-        if: ${{ steps.publish.outputs.published == 'true' }}
+        if: ${{ steps.changesets.outputs.hasChangesets == 'false' }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VERSION: ${{ steps.notes.outputs.version }}
         run: |
-          git tag "v$VERSION"
-          git push origin "v$VERSION"
-          gh release create "v$VERSION" \
-            --title "v$VERSION" \
-            --notes-file RELEASE_NOTES.md
+          if [ -z "$VERSION" ]; then
+            echo 'No shared version to release.'
+            exit 0
+          fi
+
+          if git ls-remote --exit-code --tags origin "v$VERSION" >/dev/null 2>&1; then
+            echo "Tag v$VERSION already exists."
+          else
+            git tag "v$VERSION"
+            git push origin "v$VERSION"
+          fi
+
+          if gh release view "v$VERSION" >/dev/null 2>&1; then
+            echo "Release v$VERSION already exists."
+          else
+            gh release create "v$VERSION" \
+              --title "v$VERSION" \
+              --notes-file RELEASE_NOTES.md
+          fi
 
   snapshot:
     name: Releasing Snapshot
     needs: [process]
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.process.outputs.published == 'false' }}
+    # Betas exist to preview changes that are waiting on a release, so this
+    # keys off pending changesets rather than off whether a publish happened.
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.process.outputs.hasChangesets == 'true' }}
     permissions:
       contents: read
       id-token: write

@@ -3,5 +3,4 @@ node_modules/
 .turbo/
 .coverage/
 dist/
-publish.log
 RELEASE_NOTES.md
