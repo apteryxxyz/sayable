@@ -136,7 +136,7 @@ jobs:
     needs: [check, lint, test]
     runs-on: ubuntu-latest
     outputs:
-      published: ${{ steps.changesets.outputs.published }}
+      published: ${{ steps.publish.outputs.published || 'false' }}
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     permissions:
       contents: write
@@ -150,17 +150,45 @@ jobs:
       - name: Setup Node.js
         uses: ./.github/actions/node
 
+      # Only maintains the version PR. Publishing is done below so that a
+      # release produces one tag and one GitHub release for the whole
+      # workspace, rather than one of each per package.
       - name: Process changesets
         id: changesets
         uses: changesets/action@v1
         with:
           version: pnpm run release:version
-          publish: pnpm run release:publish
           title: 'Pending Releases'
           commit: 'Update changelog and release'
 
-      - run: |
-          echo "published=${{ steps.changesets.outputs.published }}" >> $GITHUB_OUTPUT
+      - name: Publish packages
+        id: publish
+        if: ${{ steps.changesets.outputs.hasChangesets == 'false' }}
+        run: |
+          set -o pipefail
+          pnpm run release:publish | tee publish.log
+          if grep -q 'packages published successfully' publish.log; then
+            echo 'published=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'published=false' >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build release notes
+        id: notes
+        if: ${{ steps.publish.outputs.published == 'true' }}
+        run: node scripts/release-notes.mjs
+
+      - name: Tag and create release
+        if: ${{ steps.publish.outputs.published == 'true' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.notes.outputs.version }}
+        run: |
+          git tag "v$VERSION"
+          git push origin "v$VERSION"
+          gh release create "v$VERSION" \
+            --title "v$VERSION" \
+            --notes-file RELEASE_NOTES.md
 
   snapshot:
     name: Releasing Snapshot
