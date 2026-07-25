@@ -1,0 +1,42 @@
+{
+  "1XSX6v": {
+    "message": "There is no text here to read.",
+    "x-saykit-references": ["src/popup.ts:29"]
+  },
+  "2PqXjs": {
+    "message": "{0, plural,\n  one {# link}\n  other {# links}\n}",
+    "x-saykit-references": ["src/popup.ts:57"]
+  },
+  "9EHvsj": {
+    "message": "This page is written in {0}.",
+    "x-saykit-references": ["src/popup.ts:62"]
+  },
+  "extensionDescription": {
+    "message": "Estimate how long a page will take to read.",
+    "x-saykit-references": ["src/i18n.ts:38"]
+  },
+  "extensionName": {
+    "message": "Reading Time",
+    "x-saykit-references": ["src/i18n.ts:35"]
+  },
+  "Kg6WIx": {
+    "message": "Reading time",
+    "x-saykit-references": ["src/popup.ts:20"]
+  },
+  "oMxotq": {
+    "message": "{0} words at {1} words per minute",
+    "x-saykit-references": ["src/popup.ts:47"]
+  },
+  "RHQ2b0": {
+    "message": "I cannot read this page.",
+    "x-saykit-references": ["src/popup.ts:24"]
+  },
+  "WdI7wV": {
+    "message": "{minutes, plural,\n  one {About # minute}\n  other {About # minutes}\n}",
+    "x-saykit-references": ["src/popup.ts:39"]
+  },
+  "YPf_tC": {
+    "message": "{0, plural,\n  one {# image}\n  other {# images}\n}",
+    "x-saykit-references": ["src/popup.ts:53"]
+  }
+}

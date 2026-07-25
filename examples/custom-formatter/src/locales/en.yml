@@ -1,0 +1,84 @@
+locale: en
+messages:
+  0fXHbg:
+    source: |-
+      {0, select,
+        succeeded {Deploy succeeded}
+        failed {Deploy failed}
+        rolledBack {Deploy rolled back}
+        cancelled {Deploy cancelled}
+        other {Deploy finished}
+      }
+    translation: |-
+      {0, select,
+        succeeded {Deploy succeeded}
+        failed {Deploy failed}
+        rolledBack {Deploy rolled back}
+        cancelled {Deploy cancelled}
+        other {Deploy finished}
+      }
+    references:
+      - src/main.ts:15
+  95MV8H:
+    source: |-
+      {0, plural,
+        one {# check failed:}
+        other {# checks failed:}
+      }
+    translation: |-
+      {0, plural,
+        one {# check failed:}
+        other {# checks failed:}
+      }
+    references:
+      - src/main.ts:42
+  ezoyqP:
+    source: |-
+      {0, plural,
+        =0 {no files changed}
+        one {# file changed}
+        other {# files changed}
+      }
+    translation: |-
+      {0, plural,
+        =0 {no files changed}
+        one {# file changed}
+        other {# files changed}
+      }
+    references:
+      - src/main.ts:23
+  Grr5Lm:
+    source: |-
+      {0, selectordinal,
+        one {#st}
+        two {#nd}
+        few {#rd}
+        other {#th}
+      }
+    translation: |-
+      {0, selectordinal,
+        one {#st}
+        two {#nd}
+        few {#rd}
+        other {#th}
+      }
+    references:
+      - src/main.ts:29
+  LJYhIN:
+    source: '{0} → {1}, {files}, {duration}.'
+    translation: '{0} → {1}, {files}, {duration}.'
+    references:
+      - src/main.ts:37
+  SqbuVL:
+    source: This is the {attempt} deploy to {0} today.
+    translation: This is the {attempt} deploy to {0} today.
+    references:
+      - src/main.ts:38
+  vxDqZR:
+    source: '{actor} deployed {sha} to {environment}. {changed} files changed, {duration} elapsed. Full log: {url}'
+    translation: '{actor} deployed {sha} to {environment}. {changed} files changed, {duration} elapsed. Full log: {url}'
+    comments:
+      - Sent to the on-call engineer once a deploy finishes.
+      - Keep it short — this is read on a phone, often at an unsociable hour.
+    references:
+      - src/templates/summary.email

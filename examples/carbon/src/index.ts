@@ -2,10 +2,10 @@ import { Client } from '@buape/carbon';
 import { createHandler } from '@buape/carbon/adapters/fetch';
 import { CommandDataPlugin } from '@buape/carbon/command-data';
 import { SayPlugin } from '@saykit/carbon';
-import { AboutCommand, AboutModal } from './commands/about.js';
-import { MathsCommand } from './commands/maths.js';
-import { PingCommand } from './commands/ping.js';
-import { RollAgainButton, RollCommand } from './commands/roll.js';
+import { AnnounceCommand } from './commands/announce.js';
+import { JoinCommand, JoinModal } from './commands/join.js';
+import { LeaderboardCommand } from './commands/leaderboard.js';
+import { PickCommand, RemindMeButton } from './commands/pick.js';
 import say from './i18n.js';
 
 const client = new Client(
@@ -18,16 +18,20 @@ const client = new Client(
   },
   {
     commands: [
-      new AboutCommand(say),
-      new MathsCommand(say),
-      new PingCommand(say),
-      new RollCommand(say),
+      new PickCommand(say),
+      new JoinCommand(say),
+      new LeaderboardCommand(say),
+      new AnnounceCommand(say),
     ],
-    components: [new RollAgainButton(say)],
+    components: [new RemindMeButton(say)],
   },
+  // `SayPlugin` publishes the instance globally and installs the
+  // `interaction.say` / `guild.say` accessors. Without it, those getters do not
+  // exist and every command in this bot throws.
   [new SayPlugin(say), new CommandDataPlugin()],
 );
-for (const modal of [new AboutModal(say)]) client.modalHandler.registerModal(modal);
+
+for (const modal of [new JoinModal(say)]) client.modalHandler.registerModal(modal);
 
 const handler = createHandler(client);
 export default { fetch: handler };

@@ -1,0 +1,109 @@
+:root {
+  color-scheme: light dark;
+  --edge: color-mix(in oklab, currentColor 15%, transparent);
+  --muted: color-mix(in oklab, currentColor 60%, transparent);
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  line-height: 1.5;
+}
+
+body {
+  margin: 0;
+  padding: 1.5rem 1.25rem 4rem;
+}
+
+body > * {
+  margin-inline: auto;
+  max-width: 64rem;
+}
+
+.masthead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--edge);
+}
+
+.masthead__brand {
+  font-weight: 700;
+  font-size: 1.125rem;
+  text-decoration: none;
+  color: inherit;
+}
+
+.switcher {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  font-size: 0.875rem;
+}
+
+.hero h1 {
+  margin-block: 2rem 0.25rem;
+  font-size: 1.875rem;
+}
+
+.hero p {
+  margin-block: 0 2rem;
+  color: var(--muted);
+}
+
+.grid {
+  display: grid;
+  gap: 1.25rem;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--edge);
+  border-radius: 0.75rem;
+  padding: 1rem 1.125rem 1.125rem;
+}
+
+.card__name {
+  margin-block: 0 0.125rem;
+  font-size: 1.0625rem;
+}
+
+.card__roaster,
+.card__availability,
+.card__reviews {
+  margin-block: 0.125rem;
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+
+.card__price {
+  margin-block: 0.5rem 0.25rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.cart {
+  margin-top: auto;
+  padding-top: 0.75rem;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.cart--disabled {
+  color: var(--muted);
+  cursor: not-allowed;
+  text-decoration: none;
+}
+
+.footer {
+  margin-top: 3rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--edge);
+  font-size: 0.8125rem;
+  color: var(--muted);
+}

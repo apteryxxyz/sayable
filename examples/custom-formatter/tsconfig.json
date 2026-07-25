@@ -1,0 +1,5 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "include": ["src/**/*", "saykit/**/*", "saykit.config.ts", "tsdown.config.ts"],
+  "compilerOptions": { "paths": { "~/*": ["./src/*"] } }
+}

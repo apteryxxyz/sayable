@@ -1,0 +1,70 @@
+import { Say } from '@saykit/react';
+import { getSay } from '@saykit/react/server';
+import { currency, type Product } from '../../catalogue';
+import { AddToCart } from './add-to-cart';
+
+function Availability({ product }: { product: Product }) {
+  if (product.availability === 'lowStock') {
+    return <Say.Plural _={product.remaining} one="Only # left" other="Only # left" />;
+  }
+
+  if (product.availability === 'backorder') {
+    return <Say.Plural _={product.shipsInDays} one="Ships in # day" other="Ships in # days" />;
+  }
+
+  return (
+    <Say.Select
+      _={product.availability}
+      inStock="In stock"
+      discontinued="No longer roasted"
+      other="Check back soon"
+    />
+  );
+}
+
+/**
+ * A server component. It never imports `@saykit/react/client`, and it does not
+ * need a provider above it — `@saykit/react` resolves through the `react-server`
+ * export condition here, which binds `<Say>` to `getSay()` instead of `useSay()`.
+ */
+export function ProductCard({ product }: { product: Product }) {
+  const say = getSay();
+
+  const price = new Intl.NumberFormat(say.locale, { style: 'currency', currency }).format(
+    product.priceInCents / 100,
+  );
+  const rating = new Intl.NumberFormat(say.locale, { maximumFractionDigits: 1 }).format(
+    product.rating,
+  );
+
+  return (
+    <article className="card">
+      <h2 className="card__name">{product.name}</h2>
+
+      <p className="card__roaster">
+        <Say>
+          Roasted by <strong>{product.roaster}</strong>
+        </Say>
+      </p>
+
+      <p className="card__price">{price}</p>
+
+      <p className="card__availability">
+        <Availability product={product} />
+      </p>
+
+      <p className="card__reviews">
+        {product.reviews === 0 ? (
+          <Say>No reviews yet</Say>
+        ) : (
+          <Say>
+            {rating} out of 5 · <Say.Plural _={product.reviews} one="# review" other="# reviews" />
+          </Say>
+        )}
+      </p>
+
+      {/* The button below is a client component; the label crosses the boundary as a string. */}
+      <AddToCart slug={product.slug} disabled={product.availability === 'discontinued'} />
+    </article>
+  );
+}

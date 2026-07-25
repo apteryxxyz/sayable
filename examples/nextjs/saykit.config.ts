@@ -4,12 +4,13 @@ import js from '@saykit/transform-js';
 import jsx from '@saykit/transform-jsx';
 
 export default defineConfig({
-  locales: ['en', 'fr'],
+  locales: ['en', 'fr', 'pl'],
   buckets: [
     {
       include: ['src/**/*.{ts,tsx}'],
+      exclude: ['src/**/*.d.*.ts'],
       output: 'src/locales/{locale}.{extension}',
-      formatter: po(),
+      formatter: po({ includeReferences: true }),
       transformer: [js(), jsx()],
     },
   ],

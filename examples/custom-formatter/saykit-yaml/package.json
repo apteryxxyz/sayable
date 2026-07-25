@@ -1,0 +1,20 @@
+{
+  "name": "@example/saykit-yaml",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./formatter": "./src/formatter.ts",
+    "./transformer": "./src/transformer.ts"
+  },
+  "scripts": {
+    "check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "yaml": "^2.8.1"
+  },
+  "devDependencies": {
+    "@saykit/config": "workspace:^",
+    "typescript": "^6.0.3"
+  }
+}

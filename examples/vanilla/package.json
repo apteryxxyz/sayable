@@ -1,0 +1,23 @@
+{
+  "name": "vanilla-example",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "tsc --noEmit",
+    "extract": "saykit extract",
+    "build": "vite build",
+    "dev": "vite dev",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "saykit": "workspace:^"
+  },
+  "devDependencies": {
+    "@saykit/config": "workspace:^",
+    "@saykit/format-po": "workspace:^",
+    "@saykit/transform-js": "workspace:^",
+    "typescript": "^6.0.3",
+    "unplugin-saykit": "workspace:^",
+    "vite": "^8.1.5"
+  }
+}

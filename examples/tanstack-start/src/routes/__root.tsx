@@ -1,35 +1,21 @@
-import { HeadContent, Outlet, Scripts, createRootRoute } from '@tanstack/react-router';
-import { TanStackRouterDevtools } from '@tanstack/react-router-devtools';
-import * as React from 'react';
+/// <reference types="vite/client" />
+import { createRootRoute, HeadContent, Scripts } from '@tanstack/react-router';
+import type { ReactNode } from 'react';
+import styles from '../styles.css?url';
 
 export const Route = createRootRoute({
   head: () => ({
     meta: [
-      {
-        charSet: 'utf-8',
-      },
-      {
-        name: 'viewport',
-        content: 'width=device-width, initial-scale=1',
-      },
-      {
-        title: 'TanStack Start Starter',
-      },
+      { charSet: 'utf-8' },
+      { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+      { title: 'Kōrero Conf — Schedule' },
     ],
+    links: [{ rel: 'stylesheet', href: styles }],
   }),
-  component: RootComponent,
+  shellComponent: RootDocument,
 });
 
-function RootComponent() {
-  return (
-    <RootDocument>
-      <Outlet />
-      <TanStackRouterDevtools />
-    </RootDocument>
-  );
-}
-
-function RootDocument({ children }: { children: React.ReactNode }) {
+function RootDocument({ children }: { children: ReactNode }) {
   return (
     <html>
       <head>

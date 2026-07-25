@@ -1,15 +1,21 @@
 import { Say } from 'saykit';
+import de from './locales/de.json';
+import en from './locales/en-US.json';
+import fr from './locales/fr.json';
+import ja from './locales/ja.json';
 
-const say = new Say({
-  locales: ['en', 'fr', 'de'],
-  messages: {
-    en: await import('./locales/en.json').then((m) => m.default),
-    fr: await import('./locales/fr.json').then((m) => m.default),
-    de: await import('./locales/de.json').then((m) => m.default),
-  },
+export const locales = ['en-US', 'fr', 'de', 'ja'] as const;
+export type Locale = (typeof locales)[number];
+
+const say = new Say<Locale>({
+  locales: [...locales],
+  messages: { 'en-US': en, fr, de, ja },
 });
 
-say.load();
-say.activate('en');
+// A command's *definition* is registered with Discord once, for every locale at
+// the same time, so the instance handed to `withSay` needs an active locale up
+// front: it becomes the default name/description, with the rest attached as
+// Discord localisations.
+say.activate('en-US');
 
 export default say;

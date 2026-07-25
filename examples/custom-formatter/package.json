@@ -1,0 +1,23 @@
+{
+  "name": "custom-formatter-example",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "tsc --noEmit",
+    "extract": "saykit extract",
+    "build": "tsdown",
+    "start": "node dist/main.mjs"
+  },
+  "dependencies": {
+    "saykit": "workspace:^",
+    "yaml": "^2.8.1"
+  },
+  "devDependencies": {
+    "@example/saykit-yaml": "workspace:*",
+    "@saykit/config": "workspace:^",
+    "@saykit/transform-js": "workspace:^",
+    "tsdown": "^0.16.4",
+    "typescript": "^6.0.3",
+    "unplugin-saykit": "workspace:^"
+  }
+}

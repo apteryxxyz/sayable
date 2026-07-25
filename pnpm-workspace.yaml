@@ -1,5 +1,8 @@
 packages:
   - examples/*
+  # A `saykit.config.ts` can only import custom formatters and transformers by
+  # package name, so the custom-formatter example ships its own local package.
+  - examples/custom-formatter/saykit-yaml
   - packages/*
   - website
 allowBuilds:
