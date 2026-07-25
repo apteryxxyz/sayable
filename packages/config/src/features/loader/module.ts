@@ -9,7 +9,7 @@ import {
   writeFileSync,
 } from 'node:fs';
 import nodeModule, { createRequire } from 'node:module';
-import { tmpdir } from 'node:os';
+import { tmpdir, userInfo } from 'node:os';
 import { dirname, join, parse } from 'node:path';
 
 export type Loader = (path: string) => unknown;
@@ -32,18 +32,25 @@ function findNearestTsConfig(fromPath: string) {
   });
 }
 
+function digest(value: string) {
+  return createHash('sha1').update(value).digest('hex').slice(0, 16);
+}
+
+/**
+ * Builds are executable, so they belong beside the project's dependencies. The
+ * fallback lands in a shared temp directory instead, where a fixed path would
+ * let any other user on the machine plant code we later require — hence a
+ * per-user directory, created private in `compileToCache`.
+ */
 function findCacheDir(fromPath: string) {
   const nodeModules = findUpwards(fromPath, (dir) => {
     const candidate = join(dir, 'node_modules');
     return existsSync(candidate) ? candidate : null;
   });
-  return nodeModules
-    ? join(nodeModules, '.cache', 'saykit', 'config')
-    : join(tmpdir(), 'saykit', 'config');
-}
+  if (nodeModules) return join(nodeModules, '.cache', 'saykit', 'config');
 
-function digest(value: string) {
-  return createHash('sha1').update(value).digest('hex').slice(0, 16);
+  const { uid, username, homedir } = userInfo();
+  return join(tmpdir(), `saykit-config-${digest(`${uid}\0${username}\0${homedir}`)}`);
 }
 
 function mtimeOf(path: string | null) {
@@ -135,8 +142,8 @@ function compileToCache(path: string, require: NodeJS.Require) {
     transpileWithCompilerApi(source, tsConfigPath, require) ?? transpileWithNode(source);
   const target = join(dir, `${file}.${inputs}.${extension}`);
 
-  mkdirSync(dir, { recursive: true });
-  writeFileSync(target, code);
+  mkdirSync(dir, { recursive: true, mode: 0o700 });
+  writeFileSync(target, code, { mode: 0o600 });
   pruneCache(dir, file, target);
   return target;
 }
