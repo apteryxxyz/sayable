@@ -1,5 +1,12 @@
 # @saykit/config
 
+## 0.4.1
+
+### Patch Changes
+
+- 579023e: Stat globbed files instead of using `withFileTypes`, so extraction works under Bun's `node:fs/promises` shim.
+- 0571e96: Load config files through the host runtime (Bun, Deno, tsx) or Node's type stripping when the TypeScript compiler API is unavailable
+
 ## 0.4.0
 
 ### Minor Changes
