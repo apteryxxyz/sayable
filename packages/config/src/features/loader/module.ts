@@ -8,94 +8,179 @@ import {
   unlinkSync,
   writeFileSync,
 } from 'node:fs';
-import { createRequire } from 'node:module';
+import nodeModule, { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import { dirname, join, parse } from 'node:path';
 
 export type Loader = (path: string) => unknown;
 
-function findNearestTsConfig(fromPath: string) {
+function findUpwards<T>(fromPath: string, visit: (dir: string) => T | null): T | null {
   let dir = dirname(fromPath);
   const { root } = parse(dir);
   while (true) {
-    const candidate = join(dir, 'tsconfig.json');
-    if (existsSync(candidate)) return candidate;
+    const found = visit(dir);
+    if (found !== null) return found;
     if (dir === root) return null;
     dir = dirname(dir);
   }
 }
 
+function findNearestTsConfig(fromPath: string) {
+  return findUpwards(fromPath, (dir) => {
+    const candidate = join(dir, 'tsconfig.json');
+    return existsSync(candidate) ? candidate : null;
+  });
+}
+
 function findCacheDir(fromPath: string) {
-  let dir = dirname(fromPath);
-  const { root } = parse(dir);
-  while (true) {
-    const nm = join(dir, 'node_modules');
-    if (existsSync(nm)) return join(nm, '.cache', 'saykit', 'config');
-    if (dir === root) return join(tmpdir(), 'saykit', 'config');
-    dir = dirname(dir);
+  const nodeModules = findUpwards(fromPath, (dir) => {
+    const candidate = join(dir, 'node_modules');
+    return existsSync(candidate) ? candidate : null;
+  });
+  return nodeModules
+    ? join(nodeModules, '.cache', 'saykit', 'config')
+    : join(tmpdir(), 'saykit', 'config');
+}
+
+function digest(value: string) {
+  return createHash('sha1').update(value).digest('hex').slice(0, 16);
+}
+
+function mtimeOf(path: string | null) {
+  return path ? statSync(path).mtimeMs : 0;
+}
+
+/** Removes every build of `file` in `dir` except `keep`. */
+function pruneCache(dir: string, file: string, keep: string) {
+  for (const entry of readdirSync(dir)) {
+    if (!entry.startsWith(`${file}.`) || join(dir, entry) === keep) continue;
+    try {
+      unlinkSync(join(dir, entry));
+    } catch {}
   }
 }
 
-function transpile(path: string, tsConfigPath: string | null, require: NodeRequire) {
-  const ts = require('typescript');
-  const { config: tsConfig, error } = tsConfigPath
+/**
+ * Preferred: the classic TypeScript compiler API, which honours the project's
+ * tsconfig and emits CommonJS. TypeScript 7's root export no longer ships it,
+ * and the dependency is optional, so this gives up when it isn't there.
+ */
+function transpileWithCompilerApi(
+  source: string,
+  tsConfigPath: string | null,
+  require: NodeJS.Require,
+) {
+  let ts;
+  try {
+    ts = require('typescript');
+  } catch {
+    return null;
+  }
+  if (typeof ts?.transpileModule !== 'function' || typeof ts.sys?.readFile !== 'function') {
+    return null;
+  }
+
+  const { config, error } = tsConfigPath
     ? ts.readConfigFile(tsConfigPath, ts.sys.readFile)
     : { config: {}, error: null };
   if (error) throw error;
 
-  tsConfig.compilerOptions = {
-    ...tsConfig.compilerOptions,
+  config.compilerOptions = {
+    ...config.compilerOptions,
     allowJs: true,
     esModuleInterop: true,
+    noEmit: false,
     module: ts.ModuleKind.CommonJS,
     moduleResolution: ts.ModuleResolutionKind.NodeJs,
     target: ts.ScriptTarget.ES2022,
-    noEmit: false,
   };
 
-  return ts.transpileModule(readFileSync(path, 'utf8'), tsConfig).outputText as string;
+  return { code: ts.transpileModule(source, config).outputText as string, extension: 'cjs' };
 }
 
-function loadWithCache(path: string) {
-  const require = createRequire(path);
-  const mtimeMs = statSync(path).mtimeMs;
+/**
+ * Fallback: Node erases the types itself. It ignores tsconfig and leaves the
+ * module syntax alone, so the extension has to follow the source.
+ */
+function transpileWithNode(source: string) {
+  if (typeof nodeModule.stripTypeScriptTypes !== 'function') {
+    throw new Error(
+      'Loading TypeScript config files requires the TypeScript compiler API (typescript <= 6), Node 22.13+, or a runtime that loads TypeScript itself (Bun, Deno, tsx)',
+    );
+  }
+
+  const code = nodeModule.stripTypeScriptTypes(source, { mode: 'transform' });
+  return { code, extension: /^\s*(?:import|export)[\s({]/m.test(code) ? 'mjs' : 'cjs' };
+}
+
+/**
+ * Writes a plain JavaScript copy of `path` next to the project's dependencies
+ * and returns it. Copies are named `<file>.<inputs>.<extension>`, so a build
+ * can be reused until its inputs change, and earlier builds of the same file
+ * can be pruned once it does.
+ */
+function compileToCache(path: string, require: NodeJS.Require) {
   const tsConfigPath = findNearestTsConfig(path);
-  const tsConfigMtimeMs = tsConfigPath ? statSync(tsConfigPath).mtimeMs : 0;
-  const hash = createHash('sha1')
-    .update(`${path}\0${tsConfigPath ?? ''}\0${tsConfigMtimeMs}`)
-    .digest('hex')
-    .slice(0, 16);
-  const cacheDir = findCacheDir(path);
-  const cachePath = join(cacheDir, `${hash}.${mtimeMs}.cjs`);
+  const dir = findCacheDir(path);
+  const file = digest(path);
+  const inputs = digest(`${mtimeOf(path)}\0${tsConfigPath}\0${mtimeOf(tsConfigPath)}`);
 
+  const cached = ['cjs', 'mjs']
+    .map((ext) => join(dir, `${file}.${inputs}.${ext}`))
+    .find(existsSync);
+  if (cached) return cached;
+
+  const source = readFileSync(path, 'utf8');
+  const { code, extension } =
+    transpileWithCompilerApi(source, tsConfigPath, require) ?? transpileWithNode(source);
+  const target = join(dir, `${file}.${inputs}.${extension}`);
+
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(target, code);
+  pruneCache(dir, file, target);
+  return target;
+}
+
+/**
+ * Bun, Deno and hooks like tsx or ts-node load TypeScript better than we can,
+ * resolving tsconfig `paths` and the project's own module resolution with it.
+ */
+function runtimeLoadsTypeScript(require: NodeJS.Require) {
+  return Boolean(
+    process.versions.bun ||
+    (globalThis as { Deno?: unknown }).Deno ||
+    require.extensions?.['.ts'] ||
+    Reflect.get(process, Symbol.for('ts-node.register.instance')),
+  );
+}
+
+/** Requires `path` without leaving it in (or reading it from) the require cache. */
+function requireFresh(require: NodeJS.Require, path: string) {
+  const resolved = require.resolve(path);
+  delete require.cache[resolved];
+  const module = require(path);
+  delete require.cache[resolved];
+  return module?.default ?? module;
+}
+
+/**
+ * Loads a config file, compiling it first unless the runtime reads TypeScript
+ * on its own.
+ */
+function loadModule(path: string) {
+  const require = createRequire(path);
   try {
-    if (!existsSync(cachePath)) {
-      mkdirSync(cacheDir, { recursive: true });
-      writeFileSync(cachePath, transpile(path, tsConfigPath, require));
-
-      if (existsSync(cacheDir)) {
-        for (const entry of readdirSync(cacheDir)) {
-          if (entry.startsWith(`${hash}.`) && entry !== `${hash}.${mtimeMs}.cjs`) {
-            try {
-              unlinkSync(join(cacheDir, entry));
-            } catch {}
-          }
-        }
-      }
-    }
-
-    const resolved = require.resolve(cachePath);
-    delete require.cache[resolved];
-    const module = require(cachePath);
-    delete require.cache[resolved];
-    return module?.default ?? module;
+    return requireFresh(
+      require,
+      runtimeLoadsTypeScript(require) ? path : compileToCache(path, require),
+    );
   } catch (error) {
     throw new Error('Failed to import module', { cause: error });
   }
 }
 
-export const js: Loader = (path) => loadWithCache(path);
-export const ts: Loader = (path) => loadWithCache(path);
+export const js: Loader = loadModule;
+export const ts: Loader = loadModule;
 
 export const configLoaders = Object.freeze({
   '.js': js,
