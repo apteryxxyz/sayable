@@ -9,6 +9,7 @@ on:
       - 'turbo.json'
       - 'packages/**/src/**'
       - 'packages/**/package.json'
+      - 'examples/**'
       - '.changeset/**'
       - '.github/workflows/pipeline.yml'
   pull_request:
@@ -21,6 +22,7 @@ on:
       - 'turbo.json'
       - 'packages/**/src/**'
       - 'packages/**/package.json'
+      - 'examples/**'
       - '.changeset/**'
       - '.github/workflows/pipeline.yml'
   workflow_dispatch:
@@ -71,6 +73,26 @@ jobs:
 
       - name: Run the type checker
         run: pnpm check --filter "./packages/*"
+
+  examples:
+    name: Example Type Checking
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: ./.github/actions/node
+
+      - name: Download dist artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: packages
+
+      - name: Type-check examples
+        run: pnpm --filter "./examples/*" check
 
   lint:
     name: Linting
@@ -133,7 +155,7 @@ jobs:
 
   process:
     name: Processing Changesets
-    needs: [check, lint, test]
+    needs: [check, examples, lint, test]
     runs-on: ubuntu-latest
     outputs:
       hasChangesets: ${{ steps.changesets.outputs.hasChangesets }}
