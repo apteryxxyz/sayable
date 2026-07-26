@@ -35,12 +35,20 @@ The first locale in `locales` is treated as the **source locale**: the language 
 
 The CLI and the build-tool plugins both load your config via `resolveConfig()` from
 `@saykit/config/features/loader`. It searches up from the current working directory for
-`saykit.config.{ts,mts,cts,js,mjs,cjs}` and transpiles TypeScript automatically.
+`saykit.config.{ts,mts,cts,js,mjs,cjs}` and loads the first match.
 
-Transpiled output is cached in `node_modules/.cache/saykit/config/` and invalidated when:
+The file is handed to the runtime as it sits on disk — nothing is copied, transpiled or cached — so
+relative imports, `import.meta.dirname` and `__dirname` all resolve against the config's own
+directory. A config is free to import a formatter or transformer from alongside it:
 
-- the config file's `mtime` changes, or
-- a `tsconfig.json` between the config and the workspace root changes.
+```ts title="saykit.config.ts"
+import { yaml } from './saykit/yaml-formatter.ts';
+```
+
+Reading TypeScript requires Node 22.18+, or a runtime that loads it itself (Bun, Deno, tsx). Note
+that relative specifiers need the real extension (`./yaml-formatter.ts`, not `.js`), and that
+enums, namespaces and parameter properties are not erasable syntax, so no runtime will accept
+them.
 
 ## Top-level schema
 
