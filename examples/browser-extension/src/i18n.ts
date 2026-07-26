@@ -21,24 +21,4 @@ export function activateUiLocale() {
   return say;
 }
 
-/**
- * Two messages that also appear in `manifest.json`, and therefore need stable,
- * hand-written ids rather than content hashes. Everything else in this
- * extension is keyed by hash; these two are not, because `__MSG_extensionName__`
- * has to name something a human wrote down.
- *
- * They are declared here purely so extraction sees them — the manifest is not
- * JavaScript, so nothing else would put them in the catalogue.
- *
- * TODO: Create an easier way to add strings to the catalogue without having to
- * add them to code.
- */
-export const manifestStrings = {
-  // Translators: the extension's name, shown in the Chrome Web Store and toolbar.
-  name: () => say({ id: 'extensionName' })`Reading Time`,
-  // Translators: the extension's one-line store description.
-  description: () =>
-    say({ id: 'extensionDescription' })`Estimate how long a page will take to read.`,
-};
-
 export default say;

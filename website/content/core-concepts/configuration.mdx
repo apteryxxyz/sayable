@@ -143,6 +143,11 @@ A bucket is a unit of "files in &rarr; translation file out". Most projects have
       type: '`${string}{locale}${string}{extension}`',
       required: true,
     },
+    messages: {
+      description:
+        'Messages declared here rather than extracted from source, keyed by id. Values are the source string, or an object with `message`, `context`, and `comments`.',
+      type: 'Record<string, string | { message: string; context?: string; comments?: string[] }>',
+    },
     formatter: {
       description: 'A Formatter that reads and writes the chosen translation file format.',
       type: 'Formatter',
@@ -173,6 +178,31 @@ output: 'src/locales/{locale}.{extension}';
 output: 'translations/{locale}/messages.{extension}';
 // → translations/en/messages.po, translations/fr/messages.po
 ```
+
+### Declared messages
+
+Extraction only sees messages that appear as macros in source files. When a string belongs in the catalogue but has no call site — a browser extension manifest, an app store listing, an email subject, database seed data — declare it on the bucket instead of writing a dummy module for the extractor to find.
+
+```ts
+messages: {
+  // Shorthand: the value is the source string.
+  extensionName: 'Reading Time',
+
+  // Long form, for the metadata a descriptor would otherwise carry.
+  extensionDescription: {
+    message: 'Estimate how long a page will take to read.',
+    context: 'store',
+    comments: ["The extension's one-line store description."],
+  },
+},
+```
+
+Each key is the message id, so declared strings always have stable, hand-written keys rather than content hashes — which is exactly what a manifest needs when it names one. They are merged into the catalogue on every `saykit extract`, alongside everything the transformers find. If a source file happens to use the same id, the declaration wins on text and comments, and the call site still contributes its source reference.
+
+<Callout type="info">
+  Declared messages have no call site, so they are written without source references. Use `comments`
+  to tell translators where the string actually shows up.
+</Callout>
 
 ### Multiple transformers
 

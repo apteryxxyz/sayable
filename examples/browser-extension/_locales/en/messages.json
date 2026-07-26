@@ -13,11 +13,11 @@
   },
   "extensionDescription": {
     "message": "Estimate how long a page will take to read.",
-    "x-saykit-references": ["src/i18n.ts:41"]
+    "description": "The extension's one-line store description."
   },
   "extensionName": {
     "message": "Reading Time",
-    "x-saykit-references": ["src/i18n.ts:38"]
+    "description": "The extension's name, shown in the Chrome Web Store and toolbar."
   },
   "Kg6WIx": {
     "message": "Reading time",

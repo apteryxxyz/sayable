@@ -7,13 +7,13 @@ This is the example for **making SayKit write files in a layout something else a
 
 ## What it demonstrates
 
-| Concern                                                 | Where              |
-| ------------------------------------------------------- | ------------------ |
-| `json({ dialect: 'webextension' })`                     | `saykit.config.ts` |
-| `{locale}` used as a **directory**, not a filename      | `saykit.config.ts` |
-| Explicit `say({ id })` for keys the manifest references | `src/i18n.ts`      |
-| `chrome.i18n.getUILanguage()` + `say.match`             | `src/i18n.ts`      |
-| Keeping the catalogue out of the content script         | `src/content.ts`   |
+| Concern                                                         | Where              |
+| --------------------------------------------------------------- | ------------------ |
+| `json({ dialect: 'webextension' })`                             | `saykit.config.ts` |
+| `{locale}` used as a **directory**, not a filename              | `saykit.config.ts` |
+| Bucket-declared `messages` for the keys the manifest references | `saykit.config.ts` |
+| `chrome.i18n.getUILanguage()` + `say.match`                     | `src/i18n.ts`      |
+| Keeping the catalogue out of the content script                 | `src/content.ts`   |
 
 ## Writing straight into `_locales/`
 
@@ -51,15 +51,21 @@ write the key by hand:
 { "name": "__MSG_extensionName__" }
 ```
 
-So the two strings the manifest references are given explicit ids:
+Extraction only ever sees JavaScript, and the manifest is not code, so nothing in `src/` would put
+those strings in the catalogue. They are declared on the bucket instead, where the record key _is_
+the id:
 
 ```ts
-say({ id: 'extensionName' })`Reading Time`;
+messages: {
+  extensionName: {
+    message: 'Reading Time',
+    comments: ["The extension's name, shown in the Chrome Web Store and toolbar."],
+  },
+},
 ```
 
-They live in `src/i18n.ts` for the sole reason that extraction only sees JavaScript — the manifest
-is not code, so nothing else would put those strings in the catalogue. Give an explicit id to any
-message that something outside your source has to name; let the rest stay hashed.
+Declare any string that a non-JavaScript artefact owns — a manifest, a store listing, an email
+subject — and let everything with a real call site stay hashed.
 
 ## Two i18n systems, one catalogue
 

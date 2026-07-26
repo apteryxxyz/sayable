@@ -30,6 +30,7 @@ beforeEach(() => {
   dir = mkdtempSync(join(tmpdir(), 'saykit-extract-'));
   bucket = {
     include: ['src/**/*.ts'],
+    messages: [],
     match: (id: string) => id.endsWith('.ts'),
     output: Object.assign(join(dir, '{locale}', 'messages.{extension}'), {
       match: (id: string) => id.endsWith('messages.json'),
@@ -62,6 +63,33 @@ describe('BucketExtractWorker.write', () => {
     expect(readLocale('en').map((m) => m.id)).toEqual(
       expect.arrayContaining(['greeting', 'farewell']),
     );
+  });
+
+  it('writes messages declared on the bucket even when no file yields them', async () => {
+    bucket.messages = [msg({ id: 'extensionName', message: 'Reading Time' })];
+
+    await extract([msg({ message: 'Hello', id: 'greeting' })]);
+
+    expect(readLocale('en').map((m) => m.id)).toEqual(
+      expect.arrayContaining(['extensionName', 'greeting']),
+    );
+  });
+
+  it('keeps a declared message authoritative when source also extracts its id', async () => {
+    bucket.messages = [
+      msg({ id: 'extensionName', message: 'Reading Time', comments: ['The name'] }),
+    ];
+
+    await extract([
+      msg({ id: 'extensionName', message: 'Extracted Name', references: ['src/app.ts:1'] }),
+    ]);
+
+    const entries = readLocale('en');
+    expect(entries).toHaveLength(1);
+    expect(entries[0]?.message).toBe('Reading Time');
+    expect(entries[0]?.comments).toEqual(['The name']);
+    // The call site still contributes its reference.
+    expect(entries[0]?.references).toEqual(['src/app.ts:1']);
   });
 
   it('creates a header-only file for a locale that does not exist yet', async () => {

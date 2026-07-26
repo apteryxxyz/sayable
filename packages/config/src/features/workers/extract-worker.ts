@@ -18,7 +18,9 @@ function exists(path: string) {
 export class BucketExtractWorker extends BucketWorker {
   #indexedMessagesByPath = new Map<string, Message[]>();
   get #indexedMessages() {
-    return Array.from(this.#indexedMessagesByPath.values()).flat();
+    // Config-declared messages lead so their hand-written metadata wins the
+    // merge; extracted occurrences of the same id only contribute references.
+    return [...this.bucket.messages, ...Array.from(this.#indexedMessagesByPath.values()).flat()];
   }
 
   async #indexPath(path: string) {
@@ -45,9 +47,14 @@ export class BucketExtractWorker extends BucketWorker {
 
     const paths = await globBucket(this.bucket);
     this.logger.step(`Found ${paths.length} file(s)`);
+    if (this.bucket.messages.length)
+      this.logger.step(
+        `Including ${this.bucket.messages.length} message(s) declared in the config`,
+      );
     await Promise.all(paths.map((p) => this.#indexPath(p)));
 
-    this.logger.info(`Total extracted messages: ${this.#indexedMessages.length}`);
+    const extracted = Array.from(this.#indexedMessagesByPath.values()).flat().length;
+    this.logger.info(`Total extracted messages: ${extracted}`);
   }
 
   async write() {
