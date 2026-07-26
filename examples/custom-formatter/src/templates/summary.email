@@ -1,0 +1,3 @@
+# Sent to the on-call engineer once a deploy finishes.
+# Keep it short — this is read on a phone, often at an unsociable hour.
+{actor} deployed {sha} to {environment}. {changed} files changed, {duration} elapsed. Full log: {url}

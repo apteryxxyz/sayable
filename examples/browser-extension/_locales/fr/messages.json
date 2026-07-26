@@ -1,0 +1,34 @@
+{
+  "1XSX6v": {
+    "message": "Il n'y a rien à lire ici."
+  },
+  "2PqXjs": {
+    "message": "{0, plural,\n  one {# lien}\n  other {# liens}\n}"
+  },
+  "9EHvsj": {
+    "message": "Cette page est rédigée en {0}."
+  },
+  "extensionDescription": {
+    "message": "Estimez le temps de lecture d'une page.",
+    "description": "The extension's one-line store description."
+  },
+  "extensionName": {
+    "message": "Temps de lecture",
+    "description": "The extension's name, shown in the Chrome Web Store and toolbar."
+  },
+  "Kg6WIx": {
+    "message": "Temps de lecture"
+  },
+  "oMxotq": {
+    "message": "{0} mots à {1} mots par minute"
+  },
+  "RHQ2b0": {
+    "message": "Je ne peux pas lire cette page."
+  },
+  "WdI7wV": {
+    "message": "{minutes, plural,\n  one {Environ # minute}\n  other {Environ # minutes}\n}"
+  },
+  "YPf_tC": {
+    "message": "{0, plural,\n  one {# image}\n  other {# images}\n}"
+  }
+}

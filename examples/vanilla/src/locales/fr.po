@@ -1,0 +1,121 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: fr\n"
+"X-Generator: saykit\n"
+
+#: src/main.ts:82
+msgid ""
+"{0, plural,\n"
+"  =0 {You have nothing on loan}\n"
+"  one {You have # book on loan}\n"
+"  other {You have # books on loan}\n"
+"}"
+msgstr ""
+"{0, plural,\n"
+"  =0 {Vous n'avez aucun emprunt en cours}\n"
+"  one {Vous avez # livre emprunté}\n"
+"  other {Vous avez # livres empruntés}\n"
+"}"
+
+#: src/main.ts:26
+msgid ""
+"{0, plural,\n"
+"  one {Due in # day}\n"
+"  other {Due in # days}\n"
+"}"
+msgstr ""
+"{0, plural,\n"
+"  one {À rendre dans # jour}\n"
+"  other {À rendre dans # jours}\n"
+"}"
+
+#: src/main.ts:17
+msgid ""
+"{0, plural,\n"
+"  one {Overdue by # day}\n"
+"  other {Overdue by # days}\n"
+"}"
+msgstr ""
+"{0, plural,\n"
+"  one {En retard de # jour}\n"
+"  other {En retard de # jours}\n"
+"}"
+
+#: src/main.ts:33
+msgid ""
+"{0, select,\n"
+"  onLoan {On loan}\n"
+"  dueToday {Due today}\n"
+"  overdue {Overdue}\n"
+"  reserved {Reserved}\n"
+"  other {Unknown}\n"
+"}"
+msgstr ""
+"{0, select,\n"
+"  onLoan {Emprunté}\n"
+"  dueToday {À rendre aujourd'hui}\n"
+"  overdue {En retard}\n"
+"  reserved {Réservé}\n"
+"  other {Inconnu}\n"
+"}"
+
+#: src/main.ts:47
+msgid ""
+"{left, plural,\n"
+"  one {You can renew this # more time}\n"
+"  other {You can renew this # more times}\n"
+"}"
+msgstr ""
+"{left, plural,\n"
+"  one {Vous pouvez le prolonger encore # fois}\n"
+"  other {Vous pouvez le prolonger encore # fois}\n"
+"}"
+
+#: src/main.ts:62
+msgid "by {0}"
+msgstr "par {0}"
+
+#: src/main.ts:144
+msgid "City Library"
+msgstr "Bibliothèque municipale"
+
+#: src/main.ts:23
+msgid "Due back today"
+msgstr "À rendre aujourd'hui"
+
+#: src/main.ts:115
+msgid "Language"
+msgstr "Langue"
+
+#: src/main.ts:150
+msgctxt "page heading"
+msgid "My loans"
+msgstr "Mes emprunts"
+
+#: src/main.ts:104
+msgid "No fines owing. Thank you!"
+msgstr "Aucune amende à régler. Merci !"
+
+#: src/main.ts:45
+msgid "No renewals left — please return this book"
+msgstr "Plus de prolongation possible — merci de rapporter ce livre"
+
+#: src/main.ts:100
+msgid "Outstanding fines: {0}"
+msgstr "Amendes à régler : {0}"
+
+#: src/main.ts:89
+msgid ""
+"You are {holdPosition, selectordinal,\n"
+"  one {#st}\n"
+"  two {#nd}\n"
+"  few {#rd}\n"
+"  other {#th}\n"
+"} in the hold queue"
+msgstr ""
+"Vous êtes {holdPosition, selectordinal,\n"
+"  one {#er}\n"
+"  other {#e}\n"
+"} dans la file d'attente"

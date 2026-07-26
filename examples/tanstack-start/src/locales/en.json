@@ -1,9 +1,13 @@
 {
-  "@@locale": "en",
-  "9WBS3k": "Reset",
-  "@9WBS3k": {
-    "x-saykit-context": "counter"
-  },
-  "kdkZBD": "Increment",
-  "Pou3Ol": "Count: {count}"
+  "7Np4Wc": "their {0, selectordinal,\n  one {#st}\n  two {#nd}\n  few {#rd}\n  other {#th}\n} time on this stage",
+  "9Fm34u": "{0, select,\n  platform {Platform track}\n  product {Product track}\n  community {Community track}\n  other {Main track}\n}",
+  "Aw3OgN": "The full program — {0, plural,\n  one {# session}\n  other {# sessions}\n}, including {workshops, plural,\n  one {# workshop}\n  other {# workshops}\n}.",
+  "d6yzLv": "Kōrero Conf",
+  "IegPFg": "Presented by <0>{1}</0>",
+  "mXzv4S": "Fully booked",
+  "podVzJ": "{0, plural,\n  one {# seat left}\n  other {# seats left}\n}",
+  "QDqUP3": "{0, select,\n  talk {Talk}\n  workshop {Workshop}\n  lightning {Lightning talk}\n  break {Break}\n  other {Session}\n}",
+  "vXIe7J": "Language",
+  "yVpZ7e": "{0, plural,\n  one {# minute}\n  other {# minutes}\n}",
+  "YWduel": "Open to everyone"
 }

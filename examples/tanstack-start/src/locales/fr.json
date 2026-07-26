@@ -1,6 +1,13 @@
 {
-  "@@locale": "fr",
-  "9WBS3k": "Réinitialiser",
-  "kdkZBD": "Incrémenter",
-  "Pou3Ol": "Compteur : {count}"
+  "7Np4Wc": "leur {0, selectordinal,\n  one {#re}\n  other {#e}\n} intervention sur cette scène",
+  "9Fm34u": "{0, select,\n  platform {Parcours plateforme}\n  product {Parcours produit}\n  community {Parcours communauté}\n  other {Parcours principal}\n}",
+  "Aw3OgN": "Le programme complet — {0, plural,\n  one {# session}\n  other {# sessions}\n}, dont {workshops, plural,\n  one {# atelier}\n  other {# ateliers}\n}.",
+  "d6yzLv": "Kōrero Conf",
+  "IegPFg": "Présenté par <0>{1}</0>",
+  "mXzv4S": "Complet",
+  "podVzJ": "{0, plural,\n  one {# place restante}\n  other {# places restantes}\n}",
+  "QDqUP3": "{0, select,\n  talk {Conférence}\n  workshop {Atelier}\n  lightning {Conférence éclair}\n  break {Pause}\n  other {Session}\n}",
+  "vXIe7J": "Langue",
+  "yVpZ7e": "{0, plural,\n  one {# minute}\n  other {# minutes}\n}",
+  "YWduel": "Ouvert à tous"
 }

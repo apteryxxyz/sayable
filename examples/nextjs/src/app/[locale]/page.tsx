@@ -1,19 +1,38 @@
+import { Say } from '@saykit/react';
+import { getSay } from '@saykit/react/server';
+import { currency, freeShippingThresholdInCents, products } from '../../catalogue';
 import { withSay } from '../../i18n';
-import ClientComponent from './client-component';
-import ServerComponent from './server-component';
+import { ProductCard } from './product-card';
 
-function HomePage(_: PageProps<'/[locale]'>) {
+type StorefrontPageProps = { params: Promise<{ locale: string }> };
+
+function StorefrontPage(_: StorefrontPageProps) {
+  // A plain server component can reach the request-scoped instance directly.
+  // Useful when you need the locale as *data* — here, to format a price — rather
+  // than a rendered message.
+  const say = getSay();
+  const threshold = new Intl.NumberFormat(say.locale, { style: 'currency', currency }).format(
+    freeShippingThresholdInCents / 100,
+  );
+
   return (
-    <main>
-      <div style={{ border: '1px solid red' }}>
-        <ServerComponent />
-      </div>
+    <>
+      <section className="hero">
+        <h1>
+          <Say>Freshly roasted, shipped Thursdays</Say>
+        </h1>
+        <p>
+          <Say>Free delivery on orders over {threshold}.</Say>
+        </p>
+      </section>
 
-      <div style={{ border: '1px solid blue' }}>
-        <ClientComponent />
-      </div>
-    </main>
+      <section className="grid">
+        {products.map((product) => (
+          <ProductCard key={product.slug} product={product} />
+        ))}
+      </section>
+    </>
   );
 }
 
-export default withSay(HomePage, (p) => p.params.then((p) => p.locale));
+export default withSay(StorefrontPage, (props) => props.params.then((params) => params.locale));

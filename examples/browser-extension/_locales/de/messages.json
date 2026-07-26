@@ -1,0 +1,34 @@
+{
+  "1XSX6v": {
+    "message": "Hier gibt es nichts zu lesen."
+  },
+  "2PqXjs": {
+    "message": "{0, plural,\n  one {# Link}\n  other {# Links}\n}"
+  },
+  "9EHvsj": {
+    "message": "Diese Seite ist auf {0} verfasst."
+  },
+  "extensionDescription": {
+    "message": "Schätzt, wie lange das Lesen einer Seite dauert.",
+    "description": "The extension's one-line store description."
+  },
+  "extensionName": {
+    "message": "Lesezeit",
+    "description": "The extension's name, shown in the Chrome Web Store and toolbar."
+  },
+  "Kg6WIx": {
+    "message": "Lesezeit"
+  },
+  "oMxotq": {
+    "message": "{0} Wörter bei {1} Wörtern pro Minute"
+  },
+  "RHQ2b0": {
+    "message": "Diese Seite kann ich nicht lesen."
+  },
+  "WdI7wV": {
+    "message": "{minutes, plural,\n  one {Etwa # Minute}\n  other {Etwa # Minuten}\n}"
+  },
+  "YPf_tC": {
+    "message": "{0, plural,\n  one {# Bild}\n  other {# Bilder}\n}"
+  }
+}

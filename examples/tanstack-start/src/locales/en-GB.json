@@ -1,0 +1,4 @@
+{
+  "Aw3OgN": "The full programme — {0, plural,\n  one {# session}\n  other {# sessions}\n}, including {workshops, plural,\n  one {# workshop}\n  other {# workshops}\n}.",
+  "QDqUP3": "{0, select,\n  talk {Talk}\n  workshop {Workshop}\n  lightning {Lightning talk}\n  break {Tea break}\n  other {Session}\n}"
+}

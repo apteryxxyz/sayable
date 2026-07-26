@@ -1,0 +1,128 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: pl\n"
+"X-Generator: saykit\n"
+
+#: src/main.ts:82
+msgid ""
+"{0, plural,\n"
+"  =0 {You have nothing on loan}\n"
+"  one {You have # book on loan}\n"
+"  other {You have # books on loan}\n"
+"}"
+msgstr ""
+"{0, plural,\n"
+"  =0 {Nie masz żadnych wypożyczeń}\n"
+"  one {Masz wypożyczoną # książkę}\n"
+"  few {Masz wypożyczone # książki}\n"
+"  many {Masz wypożyczonych # książek}\n"
+"  other {Masz wypożyczone # książki}\n"
+"}"
+
+#: src/main.ts:26
+msgid ""
+"{0, plural,\n"
+"  one {Due in # day}\n"
+"  other {Due in # days}\n"
+"}"
+msgstr ""
+"{0, plural,\n"
+"  one {Do zwrotu za # dzień}\n"
+"  few {Do zwrotu za # dni}\n"
+"  many {Do zwrotu za # dni}\n"
+"  other {Do zwrotu za # dnia}\n"
+"}"
+
+#: src/main.ts:17
+msgid ""
+"{0, plural,\n"
+"  one {Overdue by # day}\n"
+"  other {Overdue by # days}\n"
+"}"
+msgstr ""
+"{0, plural,\n"
+"  one {Zaległość # dzień}\n"
+"  few {Zaległość # dni}\n"
+"  many {Zaległość # dni}\n"
+"  other {Zaległość # dnia}\n"
+"}"
+
+#: src/main.ts:33
+msgid ""
+"{0, select,\n"
+"  onLoan {On loan}\n"
+"  dueToday {Due today}\n"
+"  overdue {Overdue}\n"
+"  reserved {Reserved}\n"
+"  other {Unknown}\n"
+"}"
+msgstr ""
+"{0, select,\n"
+"  onLoan {Wypożyczona}\n"
+"  dueToday {Do zwrotu dzisiaj}\n"
+"  overdue {Po terminie}\n"
+"  reserved {Zarezerwowana}\n"
+"  other {Nieznany}\n"
+"}"
+
+#: src/main.ts:47
+msgid ""
+"{left, plural,\n"
+"  one {You can renew this # more time}\n"
+"  other {You can renew this # more times}\n"
+"}"
+msgstr ""
+"{left, plural,\n"
+"  one {Możesz przedłużyć jeszcze # raz}\n"
+"  few {Możesz przedłużyć jeszcze # razy}\n"
+"  many {Możesz przedłużyć jeszcze # razy}\n"
+"  other {Możesz przedłużyć jeszcze # raza}\n"
+"}"
+
+#: src/main.ts:62
+msgid "by {0}"
+msgstr "autor: {0}"
+
+#: src/main.ts:144
+msgid "City Library"
+msgstr "Biblioteka Miejska"
+
+#: src/main.ts:23
+msgid "Due back today"
+msgstr "Do zwrotu dzisiaj"
+
+#: src/main.ts:115
+msgid "Language"
+msgstr "Język"
+
+#: src/main.ts:150
+msgctxt "page heading"
+msgid "My loans"
+msgstr "Moje wypożyczenia"
+
+#: src/main.ts:104
+msgid "No fines owing. Thank you!"
+msgstr "Brak zaległych opłat. Dziękujemy!"
+
+#: src/main.ts:45
+msgid "No renewals left — please return this book"
+msgstr "Brak możliwości przedłużenia — prosimy o zwrot książki"
+
+#: src/main.ts:100
+msgid "Outstanding fines: {0}"
+msgstr "Zaległe opłaty: {0}"
+
+#: src/main.ts:89
+msgid ""
+"You are {holdPosition, selectordinal,\n"
+"  one {#st}\n"
+"  two {#nd}\n"
+"  few {#rd}\n"
+"  other {#th}\n"
+"} in the hold queue"
+msgstr ""
+"Jesteś na {holdPosition, selectordinal,\n"
+"  other {#.}\n"
+"} miejscu w kolejce"

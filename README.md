@@ -41,14 +41,27 @@ This is a pnpm monorepo. The published packages live in [`packages/*`](./package
 | [`@saykit/transform-js`](./packages/transform-js)   | JS/TS macro transformer (used by plugins)                            |
 | [`@saykit/transform-jsx`](./packages/transform-jsx) | JSX/TSX macro transformer (used by plugins)                          |
 | [`@saykit/format-po`](./packages/format-po)         | Gettext PO formatter                                                 |
+| [`@saykit/format-json`](./packages/format-json)     | JSON formatter, with ARB and WebExtension dialects                   |
 
 ## Examples
 
-End-to-end examples live in [`examples/*`](./examples):
+End-to-end examples live in [`examples/*`](./examples). Each one is a small but complete app, with
+a README explaining which parts of SayKit it exercises and why.
 
-- [`examples/nextjs`](./examples/nextjs): Next.js App Router with the Babel plugin
-- [`examples/tanstack-start`](./examples/tanstack-start): TanStack Start with Vite + unplugin
-- [`examples/carbon`](./examples/carbon): Carbon Discord bot deployed to Cloudflare Workers
+| Example                                             | Stack                                    | Read it for                                                      |
+| --------------------------------------------------- | ---------------------------------------- | ---------------------------------------------------------------- |
+| [`vanilla`](./examples/vanilla)                     | TypeScript + Vite                        | The whole picture end to end — start here                        |
+| [`react`](./examples/react)                         | React 19 SPA + Vite                      | `SayProvider`, rich-text messages, code-split catalogues         |
+| [`nextjs`](./examples/nextjs)                       | Next.js App Router + Babel               | Server Components, `getSay`, middleware locale detection         |
+| [`tanstack-start`](./examples/tanstack-start)       | TanStack Start + Vite                    | Fallback chains (`en-NZ → en-GB → en`), SSR locale negotiation   |
+| [`expo`](./examples/expo)                           | Expo / React Native + Metro              | The `whitespace` prop, device locale                             |
+| [`carbon`](./examples/carbon)                       | Carbon Discord bot on Cloudflare Workers | Per-locale command registration, `interaction.say` / `guild.say` |
+| [`browser-extension`](./examples/browser-extension) | Chrome MV3 + Vite                        | The `webextension` JSON dialect, writing into `_locales/`        |
+| [`custom-formatter`](./examples/custom-formatter)   | Node CLI + tsdown                        | Writing your own `Formatter` and `Transformer`                   |
+
+Between them they cover the plural shapes that actually catch people out — English and French
+(`one`/`other`), Polish (`one`/`few`/`many`/`other`), and Japanese (`other` only) — across Gettext
+PO, plain JSON, the WebExtension JSON dialect, and a hand-written YAML format.
 
 ## Quick start
 

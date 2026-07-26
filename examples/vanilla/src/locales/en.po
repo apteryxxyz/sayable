@@ -1,0 +1,130 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: \n"
+"PO-Revision-Date: \n"
+"Last-Translator: \n"
+"Language: en\n"
+"Language-Team: \n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: \n"
+"X-Generator: saykit\n"
+
+#: src/main.ts:82
+msgid ""
+"{0, plural,\n"
+"  =0 {You have nothing on loan}\n"
+"  one {You have # book on loan}\n"
+"  other {You have # books on loan}\n"
+"}"
+msgstr ""
+"{0, plural,\n"
+"  =0 {You have nothing on loan}\n"
+"  one {You have # book on loan}\n"
+"  other {You have # books on loan}\n"
+"}"
+
+#: src/main.ts:26
+msgid ""
+"{0, plural,\n"
+"  one {Due in # day}\n"
+"  other {Due in # days}\n"
+"}"
+msgstr ""
+"{0, plural,\n"
+"  one {Due in # day}\n"
+"  other {Due in # days}\n"
+"}"
+
+#: src/main.ts:17
+msgid ""
+"{0, plural,\n"
+"  one {Overdue by # day}\n"
+"  other {Overdue by # days}\n"
+"}"
+msgstr ""
+"{0, plural,\n"
+"  one {Overdue by # day}\n"
+"  other {Overdue by # days}\n"
+"}"
+
+#: src/main.ts:33
+msgid ""
+"{0, select,\n"
+"  onLoan {On loan}\n"
+"  dueToday {Due today}\n"
+"  overdue {Overdue}\n"
+"  reserved {Reserved}\n"
+"  other {Unknown}\n"
+"}"
+msgstr ""
+"{0, select,\n"
+"  onLoan {On loan}\n"
+"  dueToday {Due today}\n"
+"  overdue {Overdue}\n"
+"  reserved {Reserved}\n"
+"  other {Unknown}\n"
+"}"
+
+#: src/main.ts:47
+msgid ""
+"{left, plural,\n"
+"  one {You can renew this # more time}\n"
+"  other {You can renew this # more times}\n"
+"}"
+msgstr ""
+"{left, plural,\n"
+"  one {You can renew this # more time}\n"
+"  other {You can renew this # more times}\n"
+"}"
+
+#: src/main.ts:62
+msgid "by {0}"
+msgstr "by {0}"
+
+#: src/main.ts:143
+msgid "City Library"
+msgstr "City Library"
+
+#: src/main.ts:23
+msgid "Due back today"
+msgstr "Due back today"
+
+#: src/main.ts:115
+msgid "Language"
+msgstr "Language"
+
+#: src/main.ts:149
+msgctxt "page heading"
+msgid "My loans"
+msgstr "My loans"
+
+#: src/main.ts:104
+msgid "No fines owing. Thank you!"
+msgstr "No fines owing. Thank you!"
+
+#: src/main.ts:45
+msgid "No renewals left — please return this book"
+msgstr "No renewals left — please return this book"
+
+#: src/main.ts:100
+msgid "Outstanding fines: {0}"
+msgstr "Outstanding fines: {0}"
+
+#: src/main.ts:89
+msgid ""
+"You are {holdPosition, selectordinal,\n"
+"  one {#st}\n"
+"  two {#nd}\n"
+"  few {#rd}\n"
+"  other {#th}\n"
+"} in the hold queue"
+msgstr ""
+"You are {holdPosition, selectordinal,\n"
+"  one {#st}\n"
+"  two {#nd}\n"
+"  few {#rd}\n"
+"  other {#th}\n"
+"} in the hold queue"

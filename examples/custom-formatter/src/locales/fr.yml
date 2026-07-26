@@ -1,0 +1,68 @@
+locale: fr
+messages:
+  0fXHbg:
+    source: |-
+      {0, select,
+        succeeded {Deploy succeeded}
+        failed {Deploy failed}
+        rolledBack {Deploy rolled back}
+        cancelled {Deploy cancelled}
+        other {Deploy finished}
+      }
+    translation: |-
+      {0, select,
+        succeeded {Déploiement réussi}
+        failed {Déploiement en échec}
+        rolledBack {Déploiement annulé}
+        cancelled {Déploiement interrompu}
+        other {Déploiement terminé}
+      }
+  95MV8H:
+    source: |-
+      {0, plural,
+        one {# check failed:}
+        other {# checks failed:}
+      }
+    translation: |-
+      {0, plural,
+        one {# vérification en échec :}
+        other {# vérifications en échec :}
+      }
+  ezoyqP:
+    source: |-
+      {0, plural,
+        =0 {no files changed}
+        one {# file changed}
+        other {# files changed}
+      }
+    translation: |-
+      {0, plural,
+        =0 {aucun fichier modifié}
+        one {# fichier modifié}
+        other {# fichiers modifiés}
+      }
+  Grr5Lm:
+    source: |-
+      {0, selectordinal,
+        one {#st}
+        two {#nd}
+        few {#rd}
+        other {#th}
+      }
+    translation: |-
+      {0, selectordinal,
+        one {#er}
+        other {#e}
+      }
+  LJYhIN:
+    source: '{0} → {1}, {files}, {duration}.'
+    translation: '{0} → {1}, {files}, {duration}.'
+  SqbuVL:
+    source: This is the {attempt} deploy to {0} today.
+    translation: C'est le {attempt} déploiement vers {0} aujourd'hui.
+  vxDqZR:
+    source: '{actor} deployed {sha} to {environment}. {changed} files changed, {duration} elapsed. Full log: {url}'
+    translation: '{actor} a déployé {sha} sur {environment}. {changed} fichiers modifiés, {duration} écoulées. Journal complet : {url}'
+    comments:
+      - Sent to the on-call engineer once a deploy finishes.
+      - Keep it short — this is read on a phone, often at an unsociable hour.

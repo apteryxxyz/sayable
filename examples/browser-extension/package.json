@@ -1,0 +1,23 @@
+{
+  "name": "browser-extension-example",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "tsc --noEmit",
+    "extract": "saykit extract",
+    "build": "vite build",
+    "dev": "vite build --watch"
+  },
+  "dependencies": {
+    "saykit": "workspace:^"
+  },
+  "devDependencies": {
+    "@saykit/config": "workspace:^",
+    "@saykit/format-json": "workspace:^",
+    "@saykit/transform-js": "workspace:^",
+    "@types/chrome": "^0.1.28",
+    "typescript": "^6.0.3",
+    "unplugin-saykit": "workspace:^",
+    "vite": "^8.1.5"
+  }
+}

@@ -1,0 +1,67 @@
+locale: de
+messages:
+  0fXHbg:
+    source: |-
+      {0, select,
+        succeeded {Deploy succeeded}
+        failed {Deploy failed}
+        rolledBack {Deploy rolled back}
+        cancelled {Deploy cancelled}
+        other {Deploy finished}
+      }
+    translation: |-
+      {0, select,
+        succeeded {Deployment erfolgreich}
+        failed {Deployment fehlgeschlagen}
+        rolledBack {Deployment zurückgerollt}
+        cancelled {Deployment abgebrochen}
+        other {Deployment beendet}
+      }
+  95MV8H:
+    source: |-
+      {0, plural,
+        one {# check failed:}
+        other {# checks failed:}
+      }
+    translation: |-
+      {0, plural,
+        one {# Prüfung fehlgeschlagen:}
+        other {# Prüfungen fehlgeschlagen:}
+      }
+  ezoyqP:
+    source: |-
+      {0, plural,
+        =0 {no files changed}
+        one {# file changed}
+        other {# files changed}
+      }
+    translation: |-
+      {0, plural,
+        =0 {keine Dateien geändert}
+        one {# Datei geändert}
+        other {# Dateien geändert}
+      }
+  Grr5Lm:
+    source: |-
+      {0, selectordinal,
+        one {#st}
+        two {#nd}
+        few {#rd}
+        other {#th}
+      }
+    translation: |-
+      {0, selectordinal,
+        other {#.}
+      }
+  LJYhIN:
+    source: '{0} → {1}, {files}, {duration}.'
+    translation: '{0} → {1}, {files}, {duration}.'
+  SqbuVL:
+    source: This is the {attempt} deploy to {0} today.
+    translation: Das ist das {attempt} Deployment nach {0} heute.
+  vxDqZR:
+    source: '{actor} deployed {sha} to {environment}. {changed} files changed, {duration} elapsed. Full log: {url}'
+    translation: '{actor} hat {sha} nach {environment} deployt. {changed} Dateien geändert, {duration} vergangen. Vollständiges Log: {url}'
+    comments:
+      - Sent to the on-call engineer once a deploy finishes.
+      - Keep it short — this is read on a phone, often at an unsociable hour.
