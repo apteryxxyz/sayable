@@ -1,7 +1,7 @@
 import type { Formatter } from '@saykit/config';
 import PO from 'pofile';
 
-interface PoFormatterOptions {
+interface FormatterOptions {
   /**
    * Include source references in the generated PO file.
    * @default true
@@ -15,7 +15,7 @@ interface PoFormatterOptions {
   includeLineNumbers?: boolean;
 }
 
-function createPoFormatter(options: PoFormatterOptions = {}): Formatter {
+function createPoFormatter(options: FormatterOptions = {}): Formatter {
   return {
     extension: '.po',
 
@@ -77,5 +77,5 @@ function createPoFormatter(options: PoFormatterOptions = {}): Formatter {
   };
 }
 
-export type { PoFormatterOptions };
+export type { FormatterOptions };
 export default createPoFormatter;

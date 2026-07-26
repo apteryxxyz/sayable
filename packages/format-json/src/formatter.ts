@@ -14,7 +14,7 @@ function messageKey(message: Message) {
   return message.id ?? generateHash(message.message, message.context);
 }
 
-interface JsonFormatterOptions {
+interface FormatterOptions {
   /**
    * The JSON dialect to write. A dialect other than the default plain
    * `{ key: value }` map carries message metadata (comments, context, source
@@ -58,7 +58,7 @@ function isRecord(value: unknown): value is Attributes {
 }
 
 /** Build the metadata attributes shared by the ARB and WebExtension layouts. */
-function toAttributes(message: Message, options: JsonFormatterOptions): Attributes {
+function toAttributes(message: Message, options: FormatterOptions): Attributes {
   const attributes: Attributes = {};
   if (message.comments.length) attributes.description = message.comments.join('\n');
   if (message.context) attributes[CONTEXT_FIELD] = message.context;
@@ -99,7 +99,7 @@ function toMessage(key: string, value: string, attributes?: Attributes): Message
   };
 }
 
-function createJsonFormatter(options: JsonFormatterOptions = {}): Formatter {
+function createJsonFormatter(options: FormatterOptions = {}): Formatter {
   return {
     extension: '.json',
 
@@ -162,5 +162,5 @@ function createJsonFormatter(options: JsonFormatterOptions = {}): Formatter {
   };
 }
 
-export type { JsonFormatterOptions, Dialect };
+export type { FormatterOptions, Dialect };
 export default createJsonFormatter;
