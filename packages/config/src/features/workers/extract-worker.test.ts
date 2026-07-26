@@ -84,11 +84,11 @@ describe('BucketExtractWorker.write', () => {
       msg({ id: 'extensionName', message: 'Reading Time', references: ['src/app.ts:1'] }),
     ]);
 
-    const [declared] = readLocale('en').filter((m) => m.id === 'extensionName');
-    expect(readLocale('en')).toHaveLength(1);
-    expect(declared.comments).toEqual(['The name']);
+    const entries = readLocale('en');
+    expect(entries).toHaveLength(1);
+    expect(entries[0]?.comments).toEqual(['The name']);
     // The call site still contributes its reference.
-    expect(declared.references).toEqual(['src/app.ts:1']);
+    expect(entries[0]?.references).toEqual(['src/app.ts:1']);
   });
 
   it('creates a header-only file for a locale that does not exist yet', async () => {
