@@ -53,7 +53,8 @@ export class BucketExtractWorker extends BucketWorker {
       );
     await Promise.all(paths.map((p) => this.#indexPath(p)));
 
-    this.logger.info(`Total extracted messages: ${this.#indexedMessages.length}`);
+    const extracted = Array.from(this.#indexedMessagesByPath.values()).flat().length;
+    this.logger.info(`Total extracted messages: ${extracted}`);
   }
 
   async write() {

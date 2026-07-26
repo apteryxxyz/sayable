@@ -81,11 +81,12 @@ describe('BucketExtractWorker.write', () => {
     ];
 
     await extract([
-      msg({ id: 'extensionName', message: 'Reading Time', references: ['src/app.ts:1'] }),
+      msg({ id: 'extensionName', message: 'Extracted Name', references: ['src/app.ts:1'] }),
     ]);
 
     const entries = readLocale('en');
     expect(entries).toHaveLength(1);
+    expect(entries[0]?.message).toBe('Reading Time');
     expect(entries[0]?.comments).toEqual(['The name']);
     // The call site still contributes its reference.
     expect(entries[0]?.references).toEqual(['src/app.ts:1']);
