@@ -14,7 +14,7 @@ function messageKey(message: Message) {
   return message.id ?? generateHash(message.message, message.context);
 }
 
-interface FormatterOptions {
+interface JsonFormatterOptions {
   /**
    * The JSON dialect to write. A dialect other than the default plain
    * `{ key: value }` map carries message metadata (comments, context, source
@@ -32,6 +32,20 @@ interface FormatterOptions {
    * metadata.
    */
   dialect?: Dialect;
+
+  /**
+   * Include source references in the generated catalogue. Only the metadata
+   * carrying dialects have anywhere to put them, so this has no effect on the
+   * plain layout.
+   * @default true
+   */
+  includeReferences?: boolean;
+
+  /**
+   * Include line numbers in source references.
+   * @default true
+   */
+  includeLineNumbers?: boolean;
 }
 
 const CONTEXT_FIELD = 'x-saykit-context';
@@ -44,11 +58,19 @@ function isRecord(value: unknown): value is Attributes {
 }
 
 /** Build the metadata attributes shared by the ARB and WebExtension layouts. */
-function toAttributes(message: Message): Attributes {
+function toAttributes(message: Message, options: JsonFormatterOptions): Attributes {
   const attributes: Attributes = {};
   if (message.comments.length) attributes.description = message.comments.join('\n');
   if (message.context) attributes[CONTEXT_FIELD] = message.context;
-  if (message.references.length) attributes[REFERENCES_FIELD] = message.references;
+
+  if (options.includeReferences !== false) {
+    let references = message.references ?? [];
+    if (options.includeLineNumbers === false)
+      references = references.map((r) => r.replace(/:\d+$/, ''));
+    references = Array.from(new Set(references)).sort();
+    if (references.length) attributes[REFERENCES_FIELD] = references;
+  }
+
   return attributes;
 }
 
@@ -77,7 +99,7 @@ function toMessage(key: string, value: string, attributes?: Attributes): Message
   };
 }
 
-function createJsonFormatter(options: FormatterOptions = {}): Formatter {
+function createJsonFormatter(options: JsonFormatterOptions = {}): Formatter {
   return {
     extension: '.json',
 
@@ -114,7 +136,7 @@ function createJsonFormatter(options: FormatterOptions = {}): Formatter {
         for (const message of sorted) {
           const key = messageKey(message);
           catalogue[key] = message.translation ?? '';
-          const attributes = toAttributes(message);
+          const attributes = toAttributes(message, options);
           if (Object.keys(attributes).length) catalogue[`@${key}`] = attributes;
         }
         return `${JSON.stringify(catalogue, null, 2)}\n`;
@@ -125,7 +147,7 @@ function createJsonFormatter(options: FormatterOptions = {}): Formatter {
         for (const message of sorted) {
           catalogue[messageKey(message)] = {
             message: message.translation ?? '',
-            ...toAttributes(message),
+            ...toAttributes(message, options),
           };
         }
         return `${JSON.stringify(catalogue, null, 2)}\n`;
@@ -140,5 +162,5 @@ function createJsonFormatter(options: FormatterOptions = {}): Formatter {
   };
 }
 
-export type { FormatterOptions, Dialect };
+export type { JsonFormatterOptions, Dialect };
 export default createJsonFormatter;
