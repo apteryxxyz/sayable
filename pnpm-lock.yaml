@@ -116,9 +116,6 @@ importers:
         specifier: ^2.8.1
         version: 2.9.0
     devDependencies:
-      '@example/saykit-yaml':
-        specifier: workspace:*
-        version: link:saykit-yaml
       '@saykit/config':
         specifier: workspace:^
         version: link:../../packages/config
@@ -134,19 +131,6 @@ importers:
       unplugin-saykit:
         specifier: workspace:^
         version: link:../../packages/plugin-unplugin
-
-  examples/custom-formatter/saykit-yaml:
-    dependencies:
-      yaml:
-        specifier: ^2.8.1
-        version: 2.9.0
-    devDependencies:
-      '@saykit/config':
-        specifier: workspace:^
-        version: link:../../../packages/config
-      typescript:
-        specifier: ^6.0.3
-        version: 6.0.3
 
   examples/expo:
     dependencies:

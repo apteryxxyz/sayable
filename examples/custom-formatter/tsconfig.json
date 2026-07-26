@@ -1,5 +1,11 @@
 {
   "extends": "../../tsconfig.base.json",
-  "include": ["src/**/*", "saykit/**/*", "saykit.config.ts", "tsdown.config.ts"],
+  "include": [
+    "src/**/*",
+    "yaml-formatter.ts",
+    "email-transformer.ts",
+    "saykit.config.ts",
+    "tsdown.config.ts"
+  ],
   "compilerOptions": { "paths": { "~/*": ["./src/*"] } }
 }

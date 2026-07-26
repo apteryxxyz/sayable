@@ -9,16 +9,15 @@ never heard of, this is the example.
 
 ## What it demonstrates
 
-| Concern                                                      | Where                            |
-| ------------------------------------------------------------ | -------------------------------- |
-| A custom `Formatter` (`extension` / `parse` / `stringify`)   | `saykit-yaml/src/formatter.ts`   |
-| `existingContent` — not clobbering human edits               | `saykit-yaml/src/formatter.ts`   |
-| `generateHash` — keying messages the way the runtime expects | both files                       |
-| A custom `Transformer` (`match` / `extract` / `transform`)   | `saykit-yaml/src/transformer.ts` |
-| Compiling a **non-JS** file into a module                    | `saykit-yaml/src/transformer.ts` |
-| Why extensions must be a **package**, not a relative import  | `saykit-yaml/README.md`          |
-| Ambient types for the generated module                       | `src/templates.d.ts`             |
-| Locale from `LC_ALL` / `LC_MESSAGES` / `LANG`                | `src/i18n.ts`                    |
+| Concern                                                      | Where                  |
+| ------------------------------------------------------------ | ---------------------- |
+| A custom `Formatter` (`extension` / `parse` / `stringify`)   | `yaml-formatter.ts`    |
+| `existingContent` — not clobbering human edits               | `yaml-formatter.ts`    |
+| `generateHash` — keying messages the way the runtime expects | both files             |
+| A custom `Transformer` (`match` / `extract` / `transform`)   | `email-transformer.ts` |
+| Compiling a **non-JS** file into a module                    | `email-transformer.ts` |
+| Ambient types for the generated module                       | `src/templates.d.ts`   |
+| Locale from `LC_ALL` / `LC_MESSAGES` / `LANG`                | `src/i18n.ts`          |
 
 ## Writing a formatter
 
@@ -90,20 +89,19 @@ A bucket accepts an array. Each transformer declares what it owns via `match`, a
 handed to the ones that claim it — `js()` takes `.ts`, `email()` takes `.email`. Extraction unions
 their results; transformation pipes the file through each matching one in order.
 
-## Why the extensions live in their own package
+## Importing them
 
-`saykit.config.ts` imports them by package name, not relatively:
+`saykit.config.ts` picks both up relatively, straight off disk:
 
 ```ts
-import yaml from '@example/saykit-yaml/formatter';
-import email from '@example/saykit-yaml/transformer';
+import email from './email-transformer.ts';
+import yaml from './yaml-formatter.ts';
 ```
 
-That is not stylistic. `@saykit/config` compiles the config into
-`node_modules/.cache/saykit/config/*.cjs` and `require`s it from there, so a relative specifier
-resolves against the cache directory and fails. Custom extensions have to be reachable by package
-name — a workspace package, a `file:` dependency, or something published. See
-[`saykit-yaml/README.md`](./saykit-yaml/README.md).
+Note the `.ts` — the config is handed to the runtime as it sits, so specifiers are resolved by Node
+and nothing rewrites the extension for you. That needs Node 22.18+ (or Bun, Deno, or `tsx`) to read
+TypeScript. Bare specifiers work too, so a formatter you intend to reuse across projects can just as
+well be a published package.
 
 ## Running it
 
