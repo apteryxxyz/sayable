@@ -42,7 +42,7 @@ relative imports, `import.meta.dirname` and `__dirname` all resolve against the 
 directory. A config is free to import a formatter or transformer from alongside it:
 
 ```ts title="saykit.config.ts"
-import { yaml } from './saykit/yaml-formatter.ts';
+import { yaml } from './yaml-formatter.ts';
 ```
 
 Reading TypeScript requires Node 22.18+, or a runtime that loads it itself (Bun, Deno, tsx). Note
