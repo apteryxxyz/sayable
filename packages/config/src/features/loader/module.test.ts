@@ -137,15 +137,43 @@ describe('ts loader', () => {
     }
   });
 
-  it('explains itself when the runtime cannot read the syntax', () => {
+  it('explains non-erasable syntax', () => {
     const root = createProject({
-      // Enums are not erasable, so no type-stripping runtime accepts them.
       'saykit.config.ts': `
         enum Locale { En = 'en' }
         export default { locales: [Locale.En] };
       `,
     });
 
-    expect(() => ts(join(root, 'saykit.config.ts'))).toThrow('Node 22.18+');
+    expect(() => ts(join(root, 'saykit.config.ts'))).toThrow('not erasable');
+  });
+
+  it('explains top-level await', () => {
+    const root = createProject({
+      'saykit.config.ts': `
+        await Promise.resolve();
+        export default { locales: ['en'] };
+      `,
+    });
+
+    expect(() => ts(join(root, 'saykit.config.ts'))).toThrow('top-level await');
+  });
+
+  it('does not blame TypeScript for a syntax error in a JavaScript config', () => {
+    const root = createProject({ 'saykit.config.js': `export default { locales: [ };` });
+
+    try {
+      ts(join(root, 'saykit.config.js'));
+      expect.unreachable();
+    } catch (error) {
+      expect((error as Error).message).toBe('Failed to import module');
+      expect((error as Error).cause).toBeInstanceOf(SyntaxError);
+    }
+  });
+
+  it('does not blame the runtime for a syntax error in a TypeScript config', () => {
+    const root = createProject({ 'saykit.config.ts': `export default { locales: [ };` });
+
+    expect(() => ts(join(root, 'saykit.config.ts'))).toThrow(/^Failed to import module$/);
   });
 });
