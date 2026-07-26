@@ -110,12 +110,7 @@ Keys that exist in the source but not in a locale file are deliberately left alo
 
 The CLI searches for `saykit.config.{ts,mts,cts,js,mjs,cjs}` starting from the current working directory and walking up the tree. The first match wins.
 
-TypeScript configs are transpiled on the fly with results cached under `node_modules/.cache/saykit/config/`. The cache is invalidated when:
-
-- the config file's `mtime` changes
-- any `tsconfig.json` between the config and the workspace root changes
-
-You usually don't need to think about this, the first run is a little slower, subsequent runs are fast.
+TypeScript configs are read by the runtime directly, which needs Node 22.18+ or a runtime that loads TypeScript itself (Bun, Deno, tsx). Nothing is written to disk, and a config can import from alongside it as normal — using the real extension, `./formatter.ts` rather than `./formatter.js`.
 
 ## Running from `package.json`
 

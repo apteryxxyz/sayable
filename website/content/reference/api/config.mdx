@@ -189,7 +189,7 @@ import { resolveConfig } from '@saykit/config/features/loader';
 
 #### `resolveConfig(name?)`
 
-Search up from `process.cwd()` for `saykit.config.{ts,mts,cts,js,mjs,cjs}` (or `${name}.config.*`), transpile it if necessary, and return the validated `Config`.
+Search up from `process.cwd()` for `saykit.config.{ts,mts,cts,js,mjs,cjs}` (or `${name}.config.*`), load it, and return the validated `Config`.
 
 ```ts
 const config = resolveConfig(); // looks for saykit.config.*
@@ -202,7 +202,7 @@ Used by:
 - `unplugin-saykit`
 - `babel-plugin-saykit`
 
-Transpiled TS configs are cached in `node_modules/.cache/saykit/config/`, keyed by the config file's mtime and the workspace's `tsconfig.json` mtimes.
+The config is loaded from where it sits, so its relative imports and `import.meta.dirname` resolve against its own directory. Reading TypeScript requires Node 22.18+ or a runtime that loads it itself (Bun, Deno, tsx).
 
 ### `@saykit/config/features/messages`
 

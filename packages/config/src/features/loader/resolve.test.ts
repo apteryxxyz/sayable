@@ -4,8 +4,6 @@ import { afterAll, afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { resolveConfig } from './resolve.js';
 
 const cwd = process.cwd();
-// Inside the repo so the module loader's `createRequire` can resolve
-// `typescript` from the root node_modules when transpiling the config.
 const dir = mkdtempSync(join(cwd, '.tmp-loader-'));
 
 afterAll(() => rmSync(dir, { recursive: true, force: true }));
@@ -13,7 +11,7 @@ beforeEach(() => process.chdir(dir));
 afterEach(() => process.chdir(cwd));
 
 describe('resolveConfig', () => {
-  it('loads and transpiles a TypeScript config file', () => {
+  it('loads a TypeScript config file', () => {
     writeFileSync(
       join(dir, 'saykit.config.ts'),
       `const config: { locales: string[] } = { locales: ['en', 'fr'] };\nexport default config;\n`,
@@ -22,10 +20,12 @@ describe('resolveConfig', () => {
     expect(config.locales).toEqual(['en', 'fr']);
   });
 
-  it('caches the transpiled module across calls', () => {
-    writeFileSync(join(dir, 'saykit.config.ts'), `export default { locales: ['de'] };\n`);
-    const first = resolveConfig() as { locales: string[] };
-    const second = resolveConfig() as { locales: string[] };
+  // Its own name: the runtime keys a loaded module by path, so reusing
+  // `saykit.config.ts` here would hand back the module the test above loaded.
+  it('returns the same config across calls', () => {
+    writeFileSync(join(dir, 'repeat.config.ts'), `export default { locales: ['de'] };\n`);
+    const first = resolveConfig('repeat') as { locales: string[] };
+    const second = resolveConfig('repeat') as { locales: string[] };
     expect(first).toEqual(second);
     expect(second.locales).toEqual(['de']);
   });

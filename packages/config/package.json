@@ -87,12 +87,7 @@
   "devDependencies": {
     "@types/picomatch": "^4.0.3"
   },
-  "peerDependencies": {
-    "typescript": "*"
-  },
-  "peerDependenciesMeta": {
-    "typescript": {
-      "optional": true
-    }
+  "engines": {
+    "node": ">=22.18"
   }
 }
