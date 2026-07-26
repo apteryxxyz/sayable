@@ -85,13 +85,9 @@ import { SayPlugin } from '@saykit/carbon';
 import { PingCommand } from './commands/ping.js';
 import say from './i18n.js';
 
-const client = new Client(
-  {
-    /* options */
-  },
-  { commands: [new PingCommand(say)] },
-  [new SayPlugin(say)],
-);
+const client = new Client({/* options */}, { commands: [new PingCommand(say)] }, [
+  new SayPlugin(say),
+]);
 ```
 
 `SayPlugin` installs the `Say` instance into the global registry and applies extensions so `interaction.say` and `guild.say` work.
