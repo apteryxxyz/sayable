@@ -81,6 +81,11 @@ import { TypeTable } from 'fumadocs-ui/components/type-table';
       type: '`${string}{locale}${string}{extension}`',
       required: true,
     },
+    messages: {
+      description:
+        'Messages declared in the config rather than extracted from source, keyed by id. Values are the source string, or `{ message, context?, comments? }`.',
+      type: 'Record<string, string | { message: string; context?: string; comments?: string[] }>',
+    },
     formatter: {
       description: 'The Formatter for this bucket.',
       type: 'Formatter',

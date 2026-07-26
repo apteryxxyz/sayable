@@ -49,6 +49,52 @@ describe('Bucket schema', () => {
     expect(bucket.match('src/ignore/x.ts')).toBe(false);
   });
 
+  it('normalises declared messages into catalogue entries', () => {
+    const bucket = Bucket.parse({
+      include: ['src/**/*.ts'],
+      output: 'l/{locale}/m.{extension}',
+      messages: {
+        extensionName: 'Reading Time',
+        extensionDescription: {
+          message: 'Estimate how long a page will take to read.',
+          context: 'store',
+          comments: ['The one-line store description.'],
+        },
+      },
+      formatter,
+      transformer: transformer('a', '.ts'),
+    });
+
+    expect(bucket.messages).toEqual([
+      {
+        id: 'extensionName',
+        message: 'Reading Time',
+        translation: 'Reading Time',
+        context: undefined,
+        comments: [],
+        references: [],
+      },
+      {
+        id: 'extensionDescription',
+        message: 'Estimate how long a page will take to read.',
+        translation: 'Estimate how long a page will take to read.',
+        context: 'store',
+        comments: ['The one-line store description.'],
+        references: [],
+      },
+    ]);
+  });
+
+  it('declares no messages when the field is omitted', () => {
+    const bucket = Bucket.parse({
+      include: ['src/**/*.ts'],
+      output: 'l/{locale}/m.{extension}',
+      formatter,
+      transformer: transformer('a', '.ts'),
+    });
+    expect(bucket.messages).toEqual([]);
+  });
+
   it('combines an array of transformers, skipping non-matching ones', () => {
     const bucket = Bucket.parse({
       include: ['**/*'],
