@@ -13,11 +13,11 @@
   },
   "extensionDescription": {
     "message": "Estimate how long a page will take to read.",
-    "x-saykit-references": ["src/i18n.ts:38"]
+    "x-saykit-references": ["src/i18n.ts:41"]
   },
   "extensionName": {
     "message": "Reading Time",
-    "x-saykit-references": ["src/i18n.ts:35"]
+    "x-saykit-references": ["src/i18n.ts:38"]
   },
   "Kg6WIx": {
     "message": "Reading time",

@@ -29,6 +29,9 @@ export function activateUiLocale() {
  *
  * They are declared here purely so extraction sees them — the manifest is not
  * JavaScript, so nothing else would put them in the catalogue.
+ *
+ * TODO: Create an easier way to add strings to the catalogue without having to
+ * add them to code.
  */
 export const manifestStrings = {
   // Translators: the extension's name, shown in the Chrome Web Store and toolbar.
