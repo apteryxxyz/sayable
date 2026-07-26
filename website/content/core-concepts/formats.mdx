@@ -159,6 +159,30 @@ formatter: json({ dialect: 'arb' });
 
 Both formats carry translator comments in their native `description` field. Context and source references have no standard slot, so SayKit round-trips them through `x-saykit-context` / `x-saykit-references` extension fields — other tooling reads the `description` and safely ignores the rest.
 
+### References
+
+As with PO, you can trim or drop the source references a dialect writes. Neither option affects the plain layout, which carries no metadata to begin with.
+
+<TypeTable
+  type={{
+    includeReferences: {
+      description: 'Include source references (`x-saykit-references`) in the output.',
+      type: 'boolean',
+      default: 'true',
+    },
+    includeLineNumbers: {
+      description:
+        'Include line numbers in source references. Set to false for cleaner diffs when only references churn.',
+      type: 'boolean',
+      default: 'true',
+    },
+  }}
+/>
+
+```ts
+formatter: json({ dialect: 'arb', includeLineNumbers: false });
+```
+
 ## Other formats
 
 PO and JSON are the formatters shipped today. If you need YAML, XLIFF, or a custom format, you can write one yourself.

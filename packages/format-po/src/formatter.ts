@@ -77,4 +77,5 @@ function createPoFormatter(options: FormatterOptions = {}): Formatter {
   };
 }
 
+export type { FormatterOptions };
 export default createPoFormatter;

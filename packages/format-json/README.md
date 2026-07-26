@@ -70,10 +70,17 @@ Context and source references have no standard slot, so SayKit round-trips them
 through `x-saykit-context` / `x-saykit-references` extension fields — other
 tooling reads the `description` and safely ignores the rest.
 
+### Options
+
+- `dialect` (default none): `'arb'` or `'webextension'`, see above.
+- `includeReferences` (default `true`): include `x-saykit-references` source
+  references. No effect on the plain layout, which carries no metadata.
+- `includeLineNumbers` (default `true`): include line numbers in those references.
+
 > [!NOTE]
 > JSON catalogues are keyed by message id, so give your messages explicit ids to
-> get stable, human-readable keys. Unlike the PO formatter, JSON does not carry
-> source references, comments, or contexts — it is a lean runtime format.
+> get stable, human-readable keys. The plain layout carries no source
+> references, comments, or contexts — it is a lean runtime format.
 
 ## Documentation
 
