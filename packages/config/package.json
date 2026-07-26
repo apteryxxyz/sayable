@@ -78,9 +78,9 @@
     "prepack": "pnpm build"
   },
   "dependencies": {
-    "@commander-js/extra-typings": "^14.0.0",
-    "commander": "^14.0.3",
-    "js-sha256": "^0.11.1",
+    "@commander-js/extra-typings": "^15.0.0",
+    "commander": "^15.0.0",
+    "js-sha256": "^0.12.0",
     "picomatch": "^4.0.5",
     "zod": "^4.4.3"
   },
