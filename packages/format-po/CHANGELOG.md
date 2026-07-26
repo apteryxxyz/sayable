@@ -1,5 +1,11 @@
 # @saykit/format-po
 
+## 0.5.0
+
+### Minor Changes
+
+- 0a68c79: Add `includeReferences` and `includeLineNumbers` to the JSON formatter, and export the PO formatter's `FormatterOptions` type
+
 ## 0.4.1
 
 ## 0.4.0

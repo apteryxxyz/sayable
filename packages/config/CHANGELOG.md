@@ -1,5 +1,16 @@
 # @saykit/config
 
+## 0.5.0
+
+### Minor Changes
+
+- 0fd3084: Add a `messages` field to buckets for declaring catalogue entries that have no call site to extract from
+- ff0ff8d: Load config files directly rather than transpiling them to a cache, fixing relative imports and `import.meta.dirname` — now requires Node 22.18+ or a runtime that reads TypeScript itself
+
+### Patch Changes
+
+- 9a74035: Update `commander`, `@commander-js/extra-typings`, and `js-sha256` to their latest majors
+
 ## 0.4.1
 
 ### Patch Changes
