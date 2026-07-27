@@ -38,6 +38,11 @@ body > * {
   font-size: 0.875rem;
 }
 
+.switcher select,
+.switcher option {
+  text-transform: capitalize;
+}
+
 .hero h1 {
   margin-block: 2rem 0.25rem;
   font-size: 1.875rem;

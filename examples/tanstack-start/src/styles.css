@@ -24,6 +24,11 @@ body {
   font-size: 0.875rem;
 }
 
+.switcher select,
+.switcher option {
+  text-transform: capitalize;
+}
+
 .masthead h1 {
   margin-block: 1rem 0.25rem;
   font-size: 1.875rem;

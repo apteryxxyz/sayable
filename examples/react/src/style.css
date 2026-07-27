@@ -24,6 +24,11 @@ body {
   font-size: 0.875rem;
 }
 
+.locales select,
+.locales option {
+  text-transform: capitalize;
+}
+
 .masthead h1 {
   margin-block: 0.5rem 0.25rem;
   font-size: 1.75rem;
