@@ -2,6 +2,7 @@ import { parseExpression } from '@babel/parser';
 import * as t from '@babel/types';
 import {
   ArgumentMessage,
+  assignSequenceIdentifiers,
   AUTO_INCREMENT_IDENTIFIER,
   ChoiceMessage,
   CompositeMessage,
@@ -44,6 +45,41 @@ describe('parseJSXContainerElement', () => {
     expect((result!.children[0] as LiteralMessage).text).toBe('Hello, world!');
   });
 
+  it('matches JSX whitespace around multiline element boundaries', () => {
+    const result = parser.parseJSXContainerElement(jsx`
+      <Say>
+        Kiai Security - Only authorize apps you trust. Report malicious
+        integrations in
+        <a href="https://discord.gg/example">our support server</a>
+        .
+      </Say>
+    `);
+    assignSequenceIdentifiers(result!);
+    expect(result!.toICUString()).toBe(
+      'Kiai Security - Only authorize apps you trust. Report malicious integrations in<0>our support server</0>.',
+    );
+  });
+
+  it('does not insert implicit spaces around multiline elements', () => {
+    const result = parser.parseJSXContainerElement(jsx`
+      <Say>
+        Hello
+        <strong>brave</strong>
+        world!
+      </Say>
+    `);
+    assignSequenceIdentifiers(result!);
+    expect(result!.toICUString()).toBe('Hello<0>brave</0>world!');
+  });
+
+  it('preserves explicit same-line spaces around elements', () => {
+    const result = parser.parseJSXContainerElement(
+      jsx`<Say>Hello <strong>brave</strong> world!</Say>`,
+    );
+    assignSequenceIdentifiers(result!);
+    expect(result!.toICUString()).toBe('Hello <0>brave</0> world!');
+  });
+
   it('parses expression children as ArgumentMessage', () => {
     const result = parser.parseJSXContainerElement(jsx`<Say>{name}</Say>`);
     expect(result!.children[0]).toBeInstanceOf(ArgumentMessage);
@@ -69,8 +105,19 @@ describe('parseJSXContainerElement', () => {
     expect(result!.descriptor).toEqual({ id: 'msg', context: 'nav' });
   });
 
-  it('drops text children that are only whitespace', () => {
+  it('preserves same-line whitespace-only text children', () => {
     const result = parser.parseJSXContainerElement(jsx`<Say>{name}   </Say>`);
+    expect(result!.children).toHaveLength(2);
+    expect(result!.children[0]).toBeInstanceOf(ArgumentMessage);
+    expect(result!.children[1]).toEqual(new LiteralMessage('   '));
+  });
+
+  it('drops multiline whitespace-only text children', () => {
+    const result = parser.parseJSXContainerElement(jsx`
+      <Say>
+        {name}
+      </Say>
+    `);
     expect(result!.children).toHaveLength(1);
     expect(result!.children[0]).toBeInstanceOf(ArgumentMessage);
   });

@@ -15,11 +15,9 @@ export function parseJSXContainerElement(element: t.JSXElement): CompositeMessag
   if (!processed) return null;
   const [accessor] = processed;
 
-  const children = element.children.reduce<Message[]>((p, c, i, a) => {
+  const children = element.children.reduce<Message[]>((p, c) => {
     if (t.isJSXText(c)) {
-      let text = c.value.replace(/\s+/g, ' ');
-      if (i === 0) text = text.trimStart();
-      if (i === a.length - 1) text = text.trimEnd();
+      const text = normalizeJSXText(c.value);
       if (text) p.push(new LiteralMessage(text));
     }
 
@@ -122,6 +120,32 @@ export function parseJSXOpeningElement(element: t.JSXOpeningElement): CompositeM
   }
 
   return null;
+}
+
+function normalizeJSXText(value: string) {
+  const lines = value.split(/\r\n|\n|\r/);
+  let lastNonEmptyLine = 0;
+
+  for (const [index, line] of lines.entries()) {
+    if (/[^ \t]/.test(line)) lastNonEmptyLine = index;
+  }
+
+  let text = '';
+
+  for (const [index, line] of lines.entries()) {
+    const isFirstLine = index === 0;
+    const isLastLine = index === lines.length - 1;
+    const isLastNonEmptyLine = index === lastNonEmptyLine;
+    let trimmedLine = line.replace(/\t/g, ' ');
+
+    if (!isFirstLine) trimmedLine = trimmedLine.replace(/^ +/, '');
+    if (!isLastLine) trimmedLine = trimmedLine.replace(/ +$/, '');
+    if (!trimmedLine) continue;
+
+    text += isLastNonEmptyLine ? trimmedLine : `${trimmedLine} `;
+  }
+
+  return text;
 }
 
 function processJSXOpeningElement(element: t.JSXOpeningElement): [t.Node, string | null] | null {
