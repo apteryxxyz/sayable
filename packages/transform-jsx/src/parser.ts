@@ -169,7 +169,8 @@ export function parseJSXElement(element: t.JSXElement, fallback?: boolean): Mess
 }
 
 function getReferences(node: t.Node) {
-  return node.loc ? [`${node.loc.filename}:${node.loc.start.line}`] : [];
+  if (!node.loc?.filename) return [];
+  return [`${node.loc.filename}:${node.loc.start.line}`];
 }
 
 function getAttributeNameAsString(attribute: t.JSXAttribute) {
