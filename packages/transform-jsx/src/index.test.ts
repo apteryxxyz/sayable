@@ -25,6 +25,19 @@ describe('createJsxTransformer.extract', () => {
     const message = messages.find((m) => m.id === 'greeting');
     expect(message).toBeDefined();
     expect(message!.message).toContain('Hello');
+    expect(message!.references).toEqual(['file.tsx:1']);
+  });
+
+  it('extracts a JSX choice element reference', () => {
+    const [message] = transformer.extract(
+      'const x = <Say.Plural _={count} one="# item" other="# items" />;',
+      'file.tsx',
+    );
+    expect(message!.message).toBe(`{count, plural,
+  one {# item}
+  other {# items}
+}`);
+    expect(message!.references).toEqual(['file.tsx:1']);
   });
 
   it('extracts a tagged-template message alongside JSX', () => {
