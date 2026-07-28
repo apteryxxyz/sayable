@@ -35,6 +35,16 @@ describe('convertMessageToIcu', () => {
       .toMatchInlineSnapshot('"<icon/>"');
   });
 
+  it('should keep element messages paired when a child renders to nothing', () => {
+    const message = new ElementMessage(
+      'bold',
+      [new CompositeMessage({}, [], [], [], dummy)],
+      dummy,
+    );
+    expect(convertMessageToIcu(message)) //
+      .toMatchInlineSnapshot('"<bold></bold>"');
+  });
+
   it('should generate choice messages with numeric identifiers as `=n`', () => {
     const message = new ChoiceMessage(
       'plural',

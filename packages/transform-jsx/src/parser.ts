@@ -181,9 +181,9 @@ export function parseJSXElement(element: t.JSXElement, fallback?: boolean): Mess
 
 /**
  * Read the tag name off an embedded element and remove the attribute so it
- * never reaches the rendered element. Only static string literals name a tag;
- * anything else is left in place and the element falls back to an
- * auto-incremented identifier.
+ * never reaches the rendered element. Only static strings name a tag; anything
+ * else is left in place and the element falls back to an auto-incremented
+ * identifier.
  */
 function takeElementTag(element: t.JSXElement) {
   const attributes = element.openingElement.attributes;
@@ -193,9 +193,14 @@ function takeElementTag(element: t.JSXElement) {
   if (index === -1) return undefined;
 
   const attribute = attributes[index] as t.JSXAttribute;
-  if (!t.isStringLiteral(attribute.value)) return undefined;
+  // Both `say-tag="link"` and `say-tag={'link'}` are static; anything else is
+  // only known at runtime, too late to name a tag with.
+  const value = t.isJSXExpressionContainer(attribute.value)
+    ? attribute.value.expression
+    : attribute.value;
+  if (!t.isStringLiteral(value)) return undefined;
 
-  const tag = attribute.value.value;
+  const tag = value.value;
   if (!TAG_PATTERN.test(tag))
     throw new Error(
       `Invalid '${TAG_ATTRIBUTE}' value '${tag}', expected a letter or underscore followed by letters, digits, or underscores`,

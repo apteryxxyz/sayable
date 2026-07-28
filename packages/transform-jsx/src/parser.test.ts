@@ -313,6 +313,17 @@ describe('parseJSXElement', () => {
       ]);
     });
 
+    it('accepts a string literal in an expression container', () => {
+      const element = jsx`<a href="/x" say-tag={'link'}>here</a>`;
+      const result = parser.parseJSXElement(element, true) as ElementMessage;
+      expect(result.identifier).toBe('link');
+      // The attribute is consumed just as the bare-literal form is.
+      const attributes = (result.expression as t.JSXElement).openingElement.attributes;
+      expect(attributes.map((a) => ((a as t.JSXAttribute).name as t.JSXIdentifier).name)).toEqual([
+        'href',
+      ]);
+    });
+
     it('ignores a tag that is not a static string', () => {
       const element = jsx`<a say-tag={name}>here</a>`;
       const result = parser.parseJSXElement(element, true) as ElementMessage;
