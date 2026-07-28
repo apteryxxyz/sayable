@@ -12,7 +12,7 @@ msgstr ""
 "Plural-Forms: \n"
 "X-Generator: saykit\n"
 
-#: src/components/task-card.tsx:53
+#: src/components/task-card.tsx:56
 msgid ""
 "{0, plural,\n"
 "  =0 {All subtasks done}\n"
@@ -38,7 +38,7 @@ msgstr ""
 "  other {# days overdue}\n"
 "}"
 
-#: src/components/task-card.tsx:63
+#: src/components/task-card.tsx:66
 msgid ""
 "{0, plural,\n"
 "  one {# unresolved comment}\n"
@@ -108,9 +108,9 @@ msgstr ""
 "  other {# tasks still open}\n"
 "}"
 
-#: src/components/task-card.tsx:39
-msgid "Assigned to <0>{1}</0>"
-msgstr "Assigned to <0>{1}</0>"
+#: src/components/task-card.tsx:42
+msgid "Assigned to <bold>{0}</bold>"
+msgstr "Assigned to <bold>{0}</bold>"
 
 #: src/components/task-card.tsx:9
 msgid "Due today"
@@ -120,7 +120,7 @@ msgstr "Due today"
 msgid "Language"
 msgstr "Language"
 
-#: src/components/task-card.tsx:43
+#: src/components/task-card.tsx:46
 msgid "Nobody is on this yet"
 msgstr "Nobody is on this yet"
 

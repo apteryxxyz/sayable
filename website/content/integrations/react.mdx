@@ -38,9 +38,31 @@ function CheckoutSummary({ items, total }: { items: number; total: string }) {
 }
 ```
 
-Variables become named ICU placeholders (`{items}`, `{total}`). JSX elements inside `<Say>` become numbered tags (`<0>{total}</0>`) so translators can reorder them.
+Variables become named ICU placeholders (`{items}`, `{total}`). JSX elements inside `<Say>` become numbered tags (`<0>{total}</0>`) so translators can reorder them. Childless elements extract as self-closing tags (`<1/>`), so there is nowhere for a translator to insert content an icon never expected.
 
 `<Say>` works equally in server and client components, the package switches implementation based on the `react-server` condition.
+
+### Naming tags
+
+A numbered tag tells a translator nothing about what it does. Add `say-tag` to any element inside `<Say>` to name it:
+
+```tsx
+<Say>
+  Signed in as <strong say-tag="bold">{user}</strong>
+</Say>
+```
+
+The message extracts as `Signed in as <bold>{user}</bold>`. The attribute is compile-time only, it is stripped from the element and never reaches the DOM or a native view.
+
+Name the tag after what it does to the text, `bold`, `link`, `icon`, not after the content it happens to wrap. A translator sees only the tag name and the sentence around it, so `<bold>` tells them how the text will look, while `<user>` tells them nothing they can act on.
+
+Naming is opt-in and per element, so untagged elements keep their numbers alongside named ones. A tag must be a static string, and a valid identifier: a letter or underscore followed by letters, digits, or underscores.
+
+<Callout type="warn">
+  Every element in a message needs its own tag, two elements sharing one is a build error. Each
+  compiles to its own prop, and a translator reordering the sentence has to be able to tell them
+  apart. Give them distinct names, `link_docs` and `link_faq` rather than `link` twice.
+</Callout>
 
 ### Plurals, ordinals, select
 

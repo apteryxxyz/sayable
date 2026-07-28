@@ -292,4 +292,51 @@ describe('parseJSXElement', () => {
   it('returns ElementMessage (fallback=true) for unrecognised container element', () => {
     expect(parser.parseJSXElement(jsx`<span>text</span>`, true)).toBeInstanceOf(ElementMessage);
   });
+
+  describe('say-tag', () => {
+    it('names a container element after its tag', () => {
+      const result = parser.parseJSXElement(jsx`<a say-tag="link">here</a>`, true);
+      expect((result as ElementMessage).identifier).toBe('link');
+    });
+
+    it('names a self-closing element after its tag', () => {
+      const result = parser.parseJSXElement(jsx`<ChevronDown say-tag="icon" />`, true);
+      expect((result as ElementMessage).identifier).toBe('icon');
+    });
+
+    it('strips the attribute so it never reaches the rendered element', () => {
+      const element = jsx`<a href="/x" say-tag="link">here</a>`;
+      const result = parser.parseJSXElement(element, true) as ElementMessage;
+      const attributes = (result.expression as t.JSXElement).openingElement.attributes;
+      expect(attributes.map((a) => ((a as t.JSXAttribute).name as t.JSXIdentifier).name)).toEqual([
+        'href',
+      ]);
+    });
+
+    it('ignores a tag that is not a static string', () => {
+      const element = jsx`<a say-tag={name}>here</a>`;
+      const result = parser.parseJSXElement(element, true) as ElementMessage;
+      expect(result.identifier).toBe(AUTO_INCREMENT_IDENTIFIER);
+      // A dynamic value is left alone rather than silently dropped.
+      expect((result.expression as t.JSXElement).openingElement.attributes).toHaveLength(1);
+    });
+
+    it('falls back to auto-increment when there is no tag', () => {
+      const result = parser.parseJSXElement(jsx`<a href="/x">here</a>`, true);
+      expect((result as ElementMessage).identifier).toBe(AUTO_INCREMENT_IDENTIFIER);
+    });
+
+    it('throws for a tag that is not a valid identifier', () => {
+      expect(() => parser.parseJSXElement(jsx`<a say-tag="my link">here</a>`, true)).toThrow(
+        "Invalid 'say-tag' value 'my link'",
+      );
+    });
+
+    it('names elements nested inside a Say container', () => {
+      const result = parser.parseJSXContainerElement(
+        jsx`<Say>Click <a say-tag="link">here</a></Say>`,
+      );
+      expect((result!.children[1] as ElementMessage).identifier).toBe('link');
+    });
+  });
 });

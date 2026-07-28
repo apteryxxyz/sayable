@@ -64,6 +64,51 @@ describe('assignSequenceIdentifiers', () => {
     expect(value.identifier).toBe('0');
   });
 
+  it('skips sequence numbers already taken by an explicit identifier', () => {
+    const tagged = new ElementMessage('0', [], null);
+    const auto = new ArgumentMessage(AUTO_INCREMENT_IDENTIFIER, null);
+    assignSequenceIdentifiers(new CompositeMessage({}, [], [], [tagged, auto], null));
+    expect(tagged.identifier).toBe('0');
+    expect(auto.identifier).toBe('1');
+  });
+
+  it('throws when two elements share a tag', () => {
+    const message = new CompositeMessage(
+      {},
+      [],
+      [],
+      [new ElementMessage('link', [], null), new ElementMessage('link', [], null)],
+      null,
+    );
+    expect(() => assignSequenceIdentifiers(message)).toThrow(
+      "Duplicate element tag 'link', give each element in a message its own tag",
+    );
+  });
+
+  it('allows two arguments to share an identifier', () => {
+    const message = new CompositeMessage(
+      {},
+      [],
+      [],
+      [new ArgumentMessage('total', null), new ArgumentMessage('total', null)],
+      null,
+    );
+    expect(() => assignSequenceIdentifiers(message)).not.toThrow();
+  });
+
+  it('throws when an element tag collides with an argument', () => {
+    const message = new CompositeMessage(
+      {},
+      [],
+      [],
+      [new ElementMessage('total', [], null), new ArgumentMessage('total', null)],
+      null,
+    );
+    expect(() => assignSequenceIdentifiers(message)).toThrow(
+      "Element tag 'total' collides with an argument of the same name",
+    );
+  });
+
   it('leaves a literal message unchanged', () => {
     const literal = new LiteralMessage('hi');
     expect(() => assignSequenceIdentifiers(literal)).not.toThrow();
