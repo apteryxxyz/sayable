@@ -27,13 +27,7 @@ export function HabitCard({ habit, onToggle }: { habit: Habit; onToggle: () => v
       </Text>
 
       <Text style={styles.progress}>
-        {/*
-          `whitespace={false}` drops whitespace-only text nodes when the message
-          is reassembled. React Native cannot render a bare string sitting
-          between two elements, so a message with adjacent placeholders would
-          otherwise throw. See the README.
-        */}
-        <Say whitespace={false}>
+        <Say>
           <Text style={styles.strong}>{habit.thisWeek}</Text> of
           <Text style={styles.strong}>{habit.target}</Text> this week
         </Say>

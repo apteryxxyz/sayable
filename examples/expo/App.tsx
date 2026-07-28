@@ -2,7 +2,8 @@ import { Say } from '@saykit/react';
 import { SayProvider } from '@saykit/react/client';
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
-import { Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { HabitCard } from './src/habit-card';
 import { completedToday, type Habit, habits as seed } from './src/habits';
 import say, { deviceLocale, type Locale, locales } from './src/i18n';
@@ -52,11 +53,6 @@ function Home({ locale, onLocale }: { locale: Locale; onLocale: (next: Locale) =
         ))}
 
         <Text style={styles.footer}>
-          {/*
-            A deliberately multi-line message. JSX collapses the newlines and
-            indentation to single spaces during extraction, so the catalogue
-            entry is one tidy sentence rather than a block of source formatting.
-          */}
           <Say>
             Streaks reset at midnight in your device's time zone. Missing a day is fine — the habit
             is the point, not the number.
@@ -70,16 +66,17 @@ function Home({ locale, onLocale }: { locale: Locale; onLocale: (next: Locale) =
 
 export default function App() {
   const [locale, setLocale] = useState<Locale>(initialLocale);
-
-  function change(next: Locale) {
-    say.activate(next);
+  const change = (next: Locale) => {
     setLocale(next);
-  }
+    say.activate(next);
+  };
 
   return (
-    <SayProvider locale={locale} messages={say.messages}>
-      <Home locale={locale} onLocale={change} />
-    </SayProvider>
+    <SafeAreaProvider>
+      <SayProvider locale={locale} messages={say.messages}>
+        <Home locale={locale} onLocale={change} />
+      </SayProvider>
+    </SafeAreaProvider>
   );
 }
 
