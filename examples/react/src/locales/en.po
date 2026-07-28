@@ -12,6 +12,7 @@ msgstr ""
 "Plural-Forms: \n"
 "X-Generator: saykit\n"
 
+#: src/components/task-card.tsx:53
 msgid ""
 "{0, plural,\n"
 "  =0 {All subtasks done}\n"
@@ -25,6 +26,7 @@ msgstr ""
 "  other {# subtasks left}\n"
 "}"
 
+#: src/components/task-card.tsx:6
 msgid ""
 "{0, plural,\n"
 "  one {# day overdue}\n"
@@ -36,6 +38,7 @@ msgstr ""
 "  other {# days overdue}\n"
 "}"
 
+#: src/components/task-card.tsx:63
 msgid ""
 "{0, plural,\n"
 "  one {# unresolved comment}\n"
@@ -47,6 +50,7 @@ msgstr ""
 "  other {# unresolved comments}\n"
 "}"
 
+#: src/components/task-card.tsx:26
 msgid ""
 "{0, select,\n"
 "  urgent {Urgent}\n"
@@ -62,6 +66,7 @@ msgstr ""
 "  other {Normal}\n"
 "}"
 
+#: src/components/board.tsx:6
 msgid ""
 "{column, select,\n"
 "  todo {To do}\n"
@@ -77,6 +82,7 @@ msgstr ""
 "  other {Backlog}\n"
 "}"
 
+#: src/components/task-card.tsx:11
 msgid ""
 "{dueInDays, plural,\n"
 "  one {Due in # day}\n"
@@ -88,6 +94,7 @@ msgstr ""
 "  other {Due in # days}\n"
 "}"
 
+#: src/components/board.tsx:61
 msgid ""
 "{open, plural,\n"
 "  =0 {Everything is done. Enjoy the quiet.}\n"
@@ -101,24 +108,31 @@ msgstr ""
 "  other {# tasks still open}\n"
 "}"
 
+#: src/components/task-card.tsx:39
 msgid "Assigned to <0>{1}</0>"
 msgstr "Assigned to <0>{1}</0>"
 
+#: src/components/task-card.tsx:9
 msgid "Due today"
 msgstr "Due today"
 
+#: src/components/locale-picker.tsx:14
 msgid "Language"
 msgstr "Language"
 
+#: src/components/task-card.tsx:43
 msgid "Nobody is on this yet"
 msgstr "Nobody is on this yet"
 
+#: src/components/board.tsx:25
 msgid "Nothing here. <0>Add a task</0> or drag one across from <1>To do</1>."
 msgstr "Nothing here. <0>Add a task</0> or drag one across from <1>To do</1>."
 
+#: src/components/board.tsx:44
 msgid "Taskboard"
 msgstr "Taskboard"
 
+#: src/components/board.tsx:54
 msgid ""
 "Welcome back, {currentMember}. This is your {sprintNumber, selectordinal,\n"
 "  one {#st}\n"
