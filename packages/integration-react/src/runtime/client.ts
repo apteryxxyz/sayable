@@ -11,6 +11,10 @@ SayContext.displayName = 'SayContext';
  * Provide a localised {@link runtime.Say} instance to descendant **client** components via context.
  * Must wrap any component tree using {@link useSay} or {@link Say}.
  *
+ * The instance is rebuilt whenever `locale` or `messages` changes, so keep `messages`
+ * referentially stable (module scope, or memoised) rather than passing a fresh object
+ * literal on every render.
+ *
  * @param props.locale The current locale
  * @param props.messages The current messages for the locale
  */

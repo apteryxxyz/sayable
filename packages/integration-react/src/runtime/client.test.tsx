@@ -1,3 +1,6 @@
+// @vitest-environment jsdom
+
+import { render, screen } from '@testing-library/react';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
@@ -18,6 +21,22 @@ describe('SayProvider / useSay', () => {
       ),
     );
     expect(html).toBe('<span>fr:Bonjour</span>');
+  });
+
+  it('rebuilds the instance when the locale changes', () => {
+    const { rerender } = render(
+      <SayProvider locale="fr" messages={{ greeting: 'Bonjour' }}>
+        <Consumer />
+      </SayProvider>,
+    );
+    expect(screen.getByText('fr:Bonjour')).toBeDefined();
+
+    rerender(
+      <SayProvider locale="de" messages={{ greeting: 'Guten Tag' }}>
+        <Consumer />
+      </SayProvider>,
+    );
+    expect(screen.getByText('de:Guten Tag')).toBeDefined();
   });
 
   it('throws when used outside a provider', () => {
