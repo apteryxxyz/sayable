@@ -48,7 +48,7 @@ export function parseJSXContainerElement(element: t.JSXElement): CompositeMessag
   return new CompositeMessage(
     { id: descriptorId, context: descriptorContext },
     [],
-    [],
+    getReferences(element),
     children,
     accessor as t.Expression,
     whitespace,
@@ -115,7 +115,7 @@ export function parseJSXOpeningElement(element: t.JSXOpeningElement): CompositeM
     return new CompositeMessage(
       { id: descriptorId, context: descriptorContext },
       [],
-      [],
+      getReferences(element),
       [choice],
       accessor as t.Expression,
     );
@@ -166,6 +166,11 @@ export function parseJSXElement(element: t.JSXElement, fallback?: boolean): Mess
   // `Say` container), so the wrapped message is never null.
   const wrapped = parseJSXElement(fake, true)!;
   return new ElementMessage(AUTO_INCREMENT_IDENTIFIER, [wrapped], element);
+}
+
+function getReferences(node: t.Node) {
+  if (!node.loc?.filename) return [];
+  return [`${node.loc.filename}:${node.loc.start.line}`];
 }
 
 function getAttributeNameAsString(attribute: t.JSXAttribute) {
