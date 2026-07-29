@@ -73,10 +73,11 @@ describe('Say', () => {
       whitespace?: boolean;
       components: (tag?: string) => unknown;
     };
-    // The real id still reaches `say.call` and the tag named after it does not
-    // displace it, while a tag named `whitespace` is a value like any other and
-    // the flag itself still reaches the renderer.
-    expect(call).toHaveBeenCalledWith({ id: 'greet', whitespace: bold });
+    // The real id still reaches `say.call` and the value named after it does
+    // not displace it, since the two live in different namespaces until the
+    // runtime strips one underscore. The `whitespace` flag is destructured out
+    // for the renderer, while a value of that name rides along untouched.
+    expect(call).toHaveBeenCalledWith({ id: 'greet', _id: bold, _whitespace: bold });
     expect(props.whitespace).toBe(false);
     expect(typeof props.components('id')).toBe('function');
     expect(typeof props.components('whitespace')).toBe('function');
