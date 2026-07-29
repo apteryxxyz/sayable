@@ -1,3 +1,29 @@
 @import 'tailwindcss';
 @import 'fumadocs-ui/css/ruby.css';
 @import 'fumadocs-ui/css/preset.css';
+
+/*
+ * Syntax colours for the playground's CodeMirror editor, mirroring the
+ * github-light / github-dark themes Shiki uses everywhere else on the site.
+ * They live here rather than in the editor's own theme because the `.dark`
+ * class sits on an ancestor element, outside CodeMirror's scoped styles.
+ */
+:root {
+  --pg-comment: #6e7781;
+  --pg-keyword: #cf222e;
+  --pg-string: #0a3069;
+  --pg-number: #0550ae;
+  --pg-function: #8250df;
+  --pg-property: #0550ae;
+  --pg-tag: #116329;
+}
+
+.dark {
+  --pg-comment: #8b949e;
+  --pg-keyword: #ff7b72;
+  --pg-string: #a5d6ff;
+  --pg-number: #79c0ff;
+  --pg-function: #d2a8ff;
+  --pg-property: #79c0ff;
+  --pg-tag: #7ee787;
+}
