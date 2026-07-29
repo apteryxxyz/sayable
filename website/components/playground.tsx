@@ -237,10 +237,12 @@ export default function Playground({
       <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-fd-border bg-fd-card px-4 py-3">
         <VersionSelect versions={versions} value={version} onChange={setVersion} />
 
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex shrink-0 items-center gap-2">
           {pending && (
             <span className="inline-flex items-center gap-2 text-sm text-fd-muted-foreground">
-              <Loader2 className="size-4 animate-spin" /> Running
+              <Loader2 className="size-4 animate-spin" />
+              {/* The spinner alone carries the meaning when space is tight. */}
+              <span className="hidden sm:inline">Running</span>
             </span>
           )}
           <ShareButton url={shareUrl} />
@@ -338,16 +340,19 @@ function VersionSelect({
   onChange: (value: string) => void;
 }) {
   return (
-    <div className="flex items-center gap-3">
-      <label htmlFor="saykit-version" className="text-sm font-medium text-fd-foreground">
-        SayKit version
+    // A select is as wide as its longest option, which on a phone overflows the
+    // toolbar. `min-w-0` lets it shrink below that and truncate instead; it only
+    // hugs its content once there's room (`sm:flex-none`).
+    <div className="flex min-w-0 flex-1 items-center gap-2 sm:flex-none sm:gap-3">
+      <label htmlFor="saykit-version" className="shrink-0 text-sm font-medium text-fd-foreground">
+        <span className="hidden sm:inline">SayKit </span>Version
       </label>
-      <div className="relative">
+      <div className="relative min-w-0 flex-1 sm:flex-none">
         <select
           id="saykit-version"
           value={value}
           onChange={(event) => onChange(event.target.value)}
-          className="appearance-none rounded-full border border-fd-border bg-fd-background py-1.5 pl-3 pr-9 text-sm font-medium text-fd-foreground transition hover:bg-fd-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-fd-primary"
+          className="w-full appearance-none truncate rounded-full border border-fd-border bg-fd-background py-1.5 pl-3 pr-9 text-sm font-medium text-fd-foreground transition hover:bg-fd-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-fd-primary sm:w-auto"
         >
           {versions.map((option) => (
             <option key={option.value} value={option.value}>

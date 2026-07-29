@@ -24,6 +24,15 @@ function compare(a: number[], b: number[]) {
   return a[0] - b[0] || a[1] - b[1] || a[2] - b[2];
 }
 
+/**
+ * `0.0.0-beta-20260729113209` is a lot of characters that say very little, and it
+ * sets the width of the whole select. The publish date is the part anyone reads.
+ */
+function betaLabel(version: string) {
+  const match = /^\d+\.\d+\.\d+-beta-(\d{4})(\d{2})(\d{2})/.exec(version);
+  return match ? `beta (${match[1]}-${match[2]}-${match[3]})` : 'beta';
+}
+
 export async function getVersions(): Promise<VersionOption[]> {
   let registry: Registry;
 
@@ -50,7 +59,7 @@ export async function getVersions(): Promise<VersionOption[]> {
 
   // Beta releases are published as `0.0.0-beta-<timestamp>`, which sorts
   // meaninglessly — surface only the one the beta tag currently points at.
-  const beta = tags.beta ? [{ value: tags.beta, label: `beta (${tags.beta})` }] : [];
+  const beta = tags.beta ? [{ value: tags.beta, label: betaLabel(tags.beta) }] : [];
 
   const options = [...beta, ...stable];
   return options.length > 0 ? options : FALLBACK;
