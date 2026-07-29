@@ -1,5 +1,25 @@
 import { mf1ToMessage } from '@messageformat/icu-messageformat-1';
-import type { Disallow, NumeralOptions, SelectOptions, Tuple } from './types.js';
+import type { Disallow, Named, NumeralOptions, SelectOptions, Tuple } from './types.js';
+
+/**
+ * Map a descriptor's keys back to the placeholders the message names. The
+ * transform emits every value with one underscore in front, which keeps a
+ * message's values out of the descriptor's own namespace, so stripping exactly
+ * one is the whole inverse — `_0` is `0`, and `__total` is a placeholder named
+ * `_total`. Keys without one are passed through, so a hand-written
+ * `call({ id, name })` still formats `{name}`.
+ *
+ * Built from the descriptor's own entries so a value named `__proto__` stays a
+ * placeholder rather than reaching through to the prototype.
+ */
+function resolveDescriptorValues(descriptor: { id: string; [match: string | number]: unknown }) {
+  return Object.fromEntries(
+    Object.entries(descriptor)
+      // The id names the message, it is not one of its values.
+      .filter(([key]) => key !== 'id')
+      .map(([key, value]) => [key.startsWith('_') ? key.slice(1) : key, value]),
+  );
+}
 
 export namespace Say {
   export type Messages = { [key: string]: string };
@@ -20,9 +40,13 @@ export interface Say {
   /**
    * Define a message.
    *
+   * An interpolated variable is named after itself. Anything else is numbered,
+   * unless it is written as a single-key object, which names it.
+   *
    * @example
    * ```ts
    * say`Hello, ${name}!`
+   * say`Your total is ${{ cartTotal: getCartTotal() }}`
    * ```
    *
    * @remark This is a macro and must be used with the relevant saykit plugin
@@ -247,7 +271,7 @@ export class Say<
     const key = `${locale}:${descriptor.id}`;
     const format =
       this.#formats.get(key) ?? this.#formats.set(key, mf1ToMessage(locale, message)).get(key)!;
-    return String(format.format(descriptor));
+    return String(format.format(resolveDescriptorValues(descriptor)));
   }
 
   [Symbol.for('nodejs.util.inspect.custom')](
@@ -278,7 +302,7 @@ export class Say<
    * @returns The plural form of the number
    * @remark This is a macro and must be used with the relevant saykit plugin
    */
-  plural(_: number, options: Disallow<NumeralOptions, 'id' | 'context'>): string {
+  plural(_: number | Named<number>, options: Disallow<NumeralOptions, 'id' | 'context'>): string {
     void _;
     void options;
     throw new Error("'Say#plural' is a macro and must be used with the relevant saykit plugin");
@@ -303,7 +327,7 @@ export class Say<
    * @returns The ordinal form of the number
    * @remark This is a macro and must be used with the relevant saykit plugin
    */
-  ordinal(_: number, options: Disallow<NumeralOptions, 'id' | 'context'>): string {
+  ordinal(_: number | Named<number>, options: Disallow<NumeralOptions, 'id' | 'context'>): string {
     void _;
     void options;
     throw new Error("'Say#ordinal' is a macro and must be used with the relevant saykit plugin");
@@ -326,7 +350,7 @@ export class Say<
    * @returns The select form of the value
    * @remark This is a macro and must be used with the relevant saykit plugin
    */
-  select(_: string, options: Disallow<SelectOptions, 'id' | 'context'>): string {
+  select(_: string | Named<string>, options: Disallow<SelectOptions, 'id' | 'context'>): string {
     void _;
     void options;
     throw new Error("'Say#select' is a macro and must be used with the relevant saykit plugin");

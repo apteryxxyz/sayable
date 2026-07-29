@@ -134,6 +134,11 @@ say.call({ id: 'abc123', name: 'Ada' }); // → "Hello, Ada!"
 
 The descriptor must have an `id`. Extra properties are ICU placeholder values.
 
+The transform emits each value behind one underscore (`{ id: 'abc123', _name: 'Ada' }`), which keeps
+a message's values in their own namespace, so a value named `id` cannot displace the message being
+looked up. `call` strips exactly one underscore back off, and passes keys written without one
+through untouched, so a hand-written or custom-transformer-generated call works either way.
+
 In normal application code, you don't write this, the build transform emits it from your `` say`...` `` macros.
 
 ### Iteration
@@ -198,6 +203,20 @@ say.select(gender, {
   other: 'They liked it',
 });
 ```
+
+### Named placeholders
+
+Interpolating a single-key object names the placeholder that value becomes, for the values that
+would otherwise be numbered. The wrapper is read at build time and never reaches the bundle.
+
+```ts
+say`Your total is ${{ cartTotal: getCartTotal() }}`; // → "Your total is {cartTotal}"
+
+say.plural({ items: cart.length }, { one: '# item', other: '# items' });
+```
+
+The name must be a valid identifier, an invalid one fails the build. See
+[Placeholder names](/core-concepts/messages#placeholder-names).
 
 ## Types
 

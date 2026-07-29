@@ -43,6 +43,25 @@ describe('createJsTransformer.extract', () => {
     expect(message!.message).toContain('plural');
   });
 
+  it('names a placeholder written as a single-key object', () => {
+    const [message] = transformer.extract(
+      'const t = say`Total: ${{ cartTotal: getTotal() }}`;',
+      'file.ts',
+    );
+    expect(message!.message).toBe('Total: {cartTotal}');
+  });
+
+  it('leaves unnamed placeholders numbered alongside named ones', () => {
+    const [message] = transformer.extract('const t = say`${{ total: a.b }} ${c.d}`;', 'file.ts');
+    expect(message!.message).toBe('{total} {0}');
+  });
+
+  it('throws for a name that is not a valid identifier', () => {
+    expect(() => transformer.extract("const t = say`${{ 'cart total': x }}`;", 'file.ts')).toThrow(
+      "Invalid placeholder name 'cart total'",
+    );
+  });
+
   it('returns an empty array when there are no messages', () => {
     expect(transformer.extract('const x = 1 + 2;', 'file.ts')).toEqual([]);
   });
@@ -52,13 +71,79 @@ describe('createJsTransformer.transform', () => {
   it('rewrites a tagged template into a `.call`', () => {
     const output = transformer.transform('const greeting = say`Hello, ${name}!`;', 'file.ts');
     expect(output).toContain('say.call(');
-    expect(output).toContain('name: name');
+    expect(output).toContain('_name: name');
     expect(output).not.toContain('say`');
+  });
+
+  it('keeps a value named `id` from displacing the message id', () => {
+    const output = transformer.transform('const g = say`Hi ${id}`;', 'file.ts');
+    // Both are properties of one object, so without the prefix the value would
+    // win and the descriptor would no longer name a message.
+    expect(output).toMatch(/id: "[^"]+"/);
+    expect(output).toContain('_id: id');
+  });
+
+  it('compiles a named placeholder without its wrapper', () => {
+    const output = transformer.transform(
+      'const t = say`Total: ${{ cartTotal: getTotal() }}`;',
+      'file.ts',
+    );
+    expect(output).toContain('_cartTotal: getTotal()');
+    // The single-key object that named it is gone, not nested inside the call.
+    expect(output).not.toContain('{ cartTotal:');
+  });
+
+  it('throws for a name that is not a valid identifier', () => {
+    expect(() =>
+      transformer.transform("const t = say`${{ 'cart total': x }}`;", 'file.ts'),
+    ).toThrow("Invalid placeholder name 'cart total'");
   });
 
   it('leaves code without messages untouched', () => {
     const output = transformer.transform('const x = 1 + 2;', 'file.ts');
     expect(output).toContain('1 + 2');
     expect(output).not.toContain('.call(');
+  });
+});
+
+describe('duplicate placeholder names', () => {
+  it('allows the same value interpolated twice', () => {
+    const [message] = transformer.extract('const t = say`${name} and ${name}`;', 'file.ts');
+    expect(message!.message).toBe('{name} and {name}');
+    // One name is one value, so the repeat compiles to a single property.
+    const output = transformer.transform('const t = say`${name} and ${name}`;', 'file.ts');
+    expect(output.match(/_name:/g)).toHaveLength(1);
+  });
+
+  it('allows two named placeholders that name the same expression', () => {
+    const code = 'const t = say`${{ name: author.name }} and ${{ name: author.name }}`;';
+    expect(transformer.extract(code, 'file.ts')[0]!.message).toBe('{name} and {name}');
+    expect(transformer.transform(code, 'file.ts').match(/_name:/g)).toHaveLength(1);
+  });
+
+  it('rejects one name given to two different expressions', () => {
+    expect(() =>
+      transformer.extract(
+        'const t = say`${{ n: items.length }} ${{ n: users.length }}`;',
+        'file.ts',
+      ),
+    ).toThrow(
+      "Duplicate placeholder name 'n', give each value in a message its own name unless they are identical",
+    );
+  });
+
+  it('rejects a name that collides with a variable interpolated directly', () => {
+    expect(() =>
+      transformer.transform('const t = say`${name} ${{ name: author.name }}`;', 'file.ts'),
+    ).toThrow("Duplicate placeholder name 'name'");
+  });
+
+  it('compares a choice selector against the values around it', () => {
+    expect(() =>
+      transformer.extract(
+        "const t = say`${count} ${say.plural({ count: items.length }, { other: '#' })}`;",
+        'file.ts',
+      ),
+    ).toThrow("Duplicate placeholder name 'count'");
   });
 });

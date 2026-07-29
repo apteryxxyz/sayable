@@ -4,9 +4,9 @@ import traverse_ from '@babel/traverse';
 import type { Transformer } from '@saykit/config';
 import { assignSequenceIdentifiers, CompositeMessage } from '@saykit/config/features/messages';
 import { generateSayCallExpression } from '@saykit/transform-js/generator';
-import { parseExpression } from '@saykit/transform-js/parser';
+import { isEquivalentPlaceholder, parseExpression } from '@saykit/transform-js/parser';
 import { generateSayJSXElement } from './generator.js';
-import { isEquivalentElement, parseJSXElement } from './parser.js';
+import { parseJSXElement } from './parser.js';
 
 const traverse = ((traverse_ as any).default || traverse_) as typeof traverse_;
 
@@ -48,7 +48,7 @@ function createJsxTransformer(): Transformer {
           path.node.leadingComments = path.node.leadingComments ?? [];
           const message = parseExpression(path.node);
           if (message) {
-            assignSequenceIdentifiers(message, { current: 0 }, isEquivalentElement);
+            assignSequenceIdentifiers(message, { current: 0 }, isEquivalentPlaceholder);
             messages.push(message);
             path.skip();
           }
@@ -58,7 +58,7 @@ function createJsxTransformer(): Transformer {
           path.node.leadingComments = path.node.leadingComments ?? [];
           const message = parseJSXElement(path.node);
           if (message) {
-            assignSequenceIdentifiers(message, { current: 0 }, isEquivalentElement);
+            assignSequenceIdentifiers(message, { current: 0 }, isEquivalentPlaceholder);
             messages.push(message);
             path.skip();
           }
@@ -84,7 +84,7 @@ function createJsxTransformer(): Transformer {
           path.node.leadingComments = path.node.leadingComments ?? [];
           const message = parseExpression(path.node);
           if (message) {
-            assignSequenceIdentifiers(message, { current: 0 }, isEquivalentElement);
+            assignSequenceIdentifiers(message, { current: 0 }, isEquivalentPlaceholder);
             const replacement = generateSayCallExpression(message);
             path.replaceWith(replacement);
             path.skip();
@@ -95,7 +95,7 @@ function createJsxTransformer(): Transformer {
           path.node.leadingComments = path.node.leadingComments ?? [];
           const message = parseJSXElement(path.node);
           if (message) {
-            assignSequenceIdentifiers(message, { current: 0 }, isEquivalentElement);
+            assignSequenceIdentifiers(message, { current: 0 }, isEquivalentPlaceholder);
             const replacement = generateSayJSXElement(message);
             path.replaceWith(replacement);
             path.skip();

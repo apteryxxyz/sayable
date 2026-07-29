@@ -339,3 +339,102 @@ describe('parseExpression', () => {
     expect((result!.children[1] as ArgumentMessage).identifier).toBe(AUTO_INCREMENT_IDENTIFIER);
   });
 });
+
+describe('unwrapPlaceholder', () => {
+  it('names a value written as a single-key object', () => {
+    const object = expr<t.ObjectExpression>('({ cartTotal: getTotal() })');
+    const property = object.properties[0] as t.ObjectProperty;
+    expect(parser.unwrapPlaceholder(object)).toEqual(['cartTotal', property.value]);
+  });
+
+  it('names a template interpolation the value would otherwise number', () => {
+    const result = parser.parseExpression(expr('say`Total: ${{ cartTotal: getTotal() }}`'));
+    const argument = result!.children[1] as ArgumentMessage;
+    expect(argument.identifier).toBe('cartTotal');
+    // The wrapper is gone, only the value it held is compiled.
+    expect(t.isCallExpression(argument.expression)).toBe(true);
+    expect(((argument.expression as t.CallExpression).callee as t.Identifier).name).toBe(
+      'getTotal',
+    );
+  });
+
+  it('accepts a quoted key and a shorthand property', () => {
+    expect(parser.unwrapPlaceholder(expr("({ 'cartTotal': x })"))[0]).toBe('cartTotal');
+    expect(parser.unwrapPlaceholder(expr('({ total })'))[0]).toBe('total');
+  });
+
+  it.each([
+    ['a name that is not a valid identifier', "({ 'cart-total': x })"],
+    ['a numeric name', '({ 0: x })'],
+  ])('throws for %s', (_, code) => {
+    expect(() => parser.unwrapPlaceholder(expr(code))).toThrow('Invalid placeholder name');
+  });
+
+  it.each([
+    ['more than one key', '({ a: 1, b: 2 })'],
+    ['no keys', '({})'],
+    ['a computed key', '({ [key]: x })'],
+    ['a spread', '({ ...rest })'],
+    ['a method', '({ a() {} })'],
+  ])('leaves an object with %s untouched', (_, code) => {
+    // Only the one shape that could not already mean something is claimed.
+    const object = expr<t.ObjectExpression>(code);
+    expect(parser.unwrapPlaceholder(object)).toEqual([AUTO_INCREMENT_IDENTIFIER, object]);
+  });
+
+  it('passes a plain expression through as it always was', () => {
+    const identifier = expr('name');
+    expect(parser.unwrapPlaceholder(identifier)).toEqual(['name', identifier]);
+    const member = expr('obj.prop');
+    expect(parser.unwrapPlaceholder(member)).toEqual([AUTO_INCREMENT_IDENTIFIER, member]);
+  });
+
+  it('names a choice selector', () => {
+    const result = parser.parseExpression(
+      expr("say.plural({ n: items.length }, { one: '# item', other: '# items' })"),
+    );
+    const choice = result!.children[0] as ChoiceMessage;
+    expect(choice.identifier).toBe('n');
+    expect(t.isMemberExpression(choice.expression)).toBe(true);
+  });
+
+  it('keeps a named `say` macro a message of its own', () => {
+    const result = parser.parseExpression(expr('say`Hi ${{ nested: say`there` }}`'));
+    // The name is dropped rather than applied to a nested message, but no macro
+    // survives into the output.
+    expect(result!.children[1]).toBeInstanceOf(CompositeMessage);
+  });
+});
+
+describe('isEquivalentPlaceholder, on values', () => {
+  it('treats the same variable interpolated twice as one value', () => {
+    expect(parser.isEquivalentPlaceholder(expr('name'), expr('name'))).toBe(true);
+  });
+
+  it('treats the same member chain written twice as one value', () => {
+    expect(parser.isEquivalentPlaceholder(expr('author.name'), expr('author.name'))).toBe(true);
+  });
+
+  it('treats a variable and a member chain as distinguishable', () => {
+    // The shape `${name}` beside `${{ name: author.name }}` reduces to.
+    expect(parser.isEquivalentPlaceholder(expr('name'), expr('author.name'))).toBe(false);
+  });
+
+  it('treats different member chains as distinguishable', () => {
+    expect(parser.isEquivalentPlaceholder(expr('items.length'), expr('users.length'))).toBe(false);
+  });
+
+  it('ignores where in the source each one was written', () => {
+    // The same expression written at two points in a message parses to nodes
+    // that differ in position, which must not make them two placeholders.
+    const a = expr('cart.total');
+    const b = expr('  cart.total');
+    expect(a.start).not.toBe(b.start);
+    expect(parser.isEquivalentPlaceholder(a, b)).toBe(true);
+  });
+
+  it('treats anything that is not a node as distinguishable', () => {
+    expect(parser.isEquivalentPlaceholder(null, null)).toBe(false);
+    expect(parser.isEquivalentPlaceholder(expr('name'), undefined)).toBe(false);
+  });
+});

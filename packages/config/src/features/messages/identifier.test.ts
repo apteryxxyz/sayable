@@ -111,15 +111,44 @@ describe('assignSequenceIdentifiers', () => {
     );
   });
 
-  it('allows two arguments to share an identifier', () => {
+  it('allows two arguments to share a name when they are equivalent', () => {
     const message = new CompositeMessage(
       {},
       [],
       [],
-      [new ArgumentMessage('total', null), new ArgumentMessage('total', null)],
+      [new ArgumentMessage('total', 'sum'), new ArgumentMessage('total', 'sum')],
       null,
     );
-    expect(() => assignSequenceIdentifiers(message)).not.toThrow();
+    expect(() =>
+      assignSequenceIdentifiers(message, { current: 0 }, (a, b) => a === b),
+    ).not.toThrow();
+  });
+
+  it('throws when arguments sharing a name are not equivalent', () => {
+    const message = new CompositeMessage(
+      {},
+      [],
+      [],
+      [new ArgumentMessage('total', 'sum'), new ArgumentMessage('total', 'other')],
+      null,
+    );
+    expect(() => assignSequenceIdentifiers(message, { current: 0 }, (a, b) => a === b)).toThrow(
+      "Duplicate placeholder name 'total', give each value in a message its own name unless they are identical",
+    );
+  });
+
+  it('compares a choice against an argument of the same name', () => {
+    const choice = new ChoiceMessage('plural', 'count', [], 'n');
+    const message = new CompositeMessage(
+      {},
+      [],
+      [],
+      [choice, new ArgumentMessage('count', 'other')],
+      null,
+    );
+    expect(() => assignSequenceIdentifiers(message, { current: 0 }, (a, b) => a === b)).toThrow(
+      "Duplicate placeholder name 'count'",
+    );
   });
 
   it('throws when an element tag collides with an argument', () => {

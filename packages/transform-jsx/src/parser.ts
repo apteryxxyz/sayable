@@ -8,6 +8,7 @@ import {
   LiteralMessage,
   type Message,
 } from '@saykit/config/features/messages';
+import { unwrapPlaceholder } from '@saykit/transform-js/parser';
 
 /**
  * Attribute used to name the ICU tag an embedded element extracts as, e.g.
@@ -38,8 +39,10 @@ export function parseJSXContainerElement(element: t.JSXElement): CompositeMessag
     } else if (t.isJSXFragment(c)) {
       p.push(new ElementMessage(AUTO_INCREMENT_IDENTIFIER, [], c));
     } else if (t.isJSXExpressionContainer(c)) {
-      if (t.isExpression(c.expression))
-        p.push(new ArgumentMessage(getExpressionAsIdentifier(c.expression), c.expression));
+      if (t.isExpression(c.expression)) {
+        const [identifier, value] = unwrapPlaceholder(c.expression);
+        p.push(new ArgumentMessage(identifier, value));
+      }
     }
 
     return p;
@@ -98,13 +101,8 @@ export function parseJSXOpeningElement(element: t.JSXOpeningElement): CompositeM
             value: new ElementMessage(AUTO_INCREMENT_IDENTIFIER, [], a.value.expression),
           });
         } else if (t.isExpression(a.value.expression)) {
-          b.push({
-            identifier,
-            value: new ArgumentMessage(
-              getExpressionAsIdentifier(a.value.expression),
-              a.value.expression,
-            ),
-          });
+          const [name, value] = unwrapPlaceholder(a.value.expression);
+          b.push({ identifier, value: new ArgumentMessage(name, value) });
         }
       }
 
@@ -113,8 +111,8 @@ export function parseJSXOpeningElement(element: t.JSXOpeningElement): CompositeM
 
     const initialiser = findAttributeValueIfExpressionOrStringLiteral(element.attributes, '_');
     if (!initialiser) return null;
-    const identifier = getExpressionAsIdentifier(initialiser);
-    const choice = new ChoiceMessage(kind, identifier, branches, initialiser);
+    const [identifier, selector] = unwrapPlaceholder(initialiser);
+    const choice = new ChoiceMessage(kind, identifier, branches, selector);
 
     const descriptorId = findAttributeValueIfStringLiteralAsString(element.attributes, 'id');
     const descriptorContext = findAttributeValueIfStringLiteralAsString(
@@ -210,17 +208,6 @@ function takeElementTag(element: t.JSXElement) {
   return tag;
 }
 
-/**
- * Whether two elements sharing a tag are the same element, and so compile to
- * one prop a translator can use interchangeably. `say-tag` has been stripped by
- * the time this runs, so it compares the element name and the props left over,
- * not the children: those come from the translation, not the source.
- */
-export function isEquivalentElement(a: any, b: any) {
-  if (!t.isJSXElement(a) || !t.isJSXElement(b)) return false;
-  return t.isNodesEquivalent(a.openingElement, b.openingElement);
-}
-
 function getReferences(node: t.Node) {
   if (!node.loc?.filename) return [];
   return [`${node.loc.filename}:${node.loc.start.line}`];
@@ -275,13 +262,4 @@ function findAttributeValueAsBoolean(
       return attribute.value.expression.value;
   }
   return undefined;
-}
-
-function getExpressionAsIdentifier(node: t.Node) {
-  if (t.isIdentifier(node)) return node.name;
-  // Initialiser and argument nodes are always plain expressions here, never a
-  // bare JSX identifier, so this branch is unreachable in practice.
-  /* v8 ignore next */
-  if (t.isJSXIdentifier(node)) return node.name;
-  return AUTO_INCREMENT_IDENTIFIER;
 }

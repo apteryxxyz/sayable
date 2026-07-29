@@ -8,6 +8,7 @@ import {
   ElementMessage,
   LiteralMessage,
 } from '@saykit/config/features/messages';
+import { isEquivalentPlaceholder } from '@saykit/transform-js/parser';
 import { describe, expect, it } from 'vitest';
 import * as parser from './parser.js';
 
@@ -352,30 +353,36 @@ describe('parseJSXElement', () => {
   });
 });
 
-describe('isEquivalentElement', () => {
+// The comparison itself lives in `@saykit/transform-js` so both transformers
+// share one rule; the element half of it is exercised here, where the JSX is.
+describe('isEquivalentPlaceholder, on elements', () => {
   // The children differ throughout: they come from the translation, so they
   // never make two elements distinguishable.
   it('treats elements with the same name and props as equivalent', () => {
-    expect(
-      parser.isEquivalentElement(jsx`<b className="x">a</b>`, jsx`<b className="x">c</b>`),
-    ).toBe(true);
-  });
-
-  it('treats differing props as distinguishable', () => {
-    expect(parser.isEquivalentElement(jsx`<a href="/x">a</a>`, jsx`<a href="/y">a</a>`)).toBe(
-      false,
+    expect(isEquivalentPlaceholder(jsx`<b className="x">a</b>`, jsx`<b className="x">c</b>`)).toBe(
+      true,
     );
   });
 
+  it('treats differing props as distinguishable', () => {
+    expect(isEquivalentPlaceholder(jsx`<a href="/x">a</a>`, jsx`<a href="/y">a</a>`)).toBe(false);
+  });
+
   it('treats differing element names as distinguishable', () => {
-    expect(parser.isEquivalentElement(jsx`<b>a</b>`, jsx`<i>a</i>`)).toBe(false);
+    expect(isEquivalentPlaceholder(jsx`<b>a</b>`, jsx`<i>a</i>`)).toBe(false);
   });
 
   it('treats a self-closing element as distinct from a container', () => {
-    expect(parser.isEquivalentElement(jsx`<Icon />`, jsx`<Icon>a</Icon>`)).toBe(false);
+    expect(isEquivalentPlaceholder(jsx`<Icon />`, jsx`<Icon>a</Icon>`)).toBe(false);
   });
 
   it('treats a non-element expression as distinguishable', () => {
-    expect(parser.isEquivalentElement(null, jsx`<b>a</b>`)).toBe(false);
+    expect(isEquivalentPlaceholder(null, jsx`<b>a</b>`)).toBe(false);
+  });
+
+  it('never matches an element against a value, whichever side it is on', () => {
+    const value = parseExpression('user.name') as unknown as t.Expression;
+    expect(isEquivalentPlaceholder(jsx`<b>a</b>`, value)).toBe(false);
+    expect(isEquivalentPlaceholder(value, jsx`<b>a</b>`)).toBe(false);
   });
 });

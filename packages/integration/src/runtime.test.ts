@@ -5,7 +5,13 @@ import { Say } from './runtime.js';
 type Locale = 'en' | 'fr' | 'de';
 
 const messages = {
-  en: { greeting: 'Hello', items: '{count, plural, one {# item} other {# items}}' },
+  en: {
+    greeting: 'Hello',
+    items: '{count, plural, one {# item} other {# items}}',
+    named: 'Hello, {name}',
+    identified: 'Order {id}',
+    underscored: 'Total {_total}',
+  },
   fr: { greeting: 'Bonjour', items: '{count, plural, one {# article} other {# articles}}' },
 } satisfies Partial<Record<Locale, Say.Messages>>;
 
@@ -19,6 +25,14 @@ const opts = (o: {
   messages?: Partial<Record<Locale, Say.Messages>>;
   loader?: Say.Loader<Locale>;
 }) => o as Say.Options<Locale, Say.Loader<Locale> | undefined>;
+
+/**
+ * Drop the bidi isolation marks the formatter wraps substituted values in, so
+ * an assertion can read as the sentence a user sees.
+ */
+function plain(formatted: string) {
+  return formatted.replaceAll(/[⁨⁩]/g, '');
+}
 
 function make(active?: Locale) {
   const say = new Say<Locale>(opts({ locales: ['en', 'fr', 'de'], messages }));
@@ -248,6 +262,46 @@ describe('Say.call', () => {
 
   it('throws when the message id is not found', () => {
     expect(() => make('en').call({ id: 'missing' })).toThrow('Message for missing is not a string');
+  });
+
+  it('strips the underscore the transform compiles values behind', () => {
+    expect(plain(make('en').call({ id: 'named', _name: 'Ada' }))).toBe('Hello, Ada');
+  });
+
+  it('formats keys written without one, so a hand-written call still works', () => {
+    expect(plain(make('en').call({ id: 'named', name: 'Ada' }))).toBe('Hello, Ada');
+  });
+
+  it('formats a value named after the descriptor id', () => {
+    // The lookup still uses the id; the value only fills `{id}` in the message.
+    expect(plain(make('en').call({ id: 'identified', _id: '42' }))).toBe('Order 42');
+  });
+
+  it('does not expose the message id as a value', () => {
+    // `{id}` is left unresolved rather than filled with the message's own id.
+    expect(plain(make('en').call({ id: 'identified' }))).not.toContain('identified');
+  });
+
+  it('strips exactly one underscore, so a name that starts with one survives', () => {
+    expect(plain(make('en').call({ id: 'underscored', __total: '9' }))).toBe('Total 9');
+  });
+
+  it('treats a value named `__proto__` as a value, not as a prototype', () => {
+    // Assigning the stripped key would write through to `Object.prototype`
+    // rather than naming a placeholder, so the values are built from own
+    // entries instead.
+    const descriptor = { id: 'named', _name: 'Ada' };
+    Object.defineProperty(descriptor, '___proto__', {
+      value: { polluted: true },
+      enumerable: true,
+    });
+    expect(plain(make('en').call(descriptor))).toBe('Hello, Ada');
+    expect(({} as { polluted?: boolean }).polluted).toBeUndefined();
+  });
+
+  it('ignores keys a descriptor only inherits', () => {
+    const descriptor = Object.assign(Object.create({ _name: 'Ghost' }), { id: 'named' });
+    expect(plain(make('en').call(descriptor))).not.toContain('Ghost');
   });
 });
 
