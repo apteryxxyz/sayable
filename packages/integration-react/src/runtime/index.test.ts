@@ -40,9 +40,10 @@ describe('Say', () => {
     };
     expect(props.html).toBe('<name/> world');
     expect(props.whitespace).toBe(false);
-    // The descriptor passed to `say.call` has the value props unprefixed and
-    // the `whitespace` prop removed.
-    expect(call).toHaveBeenCalledWith(expect.objectContaining({ id: 'greet', name: bold }));
+    // The descriptor passed to `say.call` is exactly the message id and the
+    // value props unprefixed, so a prefixed key or a renderer prop leaking
+    // into it fails here rather than reaching the runtime.
+    expect(call).toHaveBeenCalledWith({ id: 'greet', name: bold });
 
     // A slot that maps to a valid element clones it; other slots pass the tag through.
     const resolved = props.components('name') as (p: object) => ReactElement;
@@ -71,9 +72,10 @@ describe('Say', () => {
       whitespace?: boolean;
       components: (tag?: string) => unknown;
     };
-    // The real id still reaches `say.call`, and the flag still reaches the
-    // renderer, while both tags resolve to their elements.
-    expect(call).toHaveBeenCalledWith(expect.objectContaining({ id: 'greet' }));
+    // The real id still reaches `say.call` and the tag named after it does not
+    // displace it, while a tag named `whitespace` is a value like any other and
+    // the flag itself still reaches the renderer.
+    expect(call).toHaveBeenCalledWith({ id: 'greet', whitespace: bold });
     expect(props.whitespace).toBe(false);
     expect(typeof props.components('id')).toBe('function');
     expect(typeof props.components('whitespace')).toBe('function');
