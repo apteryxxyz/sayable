@@ -31,13 +31,16 @@ export function TaskCard({ task }: { task: Task }) {
 
       <p className="card__meta">
         {/*
-          A JSX child inside `<Say>` is extracted as a positional `<0>` tag, so a
-          translator can move the emphasised name anywhere in the sentence
-          without touching markup. The element itself never enters the catalogue.
+          A JSX child inside `<Say>` is extracted as a tag, so a translator can
+          move the emphasised name anywhere in the sentence without touching
+          markup. The element itself never enters the catalogue. `say-tag`
+          names that tag `<bold>` instead of a positional `<0>` — describe what
+          the tag does, not what it wraps. The attribute is stripped at build
+          time and never reaches the DOM.
         */}
         {task.assignee ? (
           <Say>
-            Assigned to <strong>{task.assignee}</strong>
+            Assigned to <strong say-tag="bold">{task.assignee}</strong>
           </Say>
         ) : (
           <Say>Nobody is on this yet</Say>

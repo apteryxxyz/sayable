@@ -45,6 +45,45 @@ describe('createJsxTransformer.extract', () => {
     expect(message!.message).toBe('Hello, {name}!');
   });
 
+  it('names placeholders after their say-tag', () => {
+    const [message] = transformer.extract(
+      'const x = <Say>Click <a href="/x" say-tag="link">here</a> now</Say>;',
+      'file.tsx',
+    );
+    expect(message!.message).toBe('Click <link>here</link> now');
+  });
+
+  it('throws when two elements in a message share a tag', () => {
+    expect(() =>
+      transformer.extract(
+        'const x = <Say><b say-tag="bold">a</b> and <i say-tag="bold">c</i></Say>;',
+        'file.tsx',
+      ),
+    ).toThrow("Duplicate element tag 'bold'");
+  });
+
+  it('lets identical elements share a tag', () => {
+    const [message] = transformer.extract(
+      'const x = <Say><b say-tag="bold">a</b> and <b say-tag="bold">c</b></Say>;',
+      'file.tsx',
+    );
+    expect(message!.message).toBe('<bold>a</bold> and <bold>c</bold>');
+  });
+
+  it('throws when elements sharing a tag differ in their props', () => {
+    expect(() =>
+      transformer.extract(
+        'const x = <Say><a href="/x" say-tag="link">a</a> and <a href="/y" say-tag="link">c</a></Say>;',
+        'file.tsx',
+      ),
+    ).toThrow("Duplicate element tag 'link'");
+  });
+
+  it('extracts childless elements as self-closing tags', () => {
+    const [message] = transformer.extract('const x = <Say>Open <ChevronDown /></Say>;', 'file.tsx');
+    expect(message!.message).toBe('Open <0/>');
+  });
+
   it('returns an empty array when there are no messages', () => {
     expect(transformer.extract('const x = <div>plain</div>;', 'file.tsx')).toEqual([]);
   });
@@ -57,12 +96,29 @@ describe('createJsxTransformer.transform', () => {
       'file.tsx',
     );
     expect(output).toContain('id="greeting"');
-    expect(output).toContain('name={name}');
+    expect(output).toContain('_name={name}');
   });
 
   it('rewrites a tagged template into a `.call`', () => {
     const output = transformer.transform('const x = say`Hello, ${name}!`;', 'file.tsx');
     expect(output).toContain('say.call(');
+  });
+
+  it('compiles a tagged element into a named prop without the say-tag attribute', () => {
+    const output = transformer.transform(
+      'const x = <Say>Click <a href="/x" say-tag="link">here</a></Say>;',
+      'file.tsx',
+    );
+    expect(output).toContain('_link={<a href="/x">here</a>}');
+    expect(output).not.toContain('say-tag');
+  });
+
+  it('compiles identical elements sharing a tag into a single prop', () => {
+    const output = transformer.transform(
+      'const x = <Say><b say-tag="bold">a</b> and <b say-tag="bold">c</b></Say>;',
+      'file.tsx',
+    );
+    expect(output.match(/_bold=/g)).toHaveLength(1);
   });
 
   it('leaves code without messages untouched', () => {

@@ -29,7 +29,7 @@ describe('Say', () => {
     const element = (Say as (p: unknown) => ReactElement)({
       id: 'greet',
       whitespace: false,
-      name: bold,
+      _name: bold,
     });
 
     expect(element.type).toBe(Renderer);
@@ -40,19 +40,45 @@ describe('Say', () => {
     };
     expect(props.html).toBe('<name/> world');
     expect(props.whitespace).toBe(false);
-    // The descriptor passed to `say.call` has JSX-safe keys resolved and the
-    // `whitespace` prop removed.
-    expect(call).toHaveBeenCalledWith(expect.objectContaining({ id: 'greet', name: bold }));
+    // The descriptor passed to `say.call` is exactly the message id and the
+    // value props unprefixed, so a prefixed key or a renderer prop leaking
+    // into it fails here rather than reaching the runtime.
+    expect(call).toHaveBeenCalledWith({ id: 'greet', name: bold });
 
     // A slot that maps to a valid element clones it; other slots pass the tag through.
     const resolved = props.components('name') as (p: object) => ReactElement;
     expect(typeof resolved).toBe('function');
     expect(isValidElement(resolved({}))).toBe(true);
     expect(props.components('missing')).toBe('missing');
-    // `id` is a string, not an element, so it also passes through as the tag.
+    // The message id is not a value, so nothing resolves for it as a tag.
     expect(props.components('id')).toBe('id');
     // Called with no tag, it returns the (undefined) tag.
     expect(props.components()).toBeUndefined();
+  });
+
+  it('lets a value be named after one of Say’s own props', () => {
+    const call = vi.fn(() => '<id/> and <whitespace/>');
+    globalThis.GET_SAY = () => ({ call });
+
+    const bold = createElement('b', null, 'Ada');
+    const element = (Say as (p: unknown) => ReactElement)({
+      id: 'greet',
+      whitespace: false,
+      _id: bold,
+      _whitespace: bold,
+    });
+
+    const props = element.props as {
+      whitespace?: boolean;
+      components: (tag?: string) => unknown;
+    };
+    // The real id still reaches `say.call` and the tag named after it does not
+    // displace it, while a tag named `whitespace` is a value like any other and
+    // the flag itself still reaches the renderer.
+    expect(call).toHaveBeenCalledWith({ id: 'greet', whitespace: bold });
+    expect(props.whitespace).toBe(false);
+    expect(typeof props.components('id')).toBe('function');
+    expect(typeof props.components('whitespace')).toBe('function');
   });
 
   it('exposes Plural, Ordinal and Select macros that throw', () => {

@@ -21,8 +21,16 @@ export function generateSayJSXElement(message: CompositeMessage) {
             t.jsxExpressionContainer(t.booleanLiteral(message.whitespace)),
           ),
         ]),
-    ...children.map(([k, e]) =>
-      t.jsxAttribute(t.jsxIdentifier(Number.isNaN(+k) ? k : `_${k}`), t.jsxExpressionContainer(e)),
+    // An identifier can repeat — the same argument interpolated twice, or two
+    // identical elements sharing a tag — but it is one prop either way.
+    //
+    // Every value is emitted behind an underscore, which both makes numbered
+    // identifiers valid prop names and keeps them out of `Say`'s own namespace:
+    // no name a message can choose collides with `id` or `whitespace`, or with
+    // `key` and `ref` which React never passes on, and a prop added to `Say`
+    // later claims nothing. The runtime strips exactly one underscore back off.
+    ...[...new Map(children).entries()].map(([k, e]) =>
+      t.jsxAttribute(t.jsxIdentifier(`_${k}`), t.jsxExpressionContainer(e)),
     ),
   ];
 

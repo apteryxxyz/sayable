@@ -17,6 +17,11 @@ export function convertMessageToIcu(message: Message) {
         return `{${String(message.identifier)}}`;
 
       case message instanceof ElementMessage: {
+        // A childless element is self-closing, so a translator has nowhere to
+        // insert content that the element never expected. This tracks the
+        // source: an element written as a pair stays a pair, even when its
+        // children happen to render to nothing.
+        if (message.children.length === 0) return `<${String(message.identifier)}/>`;
         const children = message.children.map((m) => internalConvertMessageToIcu(m)).join('');
         return `<${String(message.identifier)}>${children}</${String(message.identifier)}>`;
       }

@@ -29,6 +29,22 @@ describe('convertMessageToIcu', () => {
       .toMatchInlineSnapshot('"<0>Hello world!</0>"');
   });
 
+  it('should generate childless element messages as self-closing', () => {
+    const message = new ElementMessage('icon', [], dummy);
+    expect(convertMessageToIcu(message)) //
+      .toMatchInlineSnapshot('"<icon/>"');
+  });
+
+  it('should keep element messages paired when a child renders to nothing', () => {
+    const message = new ElementMessage(
+      'bold',
+      [new CompositeMessage({}, [], [], [], dummy)],
+      dummy,
+    );
+    expect(convertMessageToIcu(message)) //
+      .toMatchInlineSnapshot('"<bold></bold>"');
+  });
+
   it('should generate choice messages with numeric identifiers as `=n`', () => {
     const message = new ChoiceMessage(
       'plural',

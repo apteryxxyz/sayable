@@ -9,6 +9,16 @@ import {
   type Message,
 } from '@saykit/config/features/messages';
 
+/**
+ * Attribute used to name the ICU tag an embedded element extracts as, e.g.
+ * `<a say-tag="link">` becomes `<link></link>` rather than `<0></0>`. It never
+ * reaches the real element.
+ */
+const TAG_ATTRIBUTE = 'say-tag';
+
+// A tag name is also used as a JSX prop name.
+const TAG_PATTERN = /^[A-Za-z_][A-Za-z0-9_]*$/;
+
 export function parseJSXContainerElement(element: t.JSXElement): CompositeMessage | null {
   if (element.openingElement.selfClosing) return null;
   const processed = processJSXOpeningElement(element.openingElement);
@@ -154,8 +164,9 @@ export function parseJSXElement(element: t.JSXElement, fallback?: boolean): Mess
   if (message) return message;
   if (!fallback) return null;
 
-  if (element.openingElement.selfClosing)
-    return new ElementMessage(AUTO_INCREMENT_IDENTIFIER, [], element);
+  const identifier = takeElementTag(element) ?? AUTO_INCREMENT_IDENTIFIER;
+
+  if (element.openingElement.selfClosing) return new ElementMessage(identifier, [], element);
 
   const fake = t.jsxElement(
     t.jsxOpeningElement(t.jsxIdentifier('Say'), []),
@@ -165,7 +176,49 @@ export function parseJSXElement(element: t.JSXElement, fallback?: boolean): Mess
   // `parseJSXElement(fake, true)` always resolves (the synthesised element is a
   // `Say` container), so the wrapped message is never null.
   const wrapped = parseJSXElement(fake, true)!;
-  return new ElementMessage(AUTO_INCREMENT_IDENTIFIER, [wrapped], element);
+  return new ElementMessage(identifier, [wrapped], element);
+}
+
+/**
+ * Read the tag name off an embedded element and remove the attribute so it
+ * never reaches the rendered element. Only static strings name a tag; anything
+ * else is left in place and the element falls back to an auto-incremented
+ * identifier.
+ */
+function takeElementTag(element: t.JSXElement) {
+  const attributes = element.openingElement.attributes;
+  const index = attributes.findIndex(
+    (a) => t.isJSXAttribute(a) && getAttributeNameAsString(a) === TAG_ATTRIBUTE,
+  );
+  if (index === -1) return undefined;
+
+  const attribute = attributes[index] as t.JSXAttribute;
+  // Both `say-tag="link"` and `say-tag={'link'}` are static; anything else is
+  // only known at runtime, too late to name a tag with.
+  const value = t.isJSXExpressionContainer(attribute.value)
+    ? attribute.value.expression
+    : attribute.value;
+  if (!t.isStringLiteral(value)) return undefined;
+
+  const tag = value.value;
+  if (!TAG_PATTERN.test(tag))
+    throw new Error(
+      `Invalid '${TAG_ATTRIBUTE}' value '${tag}', expected a letter or underscore followed by letters, digits, or underscores`,
+    );
+
+  attributes.splice(index, 1);
+  return tag;
+}
+
+/**
+ * Whether two elements sharing a tag are the same element, and so compile to
+ * one prop a translator can use interchangeably. `say-tag` has been stripped by
+ * the time this runs, so it compares the element name and the props left over,
+ * not the children: those come from the translation, not the source.
+ */
+export function isEquivalentElement(a: any, b: any) {
+  if (!t.isJSXElement(a) || !t.isJSXElement(b)) return false;
+  return t.isNodesEquivalent(a.openingElement, b.openingElement);
 }
 
 function getReferences(node: t.Node) {
