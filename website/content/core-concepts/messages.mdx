@@ -82,11 +82,33 @@ say.plural({ items: cart.length }, { one: '# item', other: '# items' });
 ```
 
 <Callout type="info">
-  Only an object written inline with exactly one key is read as a name. A variable holding an object
-  (`` say`${data}` ``) is a value like any other, and so is an object with two keys, a spread, or a
-  computed key. Interpolating an object was never meaningful, it stringifies to `[object Object]`,
-  so nothing that used to work changes meaning.
+  Only an object written inline with exactly one key is read as a name, and that is the one shape
+  whose meaning changes: it used to format as its own value, `[object Object]`, and now names the
+  value inside it. A variable holding an object (`` say`${data}` ``) is untouched, and so is an
+  object with two keys, a spread, or a computed key, they all stay values like any other.
 </Callout>
+
+### Reusing a name
+
+A name belongs to a value, not to a position, so interpolating the same value twice is one
+placeholder, and a translator can move it around the sentence or drop it entirely:
+
+```ts
+say`${name} invited ${name}'s team`; // → "{name} invited {name}'s team"
+say`${{ total: cart.total }} of ${{ total: cart.total }}`; // → "{total} of {total}"
+```
+
+<Callout type="warn">
+  Two different values under one name are a build error, whether they got there by naming
+  (`` say`${{ n: items.length }} ${{ n: users.length }}` ``) or by one name colliding with a variable
+  (`` say`${name} ${{ name: author.name }}` ``). Only one of them could survive into the compiled
+  call, and a translator has no way to tell them apart. Give them their own names, `itemCount` and
+  `userCount` rather than `n` twice.
+</Callout>
+
+Note that a repeat is evaluated once. Two identical placeholders compile to a single value, so if the
+expression does work, or has a side effect, it happens once no matter how many times the message
+mentions it.
 
 ## Plurals
 

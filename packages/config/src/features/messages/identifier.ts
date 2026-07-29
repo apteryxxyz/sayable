@@ -9,16 +9,16 @@ import {
 export const AUTO_INCREMENT_IDENTIFIER = Symbol('auto-increment');
 
 /**
- * Decides whether two elements sharing a tag are the same element, and so may
- * share it. Only the syntax that produced them can answer that, so the caller
- * supplies the comparison; by default no two elements are interchangeable.
+ * Decides whether two placeholders sharing a name are the same placeholder, and
+ * so may share it. Only the syntax that produced them can answer that, so the
+ * caller supplies the comparison; by default nothing is interchangeable.
  */
-export type ElementEquivalence = (a: any, b: any) => boolean;
+export type PlaceholderEquivalence = (a: any, b: any) => boolean;
 
 export function assignSequenceIdentifiers(
   message: Message,
   sequence = { current: 0 },
-  equivalent: ElementEquivalence = () => false,
+  equivalent: PlaceholderEquivalence = () => false,
 ) {
   const reserved = collectAssignedIdentifiers(message, equivalent);
 
@@ -51,30 +51,45 @@ export function assignSequenceIdentifiers(
  * Collect the identifiers already assigned before this pass runs, so generated
  * sequence numbers never shadow an explicit one (e.g. an element tagged `0`).
  *
- * Elements that differ need their own tag: they each compile to their own prop,
- * and a translator has to be able to tell them apart. Repeats are fine when
- * nothing distinguishes them — two identical elements are one prop, the same
- * way the same variable interpolated twice is one value — so arguments are
- * never checked and elements only when they are not equivalent.
+ * A name is claimed by what produced it, not by the name alone. Two that differ
+ * each compile to their own prop, and a translator moving them around a sentence
+ * has to be able to tell them apart, so they are a build error. Repeats are fine
+ * when nothing distinguishes them: the same variable interpolated twice is one
+ * value, and two identical elements are one tag.
  */
-function collectAssignedIdentifiers(message: Message, equivalent: ElementEquivalence) {
-  const tags = new Map<string, ElementMessage>();
-  const values = new Set<string>();
+function collectAssignedIdentifiers(message: Message, equivalent: PlaceholderEquivalence) {
+  const tags = new Map<string, unknown>();
+  const values = new Map<string, unknown>();
+
+  function claim(
+    claimed: Map<string, unknown>,
+    identifier: string,
+    expression: unknown,
+    conflict: string,
+  ) {
+    if (claimed.has(identifier) && !equivalent(claimed.get(identifier), expression))
+      throw new Error(conflict);
+    claimed.set(identifier, expression);
+  }
 
   function walk(message: Message) {
-    if (message instanceof ElementMessage && typeof message.identifier === 'string') {
-      const previous = tags.get(message.identifier);
-      if (previous && !equivalent(previous.expression, message.expression))
-        throw new Error(
-          `Duplicate element tag '${message.identifier}', give each element in a message its own tag unless they are identical`,
-        );
-      tags.set(message.identifier, message);
-    }
+    if (message instanceof ElementMessage && typeof message.identifier === 'string')
+      claim(
+        tags,
+        message.identifier,
+        message.expression,
+        `Duplicate element tag '${message.identifier}', give each element in a message its own tag unless they are identical`,
+      );
     if (
       (message instanceof ArgumentMessage || message instanceof ChoiceMessage) &&
       typeof message.identifier === 'string'
     )
-      values.add(message.identifier);
+      claim(
+        values,
+        message.identifier,
+        message.expression,
+        `Duplicate placeholder name '${message.identifier}', give each value in a message its own name unless they are identical`,
+      );
     if (message instanceof CompositeMessage || message instanceof ElementMessage)
       for (const child of message.children) walk(child);
     if (message instanceof ChoiceMessage) for (const branch of message.branches) walk(branch.value);
@@ -86,5 +101,5 @@ function collectAssignedIdentifiers(message: Message, equivalent: ElementEquival
     if (values.has(tag))
       throw new Error(`Element tag '${tag}' collides with an argument of the same name`);
 
-  return new Set([...tags.keys(), ...values]);
+  return new Set([...tags.keys(), ...values.keys()]);
 }

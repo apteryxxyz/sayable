@@ -4,7 +4,7 @@ import traverse_ from '@babel/traverse';
 import type { Transformer } from '@saykit/config';
 import { assignSequenceIdentifiers, CompositeMessage } from '@saykit/config/features/messages';
 import { generateSayCallExpression } from './generator.js';
-import { parseExpression } from './parser.js';
+import { isEquivalentPlaceholder, parseExpression } from './parser.js';
 
 const traverse = ((traverse_ as any).default || traverse_) as typeof traverse_;
 
@@ -46,7 +46,7 @@ function createJsTransformer(): Transformer {
           path.node.leadingComments = path.node.leadingComments ?? [];
           const message = parseExpression(path.node);
           if (message) {
-            assignSequenceIdentifiers(message, { current: 0 });
+            assignSequenceIdentifiers(message, { current: 0 }, isEquivalentPlaceholder);
             messages.push(message);
             path.skip();
           }
@@ -72,7 +72,7 @@ function createJsTransformer(): Transformer {
           path.node.leadingComments = path.node.leadingComments ?? [];
           const message = parseExpression(path.node);
           if (message) {
-            assignSequenceIdentifiers(message, { current: 0 });
+            assignSequenceIdentifiers(message, { current: 0 }, isEquivalentPlaceholder);
             const replacement = generateSayCallExpression(message);
             path.replaceWith(replacement);
             path.skip();

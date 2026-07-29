@@ -158,3 +158,26 @@ describe('createJsxTransformer.transform', () => {
     expect(output).toContain('<div>plain</div>');
   });
 });
+
+describe('duplicate placeholder names', () => {
+  it('allows the same value interpolated twice', () => {
+    const [message] = transformer.extract('<Say>{name} and {name}</Say>', 'file.tsx');
+    expect(message!.message).toBe('{name} and {name}');
+    const output = transformer.transform('<Say>{name} and {name}</Say>', 'file.tsx');
+    expect(output.match(/_name=/g)).toHaveLength(1);
+  });
+
+  it('rejects one name given to two different expressions', () => {
+    expect(() =>
+      transformer.extract('<Say>{{ who: a.name }} and {{ who: b.name }}</Say>', 'file.tsx'),
+    ).toThrow("Duplicate placeholder name 'who'");
+  });
+
+  it('rejects a value name that collides with an element tag', () => {
+    // Tags and values share one namespace in the compiled props, so this stays
+    // the harder error it always was.
+    expect(() =>
+      transformer.extract('<Say>{link} <a say-tag="link">here</a></Say>', 'file.tsx'),
+    ).toThrow("Element tag 'link' collides with an argument of the same name");
+  });
+});

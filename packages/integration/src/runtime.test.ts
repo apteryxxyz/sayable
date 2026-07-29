@@ -285,6 +285,24 @@ describe('Say.call', () => {
   it('strips exactly one underscore, so a name that starts with one survives', () => {
     expect(plain(make('en').call({ id: 'underscored', __total: '9' }))).toBe('Total 9');
   });
+
+  it('treats a value named `__proto__` as a value, not as a prototype', () => {
+    // Assigning the stripped key would write through to `Object.prototype`
+    // rather than naming a placeholder, so the values are built from own
+    // entries instead.
+    const descriptor = { id: 'named', _name: 'Ada' };
+    Object.defineProperty(descriptor, '___proto__', {
+      value: { polluted: true },
+      enumerable: true,
+    });
+    expect(plain(make('en').call(descriptor))).toBe('Hello, Ada');
+    expect(({} as { polluted?: boolean }).polluted).toBeUndefined();
+  });
+
+  it('ignores keys a descriptor only inherits', () => {
+    const descriptor = Object.assign(Object.create({ _name: 'Ghost' }), { id: 'named' });
+    expect(plain(make('en').call(descriptor))).not.toContain('Ghost');
+  });
 });
 
 describe('Say inspect', () => {

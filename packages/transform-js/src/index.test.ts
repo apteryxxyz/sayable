@@ -105,3 +105,45 @@ describe('createJsTransformer.transform', () => {
     expect(output).not.toContain('.call(');
   });
 });
+
+describe('duplicate placeholder names', () => {
+  it('allows the same value interpolated twice', () => {
+    const [message] = transformer.extract('const t = say`${name} and ${name}`;', 'file.ts');
+    expect(message!.message).toBe('{name} and {name}');
+    // One name is one value, so the repeat compiles to a single property.
+    const output = transformer.transform('const t = say`${name} and ${name}`;', 'file.ts');
+    expect(output.match(/_name:/g)).toHaveLength(1);
+  });
+
+  it('allows two named placeholders that name the same expression', () => {
+    const code = 'const t = say`${{ name: author.name }} and ${{ name: author.name }}`;';
+    expect(transformer.extract(code, 'file.ts')[0]!.message).toBe('{name} and {name}');
+    expect(transformer.transform(code, 'file.ts').match(/_name:/g)).toHaveLength(1);
+  });
+
+  it('rejects one name given to two different expressions', () => {
+    expect(() =>
+      transformer.extract(
+        'const t = say`${{ n: items.length }} ${{ n: users.length }}`;',
+        'file.ts',
+      ),
+    ).toThrow(
+      "Duplicate placeholder name 'n', give each value in a message its own name unless they are identical",
+    );
+  });
+
+  it('rejects a name that collides with a variable interpolated directly', () => {
+    expect(() =>
+      transformer.transform('const t = say`${name} ${{ name: author.name }}`;', 'file.ts'),
+    ).toThrow("Duplicate placeholder name 'name'");
+  });
+
+  it('compares a choice selector against the values around it', () => {
+    expect(() =>
+      transformer.extract(
+        "const t = say`${count} ${say.plural({ count: items.length }, { other: '#' })}`;",
+        'file.ts',
+      ),
+    ).toThrow("Duplicate placeholder name 'count'");
+  });
+});

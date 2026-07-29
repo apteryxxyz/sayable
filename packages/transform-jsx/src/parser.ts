@@ -208,17 +208,6 @@ function takeElementTag(element: t.JSXElement) {
   return tag;
 }
 
-/**
- * Whether two elements sharing a tag are the same element, and so compile to
- * one prop a translator can use interchangeably. `say-tag` has been stripped by
- * the time this runs, so it compares the element name and the props left over,
- * not the children: those come from the translation, not the source.
- */
-export function isEquivalentElement(a: any, b: any) {
-  if (!t.isJSXElement(a) || !t.isJSXElement(b)) return false;
-  return t.isNodesEquivalent(a.openingElement, b.openingElement);
-}
-
 function getReferences(node: t.Node) {
   if (!node.loc?.filename) return [];
   return [`${node.loc.filename}:${node.loc.start.line}`];

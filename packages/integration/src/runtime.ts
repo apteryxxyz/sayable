@@ -8,15 +8,17 @@ import type { Disallow, Named, NumeralOptions, SelectOptions, Tuple } from './ty
  * one is the whole inverse — `_0` is `0`, and `__total` is a placeholder named
  * `_total`. Keys without one are passed through, so a hand-written
  * `call({ id, name })` still formats `{name}`.
+ *
+ * Built from the descriptor's own entries so a value named `__proto__` stays a
+ * placeholder rather than reaching through to the prototype.
  */
 function resolveDescriptorValues(descriptor: { id: string; [match: string | number]: unknown }) {
-  const values: Record<string, unknown> = {};
-  for (const key in descriptor) {
-    // The id names the message, it is not one of its values.
-    if (key === 'id') continue;
-    values[key.startsWith('_') ? key.slice(1) : key] = descriptor[key];
-  }
-  return values;
+  return Object.fromEntries(
+    Object.entries(descriptor)
+      // The id names the message, it is not one of its values.
+      .filter(([key]) => key !== 'id')
+      .map(([key, value]) => [key.startsWith('_') ? key.slice(1) : key, value]),
+  );
 }
 
 export namespace Say {

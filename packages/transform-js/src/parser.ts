@@ -168,6 +168,25 @@ export function unwrapPlaceholder(
   return [name, property.value];
 }
 
+/**
+ * Whether two placeholders sharing a name are the same placeholder, and so
+ * compile to one prop a translator can move around the sentence freely.
+ *
+ * A value is compared whole: the same variable interpolated twice is one value,
+ * while `${name}` beside `${{ name: author.name }}` is two things claiming one
+ * name. An element is compared on its opening element alone — `say-tag` has
+ * been stripped by the time this runs, and its children come from the
+ * translation rather than the source.
+ */
+export function isEquivalentPlaceholder(a: any, b: any) {
+  if (t.isJSXElement(a) || t.isJSXElement(b)) {
+    if (!t.isJSXElement(a) || !t.isJSXElement(b)) return false;
+    return t.isNodesEquivalent(a.openingElement, b.openingElement);
+  }
+  if (!t.isNode(a) || !t.isNode(b)) return false;
+  return t.isNodesEquivalent(a, b);
+}
+
 export function parseExpression(
   expression: t.Expression,
   fallback?: false,

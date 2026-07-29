@@ -405,3 +405,36 @@ describe('unwrapPlaceholder', () => {
     expect(result!.children[1]).toBeInstanceOf(CompositeMessage);
   });
 });
+
+describe('isEquivalentPlaceholder, on values', () => {
+  it('treats the same variable interpolated twice as one value', () => {
+    expect(parser.isEquivalentPlaceholder(expr('name'), expr('name'))).toBe(true);
+  });
+
+  it('treats the same member chain written twice as one value', () => {
+    expect(parser.isEquivalentPlaceholder(expr('author.name'), expr('author.name'))).toBe(true);
+  });
+
+  it('treats a variable and a member chain as distinguishable', () => {
+    // The shape `${name}` beside `${{ name: author.name }}` reduces to.
+    expect(parser.isEquivalentPlaceholder(expr('name'), expr('author.name'))).toBe(false);
+  });
+
+  it('treats different member chains as distinguishable', () => {
+    expect(parser.isEquivalentPlaceholder(expr('items.length'), expr('users.length'))).toBe(false);
+  });
+
+  it('ignores where in the source each one was written', () => {
+    // The same expression written at two points in a message parses to nodes
+    // that differ in position, which must not make them two placeholders.
+    const a = expr('cart.total');
+    const b = expr('  cart.total');
+    expect(a.start).not.toBe(b.start);
+    expect(parser.isEquivalentPlaceholder(a, b)).toBe(true);
+  });
+
+  it('treats anything that is not a node as distinguishable', () => {
+    expect(parser.isEquivalentPlaceholder(null, null)).toBe(false);
+    expect(parser.isEquivalentPlaceholder(expr('name'), undefined)).toBe(false);
+  });
+});
