@@ -1,7 +1,7 @@
 'use client';
 
 import { CodeBlock, Pre } from 'fumadocs-ui/components/codeblock';
-import { AlertTriangle, Check, ChevronDown, Copy, Link2, Loader2, Wand2 } from 'lucide-react';
+import { AlertTriangle, Check, ChevronDown, Copy, Link2, Loader2, Wand2, X } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { VersionOption } from '@/app/(home)/playground/versions';
@@ -74,7 +74,10 @@ function loadRuntime(version: string): Promise<Runtime> {
     });
 
     // Don't cache a rejection — a transient network failure should be retryable.
-    pending.catch(() => runtimes.delete(version));
+    // The identity check avoids evicting a newer attempt that already succeeded.
+    pending.catch(() => {
+      if (runtimes.get(version) === pending) runtimes.delete(version);
+    });
     runtimes.set(version, pending);
   }
 
@@ -86,7 +89,9 @@ function loadRuntime(version: string): Promise<Runtime> {
 let highlighter: Promise<(code: string) => string> | null = null;
 
 function getHighlighter() {
-  highlighter ??= (async () => {
+  if (highlighter) return highlighter;
+
+  const pending = (async () => {
     const [{ createHighlighterCore }, { createJavaScriptRegexEngine }] = await Promise.all([
       import('shiki/core'),
       import('shiki/engine/javascript'),
@@ -102,7 +107,16 @@ function getHighlighter() {
       core.codeToHtml(code, { lang: 'tsx', themes: SHIKI_THEMES, defaultColor: false });
   })();
 
-  return highlighter;
+  // Evict a rejection, as `loadRuntime` does. Caching one would leave the output
+  // pane unhighlighted for the rest of the session after a single blip, with no
+  // way back even once the CDN recovers. The identity check avoids discarding a
+  // newer attempt that already succeeded.
+  pending.catch(() => {
+    if (highlighter === pending) highlighter = null;
+  });
+
+  highlighter = pending;
+  return pending;
 }
 
 /* ------------------------------------------------------------------- sharing */
@@ -388,20 +402,39 @@ function PaneAction({
   );
 }
 
-function CopyAction({ value }: { value: string }) {
-  const [copied, setCopied] = useState(false);
+/**
+ * Clipboard writes reject on a denied permission or an insecure context. Reporting
+ * that beats an unhandled rejection and a button that silently does nothing.
+ */
+function useCopy() {
+  const [state, setState] = useState<'idle' | 'copied' | 'failed'>('idle');
 
   useEffect(() => {
-    if (!copied) return;
-    const timer = setTimeout(() => setCopied(false), 2000);
+    if (state === 'idle') return;
+    const timer = setTimeout(() => setState('idle'), 2000);
     return () => clearTimeout(timer);
-  }, [copied]);
+  }, [state]);
+
+  const copy = useCallback(async (value: string) => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setState('copied');
+    } catch {
+      setState('failed');
+    }
+  }, []);
+
+  return [state, copy] as const;
+}
+
+function CopyAction({ value }: { value: string }) {
+  const [state, copy] = useCopy();
 
   return (
     <PaneAction
-      icon={copied ? Check : Copy}
-      label={copied ? 'Copied' : 'Copy'}
-      onClick={() => void navigator.clipboard.writeText(value).then(() => setCopied(true))}
+      icon={state === 'copied' ? Check : state === 'failed' ? X : Copy}
+      label={state === 'copied' ? 'Copied' : state === 'failed' ? 'Failed' : 'Copy'}
+      onClick={() => void copy(value)}
     />
   );
 }
@@ -428,23 +461,18 @@ function Action({
 }
 
 function ShareButton({ url }: { url: () => string }) {
-  const [copied, setCopied] = useState(false);
-
-  useEffect(() => {
-    if (!copied) return;
-    const timer = setTimeout(() => setCopied(false), 2000);
-    return () => clearTimeout(timer);
-  }, [copied]);
+  const [state, copy] = useCopy();
 
   return (
     <Action
-      icon={copied ? Check : Link2}
-      label={copied ? 'Copied' : 'Share'}
+      icon={state === 'copied' ? Check : state === 'failed' ? X : Link2}
+      label={state === 'copied' ? 'Copied' : state === 'failed' ? 'Copy failed' : 'Share'}
       onClick={() => {
         const link = url();
-        // Keep the address bar in sync so a manual copy shares the same state.
+        // Sync the address bar first, so even a failed clipboard write leaves the
+        // link somewhere the user can copy it from by hand.
         window.history.replaceState(null, '', link);
-        void navigator.clipboard.writeText(link).then(() => setCopied(true));
+        void copy(link);
       }}
     />
   );

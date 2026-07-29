@@ -5,8 +5,15 @@ const MINIMUM = [0, 5, 0];
 
 export type VersionOption = { value: string; label: string };
 
-/** Fallback so the playground still renders if the registry is unreachable. */
-const FALLBACK: VersionOption[] = [{ value: '0.5.0', label: '0.5.0 (latest)' }];
+/**
+ * Fallback so the playground still renders if the registry is unreachable. Not
+ * labelled "latest": once a newer release exists, an npm outage would otherwise
+ * have this claim to be something it isn't.
+ */
+const FALLBACK: VersionOption[] = [{ value: '0.5.0', label: '0.5.0 (fallback)' }];
+
+/** Long enough for a slow registry, short enough not to stall a build. */
+const REGISTRY_TIMEOUT_MS = 5000;
 
 type Registry = {
   'dist-tags'?: Record<string, string>;
@@ -39,6 +46,10 @@ export async function getVersions(): Promise<VersionOption[]> {
   try {
     const response = await fetch(`https://registry.npmjs.org/${PACKAGE}`, {
       next: { revalidate: 3600 },
+      // `fetch` has no deadline of its own, so a stalled registry connection would
+      // hold up static generation and every revalidation after it. A timeout
+      // rejects into the catch below, which serves FALLBACK.
+      signal: AbortSignal.timeout(REGISTRY_TIMEOUT_MS),
     });
     if (!response.ok) return FALLBACK;
     registry = (await response.json()) as Registry;
@@ -47,8 +58,9 @@ export async function getVersions(): Promise<VersionOption[]> {
   }
 
   const tags = registry['dist-tags'] ?? {};
+  const published = new Set(Object.keys(registry.versions ?? {}));
 
-  const stable = Object.keys(registry.versions ?? {})
+  const stable = [...published]
     .map((version) => ({ version, parsed: parse(version) }))
     .filter((entry) => entry.parsed !== null && compare(entry.parsed, MINIMUM) >= 0)
     .sort((a, b) => compare(b.parsed as number[], a.parsed as number[]))
@@ -59,7 +71,14 @@ export async function getVersions(): Promise<VersionOption[]> {
 
   // Beta releases are published as `0.0.0-beta-<timestamp>`, which sorts
   // meaninglessly — surface only the one the beta tag currently points at.
-  const beta = tags.beta ? [{ value: tags.beta, label: betaLabel(tags.beta) }] : [];
+  // A dist-tag is just a pointer: it can name an unpublished version, or one
+  // already listed above (`npm dist-tag add pkg@0.5.0 beta`), which would offer a
+  // version that fails to load or a duplicate entry with a duplicate React key.
+  const listed = new Set(stable.map((option) => option.value));
+  const beta =
+    tags.beta && published.has(tags.beta) && !listed.has(tags.beta)
+      ? [{ value: tags.beta, label: betaLabel(tags.beta) }]
+      : [];
 
   const options = [...beta, ...stable];
   return options.length > 0 ? options : FALLBACK;
