@@ -96,7 +96,7 @@ describe('createJsxTransformer.transform', () => {
       'file.tsx',
     );
     expect(output).toContain('id="greeting"');
-    expect(output).toContain('name={name}');
+    expect(output).toContain('_name={name}');
   });
 
   it('rewrites a tagged template into a `.call`', () => {
@@ -109,7 +109,7 @@ describe('createJsxTransformer.transform', () => {
       'const x = <Say>Click <a href="/x" say-tag="link">here</a></Say>;',
       'file.tsx',
     );
-    expect(output).toContain('link={<a href="/x">here</a>}');
+    expect(output).toContain('_link={<a href="/x">here</a>}');
     expect(output).not.toContain('say-tag');
   });
 
@@ -118,7 +118,7 @@ describe('createJsxTransformer.transform', () => {
       'const x = <Say><b say-tag="bold">a</b> and <b say-tag="bold">c</b></Say>;',
       'file.tsx',
     );
-    expect(output.match(/bold=/g)).toHaveLength(1);
+    expect(output.match(/_bold=/g)).toHaveLength(1);
   });
 
   it('leaves code without messages untouched', () => {

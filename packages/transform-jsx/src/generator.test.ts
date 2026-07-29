@@ -59,7 +59,7 @@ describe('generateSayJSXElement', () => {
     expect(expr.value).toBe(false);
   });
 
-  it('names numeric child keys with a leading underscore and passes others through', () => {
+  it('names every child key with a leading underscore', () => {
     const message = new CompositeMessage(
       { id: 'x' },
       [],
@@ -88,15 +88,15 @@ describe('generateSayJSXElement', () => {
       t.identifier('say'),
     );
 
-    // Numeric identifiers (`0`, `1`) get an underscore prefix; named ones do not.
+    // Values live behind an underscore, `Say`'s own props in front of it.
     expect(attrNames(generateSayJSXElement(message))).toEqual([
       'id',
-      'name',
+      '_name',
       '_0',
-      'inner',
+      '_inner',
       '_1',
-      'branch',
-      'deep',
+      '_branch',
+      '_deep',
     ]);
   });
 });

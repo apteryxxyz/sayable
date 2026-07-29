@@ -29,7 +29,7 @@ describe('Say', () => {
     const element = (Say as (p: unknown) => ReactElement)({
       id: 'greet',
       whitespace: false,
-      name: bold,
+      _name: bold,
     });
 
     expect(element.type).toBe(Renderer);
@@ -40,8 +40,8 @@ describe('Say', () => {
     };
     expect(props.html).toBe('<name/> world');
     expect(props.whitespace).toBe(false);
-    // The descriptor passed to `say.call` has JSX-safe keys resolved and the
-    // `whitespace` prop removed.
+    // The descriptor passed to `say.call` has the value props unprefixed and
+    // the `whitespace` prop removed.
     expect(call).toHaveBeenCalledWith(expect.objectContaining({ id: 'greet', name: bold }));
 
     // A slot that maps to a valid element clones it; other slots pass the tag through.
@@ -49,10 +49,34 @@ describe('Say', () => {
     expect(typeof resolved).toBe('function');
     expect(isValidElement(resolved({}))).toBe(true);
     expect(props.components('missing')).toBe('missing');
-    // `id` is a string, not an element, so it also passes through as the tag.
+    // The message id is not a value, so nothing resolves for it as a tag.
     expect(props.components('id')).toBe('id');
     // Called with no tag, it returns the (undefined) tag.
     expect(props.components()).toBeUndefined();
+  });
+
+  it('lets a value be named after one of Say’s own props', () => {
+    const call = vi.fn(() => '<id/> and <whitespace/>');
+    globalThis.GET_SAY = () => ({ call });
+
+    const bold = createElement('b', null, 'Ada');
+    const element = (Say as (p: unknown) => ReactElement)({
+      id: 'greet',
+      whitespace: false,
+      _id: bold,
+      _whitespace: bold,
+    });
+
+    const props = element.props as {
+      whitespace?: boolean;
+      components: (tag?: string) => unknown;
+    };
+    // The real id still reaches `say.call`, and the flag still reaches the
+    // renderer, while both tags resolve to their elements.
+    expect(call).toHaveBeenCalledWith(expect.objectContaining({ id: 'greet' }));
+    expect(props.whitespace).toBe(false);
+    expect(typeof props.components('id')).toBe('function');
+    expect(typeof props.components('whitespace')).toBe('function');
   });
 
   it('exposes Plural, Ordinal and Select macros that throw', () => {

@@ -8,7 +8,7 @@ import {
 } from 'react';
 import type { Disallow, NumeralOptions, SelectOptions } from 'saykit';
 import { Renderer } from '~/components/renderer.js';
-import { type PropsWithJSXSafeKeys, resolveJsxSafePropKeys } from '~/types.js';
+import { type PropsWithJSXSafeKeys, resolveValuePropKeys } from '~/types.js';
 
 declare function GET_SAY(): import('saykit').ReadonlySay;
 
@@ -30,15 +30,17 @@ export function Say(props: { id: string; whitespace?: boolean; [match: string]: 
     });
 
   const say = GET_SAY();
-  const { whitespace, ...rest } = props;
-  const descriptor = resolveJsxSafePropKeys(rest);
+  const { id, whitespace, ...rest } = props;
+  const values = resolveValuePropKeys(rest);
 
   return createElement(Renderer, {
-    html: say.call(descriptor),
+    // The id is kept out of `values` and merged in last, so a message free to
+    // name a tag `id` still cannot displace the message being looked up.
+    html: say.call({ ...values, id }),
     whitespace,
     components(tag?: string) {
-      if (tag && tag in descriptor && isValidElement(descriptor[tag])) {
-        const element = descriptor[tag]! as ReactElement;
+      if (tag && tag in values && isValidElement(values[tag])) {
+        const element = values[tag]! as ReactElement;
         return (props) => cloneElement(element, { ...(element.props as object), ...props });
       } else {
         return tag;
