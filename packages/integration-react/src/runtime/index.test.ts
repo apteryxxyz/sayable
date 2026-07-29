@@ -41,7 +41,9 @@ describe('Say', () => {
     expect(props.html).toBe('<name/> world');
     expect(props.whitespace).toBe(false);
     // The value props reach `say.call` still prefixed — the runtime does the
-    // single strip — with the id merged in and `whitespace` removed.
+    // single strip — with the id merged in and `whitespace` removed. Asserted
+    // exactly, so a renderer prop leaking into the descriptor fails here
+    // rather than reaching the runtime.
     expect(call).toHaveBeenCalledWith({ id: 'greet', _name: bold });
 
     // A slot that maps to a valid element clones it; other slots pass the tag through.
@@ -71,9 +73,10 @@ describe('Say', () => {
       whitespace?: boolean;
       components: (tag?: string) => unknown;
     };
-    // The real id still reaches `say.call`, and the flag still reaches the
-    // renderer, while both tags resolve to their elements.
-    expect(call).toHaveBeenCalledWith(expect.objectContaining({ id: 'greet' }));
+    // The real id still reaches `say.call` and the tag named after it does not
+    // displace it, while a tag named `whitespace` is a value like any other and
+    // the flag itself still reaches the renderer.
+    expect(call).toHaveBeenCalledWith({ id: 'greet', whitespace: bold });
     expect(props.whitespace).toBe(false);
     expect(typeof props.components('id')).toBe('function');
     expect(typeof props.components('whitespace')).toBe('function');

@@ -286,7 +286,7 @@ JSX elements inside `<Say>` are preserved across translations as numbered tags:
 {items} items · total <0>{total}</0>
 ```
 
-Translators can move `<0>...</0>` around to fit the target language's grammar, and SayKit re-renders it with the original element at runtime.
+Translators can move `<0>...</0>` around to fit the target language's grammar, and SayKit re-renders it with the original element at runtime. A number tells a translator nothing about what the element does, so you can name one with `say-tag`, and an element with no children extracts as `<1/>` rather than a pair, see [naming tags](/integrations/react#naming-tags).
 
 `<Say>` also exposes sub-components for plurals, ordinals, and select:
 
