@@ -6,7 +6,7 @@ import { assignSequenceIdentifiers, CompositeMessage } from '@saykit/config/feat
 import { generateSayCallExpression } from '@saykit/transform-js/generator';
 import { parseExpression } from '@saykit/transform-js/parser';
 import { generateSayJSXElement } from './generator.js';
-import { parseJSXElement } from './parser.js';
+import { isEquivalentElement, parseJSXElement } from './parser.js';
 
 const traverse = ((traverse_ as any).default || traverse_) as typeof traverse_;
 
@@ -48,7 +48,7 @@ function createJsxTransformer(): Transformer {
           path.node.leadingComments = path.node.leadingComments ?? [];
           const message = parseExpression(path.node);
           if (message) {
-            assignSequenceIdentifiers(message, { current: 0 });
+            assignSequenceIdentifiers(message, { current: 0 }, isEquivalentElement);
             messages.push(message);
             path.skip();
           }
@@ -58,7 +58,7 @@ function createJsxTransformer(): Transformer {
           path.node.leadingComments = path.node.leadingComments ?? [];
           const message = parseJSXElement(path.node);
           if (message) {
-            assignSequenceIdentifiers(message, { current: 0 });
+            assignSequenceIdentifiers(message, { current: 0 }, isEquivalentElement);
             messages.push(message);
             path.skip();
           }
@@ -84,7 +84,7 @@ function createJsxTransformer(): Transformer {
           path.node.leadingComments = path.node.leadingComments ?? [];
           const message = parseExpression(path.node);
           if (message) {
-            assignSequenceIdentifiers(message, { current: 0 });
+            assignSequenceIdentifiers(message, { current: 0 }, isEquivalentElement);
             const replacement = generateSayCallExpression(message);
             path.replaceWith(replacement);
             path.skip();
@@ -95,7 +95,7 @@ function createJsxTransformer(): Transformer {
           path.node.leadingComments = path.node.leadingComments ?? [];
           const message = parseJSXElement(path.node);
           if (message) {
-            assignSequenceIdentifiers(message, { current: 0 });
+            assignSequenceIdentifiers(message, { current: 0 }, isEquivalentElement);
             const replacement = generateSayJSXElement(message);
             path.replaceWith(replacement);
             path.skip();

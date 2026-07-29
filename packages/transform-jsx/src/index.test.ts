@@ -56,10 +56,27 @@ describe('createJsxTransformer.extract', () => {
   it('throws when two elements in a message share a tag', () => {
     expect(() =>
       transformer.extract(
-        'const x = <Say><b say-tag="bold">a</b> and <b say-tag="bold">c</b></Say>;',
+        'const x = <Say><b say-tag="bold">a</b> and <i say-tag="bold">c</i></Say>;',
         'file.tsx',
       ),
     ).toThrow("Duplicate element tag 'bold'");
+  });
+
+  it('lets identical elements share a tag', () => {
+    const [message] = transformer.extract(
+      'const x = <Say><b say-tag="bold">a</b> and <b say-tag="bold">c</b></Say>;',
+      'file.tsx',
+    );
+    expect(message!.message).toBe('<bold>a</bold> and <bold>c</bold>');
+  });
+
+  it('throws when elements sharing a tag differ in their props', () => {
+    expect(() =>
+      transformer.extract(
+        'const x = <Say><a href="/x" say-tag="link">a</a> and <a href="/y" say-tag="link">c</a></Say>;',
+        'file.tsx',
+      ),
+    ).toThrow("Duplicate element tag 'link'");
   });
 
   it('extracts childless elements as self-closing tags', () => {
@@ -94,6 +111,14 @@ describe('createJsxTransformer.transform', () => {
     );
     expect(output).toContain('link={<a href="/x">here</a>}');
     expect(output).not.toContain('say-tag');
+  });
+
+  it('compiles identical elements sharing a tag into a single prop', () => {
+    const output = transformer.transform(
+      'const x = <Say><b say-tag="bold">a</b> and <b say-tag="bold">c</b></Say>;',
+      'file.tsx',
+    );
+    expect(output.match(/bold=/g)).toHaveLength(1);
   });
 
   it('leaves code without messages untouched', () => {

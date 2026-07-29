@@ -351,3 +351,31 @@ describe('parseJSXElement', () => {
     });
   });
 });
+
+describe('isEquivalentElement', () => {
+  // The children differ throughout: they come from the translation, so they
+  // never make two elements distinguishable.
+  it('treats elements with the same name and props as equivalent', () => {
+    expect(
+      parser.isEquivalentElement(jsx`<b className="x">a</b>`, jsx`<b className="x">c</b>`),
+    ).toBe(true);
+  });
+
+  it('treats differing props as distinguishable', () => {
+    expect(parser.isEquivalentElement(jsx`<a href="/x">a</a>`, jsx`<a href="/y">a</a>`)).toBe(
+      false,
+    );
+  });
+
+  it('treats differing element names as distinguishable', () => {
+    expect(parser.isEquivalentElement(jsx`<b>a</b>`, jsx`<i>a</i>`)).toBe(false);
+  });
+
+  it('treats a self-closing element as distinct from a container', () => {
+    expect(parser.isEquivalentElement(jsx`<Icon />`, jsx`<Icon>a</Icon>`)).toBe(false);
+  });
+
+  it('treats a non-element expression as distinguishable', () => {
+    expect(parser.isEquivalentElement(null, jsx`<b>a</b>`)).toBe(false);
+  });
+});

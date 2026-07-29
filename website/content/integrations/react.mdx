@@ -58,9 +58,14 @@ Name the tag after what it does to the text, `bold`, `link`, `icon`, not after t
 
 Naming is opt-in and per element, so untagged elements keep their numbers alongside named ones. A tag must be a static string, and a valid identifier: a letter or underscore followed by letters, digits, or underscores.
 
+Two tagged elements in one message can share a name as long as they are identical, the same element
+with the same props, as `<b say-tag="bold">` twice is. They compile to one prop, and a translator
+still sees a single `<bold>` they can move around the sentence. Only the props are compared, not the
+content, since that comes from the translation.
+
 <Callout type="warn">
-  Two tagged elements in one message can't share a name, that's a build error. Each compiles to its
-  own prop, and a translator reordering the sentence has to be able to tell them apart. Give them
+  Elements that share a name but differ in any way are a build error. Each would compile to its own
+  prop, and a translator reordering the sentence has to be able to tell them apart. Give those
   distinct names, `link_docs` and `link_faq` rather than `link` twice. Elements you leave untagged
   are unaffected, they keep their numbers.
 </Callout>

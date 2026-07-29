@@ -81,7 +81,33 @@ describe('assignSequenceIdentifiers', () => {
       null,
     );
     expect(() => assignSequenceIdentifiers(message)).toThrow(
-      "Duplicate element tag 'link', give each element in a message its own tag",
+      "Duplicate element tag 'link', give each element in a message its own tag unless they are identical",
+    );
+  });
+
+  it('allows two elements to share a tag when they are equivalent', () => {
+    const message = new CompositeMessage(
+      {},
+      [],
+      [],
+      [new ElementMessage('link', [], 'a'), new ElementMessage('link', [], 'a')],
+      null,
+    );
+    expect(() =>
+      assignSequenceIdentifiers(message, { current: 0 }, (a, b) => a === b),
+    ).not.toThrow();
+  });
+
+  it('throws when elements sharing a tag are not equivalent', () => {
+    const message = new CompositeMessage(
+      {},
+      [],
+      [],
+      [new ElementMessage('link', [], 'a'), new ElementMessage('link', [], 'b')],
+      null,
+    );
+    expect(() => assignSequenceIdentifiers(message, { current: 0 }, (a, b) => a === b)).toThrow(
+      "Duplicate element tag 'link'",
     );
   });
 
