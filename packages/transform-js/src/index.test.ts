@@ -43,6 +43,25 @@ describe('createJsTransformer.extract', () => {
     expect(message!.message).toContain('plural');
   });
 
+  it('names a placeholder written as a single-key object', () => {
+    const [message] = transformer.extract(
+      'const t = say`Total: ${{ cartTotal: getTotal() }}`;',
+      'file.ts',
+    );
+    expect(message!.message).toBe('Total: {cartTotal}');
+  });
+
+  it('leaves unnamed placeholders numbered alongside named ones', () => {
+    const [message] = transformer.extract('const t = say`${{ total: a.b }} ${c.d}`;', 'file.ts');
+    expect(message!.message).toBe('{total} {0}');
+  });
+
+  it('throws for a name that is not a valid identifier', () => {
+    expect(() => transformer.extract("const t = say`${{ 'cart total': x }}`;", 'file.ts')).toThrow(
+      "Invalid placeholder name 'cart total'",
+    );
+  });
+
   it('returns an empty array when there are no messages', () => {
     expect(transformer.extract('const x = 1 + 2;', 'file.ts')).toEqual([]);
   });
@@ -52,8 +71,32 @@ describe('createJsTransformer.transform', () => {
   it('rewrites a tagged template into a `.call`', () => {
     const output = transformer.transform('const greeting = say`Hello, ${name}!`;', 'file.ts');
     expect(output).toContain('say.call(');
-    expect(output).toContain('name: name');
+    expect(output).toContain('_name: name');
     expect(output).not.toContain('say`');
+  });
+
+  it('keeps a value named `id` from displacing the message id', () => {
+    const output = transformer.transform('const g = say`Hi ${id}`;', 'file.ts');
+    // Both are properties of one object, so without the prefix the value would
+    // win and the descriptor would no longer name a message.
+    expect(output).toMatch(/id: "[^"]+"/);
+    expect(output).toContain('_id: id');
+  });
+
+  it('compiles a named placeholder without its wrapper', () => {
+    const output = transformer.transform(
+      'const t = say`Total: ${{ cartTotal: getTotal() }}`;',
+      'file.ts',
+    );
+    expect(output).toContain('_cartTotal: getTotal()');
+    // The single-key object that named it is gone, not nested inside the call.
+    expect(output).not.toContain('{ cartTotal:');
+  });
+
+  it('throws for a name that is not a valid identifier', () => {
+    expect(() =>
+      transformer.transform("const t = say`${{ 'cart total': x }}`;", 'file.ts'),
+    ).toThrow("Invalid placeholder name 'cart total'");
   });
 
   it('leaves code without messages untouched', () => {

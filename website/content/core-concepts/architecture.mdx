@@ -99,7 +99,7 @@ const say = new Say({
 
 say.activate('en');
 
-say.call({ id: 'abc123', name: 'Ada' });
+say.call({ id: 'abc123', _name: 'Ada' });
 // → "Hello, Ada!"
 ```
 
@@ -109,7 +109,7 @@ You almost never write `say.call(...)` by hand, the build transform generates it
 say`Hello, ${name}!`;
 ```
 
-The transformer takes that tagged template, extracts the literal text plus the placeholder, computes a stable hash id, and rewrites the source to call `say.call({ id: '...', name })`.
+The transformer takes that tagged template, extracts the literal text plus the placeholder, computes a stable hash id, and rewrites the source to call `say.call({ id: '...', _name: name })`. Values are emitted behind an underscore so they keep their own namespace, the runtime strips it back off.
 
 See [runtime](/core-concepts/runtime) for the full API and [messages](/core-concepts/messages) for what's authorable.
 

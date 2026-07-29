@@ -339,3 +339,69 @@ describe('parseExpression', () => {
     expect((result!.children[1] as ArgumentMessage).identifier).toBe(AUTO_INCREMENT_IDENTIFIER);
   });
 });
+
+describe('unwrapPlaceholder', () => {
+  it('names a value written as a single-key object', () => {
+    const object = expr<t.ObjectExpression>('({ cartTotal: getTotal() })');
+    const property = object.properties[0] as t.ObjectProperty;
+    expect(parser.unwrapPlaceholder(object)).toEqual(['cartTotal', property.value]);
+  });
+
+  it('names a template interpolation the value would otherwise number', () => {
+    const result = parser.parseExpression(expr('say`Total: ${{ cartTotal: getTotal() }}`'));
+    const argument = result!.children[1] as ArgumentMessage;
+    expect(argument.identifier).toBe('cartTotal');
+    // The wrapper is gone, only the value it held is compiled.
+    expect(t.isCallExpression(argument.expression)).toBe(true);
+    expect(((argument.expression as t.CallExpression).callee as t.Identifier).name).toBe(
+      'getTotal',
+    );
+  });
+
+  it('accepts a quoted key and a shorthand property', () => {
+    expect(parser.unwrapPlaceholder(expr("({ 'cartTotal': x })"))[0]).toBe('cartTotal');
+    expect(parser.unwrapPlaceholder(expr('({ total })'))[0]).toBe('total');
+  });
+
+  it.each([
+    ['a name that is not a valid identifier', "({ 'cart-total': x })"],
+    ['a numeric name', '({ 0: x })'],
+  ])('throws for %s', (_, code) => {
+    expect(() => parser.unwrapPlaceholder(expr(code))).toThrow('Invalid placeholder name');
+  });
+
+  it.each([
+    ['more than one key', '({ a: 1, b: 2 })'],
+    ['no keys', '({})'],
+    ['a computed key', '({ [key]: x })'],
+    ['a spread', '({ ...rest })'],
+    ['a method', '({ a() {} })'],
+  ])('leaves an object with %s untouched', (_, code) => {
+    // Only the one shape that could not already mean something is claimed.
+    const object = expr<t.ObjectExpression>(code);
+    expect(parser.unwrapPlaceholder(object)).toEqual([AUTO_INCREMENT_IDENTIFIER, object]);
+  });
+
+  it('passes a plain expression through as it always was', () => {
+    const identifier = expr('name');
+    expect(parser.unwrapPlaceholder(identifier)).toEqual(['name', identifier]);
+    const member = expr('obj.prop');
+    expect(parser.unwrapPlaceholder(member)).toEqual([AUTO_INCREMENT_IDENTIFIER, member]);
+  });
+
+  it('names a choice selector', () => {
+    const result = parser.parseExpression(
+      expr("say.plural({ n: items.length }, { one: '# item', other: '# items' })"),
+    );
+    const choice = result!.children[0] as ChoiceMessage;
+    expect(choice.identifier).toBe('n');
+    expect(t.isMemberExpression(choice.expression)).toBe(true);
+  });
+
+  it('keeps a named `say` macro a message of its own', () => {
+    const result = parser.parseExpression(expr('say`Hi ${{ nested: say`there` }}`'));
+    // The name is dropped rather than applied to a nested message, but no macro
+    // survives into the output.
+    expect(result!.children[1]).toBeInstanceOf(CompositeMessage);
+  });
+});

@@ -6,7 +6,7 @@ import {
   type ReactElement,
   type ReactNode,
 } from 'react';
-import type { Disallow, NumeralOptions, SelectOptions } from 'saykit';
+import type { Disallow, Named, NumeralOptions, SelectOptions } from 'saykit';
 import { Renderer } from '~/components/renderer.js';
 import { type PropsWithJSXSafeKeys, resolveValuePropKeys } from '~/types.js';
 
@@ -34,9 +34,11 @@ export function Say(props: { id: string; whitespace?: boolean; [match: string]: 
   const values = resolveValuePropKeys(rest);
 
   return createElement(Renderer, {
-    // The id is kept out of `values` and merged in last, so a message free to
-    // name a tag `id` still cannot displace the message being looked up.
-    html: say.call({ ...values, id }),
+    // The props go through still prefixed: `Say#call` does the single strip for
+    // every caller, so there is nowhere for it to happen twice. The id is
+    // merged in last, so a message free to name a value `id` still cannot
+    // displace the message being looked up.
+    html: say.call({ ...rest, id }),
     whitespace,
     components(tag?: string) {
       if (tag && tag in values && isValidElement(values[tag])) {
@@ -70,7 +72,9 @@ export namespace Say {
    * @remark This is a macro and must be used with the relevant saykit plugin
    */
   export function Plural(
-    props: { _: number } & PropsWithJSXSafeKeys<Disallow<NumeralOptions, 'id' | 'context'>>,
+    props: { _: number | Named<number> } & PropsWithJSXSafeKeys<
+      Disallow<NumeralOptions, 'id' | 'context'>
+    >,
   ): ReactNode {
     void props;
     throw new Error("'Say.Plural' is a macro and must be used with the relevant saykit plugin");
@@ -96,7 +100,9 @@ export namespace Say {
    * @remark This is a macro and must be used with the relevant saykit plugin
    */
   export function Ordinal(
-    props: { _: number } & PropsWithJSXSafeKeys<Disallow<NumeralOptions, 'id' | 'context'>>,
+    props: { _: number | Named<number> } & PropsWithJSXSafeKeys<
+      Disallow<NumeralOptions, 'id' | 'context'>
+    >,
   ): ReactNode {
     void props;
     throw new Error("'Say.Ordinal' is a macro and must be used with the relevant saykit plugin");
@@ -121,7 +127,9 @@ export namespace Say {
    * @remark This is a macro and must be used with the relevant saykit plugin
    */
   export function Select(
-    props: { _: string } & PropsWithJSXSafeKeys<Disallow<SelectOptions, 'id' | 'context'>>,
+    props: { _: string | Named<string> } & PropsWithJSXSafeKeys<
+      Disallow<SelectOptions, 'id' | 'context'>
+    >,
   ): ReactNode {
     void props;
     throw new Error("'Say.Select' is a macro and must be used with the relevant saykit plugin");

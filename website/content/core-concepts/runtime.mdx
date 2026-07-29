@@ -190,12 +190,12 @@ Compiled macros end up calling `say.call(descriptor)`:
 ```ts
 say.call({
   id: 'abc123',
-  name: 'Ada',
+  _name: 'Ada',
 });
 // → "Hello, Ada!"
 ```
 
-In application code you rarely write this directly, the build transform generates it from your `` say`...` `` and `<Say>` macros. The descriptor always has an `id`; extra properties become ICU placeholders.
+In application code you rarely write this directly, the build transform generates it from your `` say`...` `` and `<Say>` macros. The descriptor always has an `id`; extra properties become ICU placeholders. The transform emits each value behind one underscore so it cannot collide with the descriptor's own keys, and `call` strips exactly one back off, keys written without one are passed through unchanged.
 
 ## Putting it together
 

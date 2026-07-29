@@ -86,7 +86,46 @@ describe('generateSayCallExpression', () => {
 
     const result = generateSayCallExpression(message);
 
-    // id, then one key per non-literal child (elements/choices also emit their own children).
-    expect(callKeys(result)).toEqual(['id', 'name', '0', 'inner', 'count', 'choiceArg', 'deep']);
+    // id, then one key per non-literal child (elements/choices also emit their
+    // own children), every value behind an underscore.
+    expect(callKeys(result)).toEqual([
+      'id',
+      '_name',
+      '_0',
+      '_inner',
+      '_count',
+      '_choiceArg',
+      '_deep',
+    ]);
+  });
+
+  it('keeps a value named after the descriptor id out of its way', () => {
+    const message = new CompositeMessage(
+      { id: 'x' },
+      [],
+      [],
+      [new ArgumentMessage('id', t.identifier('id'))],
+      t.identifier('say'),
+    );
+
+    // Without the prefix both would be `id` and the later one would win,
+    // leaving the descriptor pointing at a value rather than at a message.
+    expect(callKeys(generateSayCallExpression(message))).toEqual(['id', '_id']);
+  });
+
+  it('emits one property for a repeated identifier', () => {
+    const message = new CompositeMessage(
+      { id: 'x' },
+      [],
+      [],
+      [
+        new ArgumentMessage('name', t.identifier('name')),
+        new LiteralMessage(' and '),
+        new ArgumentMessage('name', t.identifier('name')),
+      ],
+      t.identifier('say'),
+    );
+
+    expect(callKeys(generateSayCallExpression(message))).toEqual(['id', '_name']);
   });
 });

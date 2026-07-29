@@ -40,9 +40,9 @@ describe('Say', () => {
     };
     expect(props.html).toBe('<name/> world');
     expect(props.whitespace).toBe(false);
-    // The descriptor passed to `say.call` has the value props unprefixed and
-    // the `whitespace` prop removed.
-    expect(call).toHaveBeenCalledWith(expect.objectContaining({ id: 'greet', name: bold }));
+    // The value props reach `say.call` still prefixed — the runtime does the
+    // single strip — with the id merged in and `whitespace` removed.
+    expect(call).toHaveBeenCalledWith({ id: 'greet', _name: bold });
 
     // A slot that maps to a valid element clones it; other slots pass the tag through.
     const resolved = props.components('name') as (p: object) => ReactElement;
@@ -77,6 +77,20 @@ describe('Say', () => {
     expect(props.whitespace).toBe(false);
     expect(typeof props.components('id')).toBe('function');
     expect(typeof props.components('whitespace')).toBe('function');
+  });
+
+  it('leaves a tag whose name starts with an underscore intact', () => {
+    const call = vi.fn(() => '<_link/>');
+    globalThis.GET_SAY = () => ({ call });
+
+    const link = createElement('a', null, 'here');
+    const element = (Say as (p: unknown) => ReactElement)({ id: 'greet', __link: link });
+
+    const props = element.props as { components: (tag?: string) => unknown };
+    // One strip in the runtime and one in the resolver, each on its own copy:
+    // `__link` reaches `say.call` untouched and resolves as `_link` for the tag.
+    expect(call).toHaveBeenCalledWith({ id: 'greet', __link: link });
+    expect(typeof props.components('_link')).toBe('function');
   });
 
   it('exposes Plural, Ordinal and Select macros that throw', () => {

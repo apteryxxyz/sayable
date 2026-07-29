@@ -58,6 +58,8 @@ Name the tag after what it does to the text, `bold`, `link`, `icon`, not after t
 
 Naming is opt-in and per element, so untagged elements keep their numbers alongside named ones. A tag must be a static string, and a valid identifier: a letter or underscore followed by letters, digits, or underscores.
 
+`say-tag` names elements. To name a value you interpolate, wrap it in a single-key object: `<Say>Signed in as {{ who: user.profile.name }}</Say>`. See [Placeholder names](/core-concepts/messages#placeholder-names).
+
 Two tagged elements in one message can share a name as long as they are identical, the same element
 with the same props, as `<b say-tag="bold">` twice is. They compile to one prop, and a translator
 still sees a single `<bold>` they can move around the sentence. Only the props are compared, not the

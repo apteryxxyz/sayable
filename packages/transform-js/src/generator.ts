@@ -13,7 +13,17 @@ export function generateSayCallExpression(message: CompositeMessage) {
 
   const properties = t.objectExpression([
     t.objectProperty(t.identifier('id'), t.stringLiteral(id)),
-    ...children.map(([ident, expr]) => t.objectProperty(t.identifier(ident), expr)),
+    // An identifier can repeat — the same argument interpolated twice — but it
+    // is one property either way.
+    //
+    // Every value is emitted behind an underscore, which both makes a numbered
+    // identifier a valid property name and keeps the message's values out of
+    // the descriptor's own namespace: an argument named `id` no longer
+    // displaces the message being looked up. The runtime strips exactly one
+    // underscore back off.
+    ...[...new Map(children).entries()].map(([ident, expr]) =>
+      t.objectProperty(t.identifier(`_${ident}`), expr),
+    ),
   ]);
 
   return t.callExpression(t.memberExpression(message.accessor, t.identifier('call')), [properties]);

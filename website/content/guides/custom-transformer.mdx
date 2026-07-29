@@ -66,6 +66,9 @@ For reference, the JS transformer:
    - If it is one, builds a `CompositeMessage` from the AST.
 4. On `extract`, collects every `CompositeMessage` and converts each to the `Message` shape (with ICU string, comments, references).
 5. On `transform`, replaces each matched expression with a `say.call({ id, ...args })` call expression.
+   The built-in transformers emit each value behind an underscore (`_name`) to keep it out of the
+   descriptor's namespace, but that is a convention of theirs, not a requirement, `call` passes
+   unprefixed keys through unchanged.
 
 The JSX transformer does the same plus a `JSXElement` visitor for `<Say>` components.
 

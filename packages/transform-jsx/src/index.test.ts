@@ -79,6 +79,28 @@ describe('createJsxTransformer.extract', () => {
     ).toThrow("Duplicate element tag 'link'");
   });
 
+  it('names a JSX interpolation written as a single-key object', () => {
+    const [message] = transformer.extract(
+      'const x = <Say>Hi {{ who: user.name }}</Say>;',
+      'file.tsx',
+    );
+    expect(message!.message).toBe('Hi {who}');
+  });
+
+  it('names a choice initialiser written as a single-key object', () => {
+    const [message] = transformer.extract(
+      'const x = <Say.Plural _={{ items: cart.length }} one="# item" other="# items" />;',
+      'file.tsx',
+    );
+    expect(message!.message).toContain('{items, plural,');
+  });
+
+  it('throws for a placeholder name that is not a valid identifier', () => {
+    expect(() =>
+      transformer.extract("const x = <Say>Hi {{ 'who is': user.name }}</Say>;", 'file.tsx'),
+    ).toThrow("Invalid placeholder name 'who is'");
+  });
+
   it('extracts childless elements as self-closing tags', () => {
     const [message] = transformer.extract('const x = <Say>Open <ChevronDown /></Say>;', 'file.tsx');
     expect(message!.message).toBe('Open <0/>');
@@ -119,6 +141,16 @@ describe('createJsxTransformer.transform', () => {
       'file.tsx',
     );
     expect(output.match(/_bold=/g)).toHaveLength(1);
+  });
+
+  it('compiles a named interpolation into a prop without its wrapper', () => {
+    const output = transformer.transform(
+      'const x = <Say>Hi {{ who: user.name }}</Say>;',
+      'file.tsx',
+    );
+    expect(output).toContain('_who={user.name}');
+    // The single-key object that named it is gone, not passed as a prop value.
+    expect(output).not.toContain('{ who:');
   });
 
   it('leaves code without messages untouched', () => {

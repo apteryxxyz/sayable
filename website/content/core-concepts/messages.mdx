@@ -38,7 +38,9 @@ The transform does five things:
 2. Converts them to ICU MessageFormat.
 3. Generates a stable 6-character hash id from the message text + context.
 4. Records the file and line as a translator reference.
-5. Replaces the source expression with a `say.call({ id, ...values })` call.
+5. Replaces the source expression with a `say.call({ id, ...values })` call, each value behind an
+   underscore (`_name`) so a value can be named anything without colliding with the descriptor's own
+   keys. The runtime strips it back off.
 
 <Callout type="info">
   SayKit looks for the identifier `say` when transforming messages. Anything named `say` works ,
@@ -57,6 +59,34 @@ say`Signed in as ${user.profile.name ?? 'Anonymous'}`; // → "Signed in as {0}"
 ```
 
 Pull values into local variables before interpolating them, translators get readable placeholders, and the message stays stable across refactors.
+
+When you cannot, name the placeholder by interpolating a single-key object, the key is the name:
+
+```ts
+say`Your total is ${{ cartTotal: getCartTotal() }}`; // → "Your total is {cartTotal}"
+```
+
+Nothing to import, and nothing survives the build, the transform reads the key and compiles only the
+value. Name the placeholder after what the value is to the sentence, `cartTotal`, `dueDate`, not
+after the expression that produced it, a translator sees only the name and the words around it.
+
+The name must be a valid identifier: a letter or underscore followed by letters, digits, or
+underscores. An invalid name fails the build. Naming is opt-in and per placeholder, so anything you
+leave alone keeps its number. It works in `say.plural`, `say.ordinal` and `say.select` selectors
+too, and in `<Say>` interpolations:
+
+```tsx
+say.plural({ items: cart.length }, { one: '# item', other: '# items' });
+
+<Say>Signed in as {{ who: user.profile.name }}</Say>;
+```
+
+<Callout type="info">
+  Only an object written inline with exactly one key is read as a name. A variable holding an object
+  (`` say`${data}` ``) is a value like any other, and so is an object with two keys, a spread, or a
+  computed key. Interpolating an object was never meaningful, it stringifies to `[object Object]`,
+  so nothing that used to work changes meaning.
+</Callout>
 
 ## Plurals
 
