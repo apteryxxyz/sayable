@@ -1,5 +1,23 @@
 # @saykit/transform-jsx
 
+## 0.6.0
+
+### Minor Changes
+
+- 30917de: Add `say-tag` to name JSX placeholders, extract childless elements as self-closing tags, and compile message values behind an underscore so no name is reserved
+- 90296f6: Name a placeholder by interpolating a single-key object, `${{ cartTotal: getTotal() }}`
+- 06bee33: Reject two different values sharing a placeholder name, and allow a repeat when they are identical
+
+### Patch Changes
+
+- c6b374e: Add JSX message source references to parser
+- Updated dependencies [90296f6]
+- Updated dependencies [30917de]
+- Updated dependencies [90296f6]
+- Updated dependencies [06bee33]
+  - @saykit/transform-js@0.6.0
+  - @saykit/config@0.6.0
+
 ## 0.5.0
 
 ### Patch Changes

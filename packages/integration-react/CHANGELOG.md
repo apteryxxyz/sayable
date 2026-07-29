@@ -1,5 +1,16 @@
 # @saykit/react
 
+## 0.6.0
+
+### Minor Changes
+
+- 90296f6: Compile message values behind an underscore so a value named `id` no longer displaces the message id
+- 30917de: Add `say-tag` to name JSX placeholders, extract childless elements as self-closing tags, and compile message values behind an underscore so no name is reserved
+
+### Patch Changes
+
+- 6948695: Rebuild the `SayProvider` instance when the locale or messages change so locale switches reach descendants
+
 ## 0.5.0
 
 ## 0.2.1
