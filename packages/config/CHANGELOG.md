@@ -1,5 +1,12 @@
 # @saykit/config
 
+## 0.6.0
+
+### Minor Changes
+
+- 30917de: Add `say-tag` to name JSX placeholders, extract childless elements as self-closing tags, and compile message values behind an underscore so no name is reserved
+- 06bee33: Reject two different values sharing a placeholder name, and allow a repeat when they are identical
+
 ## 0.5.0
 
 ### Minor Changes
