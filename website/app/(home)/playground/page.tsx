@@ -8,10 +8,7 @@ export const metadata: Metadata = {
     'Write code and watch SayKit extract its messages and compile it, live in your browser.',
 };
 
-const DEFAULT_CODE = `import { say } from 'saykit';
-import { Say } from '@saykit/react';
-
-const greeting = say\`Hello, $\{name}!\`;
+const DEFAULT_CODE = `const greeting = say\`Hello, $\{name}!\`;
 
 const farewell = say\`See you soon\`;
 
