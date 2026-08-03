@@ -23,6 +23,11 @@ on:
       - 'packages/**/package.json'
       - '.changeset/**'
       - '.github/workflows/pipeline.yml'
+  # An approving review is what releases a preview, further down. `paths` is not
+  # available here, so this runs the pipeline again for the reviewed commit —
+  # which is wanted anyway, since nothing should be published untested.
+  pull_request_review:
+    types: [submitted]
   workflow_dispatch:
 
 concurrency:
@@ -31,6 +36,12 @@ concurrency:
   # but never cancel on main (could interrupt a release)
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
+env:
+  # A review event checks out the base branch by default, which would test and
+  # then publish the wrong code entirely. Empty for every other event, which
+  # leaves checkout on the default it already had.
+  CHECKOUT_REF: ${{ github.event_name == 'pull_request_review' && github.event.pull_request.head.sha || '' }}
+
 jobs:
   build:
     name: Building
@@ -38,6 +49,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ env.CHECKOUT_REF }}
 
       - name: Setup Node.js
         uses: ./.github/actions/node
@@ -59,6 +72,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ env.CHECKOUT_REF }}
 
       - name: Setup Node.js
         uses: ./.github/actions/node
@@ -79,6 +94,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ env.CHECKOUT_REF }}
 
       - name: Setup Node.js
         uses: ./.github/actions/node
@@ -100,6 +117,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ env.CHECKOUT_REF }}
 
       - name: Setup Node.js
         uses: ./.github/actions/node
@@ -131,6 +150,81 @@ jobs:
           path: .coverage/
           retention-days: 7
 
+  # A preview is an installable package and a link that runs its code, so it is
+  # gated on an approving review from someone with write access — which is what
+  # pkg.pr.new itself recommends, and keeps a drive-by pull request from minting
+  # one for itself. The review event fires for every submitted review, including
+  # a comment from anyone at all, so this is checked before anything is built.
+  authorize:
+    name: Checking Authorization
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'pull_request_review' && github.event.review.state == 'approved' }}
+    outputs:
+      approved: ${{ steps.permission.outputs.require-result }}
+    permissions:
+      contents: read
+
+    steps:
+      - name: Check reviewer permissions
+        id: permission
+        uses: actions-cool/check-user-permission@v2
+        with:
+          require: write
+          username: ${{ github.event.review.user.login }}
+
+  preview:
+    name: Publishing Preview
+    needs: [check, lint, test, authorize]
+    if: ${{ needs.authorize.outputs.approved == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.CHECKOUT_REF }}
+
+      - name: Setup Node.js
+        uses: ./.github/actions/node
+
+      - name: Download dist artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: packages
+
+      # `--peerDeps` points the cross-package peer ranges at the matching preview
+      # build, so installing one package pulls the rest of the set from this
+      # commit rather than from the registry.
+      - name: Publish preview packages
+        run: pnpm exec pkg-pr-new publish --pnpm --peerDeps './packages/*'
+
+      # A preview is only worth publishing if it is easy to try, so the pull request
+      # gets a link that opens the playground already pointed at this commit's build.
+      # One comment, rewritten on each further approval rather than piling up — the
+      # marker is how the previous one is found.
+      - name: Link the preview from the pull request
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NUMBER: ${{ github.event.pull_request.number }}
+          SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          marker='<!-- playground-preview -->'
+          commit="${SHA:0:7}"
+          body="$(printf '%s\nThe preview build of `%s` is published. [Open it in the playground](https://saykit.js.org/playground?preview=%s) to run this pull request against your own code, straight from the browser.' "$marker" "$commit" "$commit")"
+
+          existing=$(gh api --paginate "repos/$GITHUB_REPOSITORY/issues/$NUMBER/comments" \
+            --jq ".[] | select(.body | startswith(\"$marker\")) | .id" | head -n1)
+
+          if [ -n "$existing" ]; then
+            gh api --method PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$existing" -f body="$body"
+          else
+            gh api --method POST "repos/$GITHUB_REPOSITORY/issues/$NUMBER/comments" -f body="$body"
+          fi
+
   process:
     name: Processing Changesets
     needs: [check, lint, test]
@@ -146,6 +240,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ env.CHECKOUT_REF }}
 
       - name: Setup Node.js
         uses: ./.github/actions/node
@@ -215,6 +311,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ env.CHECKOUT_REF }}
 
       - name: Setup Node.js
         uses: ./.github/actions/node

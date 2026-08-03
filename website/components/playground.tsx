@@ -5,6 +5,7 @@ import { AlertTriangle, Check, ChevronDown, Copy, Link2, Loader2, Wand2, X } fro
 import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { VersionOption } from '@/app/(home)/playground/versions';
+import { previewCommit, previewOption } from '@/lib/preview';
 
 const CodeEditor = dynamic(() => import('@/components/code-editor'), {
   ssr: false,
@@ -42,15 +43,30 @@ const SHIKI_THEMES = { dark: 'github-dark', light: 'github-light' } as const;
 
 const runtimes = new Map<string, Promise<Runtime>>();
 
+/** The repository pkg.pr.new publishes preview builds from. */
+const REPOSITORY = 'k0d13/saykit';
+
+/** esm.sh proxies pkg.pr.new under `/pr/`, so a preview loads like any other package. */
+function moduleUrl(name: string, version: string, path = '') {
+  const commit = previewCommit(version);
+  return commit
+    ? `https://esm.sh/pr/${REPOSITORY}/${name}@${commit}${path}`
+    : `https://esm.sh/${name}@${version}${path}`;
+}
+
 /**
  * The workspace packages depend on each other by caret range, and esm.sh cannot
  * resolve `^0.0.0-beta-<timestamp>` — the entry loads but its imports 404. Pinning
  * the siblings to the exact version being loaded sidesteps that, and is a no-op
- * for stable releases.
+ * for stable releases. A preview needs none of it: pkg.pr.new rewrites those ranges
+ * to the sibling builds from the same commit before publishing.
  */
 function transformerUrl(version: string) {
+  const url = moduleUrl('@saykit/transform-jsx', version);
+  if (previewCommit(version)) return url;
+
   const deps = [`@saykit/config@${version}`, `@saykit/transform-js@${version}`].join(',');
-  return `https://esm.sh/@saykit/transform-jsx@${version}?deps=${deps}`;
+  return `${url}?deps=${deps}`;
 }
 
 function loadRuntime(version: string): Promise<Runtime> {
@@ -64,7 +80,7 @@ function loadRuntime(version: string): Promise<Runtime> {
       // Same version as the transformer, so a displayed id always matches what
       // that release would actually write into the catalogue.
       import(
-        /* webpackIgnore: true */ `https://esm.sh/@saykit/config@${version}/features/messages`
+        /* webpackIgnore: true */ moduleUrl('@saykit/config', version, '/features/messages')
       ) as Promise<{ generateHash: Runtime['generateHash'] }>,
     ]).then(([transform, messages]) => {
       const transformer = transform.default();
@@ -180,6 +196,7 @@ export default function Playground({
   defaultCode: string;
 }) {
   const [code, setCode] = useState(defaultCode);
+  const [preview, setPreview] = useState<VersionOption | null>(null);
   const [version, setVersion] = useState(versions[0]?.value ?? '0.5.0');
   const [result, setResult] = useState<Result | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -192,12 +209,23 @@ export default function Playground({
   // Also on `hashchange`, since opening a share link while already on the page is
   // a same-document navigation that never remounts this component.
   useEffect(() => {
+    // `?preview=<commit>` is the link the pipeline leaves on a pull request. It
+    // offers a version the registry knows nothing about, so it is read before the
+    // fragment — a share link that names the preview has to find it selectable.
+    const asked = previewOption(window.location.search);
+    if (asked) {
+      setPreview(asked);
+      setVersion(asked.value);
+    }
+
+    const selectable = new Set(versions.map((option) => option.value));
+    if (asked) selectable.add(asked.value);
+
     const apply = () => {
       const shared = decodeState(window.location.hash.slice(1));
       if (!shared) return;
       setCode(shared.code);
-      if (shared.version && versions.some((option) => option.value === shared.version))
-        setVersion(shared.version);
+      if (shared.version && selectable.has(shared.version)) setVersion(shared.version);
     };
 
     apply();
@@ -241,15 +269,24 @@ export default function Playground({
     }
   }, [code]);
 
-  const shareUrl = useCallback(
-    () => `${window.location.origin}${window.location.pathname}#${encodeState({ code, version })}`,
-    [code, version],
-  );
+  const shareUrl = useCallback(() => {
+    const commit = previewCommit(version);
+    // A preview is only in the list because the URL asked for it, so a link that
+    // shares one has to ask for it too.
+    const query = commit ? `?preview=${commit}` : '';
+    const { origin, pathname } = window.location;
+    return `${origin}${pathname}${query}#${encodeState({ code, version })}`;
+  }, [code, version]);
 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-fd-border bg-fd-card px-4 py-3">
-        <VersionSelect versions={versions} value={version} onChange={setVersion} />
+        {/* First, so the version the link was opened for is the one on show. */}
+        <VersionSelect
+          versions={preview ? [preview, ...versions] : versions}
+          value={version}
+          onChange={setVersion}
+        />
 
         <div className="ml-auto flex shrink-0 items-center gap-2">
           {pending && (
@@ -533,7 +570,7 @@ function MessageList({
             key={`${id ?? message.message}-${index}`}
             className="border-b border-fd-border/60 px-4 py-3 last:border-b-0"
           >
-            <p className="whitespace-pre-wrap break-words font-mono text-[13px] text-fd-foreground">
+            <p className="whitespace-pre-wrap wrap-break-words font-mono text-[13px] text-fd-foreground">
               {message.message}
             </p>
 
