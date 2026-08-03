@@ -26,6 +26,10 @@
   description: Modifications, additions, or fixes related to testing
   color: 00bfa5
 
+- name: preview
+  description: Publish a preview build and link it from the pull request
+  color: f59e0b
+
 # Package labels
 
 - name: 'package: core'

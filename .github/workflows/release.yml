@@ -1,0 +1,127 @@
+name: Release
+
+# Everything that happens once a change is on main. Pull requests and previews
+# live in `pull-request.yml`, and the gate both share lives in `quality.yml`.
+# A manual dispatch runs that gate and stops there — releasing is driven by what
+# lands on main, never by hand.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - 'turbo.json'
+      - 'packages/**/src/**'
+      - 'packages/**/package.json'
+      - '.changeset/**'
+      - '.github/workflows/release.yml'
+      - '.github/workflows/quality.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  # Never cancel on main — it could interrupt a release part way through.
+  cancel-in-progress: false
+
+jobs:
+  quality:
+    name: Quality
+    uses: ./.github/workflows/quality.yml
+    secrets: inherit
+
+  process:
+    name: Processing Changesets
+    needs: [quality]
+    runs-on: ubuntu-latest
+    outputs:
+      hasChangesets: ${{ steps.changesets.outputs.hasChangesets }}
+    if: ${{ github.event_name == 'push' }}
+    permissions:
+      contents: write
+      id-token: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: ./.github/actions/node
+
+      # Only maintains the version PR. Publishing is done below so that a
+      # release produces one tag and one GitHub release for the whole
+      # workspace, rather than one of each per package.
+      - name: Process changesets
+        id: changesets
+        # Pinned by digest. `@v1` upstream is a branch rather than a tag, so it
+        # moves on every commit — and this is the step that publishes to npm
+        # under the workspace's OIDC identity.
+        uses: changesets/action@a45c4d594aa4e2c509dc14a9f2b3b67ba3780d0d # v1.9.0
+        with:
+          version: pnpm run release:version
+          title: 'Pending Releases'
+          commit: 'Update changelog and release'
+
+      # `changeset publish` skips anything already on the registry, so this is
+      # safe to re-run: a rerun after a partial failure publishes the remainder.
+      - name: Publish packages
+        if: ${{ steps.changesets.outputs.hasChangesets == 'false' }}
+        run: pnpm run release:publish
+
+      - name: Build release notes
+        id: notes
+        if: ${{ steps.changesets.outputs.hasChangesets == 'false' }}
+        run: node scripts/release-notes.mjs
+
+      # Driven by the version on disk rather than by whether this run happened
+      # to publish, so a rerun can finish a release whose tag or GitHub release
+      # was left behind by an earlier failure. Both are no-ops once they exist.
+      - name: Tag and create release
+        if: ${{ steps.changesets.outputs.hasChangesets == 'false' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.notes.outputs.version }}
+        run: |
+          if [ -z "$VERSION" ]; then
+            echo 'No shared version to release.'
+            exit 0
+          fi
+
+          if git ls-remote --exit-code --tags origin "v$VERSION" >/dev/null 2>&1; then
+            echo "Tag v$VERSION already exists."
+          else
+            git tag "v$VERSION"
+            git push origin "v$VERSION"
+          fi
+
+          if gh release view "v$VERSION" >/dev/null 2>&1; then
+            echo "Release v$VERSION already exists."
+          else
+            gh release create "v$VERSION" \
+              --title "v$VERSION" \
+              --notes-file RELEASE_NOTES.md
+          fi
+
+  snapshot:
+    name: Releasing Snapshot
+    needs: [process]
+    runs-on: ubuntu-latest
+    # Betas exist to preview changes that are waiting on a release, so this
+    # keys off pending changesets rather than off whether a publish happened.
+    if: ${{ needs.process.outputs.hasChangesets == 'true' }}
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: ./.github/actions/node
+
+      - name: Publish snapshot version
+        run: |
+          pnpm run release:snapshot:version
+          pnpm run release:snapshot:publish

@@ -1,0 +1,144 @@
+name: Pull Request
+
+# Everything that happens to a pull request: prove it, and — on request — publish
+# a preview of it. Releasing lives in `release.yml`, and the gate both share
+# lives in `quality.yml`.
+on:
+  pull_request:
+    branches: [main]
+    # `labeled` is here for the preview label, which is one of the two things
+    # that releases a preview below. Triage labels every pull request
+    # automatically, so `quality` filters down to the label that matters.
+    types: [opened, synchronize, reopened, labeled]
+    paths:
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "turbo.json"
+      - "packages/**/src/**"
+      - "packages/**/package.json"
+      - ".changeset/**"
+      - ".github/workflows/pull-request.yml"
+      - ".github/workflows/quality.yml"
+  # An approving review is the other thing that releases a preview. `paths` is
+  # not available here, so this runs the gate again for the reviewed commit —
+  # which is wanted anyway, since nothing should be published untested.
+  pull_request_review:
+    types: [submitted]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  # A new push makes the old run irrelevant, but a label arrives while the run
+  # for the same commit is usually still going and does not supersede it.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' && github.event.action != 'labeled' }}
+
+jobs:
+  quality:
+    name: Quality
+    # Triage applies package and topic labels to every pull request, and each one
+    # of those is a `labeled` event. Only the preview label should cost a run.
+    # `preview` needs this job, so skipping here skips the publish along with it.
+    if: ${{ github.event.action != 'labeled' || github.event.label.name == 'preview' }}
+    uses: ./.github/workflows/quality.yml
+    with:
+      ref: ${{ github.event.pull_request.head.sha }}
+    secrets: inherit
+
+  # A preview is an installable package and a link that runs its code, so it is
+  # gated on a deliberate act by someone with write access — the preview label or
+  # an approving review — which is what pkg.pr.new itself recommends, and keeps a
+  # drive-by pull request from minting one for itself. Neither signal is trusted
+  # on arrival, so this resolves before anything is published.
+  authorize:
+    name: Checking Authorization
+    runs-on: ubuntu-latest
+    # Either signal releases a preview. The label is what makes this usable on a
+    # pull request you opened yourself, since GitHub will not let you approve your
+    # own — and it is read from the pull request rather than from the event, so a
+    # later push to an already labelled branch refreshes the preview too.
+    if: >-
+      ${{ (github.event_name == 'pull_request_review' && github.event.review.state == 'approved') || (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'preview')) }}
+    outputs:
+      approved: ${{ steps.resolve.outputs.approved }}
+    permissions:
+      contents: read
+
+    steps:
+      - name: Check reviewer permissions
+        id: permission
+        if: ${{ github.event_name == 'pull_request_review' }}
+        # Pinned by digest, not by tag. This action decides whether a reviewer
+        # has write access, and it runs before the publish below — a moved tag
+        # would be someone else answering that question.
+        uses: actions-cool/check-user-permission@c21884f3dda18dafc2f8b402fe807ccc9ec1aa5e # v2
+        with:
+          require: write
+          username: ${{ github.event.review.user.login }}
+
+      # Applying a label already requires write access, so the label is its own
+      # proof and a fork cannot label itself into a preview. A review proves
+      # nothing on its own — anyone at all can submit one — so it gets checked.
+      - name: Resolve authorization
+        id: resolve
+        env:
+          FROM_REVIEW: ${{ github.event_name == 'pull_request_review' }}
+          REVIEWER: ${{ steps.permission.outputs.require-result }}
+        run: |
+          if [ "$FROM_REVIEW" = 'true' ]; then
+            echo "approved=$REVIEWER" >> "$GITHUB_OUTPUT"
+          else
+            echo 'approved=true' >> "$GITHUB_OUTPUT"
+          fi
+
+  preview:
+    name: Publishing Preview
+    needs: [quality, authorize]
+    if: ${{ needs.authorize.outputs.approved == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Setup Node.js
+        uses: ./.github/actions/node
+
+      - name: Download dist artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: packages
+
+      # `--peerDeps` points the cross-package peer ranges at the matching preview
+      # build, so installing one package pulls the rest of the set from this
+      # commit rather than from the registry.
+      - name: Publish preview packages
+        run: pnpm exec pkg-pr-new publish --pnpm --peerDeps './packages/*'
+
+      # A preview is only worth publishing if it is easy to try, so the pull request
+      # gets a link that opens the playground already pointed at this commit's build.
+      # One comment, rewritten on each further preview rather than piling up — the
+      # marker is how the previous one is found.
+      - name: Link the preview from the pull request
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NUMBER: ${{ github.event.pull_request.number }}
+          SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          marker='<!-- playground-preview -->'
+          commit="${SHA:0:7}"
+          body="$(printf '%s\nThe preview build of `%s` is published. [Open it in the playground](https://saykit.js.org/playground?preview=%s) to run this pull request against your own code, straight from the browser.' "$marker" "$commit" "$commit")"
+
+          existing=$(gh api --paginate "repos/$GITHUB_REPOSITORY/issues/$NUMBER/comments" \
+            --jq ".[] | select(.body | startswith(\"$marker\")) | .id" | head -n1)
+
+          if [ -n "$existing" ]; then
+            gh api --method PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$existing" -f body="$body"
+          else
+            gh api --method POST "repos/$GITHUB_REPOSITORY/issues/$NUMBER/comments" -f body="$body"
+          fi

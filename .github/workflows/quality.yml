@@ -1,0 +1,134 @@
+name: Quality
+
+# The shared gate: build the workspace once, then prove it four ways. Nothing
+# triggers this on its own — it has no opinion about when it should run, only
+# about what passing means — so every caller decides that for itself and gets
+# the same answer. Callers pass `secrets: inherit` for the Codecov upload.
+on:
+  workflow_call:
+    inputs:
+      ref:
+        description: >-
+          Commit to check out. Both pull request events default to a checkout
+          that is not the commit under review — a review event takes the base
+          branch, a pull request event takes the merge commit — so callers
+          triggered by either pass the head SHA explicitly. Left empty on a
+          push, which keeps checkout on the default it already had.
+        type: string
+        required: false
+        default: ''
+
+# Proving the workspace needs to read it and nothing more. Stated here rather
+# than left to the repository default, because these jobs run branch code —
+# `pnpm coverage` is whatever the pull request says it is — and a token that
+# could push to main would be a token that could reach the release pipeline.
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Building
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+
+      - name: Setup Node.js
+        uses: ./.github/actions/node
+
+      - name: Build all packages
+        run: pnpm build
+
+      - name: Upload dist artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: packages/*/dist/
+          retention-days: 1
+
+  check:
+    name: Type Checking
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+
+      - name: Setup Node.js
+        uses: ./.github/actions/node
+
+      - name: Download dist artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: packages
+
+      - name: Run the type checker
+        run: pnpm check --filter "./packages/*"
+
+  lint:
+    name: Linting
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+
+      - name: Setup Node.js
+        uses: ./.github/actions/node
+
+      - name: Download dist artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: packages
+
+      - name: Run the linter
+        run: pnpm lint
+
+  test:
+    name: Testing
+    needs: [build]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+
+      - name: Setup Node.js
+        uses: ./.github/actions/node
+
+      - name: Download dist artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: packages
+
+      - name: Run tests with coverage
+        run: pnpm coverage
+
+      # Single upload of the merged report, tagged with every package flag.
+      # Each flag's `paths:` in codecov.yml slices the report server-side, so
+      # one upload feeds all the per-package coverage badges.
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: .coverage/lcov.info
+          flags: config,format-po,integration,integration-carbon,integration-react,plugin-babel,plugin-unplugin,transform-js,transform-jsx
+
+      - name: Upload coverage artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: .coverage/
+          retention-days: 7
