@@ -1,5 +1,11 @@
 # @saykit/react
 
+## 0.6.1
+
+### Patch Changes
+
+- 1a0b9d6: Accept named placeholders as `Say` children
+
 ## 0.6.0
 
 ### Minor Changes

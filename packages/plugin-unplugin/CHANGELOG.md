@@ -1,5 +1,12 @@
 # unplugin-saykit
 
+## 0.6.1
+
+### Patch Changes
+
+- Updated dependencies [7f5137f]
+  - @saykit/config@0.6.1
+
 ## 0.6.0
 
 ### Patch Changes
