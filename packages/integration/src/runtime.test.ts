@@ -65,10 +65,7 @@ describe('Say.locale getter', () => {
 });
 
 describe('Say.messages getter', () => {
-  it('returns the messages for the active locale', () => {
-    expect(make('en').messages).toEqual(messages.en);
-  });
-
+  // The active-locale case is covered by the constructor test above.
   it('throws when no locale is active', () => {
     expect(() => make().messages).toThrow('No active locale');
   });
@@ -212,32 +209,19 @@ describe('Say iteration', () => {
 });
 
 describe('Say.match', () => {
-  it('returns the first locale when no guesses are given', () => {
-    expect(make().match()).toBe('en');
-  });
-
-  it('returns the first locale when guesses are empty arrays', () => {
-    expect(make().match([])).toBe('en');
-  });
-
-  it('returns an exact match', () => {
-    expect(make().match('fr')).toBe('fr');
-  });
-
-  it('flattens array guesses', () => {
-    expect(make().match(['zz', 'fr'])).toBe('fr');
-  });
-
-  it('matches on the language prefix', () => {
-    expect(make().match('fr-CA')).toBe('fr');
-  });
-
-  it('skips guesses with an empty prefix', () => {
-    expect(make().match('', 'de')).toBe('de');
-  });
-
-  it('falls back to the first locale when nothing matches', () => {
-    expect(make().match('zz', 'xx-YY')).toBe('en');
+  // Locales are ['en', 'fr', 'de'], so 'en' is the first-locale fallback.
+  it.each([
+    ['no guesses are given', [], 'en'],
+    ['guesses are empty arrays', [[]], 'en'],
+    ['a guess matches exactly', ['fr'], 'fr'],
+    ['a guess is nested in an array', [['zz', 'fr']], 'fr'],
+    ['a guess matches on language prefix', ['fr-CA'], 'fr'],
+    ['a guess has an empty prefix', ['', 'de'], 'de'],
+    ['nothing matches', ['zz', 'xx-YY'], 'en'],
+  ])('resolves the locale when %s', (_, guesses, expected) => {
+    expect(make().match(...(guesses as Parameters<ReturnType<typeof make>['match']>))).toBe(
+      expected,
+    );
   });
 });
 
@@ -318,21 +302,13 @@ describe('Say inspect', () => {
 describe('Say macros', () => {
   const say = make('en');
 
-  it('throws for plural', () => {
-    expect(() => say.plural(1, { other: '#' })).toThrow(
-      "'Say#plural' is a macro and must be used with the relevant saykit plugin",
-    );
-  });
-
-  it('throws for ordinal', () => {
-    expect(() => say.ordinal(1, { other: '#' })).toThrow(
-      "'Say#ordinal' is a macro and must be used with the relevant saykit plugin",
-    );
-  });
-
-  it('throws for select', () => {
-    expect(() => say.select('a', { other: 'b' })).toThrow(
-      "'Say#select' is a macro and must be used with the relevant saykit plugin",
+  it.each([
+    ['plural', () => say.plural(1, { other: '#' })],
+    ['ordinal', () => say.ordinal(1, { other: '#' })],
+    ['select', () => say.select('a', { other: 'b' })],
+  ])('throws for %s', (name, call) => {
+    expect(call).toThrow(
+      `'Say#${name}' is a macro and must be used with the relevant saykit plugin`,
     );
   });
 });

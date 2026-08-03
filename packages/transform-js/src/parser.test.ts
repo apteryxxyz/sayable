@@ -141,39 +141,59 @@ describe('parseTaggedTemplateExpression', () => {
 });
 
 describe('parseCallExpression', () => {
-  it('parses a simple plural call expression', () => {
-    const result = parser.parseCallExpression(
-      expr("say.plural(count, { one: 'item', other: 'items' })"),
-    );
-    expect(result).not.toBeNull();
+  // Every choice kind parses through one code path, so they are asserted as a
+  // table: the kind, the selector, and the branch list read off it.
+  it.each([
+    [
+      "say.plural(count, { one: 'item', other: 'items' })",
+      'plural',
+      'count',
+      [
+        ['one', 'item'],
+        ['other', 'items'],
+      ],
+    ],
+    [
+      "say.ordinal(position, { 1: 'first', 2: 'second', other: 'other' })",
+      'ordinal',
+      'position',
+      [
+        ['1', 'first'],
+        ['2', 'second'],
+        ['other', 'other'],
+      ],
+    ],
+    [
+      "say.select(gender, { male: 'He', female: 'She', other: 'They' })",
+      'select',
+      'gender',
+      [
+        ['male', 'He'],
+        ['female', 'She'],
+        ['other', 'They'],
+      ],
+    ],
+    [
+      // Numeric keys stay exact matches rather than becoming plural categories.
+      "say.plural(count, { 0: 'none', 1: 'one', other: 'many' })",
+      'plural',
+      'count',
+      [
+        ['0', 'none'],
+        ['1', 'one'],
+        ['other', 'many'],
+      ],
+    ],
+  ])('parses %s', (code, kind, identifier, branches) => {
+    const result = parser.parseCallExpression(expr(code));
     expect(result!.children).toHaveLength(1);
     const choice = result!.children[0] as ChoiceMessage;
     expect(choice).toBeInstanceOf(ChoiceMessage);
-    expect(choice.kind).toBe('plural');
-    expect(choice.identifier).toBe('count');
-    expect(choice.branches).toHaveLength(2);
-    expect(choice.branches[0]!.identifier).toBe('one');
-    expect(choice.branches[0]!.value).toEqual({ text: 'item' });
-    expect(choice.branches[1]!.identifier).toBe('other');
-    expect(choice.branches[1]!.value).toEqual({ text: 'items' });
-  });
-
-  it('parses an ordinal call expression', () => {
-    const result = parser.parseCallExpression(
-      expr("say.ordinal(position, { 1: 'first', 2: 'second', other: 'other' })"),
+    expect(choice.kind).toBe(kind);
+    expect(choice.identifier).toBe(identifier);
+    expect(choice.branches.map((b) => [b.identifier, (b.value as LiteralMessage).text])).toEqual(
+      branches,
     );
-    expect(result).not.toBeNull();
-    const choice = result!.children[0] as ChoiceMessage;
-    expect(choice).toBeInstanceOf(ChoiceMessage);
-    expect(choice.kind).toBe('ordinal');
-    expect(choice.identifier).toBe('position');
-    expect(choice.branches).toHaveLength(3);
-    expect(choice.branches[0]!.identifier).toBe('1');
-    expect(choice.branches[0]!.value).toEqual({ text: 'first' });
-    expect(choice.branches[1]!.identifier).toBe('2');
-    expect(choice.branches[1]!.value).toEqual({ text: 'second' });
-    expect(choice.branches[2]!.identifier).toBe('other');
-    expect(choice.branches[2]!.value).toEqual({ text: 'other' });
   });
 
   it('reads string-literal (quoted) choice keys', () => {

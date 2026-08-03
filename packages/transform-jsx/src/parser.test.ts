@@ -35,15 +35,8 @@ describe('parseJSXContainerElement', () => {
     expect(result!.children[0]).toEqual(new LiteralMessage('Hello'));
   });
 
-  it('normalises whitespace in text children', () => {
-    const result = parser.parseJSXContainerElement(jsx`
-      <Say>
-        Hello,
-        world!
-      </Say>
-    `);
-    expect((result!.children[0] as LiteralMessage).text).toBe('Hello, world!');
-  });
+  // Whitespace normalisation is covered end-to-end in `whitespace.test.ts`,
+  // where the assertions read as the catalogue strings it produces.
 
   it('parses expression children as ArgumentMessage', () => {
     const result = parser.parseJSXContainerElement(jsx`<Say>{name}</Say>`);
@@ -86,14 +79,10 @@ describe('parseJSXContainerElement', () => {
     expect(result!.descriptor.id).toBeUndefined();
   });
 
-  it('ignores a whitespace attribute whose value is not a boolean literal', () => {
-    const result = parser.parseJSXContainerElement(jsx`<Say whitespace={dynamic}>Hi</Say>`);
-    expect(result!.whitespace).toBeUndefined();
-  });
-
-  it('leaves descriptor fields undefined when attributes are absent', () => {
+  it('leaves descriptor and whitespace undefined when attributes are absent', () => {
     const result = parser.parseJSXContainerElement(jsx`<Say>Hi</Say>`);
     expect(result!.descriptor).toEqual({ id: undefined, context: undefined });
+    expect(result!.whitespace).toBeUndefined();
   });
 
   it('ignores spread attributes when reading descriptors and whitespace', () => {
@@ -102,19 +91,18 @@ describe('parseJSXContainerElement', () => {
     expect(result!.whitespace).toBeUndefined();
   });
 
-  it('leaves whitespace undefined when the attribute is absent', () => {
-    const result = parser.parseJSXContainerElement(jsx`<Say>Hi</Say>`);
-    expect(result!.whitespace).toBeUndefined();
-  });
-
-  it('reads whitespace={false} attribute as a boolean', () => {
-    const result = parser.parseJSXContainerElement(jsx`<Say whitespace={false}>Hi</Say>`);
-    expect(result!.whitespace).toBe(false);
-  });
-
-  it('treats a bare whitespace attribute as true', () => {
-    const result = parser.parseJSXContainerElement(jsx`<Say whitespace>Hi</Say>`);
-    expect(result!.whitespace).toBe(true);
+  // Only a boolean literal (or the bare attribute) sets it; anything else is
+  // only known at runtime, too late to change what is extracted.
+  it.each([
+    ['whitespace', true],
+    ['whitespace={true}', true],
+    ['whitespace={false}', false],
+    ['whitespace={dynamic}', undefined],
+  ])('reads `%s` as %s', (attribute, expected) => {
+    const element = parseExpression(`<Say ${attribute}>Hi</Say>`, {
+      plugins: ['jsx', 'typescript'],
+    }) as unknown as t.JSXElement;
+    expect(parser.parseJSXContainerElement(element)!.whitespace).toBe(expected);
   });
 });
 
