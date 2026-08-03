@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { findConfigFile, resolveConfig } from '@saykit/config/features/loader';
+import { resolveConfig, resolveConfigFile } from '@saykit/config/features/loader';
 import { loadCatalogue } from '../catalogue.js';
 
 /**
@@ -29,14 +29,6 @@ const config = resolveConfig();
 const upstream = (transformerConfig: TransformerConfig): Worker =>
   require(transformerConfig.saykitTransformerPath) as Worker;
 
-const read = (path: string) => {
-  try {
-    return readFileSync(path, 'utf8');
-  } catch {
-    return '';
-  }
-};
-
 /**
  * What a catalogue transforms into depends on the SayKit config — the fallback
  * chain it resolves, the formatter that parses it — and on the version of this
@@ -45,8 +37,8 @@ const read = (path: string) => {
  * every catalogue serving the record it was cached with.
  */
 const salt = createHash('sha1')
-  .update(read(join(__dirname, '..', '..', 'package.json')))
-  .update(read(findConfigFile('saykit', process.cwd())?.id ?? ''))
+  .update(readFileSync(join(__dirname, '..', '..', 'package.json'), 'utf8'))
+  .update(readFileSync(resolveConfigFile(), 'utf8'))
   .digest('hex');
 
 /**
@@ -56,7 +48,7 @@ const salt = createHash('sha1')
  * catalogue's own source, leaving the file a real module whose sha1 — and
  * therefore Metro's transform cache entry — moves whenever it is edited.
  */
-export async function transform(
+export function transform(
   transformerConfig: TransformerConfig,
   projectRoot: string,
   filename: string,
@@ -64,7 +56,7 @@ export async function transform(
   options: unknown,
 ) {
   const worker = upstream(transformerConfig);
-  const catalogue = await loadCatalogue(config, filename);
+  const catalogue = loadCatalogue(config, filename);
   if (!catalogue) return worker.transform(transformerConfig, projectRoot, filename, data, options);
 
   // Metro reads a `.json` module as its body verbatim and everything else as

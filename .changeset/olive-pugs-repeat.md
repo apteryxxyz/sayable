@@ -2,4 +2,4 @@
 '@saykit/config': minor
 ---
 
-Export `findConfigFile` and `getConfigFileCandidates` from `@saykit/config/features/loader`
+Export `resolveConfigFile` from `@saykit/config/features/loader`

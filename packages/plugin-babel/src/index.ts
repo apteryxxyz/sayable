@@ -1,7 +1,7 @@
 import { dirname, relative, resolve } from 'node:path';
 import { types as t, type PluginObj, type parse as Parse } from '@babel/core';
 import { resolveConfig } from '@saykit/config/features/loader';
-import { loadCatalogueSync } from './catalogue.js';
+import { loadCatalogue } from './catalogue.js';
 
 declare module '@babel/core' {
   interface PluginObj {
@@ -19,7 +19,7 @@ export interface Options {
    * bytes change — editing a catalogue will not hot-reload.
    *
    * `'module'` leaves the import for a bundler integration to serve —
-   * `babel-plugin-saykit/webpack` or `babel-plugin-saykit/metro`. Set this
+   * `babel-plugin-saykit/next` or `babel-plugin-saykit/metro`. Set this
    * whenever one of those is wired up, or the import gets inlined before the
    * integration is ever asked for the module.
    */
@@ -43,7 +43,7 @@ export default (_: unknown, { catalogues = 'inline' }: Options = {}): PluginObj 
               const importer = state.filename ?? state.file.opts.filename;
               if (!importer) return;
 
-              const catalogue = loadCatalogueSync(config, resolve(dirname(importer), importee));
+              const catalogue = loadCatalogue(config, resolve(dirname(importer), importee));
               if (!catalogue) return;
 
               const specifier = path.node.specifiers.find(

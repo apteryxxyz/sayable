@@ -16,6 +16,8 @@ interface MetroConfig {
  * The base is the config's `projectRoot` — `process.cwd()` is wrong whenever
  * Metro is started from elsewhere, which in a monorepo is the normal case.
  */
+const transformerPath = join(__dirname, 'transformer.cjs');
+
 function resolveUpstream(specifier: string, projectRoot: string) {
   if (isAbsolute(specifier)) return specifier;
 
@@ -38,8 +40,15 @@ function resolveUpstream(specifier: string, projectRoot: string) {
  * Metro's transform cache is keyed on each file's own bytes, so a catalogue has
  * to stay a module of its own to be invalidated at all — see
  * `./transformer.ts`.
+ *
+ * Apply this outermost. Anything wrapped around it that also sets
+ * `transformerPath` replaces this one, and catalogues stop being assembled.
  */
 export function withSayKit<T extends MetroConfig>(metroConfig: T): T {
+  // Wrapping our own transformer would make it its own upstream, and every
+  // transform would recurse until the worker died.
+  if (metroConfig.transformerPath === transformerPath) return metroConfig;
+
   const config = resolveConfig();
 
   // Metro resolves `.json` itself but knows nothing of catalogue formats like
@@ -59,7 +68,7 @@ export function withSayKit<T extends MetroConfig>(metroConfig: T): T {
   return {
     ...metroConfig,
     resolver: { ...metroConfig.resolver, sourceExts },
-    transformerPath: join(__dirname, 'transformer.cjs'),
+    transformerPath,
     transformer: {
       ...metroConfig.transformer,
       saykitTransformerPath: resolveUpstream(upstream, metroConfig.projectRoot ?? process.cwd()),
