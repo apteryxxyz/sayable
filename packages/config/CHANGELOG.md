@@ -1,5 +1,11 @@
 # @saykit/config
 
+## 0.6.1
+
+### Patch Changes
+
+- 7f5137f: Fail the build on a select, plural, or ordinal branch key ICU cannot express, rather than at format time
+
 ## 0.6.0
 
 ### Minor Changes

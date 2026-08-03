@@ -1,5 +1,13 @@
 # @saykit/transform-js
 
+## 0.6.1
+
+### Patch Changes
+
+- 7f5137f: Fail the build on a select, plural, or ordinal branch key ICU cannot express, rather than at format time
+- Updated dependencies [7f5137f]
+  - @saykit/config@0.6.1
+
 ## 0.6.0
 
 ### Minor Changes
