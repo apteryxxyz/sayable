@@ -3,9 +3,28 @@ import { isAbsolute, join } from 'node:path';
 import { resolveConfig } from '@saykit/config/features/loader';
 
 interface MetroConfig {
+  projectRoot?: string;
   resolver?: { sourceExts?: string[] };
   transformer?: Record<string, unknown>;
   transformerPath?: string;
+}
+
+/**
+ * Resolve Metro's own transformer from the project rather than from this
+ * package, since it is the project that depends on Metro.
+ *
+ * The base is the config's `projectRoot` — `process.cwd()` is wrong whenever
+ * Metro is started from elsewhere, which in a monorepo is the normal case.
+ */
+function resolveUpstream(specifier: string, projectRoot: string) {
+  if (isAbsolute(specifier)) return specifier;
+
+  try {
+    return createRequire(join(projectRoot, 'metro.config.js')).resolve(specifier);
+  } catch {
+    // A hoisted install can still satisfy it from here.
+    return require.resolve(specifier);
+  }
 }
 
 /**
@@ -34,8 +53,7 @@ export function withSayKit<T extends MetroConfig>(metroConfig: T): T {
     if (!sourceExts.includes(extension)) sourceExts.push(extension);
 
   // Metro loads a worker standalone, so the wrapped transformer reaches its
-  // upstream through the transformer config rather than a closure. Resolve it
-  // from the project, since it is the project that depends on Metro.
+  // upstream through the transformer config rather than a closure.
   const upstream = metroConfig.transformerPath ?? 'metro-transform-worker';
 
   return {
@@ -44,9 +62,7 @@ export function withSayKit<T extends MetroConfig>(metroConfig: T): T {
     transformerPath: join(__dirname, 'transformer.cjs'),
     transformer: {
       ...metroConfig.transformer,
-      saykitTransformerPath: isAbsolute(upstream)
-        ? upstream
-        : createRequire(join(process.cwd(), 'metro.config.js')).resolve(upstream),
+      saykitTransformerPath: resolveUpstream(upstream, metroConfig.projectRoot ?? process.cwd()),
     },
   };
 }

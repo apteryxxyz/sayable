@@ -1,4 +1,7 @@
-import { resolveConfig } from '@saykit/config/features/loader';
+import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { findConfigFile, resolveConfig } from '@saykit/config/features/loader';
 import { loadCatalogue } from '../catalogue.js';
 
 /**
@@ -25,6 +28,26 @@ const config = resolveConfig();
 
 const upstream = (transformerConfig: TransformerConfig): Worker =>
   require(transformerConfig.saykitTransformerPath) as Worker;
+
+const read = (path: string) => {
+  try {
+    return readFileSync(path, 'utf8');
+  } catch {
+    return '';
+  }
+};
+
+/**
+ * What a catalogue transforms into depends on the SayKit config — the fallback
+ * chain it resolves, the formatter that parses it — and on the version of this
+ * package doing the assembling. Neither is a byte of the file Metro hashes, so
+ * without them in the cache key, editing `saykit.config.*` or upgrading leaves
+ * every catalogue serving the record it was cached with.
+ */
+const salt = createHash('sha1')
+  .update(read(join(__dirname, '..', '..', 'package.json')))
+  .update(read(findConfigFile('saykit', process.cwd())?.id ?? ''))
+  .digest('hex');
 
 /**
  * Metro reads `.json` straight through `transformJSON` and never runs Babel over
@@ -53,5 +76,5 @@ export async function transform(
 }
 
 export function getCacheKey(transformerConfig: TransformerConfig, options?: unknown) {
-  return upstream(transformerConfig).getCacheKey(transformerConfig, options);
+  return `${upstream(transformerConfig).getCacheKey(transformerConfig, options)}-saykit-${salt}`;
 }
