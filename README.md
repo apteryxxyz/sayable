@@ -3,6 +3,7 @@
 > Compile-time i18n for JavaScript, TypeScript, React, Next.js, TanStack Start, Carbon, and more.
 
 [![Coverage](https://codecov.io/gh/k0d13/saykit/graph/badge.svg)](https://codecov.io/gh/k0d13/saykit)
+[![pkg.pr.new](https://pkg.pr.new/badge/k0d13/saykit)](https://pkg.pr.new/~/k0d13/saykit)
 
 SayKit is a framework-agnostic internationalisation toolkit built around compile-time message extraction, typed configuration, and small runtime primitives. You write messages inline with tagged templates or JSX, and SayKit takes care of extracting them into translation files, generating stable identifiers, and rendering them at runtime.
 

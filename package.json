@@ -28,6 +28,7 @@
     "lefthook": "^2.1.10",
     "oxfmt": "^0.60.0",
     "oxlint": "^1.75.0",
+    "pkg-pr-new": "^0.0.86",
     "tsdown": "^0.22.14",
     "turbo": "^2.10.7",
     "typescript": "^6.0.3",
