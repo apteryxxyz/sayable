@@ -32,8 +32,13 @@ const { loadCatalogue } = await import('./catalogue.js');
 
 afterAll(() => rmSync(dir, { recursive: true, force: true }));
 
-const run = (code: string, filename: string) =>
-  transformSync(code, { filename, plugins: [plugin], babelrc: false, configFile: false })!.code!;
+const run = (code: string, filename: string, options: { catalogues?: 'inline' | 'module' } = {}) =>
+  transformSync(code, {
+    filename,
+    plugins: [[plugin, options]],
+    babelrc: false,
+    configFile: false,
+  })!.code!;
 
 describe('plugin-babel parserOverride', () => {
   it('runs the bucket transformer over matching source files', () => {
@@ -50,15 +55,33 @@ describe('plugin-babel parserOverride', () => {
     const out = run('const x = "MARK";', join(dir, 'app.js'));
     expect(out).toContain('MARK');
   });
+});
 
-  // Catalogues are assembled by the bundler's own module pipeline (see
-  // `loader.ts` / `metro-transformer.ts`), so the plugin must leave the import
-  // alone — inlining it would strip the dependency edge the bundler invalidates
-  // on. https://github.com/k0d13/saykit/issues/71
-  it('leaves catalogue imports intact', () => {
+describe('plugin-babel catalogue imports', () => {
+  const source = `import m from './messages.json';\nexport default m;`;
+
+  it('inlines the assembled record by default, so Babel alone is enough', () => {
     writeFileSync(join(dir, 'messages.json'), JSON.stringify([{ message: 'Hello' }]));
-    const out = run(`import m from './messages.json';\nexport default m;`, join(dir, 'app.ts'));
+    const out = run(source, join(dir, 'app.ts'));
+    expect(out).not.toContain('./messages.json');
+    expect(out).toContain('Hello');
+  });
+
+  // With a bundler integration wired up (see `webpack/index.ts` and
+  // `metro/transformer.ts`) the import has to survive — inlining it strips the
+  // dependency edge the bundler invalidates on, which is what broke hot reload
+  // in https://github.com/k0d13/saykit/issues/71.
+  it('leaves the import intact under `catalogues: "module"`', () => {
+    writeFileSync(join(dir, 'messages.json'), JSON.stringify([{ message: 'Hello' }]));
+    const out = run(source, join(dir, 'app.ts'), { catalogues: 'module' });
     expect(out).toContain('./messages.json');
+  });
+
+  it('requires a default import when inlining', () => {
+    writeFileSync(join(dir, 'messages.json'), JSON.stringify([{ message: 'Hello' }]));
+    expect(() => run(`import { m } from './messages.json';`, join(dir, 'app.ts'))).toThrow(
+      'require a default import',
+    );
   });
 });
 
