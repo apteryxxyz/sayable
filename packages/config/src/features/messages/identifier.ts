@@ -17,10 +17,16 @@ const BRANCH_PATTERN = /^(?:=\d+|[^\p{Pattern_Syntax}\p{Pattern_White_Space}]+)$
 /**
  * The ICU case a branch is written as. A number names an exact value rather
  * than a key, and only `plural` and `ordinal` are allowed to select on one.
+ *
+ * Digits are read literally rather than coerced, because everything JavaScript
+ * is willing to call a number is not: `''`, `' '`, and `'+0'` all coerce to
+ * `=0`, which would pass for a key that selects zero and quietly leave the
+ * author's own key out of the catalogue. Anything else stays a key, where the
+ * whitespace or punctuation that made it numeric-looking is caught.
  */
 export function getBranchCase(identifier: string | typeof AUTO_INCREMENT_IDENTIFIER) {
   const key = String(identifier);
-  return Number.isNaN(+key) ? key : `=${+key}`;
+  return /^\d+$/u.test(key) ? `=${+key}` : key;
 }
 
 /**

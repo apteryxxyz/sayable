@@ -182,6 +182,12 @@ describe('getBranchCase', () => {
   it('writes a number as an exact value', () => {
     expect(getBranchCase('0')).toBe('=0');
   });
+
+  // Everything JavaScript is willing to call a number is not one, and coercing
+  // these would hand back a case that selects zero.
+  it.each(['', ' ', '+0', '1e3'])('leaves %o a key rather than an exact value', (key) => {
+    expect(getBranchCase(key)).toBe(key);
+  });
 });
 
 describe('validateBranchIdentifier', () => {
@@ -222,6 +228,12 @@ describe('validateBranchIdentifier', () => {
 
   it('omits a suggestion that would itself be an exact value', () => {
     expect(() => validateBranchIdentifier('select', '1.5')).not.toThrow(/try/);
+  });
+
+  it.each(['', ' ', '+0'])('rejects the numeric-looking key %o', (key) => {
+    expect(() => validateBranchIdentifier('plural', key)).toThrow(
+      'an ICU key cannot contain punctuation or whitespace',
+    );
   });
 
   it('rejects an exact value on a select', () => {
