@@ -206,6 +206,11 @@ Extracted:
 }
 ```
 
+A branch key is an ICU key, so it carries no punctuation and no whitespace. A hyphenated string
+union is ordinary TypeScript but not an ICU key, and `'sold-out'` fails the build naming the key and
+the camel case form to use instead. Numbers are the exception: they select an exact value, which
+only `say.plural` and `say.ordinal` accept.
+
 ## Descriptors
 
 A descriptor is an object passed to `say` before the template. It carries metadata that affects extraction.

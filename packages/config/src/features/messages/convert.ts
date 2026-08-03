@@ -1,3 +1,4 @@
+import { getBranchCase } from './identifier.js';
 import {
   ArgumentMessage,
   ChoiceMessage,
@@ -29,9 +30,7 @@ export function convertMessageToIcu(message: Message) {
       case message instanceof ChoiceMessage: {
         const branches = message.branches
           .map(({ identifier, value }) => ({
-            identifier: Number.isNaN(+String(identifier))
-              ? String(identifier)
-              : `=${+String(identifier)}`,
+            identifier: getBranchCase(identifier),
             value: internalConvertMessageToIcu(value),
           }))
           .map(({ identifier, value }) => `  ${identifier} {${value}}\n`)

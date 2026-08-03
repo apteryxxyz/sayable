@@ -6,6 +6,7 @@ import {
   CompositeMessage,
   ElementMessage,
   LiteralMessage,
+  validateBranchIdentifier,
   type Message,
 } from '@saykit/config/features/messages';
 import { unwrapPlaceholder } from '@saykit/transform-js/parser';
@@ -106,6 +107,8 @@ export function parseJSXOpeningElement(element: t.JSXOpeningElement): CompositeM
 
       return b;
     }, []);
+
+    for (const branch of branches) validateBranchIdentifier(kind, branch.identifier);
 
     const initialiser = findAttributeValueIfExpressionOrStringLiteral(element.attributes, '_');
     if (!initialiser) return null;
