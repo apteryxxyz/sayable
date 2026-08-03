@@ -28,9 +28,7 @@ export function parseJSXContainerElement(element: t.JSXElement): CompositeMessag
 
   const children = element.children.reduce<Message[]>((p, c, i, a) => {
     if (t.isJSXText(c)) {
-      let text = c.value.replace(/\s+/g, ' ');
-      if (i === 0) text = text.trimStart();
-      if (i === a.length - 1) text = text.trimEnd();
+      const text = normalizeJSXText(c.value, i === 0, i === a.length - 1);
       if (text) p.push(new LiteralMessage(text));
     }
 
@@ -130,6 +128,45 @@ export function parseJSXOpeningElement(element: t.JSXOpeningElement): CompositeM
   }
 
   return null;
+}
+
+/**
+ * Punctuation that never takes a space in front of it. A formatter wrapping
+ * long JSX regularly strands these at the start of a line, on their own or
+ * ahead of the rest of a clause.
+ */
+const CLOSING_PUNCTUATION = /^[.,;:!?)\]}»”’]/;
+
+/**
+ * Collapse the whitespace in a JSX text child the way the source reads.
+ *
+ * A line break between a word and its neighbour is only how a formatter wrapped
+ * a long line, so it still means a space. Dropping it would run the words
+ * together — and because ids are content hashes, silently orphan every existing
+ * translation for the message.
+ *
+ * The exception is a line that begins with punctuation, which belongs tight
+ * against whatever precedes it. Only an implicit break is treated this way: a
+ * space the author wrote on the same line is deliberate and always survives.
+ */
+function normalizeJSXText(value: string, isFirst: boolean, isLast: boolean) {
+  let text = value.replace(/\s+/g, ' ');
+
+  if (isFirst) {
+    text = text.trimStart();
+  } else if (
+    text.startsWith(' ') &&
+    // The leading whitespace spans a line break, so it is the formatter's,
+    // not the author's.
+    /^[^\S\n]*\n/.test(value) &&
+    CLOSING_PUNCTUATION.test(text.slice(1))
+  ) {
+    text = text.slice(1);
+  }
+
+  if (isLast) text = text.trimEnd();
+
+  return text;
 }
 
 function processJSXOpeningElement(element: t.JSXOpeningElement): [t.Node, string | null] | null {
