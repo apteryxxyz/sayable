@@ -28,6 +28,7 @@ const config = {
 vi.mock('@saykit/config/features/loader', () => ({ resolveConfig: () => config }));
 
 const { default: plugin } = await import('./index.js');
+const { loadCatalogue } = await import('./catalogue.js');
 
 afterAll(() => rmSync(dir, { recursive: true, force: true }));
 
@@ -49,65 +50,52 @@ describe('plugin-babel parserOverride', () => {
     const out = run('const x = "MARK";', join(dir, 'app.js'));
     expect(out).toContain('MARK');
   });
+
+  // Catalogues are assembled by the bundler's own module pipeline (see
+  // `loader.ts` / `metro-transformer.ts`), so the plugin must leave the import
+  // alone — inlining it would strip the dependency edge the bundler invalidates
+  // on. https://github.com/k0d13/saykit/issues/71
+  it('leaves catalogue imports intact', () => {
+    writeFileSync(join(dir, 'messages.json'), JSON.stringify([{ message: 'Hello' }]));
+    const out = run(`import m from './messages.json';\nexport default m;`, join(dir, 'app.ts'));
+    expect(out).toContain('./messages.json');
+  });
 });
 
-describe('plugin-babel inline imports', () => {
-  it('replaces a default import of a catalogue with an inlined record', () => {
-    writeFileSync(
-      join(dir, 'messages.json'),
-      JSON.stringify([
-        { message: 'Hello', translation: 'Bonjour', id: 'greeting' },
-        { message: 'Bye', translation: '' },
-      ]),
-    );
-    const out = run(`import m from './messages.json';\nexport default m;`, join(dir, 'app.ts'));
-    expect(out).toContain('greeting');
-    expect(out).toContain('Bonjour');
-    // No id + empty translation -> hashed key with the source text.
-    expect(out).toContain(generateHash('Bye', undefined));
-  });
-
-  it('falls back to the source locale for keys untranslated in a non-source locale', () => {
+describe('loadCatalogue', () => {
+  it('assembles a catalogue into a record', async () => {
     writeFileSync(
       join(dir, 'en.json'),
       JSON.stringify([
-        { message: 'Hello', id: 'greeting' },
-        { message: 'Bye', id: 'farewell' },
+        { message: 'Hello', translation: 'Hello', id: 'greeting' },
+        { message: 'Bye', translation: 'Bye', id: 'farewell' },
       ]),
     );
+
+    const catalogue = await loadCatalogue(config as never, join(dir, 'en.json'));
+    expect(catalogue?.record).toMatchObject({ greeting: 'Hello', farewell: 'Bye' });
+  });
+
+  it('falls back to the source locale for keys untranslated in another locale', async () => {
     writeFileSync(
       join(dir, 'fr.json'),
       JSON.stringify([{ message: 'Hello', translation: 'Bonjour', id: 'greeting' }]),
     );
 
-    const out = run(`import m from './fr.json';\nexport default m;`, join(dir, 'app.ts'));
-    expect(out).toContain('Bonjour'); // real translation
-    expect(out).toContain('Bye'); // untranslated -> source fallback
+    const catalogue = await loadCatalogue(config as never, join(dir, 'fr.json'));
+    expect(catalogue?.record).toMatchObject({ greeting: 'Bonjour', farewell: 'Bye' });
+    // Every file in the chain is reported so callers can register it for
+    // invalidation, not just the locale's own file.
+    expect(catalogue?.sources).toHaveLength(2);
   });
 
-  it('ignores bare (non-relative) imports', () => {
-    const out = run(`import x from 'some-pkg';\nx;`, join(dir, 'app.ts'));
-    expect(out).toContain("'some-pkg'");
+  it('hashes a key when the message carries no id', async () => {
+    writeFileSync(join(dir, 'm2.json'), JSON.stringify([{ message: 'Bye' }]));
+    const catalogue = await loadCatalogue(config as never, join(dir, 'm2.json'));
+    expect(catalogue?.record).toHaveProperty(generateHash('Bye', undefined));
   });
 
-  it('ignores relative imports that are not bucket outputs', () => {
-    const out = run(`import x from './helper.ts';\nx;`, join(dir, 'app.ts'));
-    expect(out).toContain('./helper.ts');
-  });
-
-  it('ignores imports when the file has no name', () => {
-    const out = transformSync(`import x from './messages.json';\nx;`, {
-      plugins: [plugin],
-      babelrc: false,
-      configFile: false,
-    })!.code!;
-    expect(out).toContain('./messages.json');
-  });
-
-  it('throws for a non-default import of a catalogue', () => {
-    writeFileSync(join(dir, 'm2.json'), JSON.stringify([]));
-    expect(() => run(`import { x } from './m2.json';\nx;`, join(dir, 'app.ts'))).toThrow(
-      'SayKit inline imports require a default import',
-    );
+  it('ignores a path that is not a catalogue', async () => {
+    expect(await loadCatalogue(config as never, join(dir, 'helper.ts'))).toBeUndefined();
   });
 });

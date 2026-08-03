@@ -30,6 +30,24 @@ pnpm add -D @saykit/config @saykit/format-po @saykit/transform-js @saykit/transf
 
 Adding a `.babelrc` switches Next.js from SWC to Babel for compilation. SayKit doesn't have a SWC plugin, so this is the supported way to use SayKit with Next.js today.
 
+Catalogues are assembled by a loader rather than by the Babel plugin, so register it for your catalogue extension too:
+
+```js title="next.config.mjs"
+const catalogue = { loaders: ['babel-plugin-saykit/webpack'], as: '*.js' };
+
+export default {
+  turbopack: {
+    rules: { '*.po': catalogue },
+  },
+
+  // Turbopack is the default, but `next --webpack` needs the same rule.
+  webpack: (config) => {
+    config.module.rules.push({ test: /\.po$/, use: 'babel-plugin-saykit/webpack' });
+    return config;
+  },
+};
+```
+
 ### Generic Babel
 
 ```js title="babel.config.js"
@@ -71,19 +89,43 @@ module.exports = function (api) {
 };
 ```
 
+Metro never runs Babel over `.json`, so catalogues are assembled by a transform worker instead. Wrap your Metro config:
+
+```js title="metro.config.js"
+const { getDefaultConfig } = require('expo/metro-config');
+const { withSayKit } = require('babel-plugin-saykit/metro');
+
+module.exports = withSayKit(getDefaultConfig(__dirname));
+```
+
+`withSayKit` also registers non-JSON catalogue extensions (e.g. `.po`) with Metro's resolver, since a file Metro cannot resolve is not a module it can reload.
+
 ## What it does
 
-For every non-`node_modules` source file passed through Babel, the plugin:
+The Babel plugin runs the matching SayKit transformer over every non-`node_modules` source file, rewriting macros to `say.call(...)` invocations.
 
-1. Runs the matching SayKit transformer over the source, rewriting macros to `say.call(...)` invocations.
-2. Watches for static imports of translation files (e.g. `import fr from './locales/fr.po'`), resolves that locale's [fallback chain](/core-concepts/configuration#fallback-locales), parses each file in it with the bucket's formatter, and inlines the merged catalogue as a JS object literal in place of the import, untranslated keys falling back through the chain to the source string.
+Catalogues are handled separately, by whichever module pipeline your bundler uses — `babel-plugin-saykit/webpack` for webpack and Turbopack, `babel-plugin-saykit/metro` for Metro. Each resolves the locale's [fallback chain](/core-concepts/configuration#fallback-locales), parses every file in it with the bucket's formatter, and replaces the catalogue with the merged record, untranslated keys falling back through the chain to the source string.
 
-The result: no `.po` file at runtime, no SayKit extractor in the bundle, just small `say.call()` calls and plain JS objects, one locale per module. Each file in the chain is registered as an external dependency so Babel re-runs when the source locale changes.
+The result: no `.po` parser at runtime, no SayKit extractor in the bundle, just small `say.call()` calls and one plain JS object per locale.
+
+<Callout type="info">
+  Catalogues stay **real modules** rather than being inlined into whoever imports them. That is what
+  makes them hot-reloadable: a bundler invalidates a module when its own bytes change, so a record
+  inlined into an importer could never be invalidated at all. Under webpack and Turbopack the
+  fallback files are registered as dependencies too, so editing a source locale updates every locale
+  that falls back to it.
+</Callout>
 
 <Callout type="warn">
-  The plugin currently only rewrites **static** imports. `import('./locales/en.po')` (dynamic
-  import) is not yet replaced. For dynamic locale loading, use a `Say` loader and let your bundler
-  handle the imports.
+  Under **Metro** only the locale's own file is tracked. Metro keys its transform cache on each
+  file's bytes and offers no equivalent of `addDependency`, so editing a *fallback* locale (e.g.
+  `en.json` while viewing `fr`) does not refresh the locale that falls back to it. Editing the
+  locale you are viewing works normally.
+</Callout>
+
+<Callout type="warn">
+  Only **static** imports of catalogues are handled. `import('./locales/en.po')` (dynamic import) is
+  not. For dynamic locale loading, use a `Say` loader and let your bundler handle the imports.
 </Callout>
 
 ## `unplugin` vs Babel: which one?
