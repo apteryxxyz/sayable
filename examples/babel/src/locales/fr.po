@@ -1,0 +1,25 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: fr\n"
+"X-Generator: saykit\n"
+
+msgid ""
+"{books, plural,\n"
+"  one {# book on loan}\n"
+"  other {# books on loan}\n"
+"}"
+msgstr ""
+"{books, plural,\n"
+"  one {# livre emprunté}\n"
+"  other {# livres empruntés}\n"
+"}"
+
+msgid "Welcome to the library"
+msgstr "Bienvenue à la bibliothèque"
+
+# Deliberately left untranslated, so the compiled `fr` record falls back to the
+# English source string.
+msgid "Your card expires soon"
+msgstr ""

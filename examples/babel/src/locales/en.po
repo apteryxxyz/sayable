@@ -1,0 +1,26 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: en\n"
+"X-Generator: saykit\n"
+
+#: src/main.ts:17
+msgid ""
+"{books, plural,\n"
+"  one {# book on loan}\n"
+"  other {# books on loan}\n"
+"}"
+msgstr ""
+"{books, plural,\n"
+"  one {# book on loan}\n"
+"  other {# books on loan}\n"
+"}"
+
+#: src/main.ts:16
+msgid "Welcome to the library"
+msgstr "Welcome to the library"
+
+#: src/main.ts:20
+msgid "Your card expires soon"
+msgstr "Your card expires soon"
