@@ -9,6 +9,77 @@ import {
 export const AUTO_INCREMENT_IDENTIFIER = Symbol('auto-increment');
 
 /**
+ * An ICU case, either an exact value or a key. ICU reserves its own pattern
+ * syntax, so a key carries no punctuation and no whitespace.
+ */
+const BRANCH_PATTERN = /^(?:=\d+|[^\p{Pattern_Syntax}\p{Pattern_White_Space}]+)$/u;
+
+/**
+ * The ICU case a branch is written as. A number names an exact value rather
+ * than a key, and only `plural` and `ordinal` are allowed to select on one.
+ *
+ * Digits are read literally rather than coerced, because everything JavaScript
+ * is willing to call a number is not: `''`, `' '`, and `'+0'` all coerce to
+ * `=0`, which would pass for a key that selects zero and quietly leave the
+ * author's own key out of the catalogue. Anything else stays a key, where the
+ * whitespace or punctuation that made it numeric-looking is caught.
+ */
+export function getBranchCase(identifier: string | typeof AUTO_INCREMENT_IDENTIFIER) {
+  const key = String(identifier);
+  return /^\d+$/u.test(key) ? `=${+key}` : key;
+}
+
+/**
+ * Reject a branch key ICU cannot express, while the key is still attached to a
+ * file and a line.
+ *
+ * A hyphenated string union is ordinary application code and typechecks,
+ * builds, and extracts to a catalogue entry that looks perfectly normal — the
+ * only sign of trouble is a parse error at format time, in a message whose
+ * source is long gone.
+ */
+export function validateBranchIdentifier(
+  kind: string,
+  identifier: string | typeof AUTO_INCREMENT_IDENTIFIER,
+) {
+  // A branch still awaiting a sequence number is numbered, and a number is
+  // always a well-formed case.
+  if (typeof identifier !== 'string') return;
+
+  const branch = getBranchCase(identifier);
+
+  if (!BRANCH_PATTERN.test(branch)) {
+    const suggestion = suggestBranchIdentifier(identifier);
+    throw new Error(
+      `Invalid ${kind} branch key '${identifier}', an ICU key cannot contain punctuation or whitespace` +
+        (suggestion ? `, try '${suggestion}'` : ''),
+    );
+  }
+
+  if (kind === 'select' && branch.startsWith('='))
+    throw new Error(
+      `Invalid select branch key '${identifier}', a number selects an exact value, which only 'plural' and 'ordinal' accept`,
+    );
+}
+
+/**
+ * The nearest identifier-safe form of a key, so the error names the fix as well
+ * as the problem. The constraint comes from ICU rather than from anything the
+ * author wrote, and camel case is how the rest of the codebase already spells a
+ * name of more than one word.
+ */
+function suggestBranchIdentifier(identifier: string) {
+  const suggestion = identifier
+    .split(/[^\p{L}\p{N}]+/u)
+    .filter(Boolean)
+    .map((word, index) => (index === 0 ? word : word[0]!.toUpperCase() + word.slice(1)))
+    .join('');
+
+  if (!BRANCH_PATTERN.test(suggestion) || !Number.isNaN(+suggestion)) return undefined;
+  return suggestion;
+}
+
+/**
  * Decides whether two placeholders sharing a name are the same placeholder, and
  * so may share it. Only the syntax that produced them can answer that, so the
  * caller supplies the comparison; by default nothing is interchangeable.

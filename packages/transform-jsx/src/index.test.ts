@@ -101,6 +101,23 @@ describe('createJsxTransformer.extract', () => {
     ).toThrow("Invalid placeholder name 'who is'");
   });
 
+  it('throws for a branch key ICU cannot express', () => {
+    expect(() =>
+      transformer.extract(
+        'const x = <Say.Select _={status} in-stock="In stock" other="Sold out" />;',
+        'file.tsx',
+      ),
+    ).toThrow("Invalid select branch key 'in-stock'");
+  });
+
+  it('keeps an underscored numeric branch key an exact match', () => {
+    const [message] = transformer.extract(
+      'const x = <Say.Plural _={count} _0="none" other="# items" />;',
+      'file.tsx',
+    );
+    expect(message!.message).toContain('=0 {none}');
+  });
+
   it('extracts childless elements as self-closing tags', () => {
     const [message] = transformer.extract('const x = <Say>Open <ChevronDown /></Say>;', 'file.tsx');
     expect(message!.message).toBe('Open <0/>');

@@ -62,6 +62,15 @@ describe('createJsTransformer.extract', () => {
     );
   });
 
+  it('throws for a branch key ICU cannot express', () => {
+    expect(() =>
+      transformer.extract(
+        "const s = say.select(status, { 'sold-out': 'Sold out', other: 'In stock' });",
+        'file.ts',
+      ),
+    ).toThrow("Invalid select branch key 'sold-out', an ICU key cannot contain punctuation");
+  });
+
   it('returns an empty array when there are no messages', () => {
     expect(transformer.extract('const x = 1 + 2;', 'file.ts')).toEqual([]);
   });

@@ -5,6 +5,7 @@ import {
   CompositeMessage,
   AUTO_INCREMENT_IDENTIFIER,
   LiteralMessage,
+  validateBranchIdentifier,
   type Message,
 } from '@saykit/config/features/messages';
 
@@ -65,6 +66,8 @@ export function parseCallExpression(call: t.CallExpression): CompositeMessage | 
 
       return c;
     }, []);
+
+    for (const branch of branches) validateBranchIdentifier(kind, branch.identifier);
 
     const [identifier, value] = unwrapPlaceholder(call.arguments[0]);
     const choice = new ChoiceMessage(kind, identifier, branches, value);

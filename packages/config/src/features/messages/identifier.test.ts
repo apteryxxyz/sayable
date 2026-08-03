@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { assignSequenceIdentifiers } from './identifier.js';
+import {
+  assignSequenceIdentifiers,
+  getBranchCase,
+  validateBranchIdentifier,
+} from './identifier.js';
 import {
   ArgumentMessage,
   AUTO_INCREMENT_IDENTIFIER,
@@ -167,5 +171,74 @@ describe('assignSequenceIdentifiers', () => {
   it('leaves a literal message unchanged', () => {
     const literal = new LiteralMessage('hi');
     expect(() => assignSequenceIdentifiers(literal)).not.toThrow();
+  });
+});
+
+describe('getBranchCase', () => {
+  it('writes a key as itself', () => {
+    expect(getBranchCase('other')).toBe('other');
+  });
+
+  it('writes a number as an exact value', () => {
+    expect(getBranchCase('0')).toBe('=0');
+  });
+
+  // Everything JavaScript is willing to call a number is not one, and coercing
+  // these would hand back a case that selects zero.
+  it.each(['', ' ', '+0', '1e3'])('leaves %o a key rather than an exact value', (key) => {
+    expect(getBranchCase(key)).toBe(key);
+  });
+});
+
+describe('validateBranchIdentifier', () => {
+  it('accepts a plain key', () => {
+    expect(() => validateBranchIdentifier('select', 'inStock')).not.toThrow();
+  });
+
+  it('accepts a key outside ASCII', () => {
+    expect(() => validateBranchIdentifier('select', 'año')).not.toThrow();
+  });
+
+  it('accepts an exact value on a plural', () => {
+    expect(() => validateBranchIdentifier('plural', '0')).not.toThrow();
+  });
+
+  it('accepts a branch still awaiting a sequence number', () => {
+    expect(() => validateBranchIdentifier('select', AUTO_INCREMENT_IDENTIFIER)).not.toThrow();
+  });
+
+  it('rejects a hyphenated key and suggests a camel case one', () => {
+    expect(() => validateBranchIdentifier('select', 'sold-out')).toThrow(
+      "Invalid select branch key 'sold-out', an ICU key cannot contain punctuation or whitespace, try 'soldOut'",
+    );
+  });
+
+  it('names the kind that was written', () => {
+    expect(() => validateBranchIdentifier('ordinal', 'runner up')).toThrow(
+      "Invalid ordinal branch key 'runner up'",
+    );
+  });
+
+  it('omits the suggestion when nothing identifier-safe is left', () => {
+    expect(() => validateBranchIdentifier('select', '--')).toThrow(
+      "Invalid select branch key '--', an ICU key cannot contain punctuation or whitespace",
+    );
+    expect(() => validateBranchIdentifier('select', '--')).not.toThrow(/try/);
+  });
+
+  it('omits a suggestion that would itself be an exact value', () => {
+    expect(() => validateBranchIdentifier('select', '1.5')).not.toThrow(/try/);
+  });
+
+  it.each(['', ' ', '+0'])('rejects the numeric-looking key %o', (key) => {
+    expect(() => validateBranchIdentifier('plural', key)).toThrow(
+      'an ICU key cannot contain punctuation or whitespace',
+    );
+  });
+
+  it('rejects an exact value on a select', () => {
+    expect(() => validateBranchIdentifier('select', '0')).toThrow(
+      "Invalid select branch key '0', a number selects an exact value, which only 'plural' and 'ordinal' accept",
+    );
   });
 });

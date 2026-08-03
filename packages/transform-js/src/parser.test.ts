@@ -292,6 +292,20 @@ describe('parseCallExpression', () => {
     expect(choice.branches[2]!.value).toEqual({ text: 'many' });
   });
 
+  it('throws for a branch key ICU cannot express', () => {
+    expect(() =>
+      parser.parseCallExpression(
+        expr("say.select(status, { 'in-stock': 'In stock', 'sold-out': 'Sold out' })"),
+      ),
+    ).toThrow("Invalid select branch key 'in-stock'");
+  });
+
+  it('throws for an exact match on a select', () => {
+    expect(() =>
+      parser.parseCallExpression(expr("say.select(status, { 0: 'none', other: 'some' })")),
+    ).toThrow("Invalid select branch key '0'");
+  });
+
   it('returns null when the callee is not a say expression', () => {
     expect(parser.parseCallExpression(expr("other.plural(count, { other: 'x' })"))).toBeNull();
   });
