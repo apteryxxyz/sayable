@@ -2,13 +2,16 @@ import {
   cloneElement,
   createElement,
   isValidElement,
-  type PropsWithChildren,
   type ReactElement,
   type ReactNode,
 } from 'react';
 import type { Disallow, Named, NumeralOptions, SelectOptions } from 'saykit';
 import { Renderer } from '~/components/renderer.js';
-import { type PropsWithJSXSafeKeys, resolveValuePropKeys } from '~/types.js';
+import {
+  type PropsWithJSXSafeKeys,
+  type PropsWithSayChildren,
+  resolveValuePropKeys,
+} from '~/types.js';
 
 declare function GET_SAY(): import('saykit').ReadonlySay;
 
@@ -21,7 +24,7 @@ declare function GET_SAY(): import('saykit').ReadonlySay;
  */
 // @ts-expect-error macro
 export function Say(
-  props: PropsWithChildren<Disallow<{ context?: string; whitespace?: boolean }, 'id'>>,
+  props: PropsWithSayChildren<Disallow<{ context?: string; whitespace?: boolean }, 'id'>>,
 ): ReactElement;
 export function Say(props: { id: string; whitespace?: boolean; [match: string]: unknown }) {
   if (!('id' in props))
