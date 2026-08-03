@@ -29,6 +29,7 @@ vi.mock('@saykit/config/features/loader', () => ({ resolveConfig: () => config }
 
 const { default: plugin } = await import('./index.js');
 const { loadCatalogue } = await import('./catalogue.js');
+const { withSayKit } = await import('./next/index.js');
 
 afterAll(() => rmSync(dir, { recursive: true, force: true }));
 
@@ -86,7 +87,7 @@ describe('plugin-babel catalogue imports', () => {
 });
 
 describe('loadCatalogue', () => {
-  it('assembles a catalogue into a record', async () => {
+  it('assembles a catalogue into a record', () => {
     writeFileSync(
       join(dir, 'en.json'),
       JSON.stringify([
@@ -95,30 +96,73 @@ describe('loadCatalogue', () => {
       ]),
     );
 
-    const catalogue = await loadCatalogue(config as never, join(dir, 'en.json'));
+    const catalogue = loadCatalogue(config as never, join(dir, 'en.json'));
     expect(catalogue?.record).toMatchObject({ greeting: 'Hello', farewell: 'Bye' });
   });
 
-  it('falls back to the source locale for keys untranslated in another locale', async () => {
+  it('falls back to the source locale for keys untranslated in another locale', () => {
     writeFileSync(
       join(dir, 'fr.json'),
       JSON.stringify([{ message: 'Hello', translation: 'Bonjour', id: 'greeting' }]),
     );
 
-    const catalogue = await loadCatalogue(config as never, join(dir, 'fr.json'));
+    const catalogue = loadCatalogue(config as never, join(dir, 'fr.json'));
     expect(catalogue?.record).toMatchObject({ greeting: 'Bonjour', farewell: 'Bye' });
     // Every file in the chain is reported so callers can register it for
     // invalidation, not just the locale's own file.
     expect(catalogue?.sources).toHaveLength(2);
   });
 
-  it('hashes a key when the message carries no id', async () => {
+  it('hashes a key when the message carries no id', () => {
     writeFileSync(join(dir, 'm2.json'), JSON.stringify([{ message: 'Bye' }]));
-    const catalogue = await loadCatalogue(config as never, join(dir, 'm2.json'));
+    const catalogue = loadCatalogue(config as never, join(dir, 'm2.json'));
     expect(catalogue?.record).toHaveProperty(generateHash('Bye', undefined));
   });
 
-  it('ignores a path that is not a catalogue', async () => {
-    expect(await loadCatalogue(config as never, join(dir, 'helper.ts'))).toBeUndefined();
+  it('ignores a path that is not a catalogue', () => {
+    expect(loadCatalogue(config as never, join(dir, 'helper.ts'))).toBeUndefined();
+  });
+});
+
+describe('next withSayKit', () => {
+  it('derives a Turbopack rule from the bucket output', () => {
+    const out = withSayKit({});
+    const [glob, rule] = Object.entries(out.turbopack.rules!)[0]!;
+
+    // The glob is the bucket's own output template, so nothing else sharing the
+    // extension is routed through the loader.
+    expect(glob.endsWith('/*.json')).toBe(true);
+    expect(rule).toMatchObject({ loaders: ['babel-plugin-saykit/next/loader'], as: '*.js' });
+  });
+
+  it('adds a webpack rule that matches catalogues and nothing else', () => {
+    const webpackConfig = { module: { rules: [] as unknown[] } };
+    withSayKit({}).webpack(webpackConfig, {});
+
+    const rule = webpackConfig.module.rules[0] as {
+      test: (path: string) => boolean;
+      type: string;
+    };
+    expect(rule.test(join(dir, 'fr.json'))).toBe(true);
+    expect(rule.test(join(dir, 'helper.ts'))).toBe(false);
+    // The loader emits JavaScript, so a `.json` catalogue must not be handed to
+    // webpack's JSON parser.
+    expect(rule.type).toBe('javascript/auto');
+  });
+
+  it('preserves the caller’s own turbopack rules and webpack function', () => {
+    const out = withSayKit({
+      turbopack: { rules: { '*.svg': { loaders: ['svg'] } } },
+      webpack: (c) => {
+        (c.module ??= {}).rules = ['mine'];
+        return c;
+      },
+    });
+
+    expect(out.turbopack.rules).toHaveProperty('*.svg');
+
+    const result = out.webpack({}, {});
+    expect(result.module!.rules![0]).toBe('mine');
+    expect(result.module!.rules).toHaveLength(2);
   });
 });

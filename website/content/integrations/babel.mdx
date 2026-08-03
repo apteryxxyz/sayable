@@ -30,25 +30,17 @@ pnpm add -D @saykit/config @saykit/format-po @saykit/transform-js @saykit/transf
 
 Adding a `.babelrc` switches Next.js from SWC to Babel for compilation. SayKit doesn't have a SWC plugin, so this is the supported way to use SayKit with Next.js today.
 
-`catalogues: 'module'` hands catalogues to a loader instead of inlining them — see [Catalogues](#catalogues). Register it for your catalogue extension:
+`catalogues: 'module'` hands catalogues to a loader instead of inlining them — see [Catalogues](#catalogues). Wrap your Next config to register it:
 
 ```js title="next.config.mjs"
-const catalogue = { loaders: ['babel-plugin-saykit/webpack'], as: '*.js' };
+import { withSayKit } from 'babel-plugin-saykit/next';
 
-export default {
-  turbopack: {
-    rules: { '*.po': catalogue },
-  },
-
-  // Turbopack is the default, but `next --webpack` needs the same rule.
-  webpack: (config) => {
-    config.module.rules.push({ test: /\.po$/, use: 'babel-plugin-saykit/webpack' });
-    return config;
-  },
-};
+export default withSayKit({
+  // your config
+});
 ```
 
-Match the rule to your bucket's extension. A `.json` bucket needs `'*.json'` and `/\.json$/` instead — webpack and Turbopack resolve JSON natively, so without a rule the import quietly resolves to the raw file rather than the assembled record.
+`withSayKit` derives the rules from your `saykit.config.*`, one per bucket, for both Turbopack and `next --webpack`. Each targets that bucket's `output` exactly, so changing a bucket's path or format needs no change here, and no other file of the same extension is routed through the loader.
 
 ### Generic Babel
 
@@ -124,16 +116,11 @@ That is usually fine for a plain Babel build or a library, and painful in a dev 
 
 ### `'module'`
 
-The import is left alone, and the catalogue is served by a bundler integration — `babel-plugin-saykit/webpack` for webpack and Turbopack, `babel-plugin-saykit/metro` for Metro. Catalogues stay **real modules**, which is exactly what makes them hot-reloadable.
+The import is left alone, and the catalogue is served by a bundler integration — `babel-plugin-saykit/next` for Next.js, `babel-plugin-saykit/metro` for Metro. Catalogues stay **real modules**, which is exactly what makes them hot-reloadable.
 
 Set it whenever one of those is wired up. The two are mutually exclusive: if the plugin inlines the import, the integration is never asked for the module and nothing hot-reloads.
 
-<Callout type="warn">
-  Under `'module'`, every catalogue extension needs a rule. webpack and Turbopack resolve `.json`
-  natively, so a **JSON bucket without its own rule** silently hands the importer the raw file
-  instead of the assembled record — the locale's own keys work and every fallback key is missing at
-  runtime. Register a rule per extension you use, `.json` included.
-</Callout>
+Those two are the whole list, because they are the two bundlers that cannot be reached any other way — Metro never runs Babel over `.json`, and Turbopack runs loaders but not plugins. On webpack, Vite, Rollup or esbuild proper, use [`unplugin-saykit`](/integrations/unplugin) and skip the Babel plugin's catalogue handling entirely.
 
 <Callout type="info">
   Under webpack and Turbopack the fallback files are registered as dependencies too, so editing a
