@@ -99,10 +99,10 @@ say`${{ total: cart.total }} of ${{ total: cart.total }}`; // → "{total} of {t
 ```
 
 <Callout type="warn">
-  Two different values under one name are a build error, whether they got there by naming
-  (`` say`${{ n: items.length }} ${{ n: users.length }}` ``) or by one name colliding with a variable
-  (`` say`${name} ${{ name: author.name }}` ``). Only one of them could survive into the compiled
-  call, and a translator has no way to tell them apart. Give them their own names, `itemCount` and
+  Two different values under one name are a build error, whether they got there by naming (`` say`$
+  {{ n: items.length }} ${{ n: users.length }}` ``) or by one name colliding with a variable (``
+  say`${name} ${{ name: author.name }}` ``). Only one of them could survive into the compiled call,
+  and a translator has no way to tell them apart. Give them their own names, `itemCount` and
   `userCount` rather than `n` twice.
 </Callout>
 
