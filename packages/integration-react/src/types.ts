@@ -1,3 +1,17 @@
+import type { ReactNode } from 'react';
+import type { Named } from 'saykit';
+
+/**
+ * What a message is allowed to contain. On top of everything React renders, a
+ * named placeholder — `{{ name: value }}` — reaches the type checker as a plain
+ * object child, so the object form has to be part of the contract even though
+ * nothing ever renders it: the transform reads the name off it and compiles the
+ * child away before React sees the tree.
+ */
+export type SayNode = ReactNode | Named<unknown> | Iterable<SayNode>;
+
+export type PropsWithSayChildren<P = unknown> = P & { children?: SayNode };
+
 export type PropsWithJSXSafeKeys<T> = {
   [K in keyof T as K extends number | `${number}${string}`
     ? `_${K}`
