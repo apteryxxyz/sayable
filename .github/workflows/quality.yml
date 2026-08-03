@@ -1,6 +1,7 @@
 name: Quality
 
-# The shared gate: build the workspace once, then prove it four ways. Nothing
+# The shared gate: build the workspace once, then optionally prove it three more
+# ways. Building always runs, since it is what produces the artifact. Nothing
 # triggers this on its own — it has no opinion about when it should run, only
 # about what passing means — so every caller decides that for itself and gets
 # the same answer. Callers pass `secrets: inherit` for the Codecov upload.
@@ -17,6 +18,15 @@ on:
         type: string
         required: false
         default: ''
+      checks:
+        description: >-
+          Whether to type check, lint and test as well as build. Callers reacting
+          to something that did not change the commit — a label, a review — pass
+          false, because those checks already reported when it was pushed.
+          Building is not optional: it is what produces the dist artifact.
+        type: boolean
+        required: false
+        default: true
 
 # Proving the workspace needs to read it and nothing more. Stated here rather
 # than left to the repository default, because these jobs run branch code —
@@ -51,6 +61,7 @@ jobs:
   check:
     name: Type Checking
     needs: [build]
+    if: ${{ inputs.checks }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -73,6 +84,7 @@ jobs:
   lint:
     name: Linting
     needs: [build]
+    if: ${{ inputs.checks }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -95,6 +107,7 @@ jobs:
   test:
     name: Testing
     needs: [build]
+    if: ${{ inputs.checks }}
     runs-on: ubuntu-latest
 
     steps:

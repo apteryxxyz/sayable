@@ -8,7 +8,7 @@ on:
     branches: [main]
     # `labeled` is here for the preview label, which is one of the two things
     # that releases a preview below. Triage labels every pull request
-    # automatically, so `quality` filters down to the label that matters.
+    # automatically, so `authorize` filters down to the label that matters.
     types: [opened, synchronize, reopened, labeled]
     paths:
       - "package.json"
@@ -21,8 +21,8 @@ on:
       - ".github/workflows/pull-request.yml"
       - ".github/workflows/quality.yml"
   # An approving review is the other thing that releases a preview. `paths` is
-  # not available here, so this runs the gate again for the reviewed commit —
-  # which is wanted anyway, since nothing should be published untested.
+  # not available here, so this fires for reviews on any pull request — the jobs
+  # below sort out which of those is actually asking for something.
   pull_request_review:
     types: [submitted]
 
@@ -37,11 +37,14 @@ jobs:
     name: Quality
     # Triage applies package and topic labels to every pull request, and each one
     # of those is a `labeled` event. Only the preview label should cost a run.
-    # `preview` needs this job, so skipping here skips the publish along with it.
     if: ${{ github.event.action != 'labeled' || github.event.label.name == 'preview' }}
     uses: ./.github/workflows/quality.yml
     with:
       ref: ${{ github.event.pull_request.head.sha }}
+      # Labelling and reviewing do not change a line, so those build and stop —
+      # enough to have something to publish, without repeating four green checks
+      # that already reported when the commit was pushed.
+      checks: ${{ github.event_name == 'pull_request' && github.event.action != 'labeled' }}
     secrets: inherit
 
   # A preview is an installable package and a link that runs its code, so it is
@@ -142,3 +145,15 @@ jobs:
           else
             gh api --method POST "repos/$GITHUB_REPOSITORY/issues/$NUMBER/comments" -f body="$body"
           fi
+
+      # Handing the label back makes applying it the whole gesture for asking:
+      # one label on, one preview out, and the next one is another click rather
+      # than a hunt through the actions tab for a rerun. Last, so a run that
+      # failed to publish keeps the label and stays visibly outstanding. Removing
+      # it emits `unlabeled`, which this workflow does not listen for.
+      - name: Hand back the preview label
+        if: ${{ contains(github.event.pull_request.labels.*.name, 'preview') }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NUMBER: ${{ github.event.pull_request.number }}
+        run: gh api --method DELETE "repos/$GITHUB_REPOSITORY/issues/$NUMBER/labels/preview"
