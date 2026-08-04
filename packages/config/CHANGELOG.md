@@ -1,5 +1,12 @@
 # @saykit/config
 
+## 0.8.0
+
+### Minor Changes
+
+- 08900e6: Escape ICU's reserved characters in literal text, and write a plural or ordinal selector interpolated into its own branch as `#`
+- d9e5520: Number a repeated placeholder expression once, so the same value written twice extracts as one placeholder rather than two
+
 ## 0.7.0
 
 ### Minor Changes

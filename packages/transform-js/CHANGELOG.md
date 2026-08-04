@@ -1,5 +1,17 @@
 # @saykit/transform-js
 
+## 0.8.0
+
+### Minor Changes
+
+- 08900e6: Escape ICU's reserved characters in literal text, and write a plural or ordinal selector interpolated into its own branch as `#`
+
+### Patch Changes
+
+- Updated dependencies [08900e6]
+- Updated dependencies [d9e5520]
+  - @saykit/config@0.8.0
+
 ## 0.7.0
 
 ### Minor Changes
