@@ -1,5 +1,11 @@
 # @saykit/react
 
+## 0.8.0
+
+### Minor Changes
+
+- 08900e6: Escape ICU's reserved characters in literal text, and write a plural or ordinal selector interpolated into its own branch as `#`
+
 ## 0.7.0
 
 ### Minor Changes
