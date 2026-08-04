@@ -28,7 +28,7 @@ export function HabitCard({ habit, onToggle }: { habit: Habit; onToggle: () => v
 
       <Text style={styles.progress}>
         <Say>
-          <Text style={styles.strong}>{habit.thisWeek}</Text> of
+          <Text style={styles.strong}>{habit.thisWeek}</Text> of{' '}
           <Text style={styles.strong}>{habit.target}</Text> this week
         </Say>
       </Text>

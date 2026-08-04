@@ -367,15 +367,17 @@ Every macro above has a JSX counterpart. The selector is the `_` prop, branches 
 
 ```tsx
 <Say>
-  You have <Say.Number _={items.length} /> items, last updated on
+  You have <Say.Number _={items.length} /> items, last updated on{' '}
   <Say.Date _={{ updatedAt }} style="long" />
 </Say>
 ```
 
-<Callout type="warn">
-  Avoid the `{' '}` spacing escape inside a `<Say>`. It is an expression child like any other, so it
-  extracts as a placeholder (`updated {0} <Say.Date .../>`) and a translator is left moving a stray
-  space around the sentence. Reword so the line break falls where a space belongs.
+<Callout type="info">
+  A message extracts as the text JSX renders, so a line break and the indentation around it are
+  layout and never reach a catalogue. Whitespace that has to survive a break is written as `{' '}` —
+  the same escape Prettier inserts when it wraps a line ending in a space — and it extracts as the
+  space it renders as, not as a placeholder. A literal expression child such as `{'—'}` or `{10}` is
+  read the same way, as the text it renders as.
 </Callout>
 
 <Callout type="info">

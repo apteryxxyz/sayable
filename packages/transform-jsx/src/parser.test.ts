@@ -64,10 +64,26 @@ describe('parseJSXContainerElement', () => {
     expect(result!.descriptor).toEqual({ id: 'msg', context: 'nav' });
   });
 
-  it('drops text children that are only whitespace', () => {
-    const result = parser.parseJSXContainerElement(jsx`<Say>{name}   </Say>`);
+  it('drops text children that are only a line break and indentation', () => {
+    const result = parser.parseJSXContainerElement(jsx`
+      <Say>
+        {name}
+      </Say>
+    `);
     expect(result!.children).toHaveLength(1);
     expect(result!.children[0]).toBeInstanceOf(ArgumentMessage);
+  });
+
+  it('parses a literal string expression as text, folded into its neighbour', () => {
+    const result = parser.parseJSXContainerElement(jsx`<Say>Hello,{' '}world</Say>`);
+    expect(result!.children).toEqual([new LiteralMessage('Hello, world')]);
+  });
+
+  // A spread child renders an unknown number of unknown things, so there is
+  // nothing to name it or to translate around it.
+  it('ignores spread children', () => {
+    const result = parser.parseJSXContainerElement(jsx`<Say>{...items}</Say>`);
+    expect(result!.children).toHaveLength(0);
   });
 
   it('ignores expression containers that hold no expression', () => {

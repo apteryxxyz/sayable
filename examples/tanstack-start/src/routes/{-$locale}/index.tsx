@@ -58,14 +58,14 @@ function SessionRow({ session }: { session: Session }) {
               <>
                 {' — '}
                 <Say>
-                  their
+                  their{' '}
                   <Say.Ordinal
                     _={session.previousTalks + 1}
                     one="#st"
                     two="#nd"
                     few="#rd"
                     other="#th"
-                  />
+                  />{' '}
                   time on this stage
                 </Say>
               </>
@@ -108,9 +108,8 @@ function SchedulePage() {
             free through the fallback chain, without restating it.
           */}
           <Say>
-            The full program —
-            <Say.Plural _={sessions.length} one="# session" other="# sessions" />, including
-            <Say.Plural _={workshops} one="# workshop" other="# workshops" />.
+            The full program — <Say.Plural _={sessions.length} one="# session" other="# sessions" />
+            , including <Say.Plural _={workshops} one="# workshop" other="# workshops" />.
           </Say>
         </p>
       </header>
