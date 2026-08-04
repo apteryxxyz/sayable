@@ -22,7 +22,7 @@ export function Inbox({ count }: { count: number }) {
         <Say.Plural
           _={count}
           one="You have 1 unread message"
-          other="You have # unread messages"
+          other={<>You have {count} unread messages</>}
         />
       </p>
     </section>

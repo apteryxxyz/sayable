@@ -59,7 +59,7 @@ export function Inbox({ count }: { count: number }) {
           _={count}
           zero="You have no unread messages"
           one="You have 1 unread message"
-          other="You have # unread messages"
+          other={<>You have {count} unread messages</>}
         />
       </p>
     </section>

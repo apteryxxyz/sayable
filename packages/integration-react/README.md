@@ -23,7 +23,7 @@ function App() {
   return (
     <SayProvider locale="fr" messages={fr}>
       <Say>Hello, {name}!</Say>
-      <Say.Plural _={count} one="# item" other="# items" />
+      <Say.Plural _={count} one={<>{count} item</>} other={<>{count} items</>} />
     </SayProvider>
   );
 }
