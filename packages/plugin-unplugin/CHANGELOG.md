@@ -1,5 +1,14 @@
 # unplugin-saykit
 
+## 0.7.0
+
+### Patch Changes
+
+- Updated dependencies [400a3f2]
+- Updated dependencies [400a3f2]
+- Updated dependencies [2a77e73]
+  - @saykit/config@0.7.0
+
 ## 0.6.1
 
 ### Patch Changes
