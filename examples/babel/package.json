@@ -1,0 +1,24 @@
+{
+  "name": "babel-example",
+  "private": true,
+  "scripts": {
+    "check": "tsc --noEmit",
+    "extract": "saykit extract",
+    "build": "babel src --extensions .ts --out-dir dist --ignore \"src/**/*.d.po.ts\"",
+    "start": "pnpm build && node dist/main.js"
+  },
+  "dependencies": {
+    "saykit": "workspace:^"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.29.7",
+    "@babel/core": "^7.29.7",
+    "@babel/preset-env": "^7.29.7",
+    "@babel/preset-typescript": "^7.29.7",
+    "@saykit/config": "workspace:^",
+    "@saykit/format-po": "workspace:^",
+    "@saykit/transform-js": "workspace:^",
+    "babel-plugin-saykit": "workspace:^",
+    "typescript": "^6.0.3"
+  }
+}

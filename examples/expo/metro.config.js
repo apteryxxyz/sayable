@@ -1,7 +1,13 @@
 const path = require('node:path');
 const { getDefaultConfig } = require('expo/metro-config');
+const { withSayKit } = require('babel-plugin-saykit/metro');
 
-const config = getDefaultConfig(__dirname);
+// Metro never runs Babel over `.json`, so the catalogues are assembled by a
+// transformer rather than the Babel plugin. That also keeps them real modules,
+// which is what lets Metro invalidate them — its transform cache is keyed on
+// each file's own bytes, so a record inlined into an importer can never go
+// stale-free. See https://github.com/k0d13/saykit/issues/71.
+const config = withSayKit(getDefaultConfig(__dirname));
 
 // Workspace packages (e.g. @saykit/react) keep their own React devDependency,
 // which Metro would otherwise bundle as a second copy alongside the app's.

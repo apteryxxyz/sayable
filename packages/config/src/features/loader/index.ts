@@ -1,1 +1,1 @@
-export { resolveConfig } from './resolve.js';
+export { resolveConfig, resolveConfigFile } from './resolve.js';
