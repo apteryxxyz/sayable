@@ -202,6 +202,20 @@ function getExpressionAsLiteralText(expression: t.Node) {
   // A number renders as the text `String()` makes of it, and reads as content
   // in the sentence rather than as a value anything supplies.
   if (t.isNumericLiteral(expression)) return String(expression.value);
+  // A signed number is a unary operator applied to a literal rather than a
+  // literal of its own, but `{-1}` is still a number written into a sentence.
+  if (
+    t.isUnaryExpression(expression) &&
+    (expression.operator === '-' || expression.operator === '+') &&
+    t.isNumericLiteral(expression.argument)
+  ) {
+    return String(
+      expression.operator === '-' ? -expression.argument.value : expression.argument.value,
+    );
+  }
+  // JSX renders no child at all for these, so the sentence has a gap where the
+  // expression is and nothing to put in it.
+  if (t.isBooleanLiteral(expression) || t.isNullLiteral(expression)) return '';
   // A template literal with nothing interpolated is a string literal written
   // with different quotes, and renders as one.
   if (t.isTemplateLiteral(expression) && expression.expressions.length === 0) {

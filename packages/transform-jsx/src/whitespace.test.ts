@@ -183,6 +183,16 @@ describe('whitespace written as an expression', () => {
 }`);
   });
 
+  it('extracts a signed number as the text it renders as', () => {
+    expect(extract('<Say>Down {-1} place</Say>')).toBe('Down -1 place');
+  });
+
+  // JSX renders no child for these, which is what makes them the idiom for a
+  // conditional that has nothing to show.
+  it.each([['true'], ['false'], ['null']])('leaves nothing behind for {%s}', (value) => {
+    expect(extract(`<Say>Hello,{${value}} world!</Say>`)).toBe('Hello, world!');
+  });
+
   it('leaves nothing behind for an empty string', () => {
     expect(extract(`<Say>Hello,{''} world!</Say>`)).toBe('Hello, world!');
   });
