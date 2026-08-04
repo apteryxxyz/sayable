@@ -103,21 +103,25 @@ function renderSummary() {
     other: '#th',
   })} in the hold queue`;
 
-  // `say.number` is a fragment, not a whole message, so it is written inside
-  // one. It extracts as `{queue, plural, offset:1 ...}` and `{ready, number,
-  // percent}` — the formatting stays in the catalogue, where a translator can
-  // move it around the sentence.
+  // `offset` subtracts from the selector before `#` is formatted, so a queue of
+  // four reads as "you and 3 others". The exact branch is `1`, not `0`: ICU
+  // tests an exact value against the original number, before the offset, so a
+  // queue of one is the member and nobody else. Writing `0` here would leave
+  // that case to `other` and render "You and 0 others".
   const queue = document.createElement('p');
   queue.textContent = say.plural(
     { queue: holdQueueLength },
     {
       offset: 1,
-      0: 'Nobody else is waiting on your reservation',
+      1: 'Nobody else is waiting on your reservation',
       one: 'You and # other member are waiting',
       other: 'You and # others are waiting',
     },
   );
 
+  // `say.number` is a fragment rather than a whole message, so it is written
+  // inside one, extracting as `{ready, number, percent}`. The formatting stays
+  // in the catalogue, where a translator can move it around the sentence.
   const ready = document.createElement('p');
   ready.textContent = say`${say.number({ ready: holdsReadyRatio }, { style: 'percent' })} of your holds are ready to collect`;
 

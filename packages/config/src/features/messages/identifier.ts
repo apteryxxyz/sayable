@@ -61,6 +61,15 @@ export function validateBranchIdentifier(
         (suggestion ? `, try '${suggestion}'` : ''),
     );
   }
+
+  // A numeric key is written bare under `select` and reaches ICU untouched, so
+  // a key spelled `=0` by hand stays `=0` and fails to parse at format time.
+  // `getBranchCase` cannot normalise it away, because `=0` and `0` are two
+  // different keys under a format that matches its cases as literal strings.
+  if (kind === 'select' && /^=\d+$/u.test(branch))
+    throw new Error(
+      `Invalid select branch key '${identifier}', an exact value is only meaningful to 'plural' and 'ordinal', write it as '${branch.slice(1)}'`,
+    );
 }
 
 /**

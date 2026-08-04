@@ -80,9 +80,10 @@ export function Board() {
           {/*
             `Say.Number`, `Say.Date`, and `Say.Time` are fragments rather than
             whole messages, so they are written inside a `<Say>` the way any
-            other child is. They extract as `{name, number, percent}` and
-            `{name, date, medium}`, which keeps the formatting in the catalogue
-            where a translator can move it around the sentence.
+            other child is. This one extracts as `{complete, number, percent}`,
+            `{sprintEndsAt, date, medium}`, and `{sprintEndsAt, time, short}` —
+            one value formatted two ways — which keeps the formatting in the
+            catalogue where a translator can move it around the sentence.
           */}
           <Say>
             <Say.Number _={{ complete: completionRatio() }} style="percent" /> complete. This sprint
@@ -94,13 +95,17 @@ export function Board() {
         <p className="masthead__summary">
           {/*
             `offset` subtracts from the selector before `#` is formatted, so a
-            queue of five reads as "you and 4 others" rather than "you and 5".
-            It never names a branch.
+            total of five reads as "you and 4 others". It never names a branch.
+
+            The exact branch is `_1`, not `_0`: ICU tests an exact value against
+            the original number, before the offset, so a total of one means the
+            current member and nobody else. Writing `_0` here would leave that
+            case to `other` and render "You and 0 others".
           */}
           <Say.Plural
             _={watchers}
             offset={1}
-            _0="Nobody else is watching this board"
+            _1="Nobody else is watching this board"
             one="You and # other member are watching"
             other="You and # others are watching"
           />

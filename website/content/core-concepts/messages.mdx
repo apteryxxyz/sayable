@@ -218,8 +218,17 @@ Extracted:
 
 A branch key is an ICU key, so it carries no punctuation and no whitespace. A hyphenated string union
 is ordinary TypeScript but not an ICU key, so `'sold-out'` fails the build, naming the camel case
-form to use instead. Numeric keys are fine here and match as strings, unlike in `say.plural` and
-`say.ordinal` where they select an exact value.
+form to use instead.
+
+<Callout type="warn">
+  Rename the **discriminant**, not just the branch. `select` compares cases as literal strings, so a
+  `soldOut` branch never matches a value that is still `'sold-out'` at runtime, the message quietly
+  falls through to `other`. Either spell the union ICU-safe at the source (`'soldOut'`) or normalise
+  the value before passing it in.
+</Callout>
+
+Numeric keys are fine here and match as strings, unlike in `say.plural` and `say.ordinal` where they
+select an exact value.
 
 ## Numbers, dates, and times
 

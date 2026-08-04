@@ -250,4 +250,19 @@ describe('validateBranchIdentifier', () => {
     expect(() => validateBranchIdentifier('select', '0')).not.toThrow();
     expect(() => validateBranchIdentifier('select', '42')).not.toThrow();
   });
+
+  // A key spelled `=0` by hand reaches ICU untouched under `select`, where it
+  // fails to parse. `getBranchCase` cannot normalise it away, since `=0` and
+  // `0` are two different keys to a format that matches literal strings.
+  it('rejects exact-value syntax on a select', () => {
+    expect(() => validateBranchIdentifier('select', '=0')).toThrow(
+      "Invalid select branch key '=0', an exact value is only meaningful to 'plural' and 'ordinal', write it as '0'",
+    );
+    expect(() => validateBranchIdentifier('select', '=42')).toThrow("write it as '42'");
+  });
+
+  it('accepts exact-value syntax on a plural or ordinal', () => {
+    expect(() => validateBranchIdentifier('plural', '=0')).not.toThrow();
+    expect(() => validateBranchIdentifier('ordinal', '=1')).not.toThrow();
+  });
 });

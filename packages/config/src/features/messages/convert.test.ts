@@ -117,6 +117,23 @@ describe('convertMessageToIcu', () => {
     `);
   });
 
+  // `select` matches literal strings and has no number to offset, so emitting
+  // one would be invalid ICU rather than a harmless no-op.
+  it('should drop an offset on a select', () => {
+    const message = new ChoiceMessage(
+      'select',
+      'kind',
+      [{ identifier: 'other', value: new LiteralMessage('x') }],
+      dummy,
+      1,
+    );
+    expect(convertMessageToIcu(message)).toMatchInlineSnapshot(`
+      "{kind, select,
+        other {x}
+      }"
+    `);
+  });
+
   it('should generate choice messages with ordinal kind', () => {
     const message = new ChoiceMessage(
       'ordinal',

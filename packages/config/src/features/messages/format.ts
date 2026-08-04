@@ -26,11 +26,20 @@ export function isArgumentType(kind: string): kind is ArgumentType {
 }
 
 /**
- * A literal `NumberFormat` pattern, e.g. `#,##0.00`. ICU reserves braces for
- * its own pattern syntax, so a style that carries one would close the argument
- * early and take the rest of the message with it.
+ * A literal `NumberFormat` pattern, e.g. `#,##0.00`.
+ *
+ * A pattern has to carry a digit placeholder — `#` or `0` — because that is
+ * what makes it a pattern rather than a word. Without that requirement any
+ * brace-free string qualifies, which quietly readmits the named styles this
+ * module exists to reject: `currency` would sail through as a "pattern" and
+ * extract to the `{price, number, currency}` the formatter cannot honour, and
+ * so would a plain typo.
+ *
+ * Braces are excluded separately: ICU reserves them for its own pattern syntax,
+ * so a style carrying one would close the argument early and take the rest of
+ * the message with it.
  */
-const LITERAL_STYLE_PATTERN = /^[^{}\r\n]+$/;
+const LITERAL_STYLE_PATTERN = /^[^{}\r\n]*[#0][^{}\r\n]*$/;
 
 /**
  * Reject an argument style the formatter cannot honour, while the style is

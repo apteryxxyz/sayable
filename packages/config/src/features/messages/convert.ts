@@ -40,7 +40,12 @@ export function convertMessageToIcu(message: Message) {
           .map(({ identifier, value }) => `  ${identifier} {${value}}\n`)
           .join('');
         const format = message.kind === 'ordinal' ? 'selectordinal' : message.kind;
-        const offset = message.offset === undefined ? '' : ` offset:${message.offset}`;
+        // `select` matches its cases as literal strings and has no number to
+        // offset, so an offset there would be invalid ICU rather than a no-op.
+        const offset =
+          message.offset === undefined || message.kind === 'select'
+            ? ''
+            : ` offset:${message.offset}`;
         return `{${String(message.identifier)}, ${format},${offset}\n${branches}}`;
       }
 

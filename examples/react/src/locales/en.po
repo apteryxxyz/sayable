@@ -82,7 +82,7 @@ msgstr ""
 "  other {Backlog}\n"
 "}"
 
-#: src/components/board.tsx:87
+#: src/components/board.tsx:88
 msgid "{complete, number, percent} complete. This sprint ends on {sprintEndsAt, date, medium}, at {sprintEndsAt, time, short}."
 msgstr "{complete, number, percent} complete. This sprint ends on {sprintEndsAt, date, medium}, at {sprintEndsAt, time, short}."
 
@@ -112,16 +112,16 @@ msgstr ""
 "  other {# tasks still open}\n"
 "}"
 
-#: src/components/board.tsx:100
+#: src/components/board.tsx:105
 msgid ""
 "{watchers, plural, offset:1\n"
-"  =0 {Nobody else is watching this board}\n"
+"  =1 {Nobody else is watching this board}\n"
 "  one {You and # other member are watching}\n"
 "  other {You and # others are watching}\n"
 "}"
 msgstr ""
 "{watchers, plural, offset:1\n"
-"  =0 {Nobody else is watching this board}\n"
+"  =1 {Nobody else is watching this board}\n"
 "  one {You and # other member are watching}\n"
 "  other {You and # others are watching}\n"
 "}"

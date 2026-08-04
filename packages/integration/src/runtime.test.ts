@@ -369,10 +369,21 @@ describe('formatted arguments', () => {
   });
 
   it('applies a plural offset', () => {
-    const message =
-      '{n, plural, offset:1 =0 {nobody} one {you and # other} other {you and # others}}';
+    const message = '{n, plural, offset:1 one {you and # other} other {you and # others}}';
     expect(format(message, { n: 3 })).toBe('you and 2 others');
     expect(format(message, { n: 2 })).toBe('you and 1 other');
-    expect(format(message, { n: 0 })).toBe('nobody');
+  });
+
+  // ICU tests an exact value against the *original* number, before the offset
+  // is applied; the offset only reaches the CLDR category and `#`. So in the
+  // "you and N others" idiom, where the selector counts everyone including you,
+  // the branch meaning "nobody else" is `=1`, not `=0`.
+  it('matches an exact branch before applying the offset', () => {
+    const correct = '{n, plural, offset:1 =1 {nobody else} other {you and # others}}';
+    expect(format(correct, { n: 1 })).toBe('nobody else');
+    expect(format(correct, { n: 3 })).toBe('you and 2 others');
+
+    const wrong = '{n, plural, offset:1 =0 {nobody else} other {you and # others}}';
+    expect(format(wrong, { n: 1 })).toBe('you and 0 others');
   });
 });

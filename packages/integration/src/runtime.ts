@@ -358,7 +358,10 @@ export class Say<
    * @returns The select form of the value
    * @remark This is a macro and must be used with the relevant saykit plugin
    */
-  select(_: string | Named<string>, options: Disallow<SelectOptions, 'id' | 'context'>): string {
+  select(
+    _: string | number | Named<string | number>,
+    options: Disallow<SelectOptions, 'id' | 'context'>,
+  ): string {
     void _;
     void options;
     throw new Error("'Say#select' is a macro and must be used with the relevant saykit plugin");

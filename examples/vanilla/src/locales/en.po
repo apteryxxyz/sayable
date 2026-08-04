@@ -80,21 +80,21 @@ msgstr ""
 "  other {You can renew this # more times}\n"
 "}"
 
-#: src/main.ts:111
+#: src/main.ts:112
 msgid ""
 "{queue, plural, offset:1\n"
-"  =0 {Nobody else is waiting on your reservation}\n"
+"  =1 {Nobody else is waiting on your reservation}\n"
 "  one {You and # other member are waiting}\n"
 "  other {You and # others are waiting}\n"
 "}"
 msgstr ""
 "{queue, plural, offset:1\n"
-"  =0 {Nobody else is waiting on your reservation}\n"
+"  =1 {Nobody else is waiting on your reservation}\n"
 "  one {You and # other member are waiting}\n"
 "  other {You and # others are waiting}\n"
 "}"
 
-#: src/main.ts:122
+#: src/main.ts:126
 msgid "{ready, number, percent} of your holds are ready to collect"
 msgstr "{ready, number, percent} of your holds are ready to collect"
 
@@ -102,7 +102,7 @@ msgstr "{ready, number, percent} of your holds are ready to collect"
 msgid "by {0}"
 msgstr "by {0}"
 
-#: src/main.ts:182
+#: src/main.ts:186
 msgid "City Library"
 msgstr "City Library"
 
@@ -110,16 +110,16 @@ msgstr "City Library"
 msgid "Due back today"
 msgstr "Due back today"
 
-#: src/main.ts:154
+#: src/main.ts:158
 msgid "Language"
 msgstr "Language"
 
-#: src/main.ts:188
+#: src/main.ts:192
 msgctxt "page heading"
 msgid "My loans"
 msgstr "My loans"
 
-#: src/main.ts:143
+#: src/main.ts:147
 msgid "No fines owing. Thank you!"
 msgstr "No fines owing. Thank you!"
 
@@ -127,15 +127,15 @@ msgstr "No fines owing. Thank you!"
 msgid "No renewals left — please return this book"
 msgstr "No renewals left — please return this book"
 
-#: src/main.ts:139
+#: src/main.ts:143
 msgid "Outstanding fines: {0}"
 msgstr "Outstanding fines: {0}"
 
-#: src/main.ts:127
+#: src/main.ts:131
 msgid "Reserved on {reservedOn, date, long}"
 msgstr "Reserved on {reservedOn, date, long}"
 
-#: src/main.ts:130
+#: src/main.ts:134
 msgid "This branch closes at {closingTime, time, short}"
 msgstr "This branch closes at {closingTime, time, short}"
 

@@ -1,4 +1,5 @@
 import { convertMessageToIcu } from './convert.js';
+import type { ArgumentType } from './format.js';
 import { generateHash } from './hash.js';
 import { AUTO_INCREMENT_IDENTIFIER } from './identifier.js';
 
@@ -28,7 +29,7 @@ export class LiteralMessage extends Base {
  * spelling round-trips back out of it.
  */
 export interface ArgumentFormat {
-  type: string;
+  type: ArgumentType;
   style?: string;
 }
 

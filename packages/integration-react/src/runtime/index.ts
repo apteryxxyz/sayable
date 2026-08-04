@@ -137,7 +137,7 @@ export namespace Say {
    * @remark This is a macro and must be used with the relevant saykit plugin
    */
   export function Select(
-    props: { _: string | Named<string> } & PropsWithJSXSafeKeys<
+    props: { _: string | number | Named<string | number> } & PropsWithJSXSafeKeys<
       Disallow<SelectOptions, 'id' | 'context'>
     >,
   ): ReactNode {

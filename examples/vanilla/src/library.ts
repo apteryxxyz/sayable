@@ -62,10 +62,17 @@ export const holdPosition = 3;
 export const holdQueueLength = 4;
 
 /** When the branch closes today. Formatted by `say.time`, so the shape is the locale's. */
-export const closingTime = new Date(new Date().setHours(19, 30, 0, 0));
+export const closingTime = new Date();
+closingTime.setHours(19, 30, 0, 0);
 
-/** When the member's reservation was placed. Formatted by `say.date`. */
-export const reservedOn = new Date(new Date().setDate(new Date().getDate() - 12));
+/**
+ * When the member's reservation was placed. Formatted by `say.date`.
+ *
+ * Moved with `setDate` rather than by subtracting milliseconds, so a
+ * daylight-saving transition in the span cannot shift it onto the wrong day.
+ */
+export const reservedOn = new Date();
+reservedOn.setDate(reservedOn.getDate() - 12);
 
 /** How many of the member's holds have arrived, as a fraction for `percent`. */
 export const holdsReadyRatio = 0.25;

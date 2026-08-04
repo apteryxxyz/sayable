@@ -52,11 +52,21 @@ describe('validateArgumentStyle', () => {
     expect(() => validateArgumentStyle('time', 'relative')).toThrow('Invalid time style');
   });
 
-  // Named for the runtime probe that motivated leaving it out: MF1 has nowhere
-  // to write the currency code, so it formats as a literal `{$price}`.
+  // MF1 has nowhere to write the currency code, so this formats as a literal
+  // `{$price}`. The literal-pattern escape must not readmit it as a "pattern".
   it('rejects the currency style, which the formatter cannot honour', () => {
+    expect(() => validateArgumentStyle('number', 'currency')).toThrow('Invalid number style');
     expect(() => validateArgumentStyle('date', 'currency')).toThrow('Invalid date style');
   });
+
+  // A pattern is what has a digit placeholder in it; a bare word is a style
+  // name, and every style name we do not support has to stay rejected.
+  it.each(['spellout', 'duration', 'compact', 'meduim', '::compact-short'])(
+    'rejects the bare word %o as a number pattern',
+    (style) => {
+      expect(() => validateArgumentStyle('number', style)).toThrow('Invalid number style');
+    },
+  );
 
   it('names the literal pattern escape only for numbers', () => {
     expect(() => validateArgumentStyle('number', '#{}')).toThrow('literal number pattern');
