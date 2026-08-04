@@ -1,5 +1,18 @@
 # @saykit/transform-js
 
+## 0.7.0
+
+### Minor Changes
+
+- 400a3f2: Add say.number, say.date, and say.time macros, and a plural offset
+
+### Patch Changes
+
+- Updated dependencies [400a3f2]
+- Updated dependencies [400a3f2]
+- Updated dependencies [2a77e73]
+  - @saykit/config@0.7.0
+
 ## 0.6.1
 
 ### Patch Changes

@@ -1,5 +1,16 @@
 # @saykit/config
 
+## 0.7.0
+
+### Minor Changes
+
+- 400a3f2: Add say.number, say.date, and say.time macros, and a plural offset
+- 2a77e73: Export `resolveConfigFile` from `@saykit/config/features/loader`
+
+### Patch Changes
+
+- 400a3f2: Emit a numeric select branch key bare rather than failing the build, since ICU select has no exact-value syntax
+
 ## 0.6.1
 
 ### Patch Changes

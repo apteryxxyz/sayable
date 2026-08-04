@@ -1,5 +1,11 @@
 # saykit
 
+## 0.7.0
+
+### Minor Changes
+
+- 400a3f2: Add say.number, say.date, and say.time macros, and a plural offset
+
 ## 0.6.1
 
 ## 0.6.0

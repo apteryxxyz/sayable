@@ -1,5 +1,20 @@
 # babel-plugin-saykit
 
+## 0.7.0
+
+### Minor Changes
+
+- a002ffc: Add `babel-plugin-saykit/next`, a `withSayKit` wrapper that derives the Turbopack and webpack catalogue rules from your SayKit config
+- e7ccc52: Add a `catalogues: 'module'` option that hands catalogue assembly to `babel-plugin-saykit/next` or `babel-plugin-saykit/metro`, so editing a catalogue hot-reloads instead of requiring a cache-clearing restart
+
+### Patch Changes
+
+- 2a77e73: Resolve Metro's upstream transformer from the config's `projectRoot`, and invalidate its transform cache when `saykit.config.*` changes
+- Updated dependencies [400a3f2]
+- Updated dependencies [400a3f2]
+- Updated dependencies [2a77e73]
+  - @saykit/config@0.7.0
+
 ## 0.6.1
 
 ### Patch Changes
