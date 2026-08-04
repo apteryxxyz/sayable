@@ -12,7 +12,7 @@ msgstr ""
 "Plural-Forms: \n"
 "X-Generator: saykit\n"
 
-#: src/app/[locale]/product-card.tsx:8
+#: src/app/[locale]/product-card.tsx:9
 msgid ""
 "{0, plural,\n"
 "  one {Only # left}\n"
@@ -24,7 +24,7 @@ msgstr ""
 "  other {Only # left}\n"
 "}"
 
-#: src/app/[locale]/product-card.tsx:12
+#: src/app/[locale]/product-card.tsx:19
 msgid ""
 "{0, plural,\n"
 "  one {Ships in # day}\n"
@@ -36,7 +36,7 @@ msgstr ""
 "  other {Ships in # days}\n"
 "}"
 
-#: src/app/[locale]/product-card.tsx:16
+#: src/app/[locale]/product-card.tsx:28
 msgid ""
 "{0, select,\n"
 "  inStock {In stock}\n"
@@ -62,7 +62,7 @@ msgstr ""
 "  other {# bags in basket}\n"
 "}"
 
-#: src/app/[locale]/product-card.tsx:60
+#: src/app/[locale]/product-card.tsx:72
 msgid ""
 "{rating} out of 5 · {0, plural,\n"
 "  one {# review}\n"
@@ -94,7 +94,7 @@ msgstr "Harbour Coffee"
 msgid "Language"
 msgstr "Language"
 
-#: src/app/[locale]/product-card.tsx:58
+#: src/app/[locale]/product-card.tsx:70
 msgid "No reviews yet"
 msgstr "No reviews yet"
 
@@ -102,7 +102,7 @@ msgstr "No reviews yet"
 msgid "Prices include VAT. See our <0>returns policy</0>."
 msgstr "Prices include VAT. See our <0>returns policy</0>."
 
-#: src/app/[locale]/product-card.tsx:45
+#: src/app/[locale]/product-card.tsx:57
 msgid "Roasted by <0>{1}</0>"
 msgstr "Roasted by <0>{1}</0>"
 

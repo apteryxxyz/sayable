@@ -83,7 +83,7 @@ function Counter({ name }: { name: string }) {
         <Say>Hello, {name}!</Say>
       </p>
       <p>
-        <Say.Plural _={count} one="You have 1 message" other="You have # messages" />
+        <Say.Plural _={count} one="You have 1 message" other={<>You have {count} messages</>} />
       </p>
       <button onClick={() => setCount(count + 1)}>
         <Say>Add one</Say>

@@ -31,7 +31,7 @@ const say = new Say({
 say.activate('en');
 
 say`Hello, ${name}!`;
-say.plural(count, { one: '1 item', other: '# items' });
+say.plural(count, { one: '1 item', other: `${count} items` });
 ```
 
 ## Documentation

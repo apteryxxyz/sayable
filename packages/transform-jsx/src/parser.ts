@@ -29,25 +29,7 @@ export function parseJSXContainerElement(element: t.JSXElement): CompositeMessag
   if (!processed) return null;
   const [accessor] = processed;
 
-  const children = element.children.reduce<Message[]>((p, c, i, a) => {
-    if (t.isJSXText(c)) {
-      const text = normalizeJSXText(c.value, i === 0, i === a.length - 1);
-      if (text) p.push(new LiteralMessage(text));
-    }
-
-    if (t.isJSXElement(c)) {
-      p.push(parseJSXElement(c, true));
-    } else if (t.isJSXFragment(c)) {
-      p.push(new ElementMessage(AUTO_INCREMENT_IDENTIFIER, [], c));
-    } else if (t.isJSXExpressionContainer(c)) {
-      if (t.isExpression(c.expression)) {
-        const [identifier, value] = unwrapPlaceholder(c.expression);
-        p.push(new ArgumentMessage(identifier, value));
-      }
-    }
-
-    return p;
-  }, []);
+  const children = buildMessageChildren(element);
 
   const descriptorId = findAttributeValueIfStringLiteralAsString(
     element.openingElement.attributes,
@@ -116,9 +98,13 @@ export function parseJSXOpeningElement(element: t.JSXOpeningElement): CompositeM
             value: parseJSXElement(a.value.expression, true),
           });
         } else if (t.isJSXFragment(a.value.expression)) {
+          // A branch is a sentence rather than an element, so a fragment around
+          // one is how JSX writes a case that interpolates — `one={<>{n} day</>}`
+          // for the `# day` a plain string attribute cannot express.
+          const fragment = a.value.expression;
           b.push({
             identifier,
-            value: new ElementMessage(AUTO_INCREMENT_IDENTIFIER, [], a.value.expression),
+            value: new CompositeMessage({}, [], [], buildMessageChildren(fragment), fragment),
           });
         } else if (t.isExpression(a.value.expression)) {
           const [name, value] = unwrapPlaceholder(a.value.expression);
@@ -170,42 +156,89 @@ function findPluralOffset(attributes: t.JSXOpeningElement['attributes']) {
 }
 
 /**
- * Punctuation that never takes a space in front of it. A formatter wrapping
- * long JSX regularly strands these at the start of a line, on their own or
- * ahead of the rest of a clause.
+ * The children the JSX transform itself would compile, so a message extracts as
+ * the text that renders. Text children come back with their whitespace
+ * collapsed the way JSX collapses it — a line break and the indentation around
+ * it are layout and disappear, while two lines that both hold text rejoin with
+ * the single space that separated the words — every expression container comes
+ * back unwrapped, and a comment child comes back as nothing.
  */
-const CLOSING_PUNCTUATION = /^[.,;:!?)\]}»”’]/;
+function buildMessageChildren(element: t.JSXElement | t.JSXFragment, into: Message[] = []) {
+  return t.react.buildChildren(element).reduce<Message[]>((p, c) => {
+    const literal = getExpressionAsLiteralText(c);
+
+    if (literal !== undefined) {
+      pushLiteral(p, literal);
+    } else if (t.isJSXElement(c)) {
+      p.push(parseJSXElement(c, true));
+    } else if (t.isJSXFragment(c)) {
+      // A fragment renders no element of its own, so it is not a tag a
+      // translator could move — its children belong to the sentence around it,
+      // and folding them in is what the rendered output already looks like.
+      buildMessageChildren(c, p);
+    } else if (t.isExpression(c)) {
+      const [identifier, value] = unwrapPlaceholder(c);
+      p.push(new ArgumentMessage(identifier, value));
+    }
+
+    return p;
+  }, into);
+}
 
 /**
- * Collapse the whitespace in a JSX text child the way the source reads.
- *
- * A line break between a word and its neighbour is only how a formatter wrapped
- * a long line, so it still means a space. Dropping it would run the words
- * together — and because ids are content hashes, silently orphan every existing
- * translation for the message.
- *
- * The exception is a line that begins with punctuation, which belongs tight
- * against whatever precedes it. Only an implicit break is treated this way: a
- * space the author wrote on the same line is deliberate and always survives.
+ * Add text to the message, folding it into the literal in front of it when
+ * there is one, so `Hello{' '}world` is three children in the source and one
+ * run of text in the catalogue.
  */
-function normalizeJSXText(value: string, isFirst: boolean, isLast: boolean) {
-  let text = value.replace(/\s+/g, ' ');
+function pushLiteral(messages: Message[], text: string) {
+  if (!text) return;
 
-  if (isFirst) {
-    text = text.trimStart();
-  } else if (
-    text.startsWith(' ') &&
-    // The leading whitespace spans a line break, so it is the formatter's,
-    // not the author's.
-    /^[^\S\n]*\n/.test(value) &&
-    CLOSING_PUNCTUATION.test(text.slice(1))
-  ) {
-    text = text.slice(1);
+  const last = messages.at(-1);
+  if (last instanceof LiteralMessage) {
+    messages[messages.length - 1] = new LiteralMessage(last.text + text);
+  } else {
+    messages.push(new LiteralMessage(text));
   }
+}
 
-  if (isLast) text = text.trimEnd();
-
-  return text;
+/**
+ * The text a child renders as, when that is knowable at build time — a text
+ * child, which `buildChildren` has already collapsed into a string, or an
+ * expression holding a literal with nothing interpolated into it.
+ *
+ * The second is what makes `{' '}` the way to write whitespace that has to
+ * survive a line break: it extracts as the space it renders as, rather than as
+ * a placeholder a translator can neither see nor move.
+ */
+function getExpressionAsLiteralText(expression: t.Node) {
+  if (t.isStringLiteral(expression)) return expression.value;
+  // A number renders as the text `String()` makes of it, and reads as content
+  // in the sentence rather than as a value anything supplies.
+  if (t.isNumericLiteral(expression)) return String(expression.value);
+  // A signed number is a unary operator applied to a literal rather than a
+  // literal of its own, but `{-1}` is still a number written into a sentence.
+  if (
+    t.isUnaryExpression(expression) &&
+    (expression.operator === '-' || expression.operator === '+') &&
+    t.isNumericLiteral(expression.argument)
+  ) {
+    return String(
+      expression.operator === '-' ? -expression.argument.value : expression.argument.value,
+    );
+  }
+  // JSX renders no child at all for these, so the sentence has a gap where the
+  // expression is and nothing to put in it.
+  if (t.isBooleanLiteral(expression) || t.isNullLiteral(expression)) return '';
+  // A template literal with nothing interpolated is a string literal written
+  // with different quotes, and renders as one.
+  if (t.isTemplateLiteral(expression) && expression.expressions.length === 0) {
+    const [chunk] = expression.quasis;
+    // Nothing interpolated means exactly one chunk, and a chunk only fails to
+    // cook for an escape that is a syntax error outside a tagged template.
+    /* v8 ignore next */
+    return chunk?.value.cooked ?? '';
+  }
+  return undefined;
 }
 
 function processJSXOpeningElement(element: t.JSXOpeningElement): [t.Node, string | null] | null {

@@ -5,11 +5,23 @@ import { AddToCart } from './add-to-cart';
 
 function Availability({ product }: { product: Product }) {
   if (product.availability === 'lowStock') {
-    return <Say.Plural _={product.remaining} one="Only # left" other="Only # left" />;
+    return (
+      <Say.Plural
+        _={product.remaining}
+        one={<>Only {product.remaining} left</>}
+        other={<>Only {product.remaining} left</>}
+      />
+    );
   }
 
   if (product.availability === 'backorder') {
-    return <Say.Plural _={product.shipsInDays} one="Ships in # day" other="Ships in # days" />;
+    return (
+      <Say.Plural
+        _={product.shipsInDays}
+        one={<>Ships in {product.shipsInDays} day</>}
+        other={<>Ships in {product.shipsInDays} days</>}
+      />
+    );
   }
 
   return (
@@ -58,7 +70,12 @@ export function ProductCard({ product }: { product: Product }) {
           <Say>No reviews yet</Say>
         ) : (
           <Say>
-            {rating} out of 5 · <Say.Plural _={product.reviews} one="# review" other="# reviews" />
+            {rating} out of 5 ·{' '}
+            <Say.Plural
+              _={product.reviews}
+              one={<>{product.reviews} review</>}
+              other={<>{product.reviews} reviews</>}
+            />
           </Say>
         )}
       </p>

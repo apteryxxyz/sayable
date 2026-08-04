@@ -34,14 +34,17 @@ export class PickCommand extends withSay(Command) {
       currentPick.meetsInDays === 0
         ? say`We meet today.`
         : say.plural(currentPick.meetsInDays, {
-            one: 'We meet in # day.',
-            other: 'We meet in # days.',
+            one: `We meet in ${currentPick.meetsInDays} day.`,
+            other: `We meet in ${currentPick.meetsInDays} days.`,
           });
 
     await interaction.reply({
       content: [
         say`We are reading **${currentPick.title}** by ${currentPick.author}.`,
-        say.plural(currentPick.pages, { one: '# page.', other: '# pages.' }),
+        say.plural(currentPick.pages, {
+          one: `${currentPick.pages} page.`,
+          other: `${currentPick.pages} pages.`,
+        }),
         meeting,
       ].join(' '),
       components: [new Row([new RemindMeButton(say)])],

@@ -21,12 +21,7 @@ export function parseTaggedTemplateExpression(
   if (!processed) return null;
   const [accessor, descriptor] = processed;
 
-  const children = tagged.quasi.quasis.reduce<Message[]>((c, q, i) => {
-    c.push(new LiteralMessage(q.value.cooked ?? q.value.raw));
-    if (t.isExpression(tagged.quasi.expressions[i]))
-      c.push(parseExpression(tagged.quasi.expressions[i]!, true)!);
-    return c;
-  }, []);
+  const children = buildTemplateChildren(tagged.quasi);
 
   const descriptorId = descriptor
     ? findPropertyValueIfStringLiteralAsString(descriptor, 'id')
@@ -42,6 +37,19 @@ export function parseTaggedTemplateExpression(
     children,
     accessor,
   );
+}
+
+/**
+ * The text and the values of a template literal, in the order they were
+ * written — the message the template spells out.
+ */
+function buildTemplateChildren(template: t.TemplateLiteral) {
+  return template.quasis.reduce<Message[]>((c, q, i) => {
+    c.push(new LiteralMessage(q.value.cooked ?? q.value.raw));
+    if (t.isExpression(template.expressions[i]))
+      c.push(parseExpression(template.expressions[i]!, true)!);
+    return c;
+  }, []);
 }
 
 export function parseCallExpression(call: t.CallExpression): CompositeMessage | null {
@@ -80,6 +88,11 @@ export function parseCallExpression(call: t.CallExpression): CompositeMessage | 
 
       let message: Message | null = null;
       if (!message && t.isStringLiteral(p.value)) message = new LiteralMessage(p.value.value);
+      // A branch is a sentence rather than a value, so an untagged template
+      // spells one out — `one: \`${n} day\`` for the `# day` a plain string
+      // cannot express. The `say` tag would be redundant inside a message.
+      if (!message && t.isTemplateLiteral(p.value))
+        message = new CompositeMessage({}, [], [], buildTemplateChildren(p.value), p.value);
       if (!message) message = parseExpression(p.value, true);
       c.push({
         identifier: getPropertyNameAsString(p.key),

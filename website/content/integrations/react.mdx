@@ -77,9 +77,9 @@ content, since that comes from the translation.
 `<Say>` exposes sub-components for ICU branching:
 
 ```tsx
-<Say.Plural _={count} one="# item in your cart" other="# items in your cart" />
+<Say.Plural _={count} one={<>{count} item in your cart</>} other={<>{count} items in your cart</>} />
 
-<Say.Ordinal _={position} _1="1st" _2="2nd" _3="3rd" other="#th" />
+<Say.Ordinal _={position} _1="1st" _2="2nd" _3="3rd" other={<>{position}th</>} />
 
 <Say.Select _={gender} male="He liked it" female="She liked it" other="They liked it" />
 ```

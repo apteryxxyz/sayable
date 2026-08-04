@@ -33,7 +33,7 @@ function BoardColumn({ column }: { column: Column }) {
             still uses these exact React elements, with their handlers intact.
           */}
           <Say>
-            Nothing here. <a href="#new">Add a task</a> or drag one across from
+            Nothing here. <a href="#new">Add a task</a> or drag one across from{' '}
             <strong>To do</strong>.
           </Say>
         </p>
@@ -62,8 +62,15 @@ export function Board() {
             `one` and `other`.
           */}
           <Say>
-            Welcome back, {currentMember}. This is your
-            <Say.Ordinal _={sprintNumber} one="#st" two="#nd" few="#rd" other="#th" /> sprint.
+            Welcome back, {currentMember}. This is your{' '}
+            <Say.Ordinal
+              _={sprintNumber}
+              one={<>{sprintNumber}st</>}
+              two={<>{sprintNumber}nd</>}
+              few={<>{sprintNumber}rd</>}
+              other={<>{sprintNumber}th</>}
+            />{' '}
+            sprint.
           </Say>
         </p>
 
@@ -71,8 +78,8 @@ export function Board() {
           <Say.Plural
             _={open}
             _0="Everything is done. Enjoy the quiet."
-            one="# task still open"
-            other="# tasks still open"
+            one={<>{open} task still open</>}
+            other={<>{open} tasks still open</>}
           />
         </p>
 
@@ -87,7 +94,7 @@ export function Board() {
           */}
           <Say>
             <Say.Number _={{ complete: completionRatio() }} style="percent" /> complete. This sprint
-            ends on <Say.Date _={{ sprintEndsAt }} style="medium" />, at
+            ends on <Say.Date _={{ sprintEndsAt }} style="medium" />, at{' '}
             <Say.Time _={{ sprintEndsAt }} style="short" />.
           </Say>
         </p>
@@ -106,8 +113,8 @@ export function Board() {
             _={watchers}
             offset={1}
             _1="Nobody else is watching this board"
-            one="You and # other member are watching"
-            other="You and # others are watching"
+            one={<>You and {watchers} other member are watching</>}
+            other={<>You and {watchers} others are watching</>}
           />
         </p>
       </header>

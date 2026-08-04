@@ -72,7 +72,7 @@ export namespace Say {
    * <Say.Plural
    *   _={count}
    *   one="You have 1 item"
-   *   other="You have # items"
+   *   other={<>You have {count} items</>}
    * />
    * ```
    *
@@ -83,7 +83,7 @@ export namespace Say {
    */
   export function Plural(
     props: { _: number | Named<number> } & PropsWithJSXSafeKeys<
-      Disallow<NumeralOptions, 'id' | 'context'>
+      Disallow<NumeralOptions<ReactNode>, 'id' | 'context'>
     >,
   ): ReactNode {
     void props;
@@ -97,10 +97,10 @@ export namespace Say {
    * ```tsx
    * <Say.Ordinal
    *   _={position}
-   *   1="#st"
-   *   2="#nd"
-   *   3="#rd"
-   *   other="#th"
+   *   1={<>{position}st</>}
+   *   2={<>{position}nd</>}
+   *   3={<>{position}rd</>}
+   *   other={<>{position}th</>}
    * />
    * ```
    *
@@ -111,7 +111,7 @@ export namespace Say {
    */
   export function Ordinal(
     props: { _: number | Named<number> } & PropsWithJSXSafeKeys<
-      Disallow<NumeralOptions, 'id' | 'context'>
+      Disallow<NumeralOptions<ReactNode>, 'id' | 'context'>
     >,
   ): ReactNode {
     void props;
@@ -138,7 +138,7 @@ export namespace Say {
    */
   export function Select(
     props: { _: string | number | Named<string | number> } & PropsWithJSXSafeKeys<
-      Disallow<SelectOptions, 'id' | 'context'>
+      Disallow<SelectOptions<ReactNode>, 'id' | 'context'>
     >,
   ): ReactNode {
     void props;

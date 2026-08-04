@@ -12,12 +12,19 @@ export type Awaitable<T> = T | PromiseLike<T>;
  */
 export type Named<T> = { [name: string]: T };
 
-export interface NumeralOptions extends Omit<
-  Partial<Record<Intl.LDMLPluralRule, string>>,
+/**
+ * Branches of a choice, keyed by CLDR category or by exact number.
+ *
+ * `Branch` is what a case may be written as. It is text everywhere the message
+ * is text, and widens in JSX, where a case that shows the number has to be a
+ * fragment — a string attribute has nowhere to put a value.
+ */
+export interface NumeralOptions<Branch = string> extends Omit<
+  Partial<Record<Intl.LDMLPluralRule, Branch>>,
   'other'
 > {
-  other: string;
-  [digit: number]: string;
+  other: Branch;
+  [digit: number]: Branch;
   /**
    * Subtracted from the value before `#` is formatted, so "You and 2 others"
    * can select on a total of three. Reserved — it never names a branch.
@@ -25,9 +32,9 @@ export interface NumeralOptions extends Omit<
   offset?: number;
 }
 
-export interface SelectOptions {
-  other: string;
-  [match: string | number]: string;
+export interface SelectOptions<Branch = string> {
+  other: Branch;
+  [match: string | number]: Branch;
 }
 
 /**

@@ -179,7 +179,7 @@ say({ context: 'direction' })`Right`;
 ```ts
 say.plural(count, {
   one: 'You have 1 item',
-  other: 'You have # items',
+  other: `You have ${count} items`,
 });
 ```
 
@@ -187,10 +187,10 @@ say.plural(count, {
 
 ```ts
 say.ordinal(position, {
-  1: '#st',
-  2: '#nd',
-  3: '#rd',
-  other: '#th',
+  1: `${position}st`,
+  2: `${position}nd`,
+  3: `${position}rd`,
+  other: `${position}th`,
 });
 ```
 
@@ -212,7 +212,10 @@ would otherwise be numbered. The wrapper is read at build time and never reaches
 ```ts
 say`Your total is ${{ cartTotal: getCartTotal() }}`; // → "Your total is {cartTotal}"
 
-say.plural({ items: cart.length }, { one: '# item', other: '# items' });
+say.plural({ items: cart.length }, {
+  one: `${{ items: cart.length }} item`,
+  other: `${{ items: cart.length }} items`,
+});
 ```
 
 The name must be a valid identifier, an invalid one fails the build. See

@@ -45,9 +45,10 @@ describe('parseJSXContainerElement', () => {
     expect((result!.children[0] as ArgumentMessage).identifier).toBe('name');
   });
 
-  it('parses fragment children as ElementMessage', () => {
+  // A fragment renders no element, so an empty one leaves nothing behind.
+  it('parses an empty fragment child as no child at all', () => {
     const result = parser.parseJSXContainerElement(jsx`<Say><></></Say>`);
-    expect(result!.children[0]).toBeInstanceOf(ElementMessage);
+    expect(result!.children).toEqual([]);
   });
 
   it('parses nested JSX children as ElementMessage (non-Say fallback)', () => {
@@ -64,10 +65,26 @@ describe('parseJSXContainerElement', () => {
     expect(result!.descriptor).toEqual({ id: 'msg', context: 'nav' });
   });
 
-  it('drops text children that are only whitespace', () => {
-    const result = parser.parseJSXContainerElement(jsx`<Say>{name}   </Say>`);
+  it('drops text children that are only a line break and indentation', () => {
+    const result = parser.parseJSXContainerElement(jsx`
+      <Say>
+        {name}
+      </Say>
+    `);
     expect(result!.children).toHaveLength(1);
     expect(result!.children[0]).toBeInstanceOf(ArgumentMessage);
+  });
+
+  it('parses a literal string expression as text, folded into its neighbour', () => {
+    const result = parser.parseJSXContainerElement(jsx`<Say>Hello,{' '}world</Say>`);
+    expect(result!.children).toEqual([new LiteralMessage('Hello, world')]);
+  });
+
+  // A spread child renders an unknown number of unknown things, so there is
+  // nothing to name it or to translate around it.
+  it('ignores spread children', () => {
+    const result = parser.parseJSXContainerElement(jsx`<Say>{...items}</Say>`);
+    expect(result!.children).toHaveLength(0);
   });
 
   it('ignores expression containers that hold no expression', () => {
@@ -274,14 +291,29 @@ describe('parseJSXOpeningElement', () => {
     expect(choice.branches[0]!.value).toBeInstanceOf(ElementMessage);
   });
 
-  it('accepts a JSX fragment expression as a branch value', () => {
+  // A fragment is the sentence itself rather than an element in it, so its
+  // children are the branch — which is how a case interpolates its selector.
+  it('reads a JSX fragment branch value as the branch content', () => {
     const result = parser.parseJSXOpeningElement(
       jsx`
-      <Say.plural _={count} one={<></>} />
+      <Say.plural _={count} one={<>{count} day</>} />
     `.openingElement,
     );
     const choice = result!.children[0] as ChoiceMessage;
-    expect(choice.branches[0]!.value).toBeInstanceOf(ElementMessage);
+    const branch = choice.branches[0]!.value as CompositeMessage;
+    expect(branch).toBeInstanceOf(CompositeMessage);
+    expect((branch.children[0] as ArgumentMessage).identifier).toBe('count');
+    expect((branch.children[1] as LiteralMessage).text).toBe(' day');
+  });
+
+  // A fragment renders no element, so it is content rather than a tag, and its
+  // children belong to the sentence that encloses it.
+  it('folds a nested fragment into the children around it', () => {
+    const result = parser.parseJSXContainerElement(jsx`<Say>Hello <>brave {name}</>!</Say>`);
+    const message = result!;
+    expect((message.children[0] as LiteralMessage).text).toBe('Hello brave ');
+    expect((message.children[1] as ArgumentMessage).identifier).toBe('name');
+    expect((message.children[2] as LiteralMessage).text).toBe('!');
   });
 
   it('skips branch attributes with no value', () => {

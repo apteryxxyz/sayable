@@ -25,8 +25,8 @@ function dueLabel(loan: Loan) {
   if (loan.dueInDays < 0) {
     // Translators: shown in red on an overdue loan. # is the number of days.
     return say.plural(Math.abs(loan.dueInDays), {
-      one: 'Overdue by # day',
-      other: 'Overdue by # days',
+      one: `Overdue by ${Math.abs(loan.dueInDays)} day`,
+      other: `Overdue by ${Math.abs(loan.dueInDays)} days`,
     });
   }
 
@@ -34,8 +34,8 @@ function dueLabel(loan: Loan) {
 
   // Translators: # is the number of days remaining before the book is due.
   return say.plural(loan.dueInDays, {
-    one: 'Due in # day',
-    other: 'Due in # days',
+    one: `Due in ${loan.dueInDays} day`,
+    other: `Due in ${loan.dueInDays} days`,
   });
 }
 
@@ -55,8 +55,8 @@ function renewalLabel(loan: Loan) {
   if (left === 0) return say`No renewals left — please return this book`;
 
   return say.plural(left, {
-    one: 'You can renew this # more time',
-    other: 'You can renew this # more times',
+    one: `You can renew this ${left} more time`,
+    other: `You can renew this ${left} more times`,
   });
 }
 
@@ -91,16 +91,16 @@ function renderSummary() {
   // Translators: the headline count at the top of the loans page.
   count.textContent = say.plural(loans.length, {
     0: 'You have nothing on loan',
-    one: 'You have # book on loan',
-    other: 'You have # books on loan',
+    one: `You have ${loans.length} book on loan`,
+    other: `You have ${loans.length} books on loan`,
   });
 
   const hold = document.createElement('p');
   hold.textContent = say`You are ${say.ordinal(holdPosition, {
-    one: '#st',
-    two: '#nd',
-    few: '#rd',
-    other: '#th',
+    one: `${holdPosition}st`,
+    two: `${holdPosition}nd`,
+    few: `${holdPosition}rd`,
+    other: `${holdPosition}th`,
   })} in the hold queue`;
 
   // `offset` subtracts from the selector before `#` is formatted, so a queue of
@@ -114,8 +114,8 @@ function renderSummary() {
     {
       offset: 1,
       1: 'Nobody else is waiting on your reservation',
-      one: 'You and # other member are waiting',
-      other: 'You and # others are waiting',
+      one: `You and ${{ queue: holdQueueLength }} other member are waiting`,
+      other: `You and ${{ queue: holdQueueLength }} others are waiting`,
     },
   );
 

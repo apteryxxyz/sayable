@@ -22,20 +22,28 @@ export function HabitCard({ habit, onToggle }: { habit: Habit; onToggle: () => v
         {habit.streak === 0 ? (
           <Say>No streak yet — today is a good day to start</Say>
         ) : (
-          <Say.Plural _={habit.streak} one="# day streak" other="# day streak" />
+          <Say.Plural
+            _={habit.streak}
+            one={<>{habit.streak} day streak</>}
+            other={<>{habit.streak} day streak</>}
+          />
         )}
       </Text>
 
       <Text style={styles.progress}>
         <Say>
-          <Text style={styles.strong}>{habit.thisWeek}</Text> of
+          <Text style={styles.strong}>{habit.thisWeek}</Text> of{' '}
           <Text style={styles.strong}>{habit.target}</Text> this week
         </Say>
       </Text>
 
       {habit.best > habit.streak && (
         <Text style={styles.best}>
-          <Say.Plural _={habit.best} one="Your best was # day" other="Your best was # days" />
+          <Say.Plural
+            _={habit.best}
+            one={<>Your best was {habit.best} day</>}
+            other={<>Your best was {habit.best} days</>}
+          />
         </Text>
       )}
 

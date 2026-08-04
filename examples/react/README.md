@@ -43,7 +43,12 @@ serialised in the first place.
 JSX attribute names cannot be numbers, so an exact-match branch such as ICU's `=0` is written `_0`:
 
 ```tsx
-<Say.Plural _={open} _0="Everything is done." one="# task still open" other="# tasks still open" />
+<Say.Plural
+  _={open}
+  _0="Everything is done."
+  one={<>{open} task still open</>}
+  other={<>{open} tasks still open</>}
+/>
 ```
 
 `_` is the value being matched; `_0`, `_1`, … are exact numeric branches; everything else is a CLDR

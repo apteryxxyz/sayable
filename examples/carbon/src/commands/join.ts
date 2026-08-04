@@ -54,11 +54,11 @@ export class JoinModal extends withSay(Modal) {
 
     await interaction.reply({
       content: say`At ${say.plural(pace, {
-        one: '# page',
-        other: '# pages',
+        one: `${pace} page`,
+        other: `${pace} pages`,
       })} a day you will finish ${currentPick.title} in ${say.plural(days, {
-        one: '# day',
-        other: '# days',
+        one: `${days} day`,
+        other: `${days} days`,
       })}.`,
       ephemeral: true,
     });

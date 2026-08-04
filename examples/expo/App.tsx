@@ -43,8 +43,8 @@ function Home({ locale, onLocale }: { locale: Locale; onLocale: (next: Locale) =
           <Say.Plural
             _={done}
             _0="Nothing ticked off yet today"
-            one="# habit done today"
-            other="# habits done today"
+            one={<>{done} habit done today</>}
+            other={<>{done} habits done today</>}
           />
         </Text>
 

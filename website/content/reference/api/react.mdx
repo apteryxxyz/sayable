@@ -50,7 +50,7 @@ import { TypeTable } from 'fumadocs-ui/components/type-table';
 ### `<Say.Plural>`
 
 ```tsx
-<Say.Plural _={count} one="1 item" other="# items" />
+<Say.Plural _={count} one="1 item" other={<>{count} items</>} />
 ```
 
 Props:
@@ -63,13 +63,14 @@ Props:
       required: true,
     },
     'one, two, few, many, zero, other': {
-      description: 'CLDR plural-category branches. `other` is required.',
-      type: 'string',
+      description:
+        'CLDR plural-category branches. `other` is required. A branch that shows the number is written as a fragment, `one={<>{count} item</>}`.',
+      type: 'ReactNode',
     },
     '_1, _2, …': {
       description:
         'Exact-number branches. JSX prop keys cannot start with a digit, so they are prefixed with an underscore; extraction strips the prefix.',
-      type: 'string',
+      type: 'ReactNode',
     },
   }}
 />
@@ -77,7 +78,7 @@ Props:
 ### `<Say.Ordinal>`
 
 ```tsx
-<Say.Ordinal _={position} _1="1st" _2="2nd" _3="3rd" other="#th" />
+<Say.Ordinal _={position} _1="1st" _2="2nd" _3="3rd" other={<>{position}th</>} />
 ```
 
 Same props as `<Say.Plural>`, CLDR plural categories plus exact-number branches.
@@ -99,7 +100,7 @@ Props:
     },
     '[selector]': {
       description: 'One branch per possible value. `other` is required.',
-      type: 'string',
+      type: 'ReactNode',
     },
   }}
 />

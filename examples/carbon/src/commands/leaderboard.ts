@@ -22,16 +22,16 @@ class BooksCommand extends withSay(Command) {
 
     const rows = leaderboard().map((member, index) => {
       const place = say.ordinal(index + 1, {
-        one: '#st',
-        two: '#nd',
-        few: '#rd',
-        other: '#th',
+        one: `${index + 1}st`,
+        two: `${index + 1}nd`,
+        few: `${index + 1}rd`,
+        other: `${index + 1}th`,
       });
 
       const finished = say.plural(member.finished, {
         0: 'nothing yet',
-        one: '# book',
-        other: '# books',
+        one: `${member.finished} book`,
+        other: `${member.finished} books`,
       });
 
       return say`${place} — ${member.name}, ${finished}`;
@@ -87,8 +87,8 @@ class PagesCommand extends withSay(Command) {
       await interaction.reply({
         content: say`${member.name} ${role} and has read ${say.plural(member.pagesThisWeek, {
           0: 'no pages',
-          one: '# page',
-          other: '# pages',
+          one: `${member.pagesThisWeek} page`,
+          other: `${member.pagesThisWeek} pages`,
         })} this week.`,
       });
       return;
@@ -99,8 +99,8 @@ class PagesCommand extends withSay(Command) {
     await interaction.reply({
       content: say.plural(total, {
         0: 'Nobody has read anything this week. Bold strategy.',
-        one: 'Between us we have read # page this week.',
-        other: 'Between us we have read # pages this week.',
+        one: `Between us we have read ${total} page this week.`,
+        other: `Between us we have read ${total} pages this week.`,
       }),
     });
   }

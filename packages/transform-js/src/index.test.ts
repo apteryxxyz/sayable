@@ -26,6 +26,48 @@ describe('createJsTransformer.extract', () => {
     expect(message!.references).toEqual(['file.ts:1']);
   });
 
+  // The same value written twice is one value. Numbering it twice asks the
+  // caller to supply it under two props and a translator to keep two holes in
+  // step, for a sentence that only ever had one thing in it.
+  // `#` is how ICU spells the plural's own selector, so interpolating it into a
+  // branch is how a case is written, and a `#` an author typed is text.
+  it('writes a selector interpolated into its own branch as a hash', () => {
+    const [message] = transformer.extract(
+      'const x = say.plural(count, { one: `${count} item`, other: `${count} items` });',
+      'file.ts',
+    );
+    expect(message!.message).toBe(`{count, plural,
+  one {# item}
+  other {# items}
+}`);
+  });
+
+  it('escapes a hash an author wrote in a branch', () => {
+    const [message] = transformer.extract(
+      "const x = say.plural(count, { other: 'issue #1' });",
+      'file.ts',
+    );
+    expect(message!.message).toContain("other {issue '#'1}");
+  });
+
+  it('escapes braces and apostrophes in text', () => {
+    const [message] = transformer.extract("const x = say`it's {done}`;", 'file.ts');
+    expect(message!.message).toBe("it''s '{'done'}'");
+  });
+
+  it('numbers a repeated expression once', () => {
+    const [message] = transformer.extract(
+      'const x = say`${guesses.length} x ${guesses.length}`;',
+      'file.ts',
+    );
+    expect(message!.message).toBe('{0} x {0}');
+  });
+
+  it('numbers expressions that differ apart', () => {
+    const [message] = transformer.extract('const x = say`${a.length} x ${b.length}`;', 'file.ts');
+    expect(message!.message).toBe('{0} x {1}');
+  });
+
   it('carries through an explicit id and context', () => {
     const [message] = transformer.extract(
       "const g = say({ id: 'greeting', context: 'formal' })`Hi`;",
