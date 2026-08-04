@@ -6,4 +6,4 @@
 'saykit': minor
 ---
 
-Escape ICU's reserved characters in literal text, and write a plural selector interpolated into its own branch as `#`
+Escape ICU's reserved characters in literal text, and write a plural or ordinal selector interpolated into its own branch as `#`

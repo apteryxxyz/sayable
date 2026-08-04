@@ -163,7 +163,7 @@ function findPluralOffset(attributes: t.JSXOpeningElement['attributes']) {
  * the single space that separated the words — every expression container comes
  * back unwrapped, and a comment child comes back as nothing.
  */
-function buildMessageChildren(element: t.JSXElement | t.JSXFragment) {
+function buildMessageChildren(element: t.JSXElement | t.JSXFragment, into: Message[] = []) {
   return t.react.buildChildren(element).reduce<Message[]>((p, c) => {
     const literal = getExpressionAsLiteralText(c);
 
@@ -172,14 +172,17 @@ function buildMessageChildren(element: t.JSXElement | t.JSXFragment) {
     } else if (t.isJSXElement(c)) {
       p.push(parseJSXElement(c, true));
     } else if (t.isJSXFragment(c)) {
-      p.push(new ElementMessage(AUTO_INCREMENT_IDENTIFIER, [], c));
+      // A fragment renders no element of its own, so it is not a tag a
+      // translator could move — its children belong to the sentence around it,
+      // and folding them in is what the rendered output already looks like.
+      buildMessageChildren(c, p);
     } else if (t.isExpression(c)) {
       const [identifier, value] = unwrapPlaceholder(c);
       p.push(new ArgumentMessage(identifier, value));
     }
 
     return p;
-  }, []);
+  }, into);
 }
 
 /**

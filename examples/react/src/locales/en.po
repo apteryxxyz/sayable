@@ -12,7 +12,7 @@ msgstr ""
 "Plural-Forms: \n"
 "X-Generator: saykit\n"
 
-#: src/components/task-card.tsx:56
+#: src/components/task-card.tsx:68
 msgid ""
 "{0, plural,\n"
 "  =0 {All subtasks done}\n"
@@ -26,7 +26,7 @@ msgstr ""
 "  other {# subtasks left}\n"
 "}"
 
-#: src/components/task-card.tsx:6
+#: src/components/task-card.tsx:7
 msgid ""
 "{0, plural,\n"
 "  one {# day overdue}\n"
@@ -38,7 +38,7 @@ msgstr ""
 "  other {# days overdue}\n"
 "}"
 
-#: src/components/task-card.tsx:66
+#: src/components/task-card.tsx:78
 msgid ""
 "{0, plural,\n"
 "  one {# unresolved comment}\n"
@@ -50,7 +50,7 @@ msgstr ""
 "  other {# unresolved comments}\n"
 "}"
 
-#: src/components/task-card.tsx:26
+#: src/components/task-card.tsx:38
 msgid ""
 "{0, select,\n"
 "  urgent {Urgent}\n"
@@ -82,11 +82,11 @@ msgstr ""
 "  other {Backlog}\n"
 "}"
 
-#: src/components/board.tsx:88
+#: src/components/board.tsx:95
 msgid "{complete, number, percent} complete. This sprint ends on {sprintEndsAt, date, medium}, at {sprintEndsAt, time, short}."
 msgstr "{complete, number, percent} complete. This sprint ends on {sprintEndsAt, date, medium}, at {sprintEndsAt, time, short}."
 
-#: src/components/task-card.tsx:11
+#: src/components/task-card.tsx:18
 msgid ""
 "{dueInDays, plural,\n"
 "  one {Due in # day}\n"
@@ -98,7 +98,7 @@ msgstr ""
 "  other {Due in # days}\n"
 "}"
 
-#: src/components/board.tsx:71
+#: src/components/board.tsx:78
 msgid ""
 "{open, plural,\n"
 "  =0 {Everything is done. Enjoy the quiet.}\n"
@@ -112,7 +112,7 @@ msgstr ""
 "  other {# tasks still open}\n"
 "}"
 
-#: src/components/board.tsx:105
+#: src/components/board.tsx:112
 msgid ""
 "{watchers, plural, offset:1\n"
 "  =1 {Nobody else is watching this board}\n"
@@ -126,11 +126,11 @@ msgstr ""
 "  other {You and # others are watching}\n"
 "}"
 
-#: src/components/task-card.tsx:42
+#: src/components/task-card.tsx:54
 msgid "Assigned to <bold>{0}</bold>"
 msgstr "Assigned to <bold>{0}</bold>"
 
-#: src/components/task-card.tsx:9
+#: src/components/task-card.tsx:15
 msgid "Due today"
 msgstr "Due today"
 
@@ -138,7 +138,7 @@ msgstr "Due today"
 msgid "Language"
 msgstr "Language"
 
-#: src/components/task-card.tsx:46
+#: src/components/task-card.tsx:58
 msgid "Nobody is on this yet"
 msgstr "Nobody is on this yet"
 

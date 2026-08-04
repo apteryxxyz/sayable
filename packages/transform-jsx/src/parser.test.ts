@@ -45,9 +45,10 @@ describe('parseJSXContainerElement', () => {
     expect((result!.children[0] as ArgumentMessage).identifier).toBe('name');
   });
 
-  it('parses fragment children as ElementMessage', () => {
+  // A fragment renders no element, so an empty one leaves nothing behind.
+  it('parses an empty fragment child as no child at all', () => {
     const result = parser.parseJSXContainerElement(jsx`<Say><></></Say>`);
-    expect(result!.children[0]).toBeInstanceOf(ElementMessage);
+    expect(result!.children).toEqual([]);
   });
 
   it('parses nested JSX children as ElementMessage (non-Say fallback)', () => {
@@ -301,8 +302,18 @@ describe('parseJSXOpeningElement', () => {
     const choice = result!.children[0] as ChoiceMessage;
     const branch = choice.branches[0]!.value as CompositeMessage;
     expect(branch).toBeInstanceOf(CompositeMessage);
-    expect(branch.children[0]).toBeInstanceOf(ArgumentMessage);
-    expect(branch.children[1]).toBeInstanceOf(LiteralMessage);
+    expect((branch.children[0] as ArgumentMessage).identifier).toBe('count');
+    expect((branch.children[1] as LiteralMessage).text).toBe(' day');
+  });
+
+  // A fragment renders no element, so it is content rather than a tag, and its
+  // children belong to the sentence that encloses it.
+  it('folds a nested fragment into the children around it', () => {
+    const result = parser.parseJSXContainerElement(jsx`<Say>Hello <>brave {name}</>!</Say>`);
+    const message = result!;
+    expect((message.children[0] as LiteralMessage).text).toBe('Hello brave ');
+    expect((message.children[1] as ArgumentMessage).identifier).toBe('name');
+    expect((message.children[2] as LiteralMessage).text).toBe('!');
   });
 
   it('skips branch attributes with no value', () => {
