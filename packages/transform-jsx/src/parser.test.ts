@@ -2,6 +2,7 @@ import { parseExpression } from '@babel/parser';
 import * as t from '@babel/types';
 import {
   ArgumentMessage,
+  assignSequenceIdentifiers,
   AUTO_INCREMENT_IDENTIFIER,
   ChoiceMessage,
   CompositeMessage,
@@ -79,6 +80,16 @@ describe('parseJSXContainerElement', () => {
     expect(result!.descriptor.id).toBeUndefined();
   });
 
+  // A formatted argument is a fragment, not a whole message, so the shape that
+  // matters most is the nested one.
+  it('parses a nested formatted argument inside a container', () => {
+    const result = parser.parseJSXContainerElement(
+      jsx`<Say>You have <Say.number _={items.length} /> items</Say>`,
+    );
+    assignSequenceIdentifiers(result!);
+    expect(result!.toICUString()).toBe('You have {0, number} items');
+  });
+
   it('leaves descriptor and whitespace undefined when attributes are absent', () => {
     const result = parser.parseJSXContainerElement(jsx`<Say>Hi</Say>`);
     expect(result!.descriptor).toEqual({ id: undefined, context: undefined });
@@ -147,6 +158,100 @@ describe('parseJSXOpeningElement', () => {
       jsx`<Say.ordinal _={val} a="A" />`.openingElement,
     );
     expect((ordinal!.children[0] as ChoiceMessage).kind).toBe('ordinal');
+  });
+
+  it('parses a plural offset', () => {
+    const result = parser.parseJSXOpeningElement(
+      jsx`<Say.plural _={count} offset={1} one="you and # other" other="you and # others" />`
+        .openingElement,
+    );
+    const choice = result!.children[0] as ChoiceMessage;
+    expect(choice.offset).toBe(1);
+    expect(choice.branches.map((b) => b.identifier)).toEqual(['one', 'other']);
+  });
+
+  it('leaves the offset undefined when absent', () => {
+    const result = parser.parseJSXOpeningElement(
+      jsx`<Say.plural _={count} other="#" />`.openingElement,
+    );
+    expect((result!.children[0] as ChoiceMessage).offset).toBeUndefined();
+  });
+
+  // `select` has no number to offset, so `offset` there is an ordinary branch.
+  it('treats offset as a branch key on select', () => {
+    const result = parser.parseJSXOpeningElement(
+      jsx`<Say.select _={kind} offset="Offset" other="Other" />`.openingElement,
+    );
+    const choice = result!.children[0] as ChoiceMessage;
+    expect(choice.offset).toBeUndefined();
+    expect(choice.branches.map((b) => b.identifier)).toEqual(['offset', 'other']);
+  });
+
+  it.each(['offset="1"', 'offset={n}', 'offset={1.5}'])('ignores a non-literal %s', (offset) => {
+    const element = parseExpression(`<Say.plural _={count} ${offset} other="#" />`, {
+      plugins: ['jsx', 'typescript'],
+    }) as unknown as t.JSXElement;
+    const result = parser.parseJSXOpeningElement(element.openingElement);
+    expect((result!.children[0] as ChoiceMessage).offset).toBeUndefined();
+  });
+
+  it('parses Say.number', () => {
+    const result = parser.parseJSXOpeningElement(jsx`<Say.number _={total} />`.openingElement);
+    expect(result).toBeInstanceOf(CompositeMessage);
+    const argument = result!.children[0] as ArgumentMessage;
+    expect(argument).toBeInstanceOf(ArgumentMessage);
+    expect(argument.identifier).toBe('total');
+    expect(argument.format).toEqual({ type: 'number', style: undefined });
+  });
+
+  it('parses Say.number with a style', () => {
+    const result = parser.parseJSXOpeningElement(
+      jsx`<Say.number _={level} style="percent" />`.openingElement,
+    );
+    expect((result!.children[0] as ArgumentMessage).format).toEqual({
+      type: 'number',
+      style: 'percent',
+    });
+  });
+
+  it.each(['date', 'time'] as const)('parses Say.%s with a style', (kind) => {
+    const element = parseExpression(`<Say.${kind} _={when} style="medium" />`, {
+      plugins: ['jsx', 'typescript'],
+    }) as unknown as t.JSXElement;
+    const result = parser.parseJSXOpeningElement(element.openingElement);
+    expect((result!.children[0] as ArgumentMessage).format).toEqual({
+      type: kind,
+      style: 'medium',
+    });
+  });
+
+  it('names a formatted placeholder written as a single-key object', () => {
+    const result = parser.parseJSXOpeningElement(
+      jsx`<Say.number _={{ cartTotal: getTotal() }} />`.openingElement,
+    );
+    expect((result!.children[0] as ArgumentMessage).identifier).toBe('cartTotal');
+  });
+
+  it('returns null when a formatted argument has no _ initialiser', () => {
+    expect(
+      parser.parseJSXOpeningElement(jsx`<Say.number style="percent" />`.openingElement),
+    ).toBeNull();
+  });
+
+  it('rejects a style the formatter cannot honour', () => {
+    expect(() =>
+      parser.parseJSXOpeningElement(jsx`<Say.date _={when} style="meduim" />`.openingElement),
+    ).toThrow("Invalid date style 'meduim'");
+  });
+
+  it('ignores a style that is not a string literal', () => {
+    const result = parser.parseJSXOpeningElement(
+      jsx`<Say.number _={n} style={dynamic} />`.openingElement,
+    );
+    expect((result!.children[0] as ArgumentMessage).format).toEqual({
+      type: 'number',
+      style: undefined,
+    });
   });
 
   it('strips leading underscore from numeric branch names (e.g. _0 → 0)', () => {

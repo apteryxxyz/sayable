@@ -176,17 +176,25 @@ describe('assignSequenceIdentifiers', () => {
 
 describe('getBranchCase', () => {
   it('writes a key as itself', () => {
-    expect(getBranchCase('other')).toBe('other');
+    expect(getBranchCase('plural', 'other')).toBe('other');
   });
 
   it('writes a number as an exact value', () => {
-    expect(getBranchCase('0')).toBe('=0');
+    expect(getBranchCase('plural', '0')).toBe('=0');
+    expect(getBranchCase('ordinal', '1')).toBe('=1');
+  });
+
+  // `select` has no exact-value syntax: its cases are literal string matches,
+  // and `=0` there fails to parse. A bare `0` matches both `0` and `'0'`.
+  it('leaves a number bare on a select', () => {
+    expect(getBranchCase('select', '0')).toBe('0');
+    expect(getBranchCase('select', 'other')).toBe('other');
   });
 
   // Everything JavaScript is willing to call a number is not one, and coercing
   // these would hand back a case that selects zero.
   it.each(['', ' ', '+0', '1e3'])('leaves %o a key rather than an exact value', (key) => {
-    expect(getBranchCase(key)).toBe(key);
+    expect(getBranchCase('plural', key)).toBe(key);
   });
 });
 
@@ -236,9 +244,10 @@ describe('validateBranchIdentifier', () => {
     );
   });
 
-  it('rejects an exact value on a select', () => {
-    expect(() => validateBranchIdentifier('select', '0')).toThrow(
-      "Invalid select branch key '0', a number selects an exact value, which only 'plural' and 'ordinal' accept",
-    );
+  // ICU `select` matches its cases as literal strings, so a numeric key is an
+  // ordinary key there rather than an exact value.
+  it('accepts a numeric key on a select', () => {
+    expect(() => validateBranchIdentifier('select', '0')).not.toThrow();
+    expect(() => validateBranchIdentifier('select', '42')).not.toThrow();
   });
 });

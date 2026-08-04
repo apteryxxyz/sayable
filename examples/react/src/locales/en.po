@@ -66,7 +66,7 @@ msgstr ""
 "  other {Normal}\n"
 "}"
 
-#: src/components/board.tsx:6
+#: src/components/board.tsx:16
 msgid ""
 "{column, select,\n"
 "  todo {To do}\n"
@@ -81,6 +81,10 @@ msgstr ""
 "  done {Done}\n"
 "  other {Backlog}\n"
 "}"
+
+#: src/components/board.tsx:87
+msgid "{complete, number, percent} complete. This sprint ends on {sprintEndsAt, date, medium}, at {sprintEndsAt, time, short}."
+msgstr "{complete, number, percent} complete. This sprint ends on {sprintEndsAt, date, medium}, at {sprintEndsAt, time, short}."
 
 #: src/components/task-card.tsx:11
 msgid ""
@@ -94,7 +98,7 @@ msgstr ""
 "  other {Due in # days}\n"
 "}"
 
-#: src/components/board.tsx:61
+#: src/components/board.tsx:71
 msgid ""
 "{open, plural,\n"
 "  =0 {Everything is done. Enjoy the quiet.}\n"
@@ -106,6 +110,20 @@ msgstr ""
 "  =0 {Everything is done. Enjoy the quiet.}\n"
 "  one {# task still open}\n"
 "  other {# tasks still open}\n"
+"}"
+
+#: src/components/board.tsx:100
+msgid ""
+"{watchers, plural, offset:1\n"
+"  =0 {Nobody else is watching this board}\n"
+"  one {You and # other member are watching}\n"
+"  other {You and # others are watching}\n"
+"}"
+msgstr ""
+"{watchers, plural, offset:1\n"
+"  =0 {Nobody else is watching this board}\n"
+"  one {You and # other member are watching}\n"
+"  other {You and # others are watching}\n"
 "}"
 
 #: src/components/task-card.tsx:42
@@ -124,15 +142,15 @@ msgstr "Language"
 msgid "Nobody is on this yet"
 msgstr "Nobody is on this yet"
 
-#: src/components/board.tsx:25
+#: src/components/board.tsx:35
 msgid "Nothing here. <0>Add a task</0> or drag one across from <1>To do</1>."
 msgstr "Nothing here. <0>Add a task</0> or drag one across from <1>To do</1>."
 
-#: src/components/board.tsx:44
+#: src/components/board.tsx:54
 msgid "Taskboard"
 msgstr "Taskboard"
 
-#: src/components/board.tsx:54
+#: src/components/board.tsx:64
 msgid ""
 "Welcome back, {currentMember}. This is your {sprintNumber, selectordinal,\n"
 "  one {#st}\n"

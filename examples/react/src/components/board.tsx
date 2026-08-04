@@ -1,5 +1,15 @@
 import { Say } from '@saykit/react';
-import { type Column, columns, currentMember, sprintNumber, tasks, tasksIn } from '../board.js';
+import {
+  type Column,
+  columns,
+  completionRatio,
+  currentMember,
+  sprintEndsAt,
+  sprintNumber,
+  tasks,
+  tasksIn,
+  watchers,
+} from '../board.js';
 import { TaskCard } from './task-card.js';
 
 function ColumnHeading({ column }: { column: Column }) {
@@ -63,6 +73,36 @@ export function Board() {
             _0="Everything is done. Enjoy the quiet."
             one="# task still open"
             other="# tasks still open"
+          />
+        </p>
+
+        <p className="masthead__summary">
+          {/*
+            `Say.Number`, `Say.Date`, and `Say.Time` are fragments rather than
+            whole messages, so they are written inside a `<Say>` the way any
+            other child is. They extract as `{name, number, percent}` and
+            `{name, date, medium}`, which keeps the formatting in the catalogue
+            where a translator can move it around the sentence.
+          */}
+          <Say>
+            <Say.Number _={{ complete: completionRatio() }} style="percent" /> complete. This sprint
+            ends on <Say.Date _={{ sprintEndsAt }} style="medium" />, at
+            <Say.Time _={{ sprintEndsAt }} style="short" />.
+          </Say>
+        </p>
+
+        <p className="masthead__summary">
+          {/*
+            `offset` subtracts from the selector before `#` is formatted, so a
+            queue of five reads as "you and 4 others" rather than "you and 5".
+            It never names a branch.
+          */}
+          <Say.Plural
+            _={watchers}
+            offset={1}
+            _0="Nobody else is watching this board"
+            one="You and # other member are watching"
+            other="You and # others are watching"
           />
         </p>
       </header>

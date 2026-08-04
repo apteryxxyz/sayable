@@ -23,6 +23,24 @@ describe('convertMessageToIcu', () => {
       .toMatchInlineSnapshot('"{name}"');
   });
 
+  it('should generate argument messages with a format type', () => {
+    const message = new ArgumentMessage('count', dummy, { type: 'number' });
+    expect(convertMessageToIcu(message)) //
+      .toMatchInlineSnapshot('"{count, number}"');
+  });
+
+  it('should generate argument messages with a format type and style', () => {
+    const message = new ArgumentMessage('when', dummy, { type: 'date', style: 'medium' });
+    expect(convertMessageToIcu(message)) //
+      .toMatchInlineSnapshot('"{when, date, medium}"');
+  });
+
+  it('should omit an empty style rather than emit a trailing comma', () => {
+    const message = new ArgumentMessage('n', dummy, { type: 'number', style: undefined });
+    expect(convertMessageToIcu(message)) //
+      .toMatchInlineSnapshot('"{n, number}"');
+  });
+
   it('should generate element messages', () => {
     const message = new ElementMessage('0', [new LiteralMessage('Hello world!')], dummy);
     expect(convertMessageToIcu(message)) //
@@ -65,6 +83,40 @@ describe('convertMessageToIcu', () => {
     `);
   });
 
+  it('should generate choice messages with an offset', () => {
+    const message = new ChoiceMessage(
+      'plural',
+      'count',
+      [
+        { identifier: 'one', value: new LiteralMessage('you and # other') },
+        { identifier: 'other', value: new LiteralMessage('you and # others') },
+      ],
+      dummy,
+      1,
+    );
+    expect(convertMessageToIcu(message)).toMatchInlineSnapshot(`
+      "{count, plural, offset:1
+        one {you and # other}
+        other {you and # others}
+      }"
+    `);
+  });
+
+  it('should generate an offset of zero rather than treat it as absent', () => {
+    const message = new ChoiceMessage(
+      'plural',
+      'count',
+      [{ identifier: 'other', value: new LiteralMessage('#') }],
+      dummy,
+      0,
+    );
+    expect(convertMessageToIcu(message)).toMatchInlineSnapshot(`
+      "{count, plural, offset:0
+        other {#}
+      }"
+    `);
+  });
+
   it('should generate choice messages with ordinal kind', () => {
     const message = new ChoiceMessage(
       'ordinal',
@@ -83,6 +135,28 @@ describe('convertMessageToIcu', () => {
         =2 {second}
         =3 {third}
         other {other}
+      }"
+    `);
+  });
+
+  // A numeric key stays bare under `select`, which matches its cases as literal
+  // strings — `=0` there is a parse error, not an exact value.
+  it('should generate select messages with numeric identifiers bare', () => {
+    const message = new ChoiceMessage(
+      'select',
+      'tier',
+      [
+        { identifier: '0', value: new LiteralMessage('Free') },
+        { identifier: '1', value: new LiteralMessage('Pro') },
+        { identifier: 'other', value: new LiteralMessage('Unknown') },
+      ],
+      dummy,
+    );
+    expect(convertMessageToIcu(message)).toMatchInlineSnapshot(`
+      "{tier, select,
+        0 {Free}
+        1 {Pro}
+        other {Unknown}
       }"
     `);
   });

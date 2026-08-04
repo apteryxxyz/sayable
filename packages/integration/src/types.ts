@@ -18,9 +18,33 @@ export interface NumeralOptions extends Omit<
 > {
   other: string;
   [digit: number]: string;
+  /**
+   * Subtracted from the value before `#` is formatted, so "You and 2 others"
+   * can select on a total of three. Reserved — it never names a branch.
+   */
+  offset?: number;
 }
 
 export interface SelectOptions {
   other: string;
   [match: string | number]: string;
+}
+
+/**
+ * Formatting for a `{arg, number}` placeholder.
+ *
+ * `currency` is not offered: MF1 has nowhere to write the currency code, so
+ * `{price, number, currency}` formats as a literal `{$price}` rather than an
+ * amount. A literal pattern such as `#,##0.00` is accepted for the cases the
+ * named styles do not cover.
+ */
+export interface NumberOptions {
+  style?: 'integer' | 'percent' | (string & {});
+}
+
+/**
+ * Formatting for a `{arg, date}` or `{arg, time}` placeholder.
+ */
+export interface DateTimeOptions {
+  style?: 'short' | 'medium' | 'long' | 'full';
 }

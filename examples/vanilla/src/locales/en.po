@@ -12,7 +12,7 @@ msgstr ""
 "Plural-Forms: \n"
 "X-Generator: saykit\n"
 
-#: src/main.ts:82
+#: src/main.ts:92
 msgid ""
 "{0, plural,\n"
 "  =0 {You have nothing on loan}\n"
@@ -26,7 +26,7 @@ msgstr ""
 "  other {You have # books on loan}\n"
 "}"
 
-#: src/main.ts:26
+#: src/main.ts:36
 msgid ""
 "{0, plural,\n"
 "  one {Due in # day}\n"
@@ -38,7 +38,7 @@ msgstr ""
 "  other {Due in # days}\n"
 "}"
 
-#: src/main.ts:17
+#: src/main.ts:27
 msgid ""
 "{0, plural,\n"
 "  one {Overdue by # day}\n"
@@ -50,7 +50,7 @@ msgstr ""
 "  other {Overdue by # days}\n"
 "}"
 
-#: src/main.ts:33
+#: src/main.ts:43
 msgid ""
 "{0, select,\n"
 "  onLoan {On loan}\n"
@@ -68,7 +68,7 @@ msgstr ""
 "  other {Unknown}\n"
 "}"
 
-#: src/main.ts:47
+#: src/main.ts:57
 msgid ""
 "{left, plural,\n"
 "  one {You can renew this # more time}\n"
@@ -80,40 +80,66 @@ msgstr ""
 "  other {You can renew this # more times}\n"
 "}"
 
-#: src/main.ts:62
+#: src/main.ts:111
+msgid ""
+"{queue, plural, offset:1\n"
+"  =0 {Nobody else is waiting on your reservation}\n"
+"  one {You and # other member are waiting}\n"
+"  other {You and # others are waiting}\n"
+"}"
+msgstr ""
+"{queue, plural, offset:1\n"
+"  =0 {Nobody else is waiting on your reservation}\n"
+"  one {You and # other member are waiting}\n"
+"  other {You and # others are waiting}\n"
+"}"
+
+#: src/main.ts:122
+msgid "{ready, number, percent} of your holds are ready to collect"
+msgstr "{ready, number, percent} of your holds are ready to collect"
+
+#: src/main.ts:72
 msgid "by {0}"
 msgstr "by {0}"
 
-#: src/main.ts:143
+#: src/main.ts:182
 msgid "City Library"
 msgstr "City Library"
 
-#: src/main.ts:23
+#: src/main.ts:33
 msgid "Due back today"
 msgstr "Due back today"
 
-#: src/main.ts:115
+#: src/main.ts:154
 msgid "Language"
 msgstr "Language"
 
-#: src/main.ts:149
+#: src/main.ts:188
 msgctxt "page heading"
 msgid "My loans"
 msgstr "My loans"
 
-#: src/main.ts:104
+#: src/main.ts:143
 msgid "No fines owing. Thank you!"
 msgstr "No fines owing. Thank you!"
 
-#: src/main.ts:45
+#: src/main.ts:55
 msgid "No renewals left — please return this book"
 msgstr "No renewals left — please return this book"
 
-#: src/main.ts:100
+#: src/main.ts:139
 msgid "Outstanding fines: {0}"
 msgstr "Outstanding fines: {0}"
 
-#: src/main.ts:89
+#: src/main.ts:127
+msgid "Reserved on {reservedOn, date, long}"
+msgstr "Reserved on {reservedOn, date, long}"
+
+#: src/main.ts:130
+msgid "This branch closes at {closingTime, time, short}"
+msgstr "This branch closes at {closingTime, time, short}"
+
+#: src/main.ts:99
 msgid ""
 "You are {holdPosition, selectordinal,\n"
 "  one {#st}\n"

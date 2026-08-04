@@ -2,6 +2,7 @@ import { parseExpression } from '@babel/parser';
 import * as t from '@babel/types';
 import {
   ArgumentMessage,
+  assignSequenceIdentifiers,
   AUTO_INCREMENT_IDENTIFIER,
   ChoiceMessage,
   CompositeMessage,
@@ -87,6 +88,23 @@ describe('parseTaggedTemplateExpression', () => {
     expect((result!.children[1] as ArgumentMessage).identifier).toBe('name');
     expect(result!.children[2]).toBeInstanceOf(LiteralMessage);
     expect(result!.children[2]).toEqual({ text: '!' });
+  });
+
+  // A formatted argument is a fragment, not a whole message, so the shape that
+  // matters most is the nested one.
+  it('parses a nested formatted argument inside a template', () => {
+    const result = parser.parseTaggedTemplateExpression(
+      expr('say`You have ${say.number(items.length)} items`'),
+    );
+    assignSequenceIdentifiers(result!);
+    expect(result!.toICUString()).toBe('You have {0, number} items');
+  });
+
+  it('parses a nested formatted argument with a name and a style', () => {
+    const result = parser.parseTaggedTemplateExpression(
+      expr("say`Battery at ${say.number({ level: device.level }, { style: 'percent' })}`"),
+    );
+    expect(result!.toICUString()).toBe('Battery at {level, number, percent}');
   });
 
   it('parses a tagged template with a descriptor id', () => {
@@ -254,6 +272,110 @@ describe('parseCallExpression', () => {
     expect(parser.parseCallExpression(expr('say.something()'))).toBeNull();
   });
 
+  it('parses a plural offset', () => {
+    const result = parser.parseCallExpression(
+      expr("say.plural(count, { offset: 1, one: 'you and # other', other: 'you and # others' })"),
+    );
+    const choice = result!.children[0] as ChoiceMessage;
+    expect(choice.offset).toBe(1);
+    expect(choice.branches.map((b) => b.identifier)).toEqual(['one', 'other']);
+  });
+
+  it('parses an ordinal offset', () => {
+    const result = parser.parseCallExpression(
+      expr("say.ordinal(place, { offset: 1, other: '#th' })"),
+    );
+    expect((result!.children[0] as ChoiceMessage).offset).toBe(1);
+  });
+
+  it('leaves the offset undefined when absent', () => {
+    const result = parser.parseCallExpression(expr("say.plural(count, { other: '#' })"));
+    expect((result!.children[0] as ChoiceMessage).offset).toBeUndefined();
+  });
+
+  // `select` has no number to offset, so `offset` there is an ordinary key that
+  // happens to be spelled that way.
+  it('treats offset as a branch key on select', () => {
+    const result = parser.parseCallExpression(
+      expr("say.select(kind, { offset: 'Offset', other: 'Other' })"),
+    );
+    const choice = result!.children[0] as ChoiceMessage;
+    expect(choice.offset).toBeUndefined();
+    expect(choice.branches.map((b) => b.identifier)).toEqual(['offset', 'other']);
+  });
+
+  // The offset is baked into the extracted message, so it has to be known at
+  // build time. Anything else stays a branch and fails branch validation.
+  it.each(['offset: n', 'offset: 1.5', 'offset: -1'])('ignores a non-literal %s', (offset) => {
+    expect(() =>
+      parser.parseCallExpression(expr(`say.plural(count, { ${offset}, other: '#' })`)),
+    ).not.toThrow();
+    const result = parser.parseCallExpression(expr(`say.plural(count, { ${offset}, other: '#' })`));
+    expect((result!.children[0] as ChoiceMessage).offset).toBeUndefined();
+  });
+
+  it('parses a number call expression', () => {
+    const result = parser.parseCallExpression(expr('say.number(total)'));
+    expect(result).toBeInstanceOf(CompositeMessage);
+    const argument = result!.children[0] as ArgumentMessage;
+    expect(argument).toBeInstanceOf(ArgumentMessage);
+    expect(argument.identifier).toBe('total');
+    expect(argument.format).toEqual({ type: 'number', style: undefined });
+  });
+
+  it('parses a number call expression with a style', () => {
+    const result = parser.parseCallExpression(expr("say.number(level, { style: 'percent' })"));
+    const argument = result!.children[0] as ArgumentMessage;
+    expect(argument.format).toEqual({ type: 'number', style: 'percent' });
+  });
+
+  it.each(['date', 'time'] as const)('parses a %s call expression with a style', (kind) => {
+    const result = parser.parseCallExpression(expr(`say.${kind}(when, { style: 'medium' })`));
+    const argument = result!.children[0] as ArgumentMessage;
+    expect(argument.format).toEqual({ type: kind, style: 'medium' });
+  });
+
+  it('names a number placeholder written as a single-key object', () => {
+    const result = parser.parseCallExpression(expr('say.number({ cartTotal: getTotal() })'));
+    const argument = result!.children[0] as ArgumentMessage;
+    expect(argument.identifier).toBe('cartTotal');
+    // The wrapper is gone: what compiles is the value alone.
+    expect(t.isCallExpression(argument.expression)).toBe(true);
+    expect((argument.expression as t.CallExpression).callee).toMatchObject({ name: 'getTotal' });
+  });
+
+  it('numbers an unnamed number placeholder', () => {
+    const result = parser.parseCallExpression(expr('say.number(items.length)'));
+    expect((result!.children[0] as ArgumentMessage).identifier).toBe(AUTO_INCREMENT_IDENTIFIER);
+  });
+
+  it('parses a formatted argument with a descriptor', () => {
+    const result = parser.parseCallExpression(expr("say({ id: 'total' }).number(sum)"));
+    expect(result!.descriptor).toEqual({ id: 'total', context: undefined });
+  });
+
+  it('rejects a style the formatter cannot honour', () => {
+    expect(() => parser.parseCallExpression(expr("say.date(when, { style: 'meduim' })"))).toThrow(
+      "Invalid date style 'meduim'",
+    );
+  });
+
+  // The style is baked into the extracted message, so a value only known at
+  // runtime cannot name one. It is dropped rather than guessed at.
+  it('ignores a style that is not a string literal', () => {
+    const result = parser.parseCallExpression(expr('say.number(n, { style: dynamic })'));
+    expect((result!.children[0] as ArgumentMessage).format).toEqual({
+      type: 'number',
+      style: undefined,
+    });
+  });
+
+  it('returns null for malformed formatted arguments', () => {
+    expect(parser.parseCallExpression(expr('say.number()'))).toBeNull();
+    expect(parser.parseCallExpression(expr("say.number(n, 'percent')"))).toBeNull();
+    expect(parser.parseCallExpression(expr('say.number(n, {}, {})'))).toBeNull();
+  });
+
   it('returns null for malformed choice expressions', () => {
     expect(parser.parseCallExpression(expr('say.plural()'))).toBeNull();
   });
@@ -300,10 +422,13 @@ describe('parseCallExpression', () => {
     ).toThrow("Invalid select branch key 'in-stock'");
   });
 
-  it('throws for an exact match on a select', () => {
-    expect(() =>
-      parser.parseCallExpression(expr("say.select(status, { 0: 'none', other: 'some' })")),
-    ).toThrow("Invalid select branch key '0'");
+  // ICU `select` matches its cases as literal strings, so a numeric key is an
+  // ordinary key there and stays bare — `=0` would fail to parse.
+  it('keeps a numeric key bare on a select', () => {
+    const result = parser.parseCallExpression(
+      expr("say.select(tier, { 0: 'Free', other: 'Paid' })"),
+    );
+    expect(result!.toICUString()).toBe('{tier, select,\n  0 {Free}\n  other {Paid}\n}');
   });
 
   it('returns null when the callee is not a say expression', () => {

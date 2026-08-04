@@ -4,7 +4,9 @@ import {
   ChoiceMessage,
   CompositeMessage,
   AUTO_INCREMENT_IDENTIFIER,
+  isArgumentType,
   LiteralMessage,
+  validateArgumentStyle,
   validateBranchIdentifier,
   type Message,
 } from '@saykit/config/features/messages';
@@ -47,14 +49,34 @@ export function parseCallExpression(call: t.CallExpression): CompositeMessage | 
   if (!processed) return null;
   const [accessor, descriptor, kind] = processed;
 
+  const descriptorId = descriptor
+    ? findPropertyValueIfStringLiteralAsString(descriptor, 'id')
+    : undefined;
+  const descriptorContext = descriptor
+    ? findPropertyValueIfStringLiteralAsString(descriptor, 'context')
+    : undefined;
+
+  const wrap = (children: Message[]) =>
+    new CompositeMessage(
+      { id: descriptorId, context: descriptorContext },
+      [],
+      call.loc ? [`${call.loc.filename}:${call.loc.start.line}`] : [],
+      children,
+      accessor,
+    );
+
   if (typeof kind === 'string' && ['select', 'ordinal', 'plural'].includes(kind)) {
     if (call.arguments.length !== 2) return null;
     if (!t.isExpression(call.arguments[0])) return null;
     if (!t.isObjectExpression(call.arguments[1])) return null;
     const object = call.arguments[1];
 
+    const offset = kind === 'select' ? undefined : findPluralOffset(object);
+
     const branches = object.properties.reduce<ChoiceMessage['branches']>((c, p) => {
       if (!t.isObjectProperty(p) || !t.isExpression(p.value)) return c;
+      // `offset` is a modifier on the selector, not a case to select.
+      if (offset !== undefined && getPropertyNameAsString(p.key) === 'offset') return c;
 
       let message: Message | null = null;
       if (!message && t.isStringLiteral(p.value)) message = new LiteralMessage(p.value.value);
@@ -70,25 +92,47 @@ export function parseCallExpression(call: t.CallExpression): CompositeMessage | 
     for (const branch of branches) validateBranchIdentifier(kind, branch.identifier);
 
     const [identifier, value] = unwrapPlaceholder(call.arguments[0]);
-    const choice = new ChoiceMessage(kind, identifier, branches, value);
+    return wrap([new ChoiceMessage(kind, identifier, branches, value, offset)]);
+  }
 
-    const descriptorId = descriptor
-      ? findPropertyValueIfStringLiteralAsString(descriptor, 'id')
-      : undefined;
-    const descriptorContext = descriptor
-      ? findPropertyValueIfStringLiteralAsString(descriptor, 'context')
-      : undefined;
+  if (typeof kind === 'string' && isArgumentType(kind)) {
+    // The options object is optional — `{n, number}` is the type's own default
+    // formatting, and is the common case.
+    if (call.arguments.length < 1 || call.arguments.length > 2) return null;
+    if (!t.isExpression(call.arguments[0])) return null;
 
-    return new CompositeMessage(
-      { id: descriptorId, context: descriptorContext },
-      [],
-      call.loc ? [`${call.loc.filename}:${call.loc.start.line}`] : [],
-      [choice],
-      accessor,
-    );
+    let style: string | undefined;
+    if (call.arguments.length === 2) {
+      if (!t.isObjectExpression(call.arguments[1])) return null;
+      style = findPropertyValueIfStringLiteralAsString(call.arguments[1], 'style');
+      if (style !== undefined) validateArgumentStyle(kind, style);
+    }
+
+    const [identifier, value] = unwrapPlaceholder(call.arguments[0]);
+    return wrap([new ArgumentMessage(identifier, value, { type: kind, style })]);
   }
 
   return null;
+}
+
+/**
+ * The `offset` a plural subtracts from its selector before `#` is formatted, so
+ * "You and 2 others" can select on a total of three.
+ *
+ * Read only from an integer literal: the offset is baked into the extracted
+ * message, so it has to be known at build time, and a fractional or negative
+ * one is not something ICU accepts. Anything else stays an ordinary branch and
+ * is validated as the key it looks like.
+ */
+function findPluralOffset(object: t.ObjectExpression) {
+  for (const property of object.properties) {
+    if (!t.isObjectProperty(property) || property.computed) continue;
+    if (getPropertyNameAsString(property.key) !== 'offset') continue;
+    if (!t.isNumericLiteral(property.value)) continue;
+    if (!Number.isInteger(property.value.value) || property.value.value < 0) continue;
+    return property.value.value;
+  }
+  return undefined;
 }
 
 //

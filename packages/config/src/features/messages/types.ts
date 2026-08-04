@@ -19,10 +19,24 @@ export class LiteralMessage extends Base {
   }
 }
 
+/**
+ * An ICU argument type and style, e.g. `{n, number, percent}`. A style is
+ * optional — `{n, number}` is the type's default formatting.
+ *
+ * Both are kept as the ICU strings they are written as, rather than as `Intl`
+ * options, because the catalogue is the source of truth and only the ICU
+ * spelling round-trips back out of it.
+ */
+export interface ArgumentFormat {
+  type: string;
+  style?: string;
+}
+
 export class ArgumentMessage extends Base {
   constructor(
     public identifier: string | typeof AUTO_INCREMENT_IDENTIFIER,
     public readonly expression: any,
+    public readonly format?: ArgumentFormat,
   ) {
     super();
   }
@@ -47,6 +61,12 @@ export class ChoiceMessage extends Base {
       readonly value: Message;
     }[],
     public readonly expression: any,
+    /**
+     * Subtracted from the selector before `#` is formatted, so "You and 2
+     * others" can select on a total of three. Only `plural` and `ordinal`
+     * accept one; `select` has no number to offset.
+     */
+    public readonly offset?: number,
   ) {
     super();
   }

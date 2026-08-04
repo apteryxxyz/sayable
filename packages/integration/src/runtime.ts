@@ -1,5 +1,13 @@
 import { mf1ToMessage } from '@messageformat/icu-messageformat-1';
-import type { Disallow, Named, NumeralOptions, SelectOptions, Tuple } from './types.js';
+import type {
+  DateTimeOptions,
+  Disallow,
+  Named,
+  NumberOptions,
+  NumeralOptions,
+  SelectOptions,
+  Tuple,
+} from './types.js';
 
 /**
  * Map a descriptor's keys back to the placeholders the message names. The
@@ -354,6 +362,77 @@ export class Say<
     void _;
     void options;
     throw new Error("'Say#select' is a macro and must be used with the relevant saykit plugin");
+  }
+
+  /**
+   * Format a number the way the active locale writes one, with its own grouping
+   * separators and decimal mark.
+   *
+   * Unlike `plural`, `ordinal`, and `select`, this is a fragment rather than a
+   * whole message, and is normally written inside one.
+   *
+   * @example
+   * ```ts
+   * say`You have ${say.number(items.length)} items`
+   * say`Battery at ${say.number(level, { style: 'percent' })}`
+   * say`Total: ${say.number({ cartTotal: getTotal() }, { style: '#,##0.00' })}`
+   * ```
+   *
+   * @param _ Number to format
+   * @param options Formatting style, either a named style or a literal number pattern
+   * @returns The formatted number
+   * @remark This is a macro and must be used with the relevant saykit plugin
+   */
+  number(_: number | Named<number>, options?: Disallow<NumberOptions, 'id' | 'context'>): string {
+    void _;
+    void options;
+    throw new Error("'Say#number' is a macro and must be used with the relevant saykit plugin");
+  }
+
+  /**
+   * Format the date portion of a value the way the active locale writes one.
+   *
+   * @example
+   * ```ts
+   * say`Published ${say.date(post.publishedAt)}`
+   * say`Published ${say.date(post.publishedAt, { style: 'full' })}`
+   * ```
+   *
+   * @param _ Date to format
+   * @param options Formatting style
+   * @returns The formatted date
+   * @remark This is a macro and must be used with the relevant saykit plugin
+   */
+  date(
+    _: Date | number | Named<Date | number>,
+    options?: Disallow<DateTimeOptions, 'id' | 'context'>,
+  ): string {
+    void _;
+    void options;
+    throw new Error("'Say#date' is a macro and must be used with the relevant saykit plugin");
+  }
+
+  /**
+   * Format the time portion of a value the way the active locale writes one.
+   *
+   * @example
+   * ```ts
+   * say`Doors open at ${say.time(opensAt)}`
+   * say`Doors open at ${say.time(opensAt, { style: 'short' })}`
+   * ```
+   *
+   * @param _ Date to format
+   * @param options Formatting style
+   * @returns The formatted time
+   * @remark This is a macro and must be used with the relevant saykit plugin
+   */
+  time(
+    _: Date | number | Named<Date | number>,
+    options?: Disallow<DateTimeOptions, 'id' | 'context'>,
+  ): string {
+    void _;
+    void options;
+    throw new Error("'Say#time' is a macro and must be used with the relevant saykit plugin");
   }
 }
 

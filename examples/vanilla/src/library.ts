@@ -58,6 +58,18 @@ export const loans: Loan[] = [
 /** Position in the hold queue for the member's outstanding reservation. */
 export const holdPosition = 3;
 
+/** How many members are waiting on the same reservation, the member included. */
+export const holdQueueLength = 4;
+
+/** When the branch closes today. Formatted by `say.time`, so the shape is the locale's. */
+export const closingTime = new Date(new Date().setHours(19, 30, 0, 0));
+
+/** When the member's reservation was placed. Formatted by `say.date`. */
+export const reservedOn = new Date(new Date().setDate(new Date().getDate() - 12));
+
+/** How many of the member's holds have arrived, as a fraction for `percent`. */
+export const holdsReadyRatio = 0.25;
+
 export function totalFineInCents(entries: Loan[]) {
   return entries.reduce((total, loan) => total + loan.fineInCents, 0);
 }

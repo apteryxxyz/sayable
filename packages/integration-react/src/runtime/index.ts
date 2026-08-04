@@ -5,7 +5,14 @@ import {
   type ReactElement,
   type ReactNode,
 } from 'react';
-import type { Disallow, Named, NumeralOptions, SelectOptions } from 'saykit';
+import type {
+  DateTimeOptions,
+  Disallow,
+  Named,
+  NumberOptions,
+  NumeralOptions,
+  SelectOptions,
+} from 'saykit';
 import { Renderer } from '~/components/renderer.js';
 import {
   type PropsWithJSXSafeKeys,
@@ -136,5 +143,75 @@ export namespace Say {
   ): ReactNode {
     void props;
     throw new Error("'Say.Select' is a macro and must be used with the relevant saykit plugin");
+  }
+
+  /**
+   * Format a number the way the active locale writes one.
+   *
+   * Unlike `Say.Plural`, `Say.Ordinal`, and `Say.Select`, this is a fragment
+   * rather than a whole message, and is normally written inside one.
+   *
+   * @example
+   * ```tsx
+   * <Say>You have <Say.Number _={items.length} /> items</Say>
+   * <Say>Battery at <Say.Number _={level} style="percent" /></Say>
+   * ```
+   *
+   * @param props._ Number to format
+   * @param props.style Formatting style, either a named style or a literal number pattern
+   * @returns The formatted number, as a React node
+   * @remark This is a macro and must be used with the relevant saykit plugin
+   */
+  export function Number(
+    props: { _: number | Named<number> } & Disallow<NumberOptions, 'id' | 'context'>,
+  ): ReactNode {
+    void props;
+    throw new Error("'Say.Number' is a macro and must be used with the relevant saykit plugin");
+  }
+
+  /**
+   * Format the date portion of a value the way the active locale writes one.
+   *
+   * @example
+   * ```tsx
+   * <Say>Published <Say.Date _={post.publishedAt} style="medium" /></Say>
+   * ```
+   *
+   * @param props._ Date to format
+   * @param props.style Formatting style
+   * @returns The formatted date, as a React node
+   * @remark This is a macro and must be used with the relevant saykit plugin
+   */
+  export function Date(
+    props: { _: globalThis.Date | number | Named<globalThis.Date | number> } & Disallow<
+      DateTimeOptions,
+      'id' | 'context'
+    >,
+  ): ReactNode {
+    void props;
+    throw new Error("'Say.Date' is a macro and must be used with the relevant saykit plugin");
+  }
+
+  /**
+   * Format the time portion of a value the way the active locale writes one.
+   *
+   * @example
+   * ```tsx
+   * <Say>Doors open at <Say.Time _={opensAt} style="short" /></Say>
+   * ```
+   *
+   * @param props._ Date to format
+   * @param props.style Formatting style
+   * @returns The formatted time, as a React node
+   * @remark This is a macro and must be used with the relevant saykit plugin
+   */
+  export function Time(
+    props: { _: globalThis.Date | number | Named<globalThis.Date | number> } & Disallow<
+      DateTimeOptions,
+      'id' | 'context'
+    >,
+  ): ReactNode {
+    void props;
+    throw new Error("'Say.Time' is a macro and must be used with the relevant saykit plugin");
   }
 }
