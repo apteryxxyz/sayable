@@ -15,8 +15,13 @@ export const AUTO_INCREMENT_IDENTIFIER = Symbol('auto-increment');
 const BRANCH_PATTERN = /^(?:=\d+|[^\p{Pattern_Syntax}\p{Pattern_White_Space}]+)$/u;
 
 /**
- * The ICU case a branch is written as. A number names an exact value rather
- * than a key, and only `plural` and `ordinal` are allowed to select on one.
+ * The ICU case a branch is written as.
+ *
+ * Under `plural` and `ordinal` a number names an exact value, spelled `=0`, and
+ * so is distinct from the CLDR category that would otherwise match it. `select`
+ * has no such syntax — its cases are literal string matches, and `=0` there is
+ * a parse error — so a numeric key stays bare, where it matches both `0` and
+ * `'0'`.
  *
  * Digits are read literally rather than coerced, because everything JavaScript
  * is willing to call a number is not: `''`, `' '`, and `'+0'` all coerce to
@@ -24,8 +29,9 @@ const BRANCH_PATTERN = /^(?:=\d+|[^\p{Pattern_Syntax}\p{Pattern_White_Space}]+)$
  * author's own key out of the catalogue. Anything else stays a key, where the
  * whitespace or punctuation that made it numeric-looking is caught.
  */
-export function getBranchCase(identifier: string | typeof AUTO_INCREMENT_IDENTIFIER) {
+export function getBranchCase(kind: string, identifier: string | typeof AUTO_INCREMENT_IDENTIFIER) {
   const key = String(identifier);
+  if (kind === 'select') return key;
   return /^\d+$/u.test(key) ? `=${+key}` : key;
 }
 
@@ -46,7 +52,7 @@ export function validateBranchIdentifier(
   // always a well-formed case.
   if (typeof identifier !== 'string') return;
 
-  const branch = getBranchCase(identifier);
+  const branch = getBranchCase(kind, identifier);
 
   if (!BRANCH_PATTERN.test(branch)) {
     const suggestion = suggestBranchIdentifier(identifier);
@@ -56,9 +62,13 @@ export function validateBranchIdentifier(
     );
   }
 
-  if (kind === 'select' && branch.startsWith('='))
+  // A numeric key is written bare under `select` and reaches ICU untouched, so
+  // a key spelled `=0` by hand stays `=0` and fails to parse at format time.
+  // `getBranchCase` cannot normalise it away, because `=0` and `0` are two
+  // different keys under a format that matches its cases as literal strings.
+  if (kind === 'select' && /^=\d+$/u.test(branch))
     throw new Error(
-      `Invalid select branch key '${identifier}', a number selects an exact value, which only 'plural' and 'ordinal' accept`,
+      `Invalid select branch key '${identifier}', an exact value is only meaningful to 'plural' and 'ordinal', write it as '${branch.slice(1)}'`,
     );
 }
 

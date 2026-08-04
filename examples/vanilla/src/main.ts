@@ -1,5 +1,15 @@
 import say, { type Locale, locales } from './i18n.js';
-import { holdPosition, type Loan, loans, RENEWAL_LIMIT, totalFineInCents } from './library.js';
+import {
+  closingTime,
+  holdPosition,
+  holdQueueLength,
+  holdsReadyRatio,
+  type Loan,
+  loans,
+  RENEWAL_LIMIT,
+  reservedOn,
+  totalFineInCents,
+} from './library.js';
 
 /**
  * Pick a starting locale from what the browser advertises. `match` walks the
@@ -93,9 +103,42 @@ function renderSummary() {
     other: '#th',
   })} in the hold queue`;
 
+  // `offset` subtracts from the selector before `#` is formatted, so a queue of
+  // four reads as "you and 3 others". The exact branch is `1`, not `0`: ICU
+  // tests an exact value against the original number, before the offset, so a
+  // queue of one is the member and nobody else. Writing `0` here would leave
+  // that case to `other` and render "You and 0 others".
+  const queue = document.createElement('p');
+  queue.textContent = say.plural(
+    { queue: holdQueueLength },
+    {
+      offset: 1,
+      1: 'Nobody else is waiting on your reservation',
+      one: 'You and # other member are waiting',
+      other: 'You and # others are waiting',
+    },
+  );
+
+  // `say.number` is a fragment rather than a whole message, so it is written
+  // inside one, extracting as `{ready, number, percent}`. The formatting stays
+  // in the catalogue, where a translator can move it around the sentence.
+  const ready = document.createElement('p');
+  ready.textContent = say`${say.number({ ready: holdsReadyRatio }, { style: 'percent' })} of your holds are ready to collect`;
+
+  // `say.date` and `say.time` format only the portion they name, in the shape
+  // the active locale writes it — no `Intl` call at the callsite.
+  const reserved = document.createElement('p');
+  reserved.textContent = say`Reserved on ${say.date({ reservedOn }, { style: 'long' })}`;
+
+  const closing = document.createElement('p');
+  closing.textContent = say`This branch closes at ${say.time({ closingTime }, { style: 'short' })}`;
+
   const fines = totalFineInCents(loans);
   const balance = document.createElement('p');
   balance.className = 'summary__balance';
+  // Currency stays an `Intl` call at the callsite rather than a `say.number`
+  // style: MF1 has nowhere to write the currency code, so `{n, number,
+  // currency}` would format as a literal `{$n}` rather than an amount.
   balance.textContent = fines
     ? say`Outstanding fines: ${new Intl.NumberFormat(say.locale, {
         style: 'currency',
@@ -103,7 +146,7 @@ function renderSummary() {
       }).format(fines / 100)}`
     : say`No fines owing. Thank you!`;
 
-  section.append(count, hold, balance);
+  section.append(count, hold, queue, ready, reserved, closing, balance);
   return section;
 }
 

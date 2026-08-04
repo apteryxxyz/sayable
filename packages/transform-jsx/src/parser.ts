@@ -5,7 +5,9 @@ import {
   ChoiceMessage,
   CompositeMessage,
   ElementMessage,
+  isArgumentType,
   LiteralMessage,
+  validateArgumentStyle,
   validateBranchIdentifier,
   type Message,
 } from '@saykit/config/features/messages';
@@ -73,12 +75,31 @@ export function parseJSXOpeningElement(element: t.JSXOpeningElement): CompositeM
   if (!processed) return null;
   const [accessor, kind] = processed;
 
+  const descriptorId = findAttributeValueIfStringLiteralAsString(element.attributes, 'id');
+  const descriptorContext = findAttributeValueIfStringLiteralAsString(
+    element.attributes,
+    'context',
+  );
+
+  const wrap = (children: Message[]) =>
+    new CompositeMessage(
+      { id: descriptorId, context: descriptorContext },
+      [],
+      getReferences(element),
+      children,
+      accessor as t.Expression,
+    );
+
   if (typeof kind === 'string' && ['select', 'ordinal', 'plural'].includes(kind)) {
+    const offset = kind === 'select' ? undefined : findPluralOffset(element.attributes);
+
     const branches = element.attributes.reduce<{ identifier: string; value: Message }[]>((b, a) => {
       if (!t.isJSXAttribute(a)) return b;
 
       let identifier = getAttributeNameAsString(a);
       if (identifier === '_' || identifier === 'id' || identifier === 'context') return b;
+      // `offset` is a modifier on the selector, not a case to select.
+      if (offset !== undefined && identifier === 'offset') return b;
       if (
         identifier.startsWith('_') &&
         identifier.length > 1 &&
@@ -113,24 +134,39 @@ export function parseJSXOpeningElement(element: t.JSXOpeningElement): CompositeM
     const initialiser = findAttributeValueIfExpressionOrStringLiteral(element.attributes, '_');
     if (!initialiser) return null;
     const [identifier, selector] = unwrapPlaceholder(initialiser);
-    const choice = new ChoiceMessage(kind, identifier, branches, selector);
+    return wrap([new ChoiceMessage(kind, identifier, branches, selector, offset)]);
+  }
 
-    const descriptorId = findAttributeValueIfStringLiteralAsString(element.attributes, 'id');
-    const descriptorContext = findAttributeValueIfStringLiteralAsString(
-      element.attributes,
-      'context',
-    );
+  if (typeof kind === 'string' && isArgumentType(kind)) {
+    const initialiser = findAttributeValueIfExpressionOrStringLiteral(element.attributes, '_');
+    if (!initialiser) return null;
 
-    return new CompositeMessage(
-      { id: descriptorId, context: descriptorContext },
-      [],
-      getReferences(element),
-      [choice],
-      accessor as t.Expression,
-    );
+    const style = findAttributeValueIfStringLiteralAsString(element.attributes, 'style');
+    if (style !== undefined) validateArgumentStyle(kind, style);
+
+    const [identifier, value] = unwrapPlaceholder(initialiser);
+    return wrap([new ArgumentMessage(identifier, value, { type: kind, style })]);
   }
 
   return null;
+}
+
+/**
+ * The `offset` a plural subtracts from its selector before `#` is formatted.
+ * See the JS parser's counterpart — the constraints are the same, only the
+ * syntax carrying it differs.
+ */
+function findPluralOffset(attributes: t.JSXOpeningElement['attributes']) {
+  for (const attribute of attributes) {
+    if (!t.isJSXAttribute(attribute)) continue;
+    if (getAttributeNameAsString(attribute) !== 'offset') continue;
+    if (!t.isJSXExpressionContainer(attribute.value)) continue;
+    const { expression } = attribute.value;
+    if (!t.isNumericLiteral(expression)) continue;
+    if (!Number.isInteger(expression.value) || expression.value < 0) continue;
+    return expression.value;
+  }
+  return undefined;
 }
 
 /**

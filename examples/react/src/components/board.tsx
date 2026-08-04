@@ -1,5 +1,15 @@
 import { Say } from '@saykit/react';
-import { type Column, columns, currentMember, sprintNumber, tasks, tasksIn } from '../board.js';
+import {
+  type Column,
+  columns,
+  completionRatio,
+  currentMember,
+  sprintEndsAt,
+  sprintNumber,
+  tasks,
+  tasksIn,
+  watchers,
+} from '../board.js';
 import { TaskCard } from './task-card.js';
 
 function ColumnHeading({ column }: { column: Column }) {
@@ -63,6 +73,41 @@ export function Board() {
             _0="Everything is done. Enjoy the quiet."
             one="# task still open"
             other="# tasks still open"
+          />
+        </p>
+
+        <p className="masthead__summary">
+          {/*
+            `Say.Number`, `Say.Date`, and `Say.Time` are fragments rather than
+            whole messages, so they are written inside a `<Say>` the way any
+            other child is. This one extracts as `{complete, number, percent}`,
+            `{sprintEndsAt, date, medium}`, and `{sprintEndsAt, time, short}` —
+            one value formatted two ways — which keeps the formatting in the
+            catalogue where a translator can move it around the sentence.
+          */}
+          <Say>
+            <Say.Number _={{ complete: completionRatio() }} style="percent" /> complete. This sprint
+            ends on <Say.Date _={{ sprintEndsAt }} style="medium" />, at
+            <Say.Time _={{ sprintEndsAt }} style="short" />.
+          </Say>
+        </p>
+
+        <p className="masthead__summary">
+          {/*
+            `offset` subtracts from the selector before `#` is formatted, so a
+            total of five reads as "you and 4 others". It never names a branch.
+
+            The exact branch is `_1`, not `_0`: ICU tests an exact value against
+            the original number, before the offset, so a total of one means the
+            current member and nobody else. Writing `_0` here would leave that
+            case to `other` and render "You and 0 others".
+          */}
+          <Say.Plural
+            _={watchers}
+            offset={1}
+            _1="Nobody else is watching this board"
+            one="You and # other member are watching"
+            other="You and # others are watching"
           />
         </p>
       </header>

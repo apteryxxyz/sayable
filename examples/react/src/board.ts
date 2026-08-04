@@ -66,3 +66,21 @@ export function tasksIn(column: Column) {
 /** How many sprints the current member has shipped, for the ordinal greeting. */
 export const sprintNumber = 22;
 export const currentMember = 'Amara';
+
+/**
+ * When the sprint ends. Formatted by `Say.Date` / `Say.Time`.
+ *
+ * Advanced with `setDate` rather than by adding milliseconds, so the clock time
+ * survives a daylight-saving transition falling inside the span.
+ */
+export const sprintEndsAt = new Date();
+sprintEndsAt.setHours(17, 0, 0, 0);
+sprintEndsAt.setDate(sprintEndsAt.getDate() + 3);
+
+/** How many members are watching the board, the current one included. */
+export const watchers = 5;
+
+export function completionRatio() {
+  const done = tasks.filter((task) => task.column === 'done').length;
+  return done / tasks.length;
+}

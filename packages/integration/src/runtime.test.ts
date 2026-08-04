@@ -306,9 +306,84 @@ describe('Say macros', () => {
     ['plural', () => say.plural(1, { other: '#' })],
     ['ordinal', () => say.ordinal(1, { other: '#' })],
     ['select', () => say.select('a', { other: 'b' })],
+    ['number', () => say.number(1)],
+    ['date', () => say.date(new Date())],
+    ['time', () => say.time(new Date())],
   ])('throws for %s', (name, call) => {
     expect(call).toThrow(
       `'Say#${name}' is a macro and must be used with the relevant saykit plugin`,
     );
+  });
+});
+
+// The macros exist to author these strings, so what matters is that the ICU
+// they extract to is ICU the runtime formatter actually honours. Every style
+// the parser accepts is exercised here, against the formatter we ship.
+describe('formatted arguments', () => {
+  // Built in local time, at midday, so the calendar date is the same one in
+  // every timezone the suite might run in.
+  const when = new Date(2020, 0, 2, 12, 4, 5);
+
+  function format(message: string, values: Record<string, unknown>) {
+    return new Say({ locales: ['en-US'], messages: { 'en-US': { m: message } } })
+      .activate('en-US')
+      .call({ id: 'm', ...values });
+  }
+
+  it.each([
+    ['{n, number}', { n: 1234.5 }, '1,234.5'],
+    ['{n, number, integer}', { n: 1234.5 }, '1,235'],
+    ['{n, number, percent}', { n: 0.25 }, '25%'],
+    ['{n, number, #,##0.00}', { n: 1234.5 }, '1,234.50'],
+  ])('formats %s', (message, values, expected) => {
+    expect(format(message, values)).toBe(expected);
+  });
+
+  it.each([
+    ['{d, date}', 'Jan 2, 2020'],
+    ['{d, date, short}', '1/2/2020'],
+    ['{d, date, medium}', 'Jan 2, 2020'],
+    ['{d, date, long}', 'January 2, 2020'],
+    ['{d, date, full}', 'Thursday, January 2, 2020'],
+  ])('formats %s', (message, expected) => {
+    expect(format(message, { d: when })).toBe(expected);
+  });
+
+  it.each(['{d, time}', '{d, time, short}', '{d, time, medium}', '{d, time, long}'])(
+    'formats %s',
+    (message) => {
+      expect(format(message, { d: when })).toMatch(/\d{1,2}:\d{2}/);
+    },
+  );
+
+  // ICU `select` has no exact-value syntax: `=0` there is a parse error, while
+  // a bare `0` matches the number and the string alike.
+  it.each([
+    [0, 'Free'],
+    ['0', 'Free'],
+    [1, 'Pro'],
+    ['enterprise', 'Custom'],
+  ])('selects the bare numeric case for %o', (tier, expected) => {
+    const message = '{tier, select, 0 {Free} 1 {Pro} other {Custom}}';
+    expect(format(message, { tier })).toBe(expected);
+  });
+
+  it('applies a plural offset', () => {
+    const message = '{n, plural, offset:1 one {you and # other} other {you and # others}}';
+    expect(format(message, { n: 3 })).toBe('you and 2 others');
+    expect(format(message, { n: 2 })).toBe('you and 1 other');
+  });
+
+  // ICU tests an exact value against the *original* number, before the offset
+  // is applied; the offset only reaches the CLDR category and `#`. So in the
+  // "you and N others" idiom, where the selector counts everyone including you,
+  // the branch meaning "nobody else" is `=1`, not `=0`.
+  it('matches an exact branch before applying the offset', () => {
+    const correct = '{n, plural, offset:1 =1 {nobody else} other {you and # others}}';
+    expect(format(correct, { n: 1 })).toBe('nobody else');
+    expect(format(correct, { n: 3 })).toBe('you and 2 others');
+
+    const wrong = '{n, plural, offset:1 =0 {nobody else} other {you and # others}}';
+    expect(format(wrong, { n: 1 })).toBe('you and 0 others');
   });
 });

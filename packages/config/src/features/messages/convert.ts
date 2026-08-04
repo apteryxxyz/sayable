@@ -14,8 +14,12 @@ export function convertMessageToIcu(message: Message) {
       case message instanceof LiteralMessage:
         return String(message.text);
 
-      case message instanceof ArgumentMessage:
-        return `{${String(message.identifier)}}`;
+      case message instanceof ArgumentMessage: {
+        const parts = [String(message.identifier)];
+        if (message.format) parts.push(message.format.type);
+        if (message.format?.style) parts.push(message.format.style);
+        return `{${parts.join(', ')}}`;
+      }
 
       case message instanceof ElementMessage: {
         // A childless element is self-closing, so a translator has nowhere to
@@ -30,13 +34,19 @@ export function convertMessageToIcu(message: Message) {
       case message instanceof ChoiceMessage: {
         const branches = message.branches
           .map(({ identifier, value }) => ({
-            identifier: getBranchCase(identifier),
+            identifier: getBranchCase(message.kind, identifier),
             value: internalConvertMessageToIcu(value),
           }))
           .map(({ identifier, value }) => `  ${identifier} {${value}}\n`)
           .join('');
         const format = message.kind === 'ordinal' ? 'selectordinal' : message.kind;
-        return `{${String(message.identifier)}, ${format},\n${branches}}`;
+        // `select` matches its cases as literal strings and has no number to
+        // offset, so an offset there would be invalid ICU rather than a no-op.
+        const offset =
+          message.offset === undefined || message.kind === 'select'
+            ? ''
+            : ` offset:${message.offset}`;
+        return `{${String(message.identifier)}, ${format},${offset}\n${branches}}`;
       }
 
       case message instanceof CompositeMessage:

@@ -90,6 +90,28 @@ content, since that comes from the translation.
   ICU is `1 {...}`, `2 {...}`.
 </Callout>
 
+### Numbers, dates, times
+
+`<Say.Number>`, `<Say.Date>`, and `<Say.Time>` format a value the way the active locale writes it.
+They are fragments rather than whole messages, so they nest inside a `<Say>`:
+
+```tsx
+<Say>
+  You have <Say.Number _={items.length} /> items, due
+  <Say.Date _={{ dueAt }} style="medium" />
+</Say>
+```
+
+`style` is optional: `integer` or `percent` on `<Say.Number>` (or a pattern like `#,##0.00`), and
+`short`, `medium`, `long`, or `full` on `<Say.Date>` and `<Say.Time>`. See
+[Messages](/core-concepts/messages#numbers-dates-and-times) for what each one extracts to, and why
+there is no `currency`.
+
+<Callout type="warn">
+  Don't use the `{' '}` spacing escape inside a `<Say>`. It is an expression child like any other, so
+  it extracts as a placeholder and leaves a translator moving a stray space around the sentence.
+</Callout>
+
 ### Descriptors
 
 To attach metadata to a JSX message, a custom id or context, pass it as a prop:
