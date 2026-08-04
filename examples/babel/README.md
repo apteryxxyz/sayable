@@ -1,7 +1,7 @@
 # Babel example
 
 SayKit compiled by **Babel and nothing else** — no bundler, no dev server, no loader.
-`babel src --out-dir dist`, then `node dist/main.js`.
+`pnpm build`, then `node dist/main.js`.
 
 This exists to pin down the `catalogues: 'inline'` default: `babel-plugin-saykit` on its
 own has to rewrite the macros _and_ resolve the catalogue imports, with no other tool
@@ -14,7 +14,7 @@ the only one that would notice if that stopped being true.
 pnpm start
 ```
 
-```
+```text
 [en]
 Welcome to the library
 3 books on loan

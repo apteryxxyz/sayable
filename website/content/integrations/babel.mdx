@@ -98,7 +98,7 @@ module.exports = withSayKit(getDefaultConfig(__dirname));
 
 The Babel plugin runs the matching SayKit transformer over every non-`node_modules` source file, rewriting macros to `say.call(...)` invocations.
 
-It also resolves each catalogue import: the locale's [fallback chain](/core-concepts/configuration#fallback-locales) is walked, every file in it parsed with the bucket's formatter, and the results merged into one record so untranslated keys fall back through the chain to the source string.
+Assembling a catalogue means walking the locale's [fallback chain](/core-concepts/configuration#fallback-locales), parsing every file in it with the bucket's formatter, and merging the results into one record so untranslated keys fall back through the chain to the source string. Under the default `'inline'` mode the plugin does that itself, at the import; under `'module'` it leaves the import alone and the Next.js loader or Metro transformer assembles the record instead.
 
 The result: no `.po` parser at runtime, no SayKit extractor in the bundle, just small `say.call()` calls and one plain JS object per locale.
 
