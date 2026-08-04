@@ -432,25 +432,37 @@ non-breaking space.
 
 ### Braces in text
 
-`{` and `}` are ICU's own syntax, so a message that means them literally has to say so. JSX has no
-way to write a bare brace in text at all, which leaves the expression form, and extraction escapes
-it for you on the way into the catalogue:
+`{` and `}` are ICU's own syntax, and a message that means them as characters is not writing ICU.
+Write the character; extraction quotes it on the way into the catalogue, and it renders as itself.
+You never write an ICU escape yourself.
+
+In JSX a bare `{` in text is a syntax error, so it comes from an expression or a character entity —
+either works:
 
 ```tsx
 <Say>Use {'{'}name{'}'} here</Say>
-// Use '{'name'}' here   →   renders as: Use {name} here
+<Say>Use &#123;name&#125; here</Say>
+// both extract as: Use '{'name'}' here   →   renders as: Use {name} here
 ```
 
-The same applies to a `say` template, where a brace can be written directly:
+A `say` template takes the character directly, since its own interpolation is `${}` and a brace
+there was never asking for an argument:
 
 ```ts
 say`Use {name} here`;
 // Use '{'name'}' here
 ```
 
-An apostrophe is the character ICU escapes with, so it is doubled where it sits in front of a brace
-or another apostrophe, and left alone everywhere else — `It's` stays `It's`. A `#` is never
-escaped, since inside a plural that is the number being formatted.
+The apostrophe is the character ICU quotes with, so it escapes itself: one in a message is doubled
+wherever ICU would read it as opening a quote, and left alone everywhere else, so `It's` stays
+`It's`. A bare `#` is the exception in the other direction — inside a plural that is the number
+being formatted, which is the one piece of ICU a message does write deliberately.
+
+<Callout type="info">
+  These escapes are what the catalogue holds, so a translator working in a PO or JSON file sees
+  `'{'` and `''`, and follows the same ICU rules when they write a translation. Nothing in your
+  source has to.
+</Callout>
 
 See [React integration](/integrations/react) for the full setup.
 

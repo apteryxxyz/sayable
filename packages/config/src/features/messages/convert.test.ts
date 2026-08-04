@@ -36,6 +36,9 @@ describe('convertMessageToIcu', () => {
       ['an apostrophe in front of an apostrophe', "it''s", `it'''s`],
       ['an apostrophe in front of neither', "don't {x}", `don't '{'x'}'`],
       ['an apostrophe in front of nothing at all', "the '80s'", `the '80s'`],
+      // Otherwise it quotes the `#`, which is how ICU spells a literal one —
+      // an escape nobody wrote and the sentence does not mean.
+      ['an apostrophe in front of a hash', "it's '#1", `it's ''#1`],
     ])('escapes %s', (_, text, expected) => {
       expect(convertMessageToIcu(new LiteralMessage(text))).toBe(expected);
     });
@@ -44,6 +47,42 @@ describe('convertMessageToIcu', () => {
     // every message that has ever contained one, for nothing.
     it('leaves an ordinary apostrophe alone', () => {
       expect(convertMessageToIcu(new LiteralMessage("It's a test"))).toBe("It's a test");
+    });
+
+    /**
+     * The character a literal runs into is not always one of its own. An
+     * apostrophe at the end of a literal sits against whatever the message puts
+     * next, and quoting there steals syntax that belongs to a sibling.
+     */
+    it('doubles an apostrophe that runs into a placeholder', () => {
+      const message = new CompositeMessage(
+        {},
+        [],
+        [],
+        [
+          new LiteralMessage("Click '"),
+          new ArgumentMessage('name', dummy),
+          new LiteralMessage("'"),
+        ],
+        dummy,
+      );
+      expect(convertMessageToIcu(message)).toBe(`Click ''{name}'`);
+    });
+
+    it('doubles an apostrophe that runs into the end of a branch', () => {
+      const message = new ChoiceMessage(
+        'plural',
+        'n',
+        [{ identifier: 'other', value: new LiteralMessage("the boys'") }],
+        dummy,
+      );
+      expect(convertMessageToIcu(message)).toContain("other {the boys''}");
+    });
+
+    // Nothing can be quoted at the end of the string, so the id of a message
+    // that simply ends in an apostrophe does not move.
+    it('leaves an apostrophe at the end of a message alone', () => {
+      expect(convertMessageToIcu(new LiteralMessage("the boys'"))).toBe("the boys'");
     });
 
     // Inside a plural this is the number being formatted, which is the whole

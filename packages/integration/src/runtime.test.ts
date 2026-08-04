@@ -383,8 +383,19 @@ describe('formatted arguments', () => {
     [`don't '{'x'}'`, "don't {x}"],
     // Escaped by nothing, because ICU already reads them as text.
     [`It's a test`, "It's a test"],
+    [`the boys'`, "the boys'"],
   ])('formats the escaped literal %j back to its text', (message, expected) => {
     expect(format(message, {})).toBe(expected);
+  });
+
+  // An apostrophe that runs into a placeholder rather than into text: quoted
+  // wrongly, it swallows the placeholder whole and the value never appears.
+  it('keeps a placeholder after an escaped apostrophe', () => {
+    expect(plain(format(`Click ''{name}'`, { name: 'Ada' }))).toBe(`Click 'Ada'`);
+  });
+
+  it('keeps a branch closed after an escaped apostrophe', () => {
+    expect(format(`{n, plural, other {the boys'' #}}`, { n: 2 })).toBe(`the boys' 2`);
   });
 
   it('applies a plural offset', () => {

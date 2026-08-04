@@ -123,14 +123,15 @@ describe('createJsxTransformer.extract', () => {
     expect(message!.message).toBe('Open <0/>');
   });
 
-  // JSX has no way to write a bare brace in text, so this is the only spelling
-  // of one — and it has to reach the catalogue as text rather than as an
-  // argument nothing supplies. See `escapeIcuLiteral` in `@saykit/config`.
-  it('escapes a literal brace written as an expression', () => {
-    const [message] = transformer.extract(
-      `const x = <Say>Use {'{'}name{'}'} here</Say>;`,
-      'file.tsx',
-    );
+  // A bare brace in JSX text is a syntax error, so a message meaning one says
+  // it with an expression or a character entity. Both are text by the time they
+  // reach the catalogue, and neither may arrive as an argument nothing
+  // supplies. See `escapeIcuLiteral` in `@saykit/config`.
+  it.each([
+    ['an expression', `<Say>Use {'{'}name{'}'} here</Say>`],
+    ['a character entity', '<Say>Use &#123;name&#125; here</Say>'],
+  ])('escapes a literal brace written as %s', (_, jsx) => {
+    const [message] = transformer.extract(`const x = ${jsx};`, 'file.tsx');
     expect(message!.message).toBe(`Use '{'name'}' here`);
   });
 

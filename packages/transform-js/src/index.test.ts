@@ -26,6 +26,14 @@ describe('createJsTransformer.extract', () => {
     expect(message!.references).toEqual(['file.ts:1']);
   });
 
+  // A brace in a template is text — the template's own interpolation is `${}`,
+  // so nothing here is asking for an ICU argument. Escaping it is what keeps a
+  // message from turning into a placeholder the catalogue never declared.
+  it('escapes a brace written in a template', () => {
+    const [message] = transformer.extract('const x = say`Use {name} here`;', 'file.ts');
+    expect(message!.message).toBe(`Use '{'name'}' here`);
+  });
+
   it('carries through an explicit id and context', () => {
     const [message] = transformer.extract(
       "const g = say({ id: 'greeting', context: 'formal' })`Hi`;",
