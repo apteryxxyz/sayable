@@ -17,6 +17,42 @@ describe('convertMessageToIcu', () => {
       .toMatchInlineSnapshot('"Hello"');
   });
 
+  /**
+   * A brace in literal text is text. Left as it is, ICU reads it as an
+   * argument the catalogue never declared — `Use {name} here` stops being a
+   * sentence about braces and starts being a sentence with a hole in it.
+   *
+   * The round trip is what these assert against: each escaped string below is
+   * fed back through the runtime formatter in `packages/integration`, and has
+   * to come out as the text it started as.
+   */
+  describe('escaping literal text', () => {
+    it.each([
+      ['a brace', 'Use {name} here', `Use '{'name'}' here`],
+      ['a run of braces', 'a {{ b }} c', `a '{{' b '}}' c`],
+      // Doubled only where a quote could start. In `don't` the apostrophe is
+      // followed by a letter, so ICU already reads it as an apostrophe.
+      ['an apostrophe in front of a brace', "'{", `'''{'`],
+      ['an apostrophe in front of an apostrophe', "it''s", `it'''s`],
+      ['an apostrophe in front of neither', "don't {x}", `don't '{'x'}'`],
+      ['an apostrophe in front of nothing at all', "the '80s'", `the '80s'`],
+    ])('escapes %s', (_, text, expected) => {
+      expect(convertMessageToIcu(new LiteralMessage(text))).toBe(expected);
+    });
+
+    // Doubling every apostrophe would be valid ICU and would rewrite the id of
+    // every message that has ever contained one, for nothing.
+    it('leaves an ordinary apostrophe alone', () => {
+      expect(convertMessageToIcu(new LiteralMessage("It's a test"))).toBe("It's a test");
+    });
+
+    // Inside a plural this is the number being formatted, which is the whole
+    // reason to write one.
+    it('leaves a hash alone', () => {
+      expect(convertMessageToIcu(new LiteralMessage('issue #1'))).toBe('issue #1');
+    });
+  });
+
   it('should generate argument messages', () => {
     const message = new ArgumentMessage('name', dummy);
     expect(convertMessageToIcu(message)) //
@@ -210,20 +246,24 @@ describe('convertMessageToIcu', () => {
       .toMatchInlineSnapshot('"Hello, {name}!"');
   });
 
-  it('should normalise jsx related whitespace', () => {
+  // Collapsing a message's own indentation is the JSX parser's job, and it
+  // does it the way JSX does. By the time text arrives here it is the text the
+  // message means, edges included — a space at either end is as deliberate as
+  // one in the middle, and `{' '}` is how JSX asks for it.
+  it('keeps whitespace at the edges of a message', () => {
     const message = new CompositeMessage(
       {},
       [],
       [],
       [
-        new LiteralMessage('\n  Hello, '),
+        new LiteralMessage(' Hello, '),
         new ArgumentMessage('name', dummy),
-        new LiteralMessage('!\n'),
+        new LiteralMessage('! '),
       ],
       dummy,
     );
     expect(convertMessageToIcu(message)) //
-      .toMatchInlineSnapshot('"Hello, {name}!"');
+      .toMatchInlineSnapshot(`" Hello, {name}! "`);
   });
 
   it('throws for an unknown message type', () => {

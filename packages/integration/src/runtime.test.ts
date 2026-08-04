@@ -368,6 +368,25 @@ describe('formatted arguments', () => {
     expect(format(message, { tier })).toBe(expected);
   });
 
+  /**
+   * The other half of the round trip. `convertMessageToIcu` in `@saykit/config`
+   * escapes literal text on the way into a catalogue; these are the exact
+   * strings it produces for the cases asserted there, and each one has to come
+   * back out as the text an author wrote. A catalogue that formats to anything
+   * else is a catalogue that quietly lost a character.
+   */
+  it.each([
+    [`Use '{'name'}' here`, 'Use {name} here'],
+    [`a '{{' b '}}' c`, 'a {{ b }} c'],
+    [`'''{'`, "'{"],
+    [`it'''s`, "it''s"],
+    [`don't '{'x'}'`, "don't {x}"],
+    // Escaped by nothing, because ICU already reads them as text.
+    [`It's a test`, "It's a test"],
+  ])('formats the escaped literal %j back to its text', (message, expected) => {
+    expect(format(message, {})).toBe(expected);
+  });
+
   it('applies a plural offset', () => {
     const message = '{n, plural, offset:1 one {you and # other} other {you and # others}}';
     expect(format(message, { n: 3 })).toBe('you and 2 others');

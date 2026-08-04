@@ -123,6 +123,17 @@ describe('createJsxTransformer.extract', () => {
     expect(message!.message).toBe('Open <0/>');
   });
 
+  // JSX has no way to write a bare brace in text, so this is the only spelling
+  // of one — and it has to reach the catalogue as text rather than as an
+  // argument nothing supplies. See `escapeIcuLiteral` in `@saykit/config`.
+  it('escapes a literal brace written as an expression', () => {
+    const [message] = transformer.extract(
+      `const x = <Say>Use {'{'}name{'}'} here</Say>;`,
+      'file.tsx',
+    );
+    expect(message!.message).toBe(`Use '{'name'}' here`);
+  });
+
   it('returns an empty array when there are no messages', () => {
     expect(transformer.extract('const x = <div>plain</div>;', 'file.tsx')).toEqual([]);
   });

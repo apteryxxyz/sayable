@@ -33,7 +33,7 @@ function BoardColumn({ column }: { column: Column }) {
             still uses these exact React elements, with their handlers intact.
           */}
           <Say>
-            Nothing here. <a href="#new">Add a task</a> or drag one across from
+            Nothing here. <a href="#new">Add a task</a> or drag one across from{' '}
             <strong>To do</strong>.
           </Say>
         </p>
@@ -62,7 +62,7 @@ export function Board() {
             `one` and `other`.
           */}
           <Say>
-            Welcome back, {currentMember}. This is your
+            Welcome back, {currentMember}. This is your{' '}
             <Say.Ordinal _={sprintNumber} one="#st" two="#nd" few="#rd" other="#th" /> sprint.
           </Say>
         </p>
@@ -87,7 +87,7 @@ export function Board() {
           */}
           <Say>
             <Say.Number _={{ complete: completionRatio() }} style="percent" /> complete. This sprint
-            ends on <Say.Date _={{ sprintEndsAt }} style="medium" />, at
+            ends on <Say.Date _={{ sprintEndsAt }} style="medium" />, at{' '}
             <Say.Time _={{ sprintEndsAt }} style="short" />.
           </Say>
         </p>

@@ -97,7 +97,7 @@ They are fragments rather than whole messages, so they nest inside a `<Say>`:
 
 ```tsx
 <Say>
-  You have <Say.Number _={items.length} /> items, due
+  You have <Say.Number _={items.length} /> items, due{' '}
   <Say.Date _={{ dueAt }} style="medium" />
 </Say>
 ```
@@ -107,9 +107,11 @@ They are fragments rather than whole messages, so they nest inside a `<Say>`:
 [Messages](/core-concepts/messages#numbers-dates-and-times) for what each one extracts to, and why
 there is no `currency`.
 
-<Callout type="warn">
-  Don't use the `{' '}` spacing escape inside a `<Say>`. It is an expression child like any other, so
-  it extracts as a placeholder and leaves a translator moving a stray space around the sentence.
+<Callout type="info">
+  A line break between two children is layout, not a space, exactly as it is in JSX itself, so the
+  `{' '}` above is what keeps "due" from running into the date. It extracts as a plain space inside
+  the message, and Prettier writes it for you when it wraps a line that ends in one. See
+  [whitespace](/core-concepts/messages#whitespace).
 </Callout>
 
 ### Descriptors

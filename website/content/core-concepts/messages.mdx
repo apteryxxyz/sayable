@@ -367,21 +367,90 @@ Every macro above has a JSX counterpart. The selector is the `_` prop, branches 
 
 ```tsx
 <Say>
-  You have <Say.Number _={items.length} /> items, last updated on
+  You have <Say.Number _={items.length} /> items, last updated on{' '}
   <Say.Date _={{ updatedAt }} style="long" />
 </Say>
 ```
-
-<Callout type="warn">
-  Avoid the `{' '}` spacing escape inside a `<Say>`. It is an expression child like any other, so it
-  extracts as a placeholder (`updated {0} <Say.Date .../>`) and a translator is left moving a stray
-  space around the sentence. Reword so the line break falls where a space belongs.
-</Callout>
 
 <Callout type="info">
   Branch keys that start with a digit get a leading underscore in JSX (`_1`, `_2`) because JSX prop
   names can't start with a number. SayKit strips the underscore at extract time.
 </Callout>
+
+### Whitespace
+
+A JSX message extracts as the text JSX renders, character for character. There is one rule behind
+that, and it is the one React already applies to your markup: **a line break and the indentation
+around it are layout, not content.** Two lines that both hold text are rejoined with a single
+space, because the break is all that was separating the words. A break that sits against an element
+or an expression leaves nothing behind, and the two sides render touching.
+
+```tsx
+<Say>
+  Hello,
+  world!
+</Say>
+// Hello, world!
+
+<Say>
+  <span>{days}</span>
+  d
+</Say>
+// <0>{days}</0>d
+```
+
+Anything written inside a line is content, so every space there survives, including a run of them.
+To keep a space across a break, write it as `{' '}` — it extracts as a plain space rather than as a
+placeholder, and Prettier inserts it for you when it wraps a line that ended in one. `{'\n'}`
+extracts as a line break the same way, and a space written this way survives at the very start or
+end of a message too.
+
+Any expression holding a literal is treated the same, because a literal is text that renders:
+`{'—'}`, `` {`\n`} ``, and `{10}` all extract as the characters they put on the page. HTML entities
+need no expression at all — `&middot;` and `&nbsp;` are decoded into the message as `·` and a real
+non-breaking space.
+
+```tsx
+<Say>
+  Read <a href="/docs">the docs</a>
+  , or ask us.
+</Say>
+// Read <0>the docs</0>, or ask us.
+
+<Say>
+  Drag one across from{' '}
+  <strong>To do</strong>.
+</Say>
+// Drag one across from <0>To do</0>.
+```
+
+<Callout type="warn">
+  Ids are content hashes, so a whitespace change is a new message and orphans the translations of
+  the old one. Check what a message extracts to before shipping it, `saykit extract` prints the
+  catalogue it produces.
+</Callout>
+
+### Braces in text
+
+`{` and `}` are ICU's own syntax, so a message that means them literally has to say so. JSX has no
+way to write a bare brace in text at all, which leaves the expression form, and extraction escapes
+it for you on the way into the catalogue:
+
+```tsx
+<Say>Use {'{'}name{'}'} here</Say>
+// Use '{'name'}' here   →   renders as: Use {name} here
+```
+
+The same applies to a `say` template, where a brace can be written directly:
+
+```ts
+say`Use {name} here`;
+// Use '{'name'}' here
+```
+
+An apostrophe is the character ICU escapes with, so it is doubled where it sits in front of a brace
+or another apostrophe, and left alone everywhere else — `It's` stays `It's`. A `#` is never
+escaped, since inside a plural that is the number being formatted.
 
 See [React integration](/integrations/react) for the full setup.
 

@@ -12,99 +12,63 @@ function extract(jsx: string) {
 }
 
 /**
- * Prettier wraps JSX at the print width, so a translatable line routinely ends
- * with a word and continues with an element on the next line. The line break is
- * the only thing separating them, and it has to keep meaning "space" — dropping
- * it runs the words together and, because ids are content hashes, silently
- * orphans every existing translation for the message.
+ * The whole rule, and the only one worth remembering: a message extracts as the
+ * text JSX renders. A line break and the indentation around it are how the
+ * source is laid out, not part of the sentence, so they never reach a
+ * catalogue — whitespace that has to survive a break is written as `{' '}`.
  *
- * Each case below is lifted from a real example app, named by where it lives.
- * They exist because they are the shapes that regressed in #63 while the whole
- * suite stayed green.
+ * Every case below is checked against what React itself would put on the page
+ * for the same JSX. Where the two could differ, this file is wrong.
  */
-describe('whitespace across a line break', () => {
-  it('joins text to an element on the next line', () => {
-    // examples/react/src/components/board.tsx
+describe('a line break between two children', () => {
+  it('leaves nothing between text and an element on the next line', () => {
     expect(
       extract(`<Say>
-        Nothing here. <a href="#new">Add a task</a> or drag one across from
-        <strong>To do</strong>.
+        <span>
+          {days}
+        </span>
+        d
       </Say>`),
-    ).toBe('Nothing here. <0>Add a task</0> or drag one across from <1>To do</1>.');
+    ).toBe('<0>{days}</0>d');
   });
 
-  it('joins text between two elements that each start a line', () => {
-    // examples/expo/src/habit-card.tsx
+  it('leaves nothing between two elements on their own lines', () => {
     expect(
       extract(`<Say>
-        <Text style={s}>{a}</Text> of
-        <Text style={s}>{b}</Text> this week
+        <strong>1</strong>
+        <em>2</em>
       </Say>`),
-    ).toBe('<0>{a}</0> of <1>{b}</1> this week');
+    ).toBe('<0>1</0><1>2</1>');
   });
 
-  it('joins text to a choice element on both sides', () => {
-    // examples/tanstack-start/src/routes/{-$locale}/index.tsx
+  it('leaves nothing before punctuation stranded on its own line', () => {
+    expect(
+      extract(`<Say>
+        Read <a href="/d">the docs</a>
+        .
+      </Say>`),
+    ).toBe('Read <0>the docs</0>.');
+  });
+
+  it('leaves nothing before a choice element on the next line', () => {
     expect(
       extract(`<Say>
         their
-        <Say.Ordinal _={n} one="#st" two="#nd" few="#rd" other="#th" />
-        time on this stage
+        <Say.Ordinal _={n} one="#st" other="#th" />
       </Say>`),
-    ).toBe(`their {n, selectordinal,
+    ).toBe(`their{n, selectordinal,
   one {#st}
-  two {#nd}
-  few {#rd}
   other {#th}
-} time on this stage`);
-  });
-
-  it('joins text to two consecutive choice elements', () => {
-    // examples/tanstack-start/src/routes/{-$locale}/index.tsx
-    expect(
-      extract(`<Say>
-        The full program —
-        <Say.Plural _={s} one="# session" other="# sessions" />, including
-        <Say.Plural _={w} one="# workshop" other="# workshops" />.
-      </Say>`),
-    ).toBe(`The full program — {s, plural,
-  one {# session}
-  other {# sessions}
-}, including {w, plural,
-  one {# workshop}
-  other {# workshops}
-}.`);
+}`);
   });
 });
 
-describe('whitespace on a single line', () => {
-  it('keeps single spaces around an element', () => {
-    expect(extract('<Say>Hello <strong>brave</strong> world!</Say>')).toBe(
-      'Hello <0>brave</0> world!',
-    );
-  });
-
-  it('collapses a run of spaces to one', () => {
-    expect(extract('<Say>Hello   <strong>brave</strong>   world!</Say>')).toBe(
-      'Hello <0>brave</0> world!',
-    );
-  });
-
-  it('keeps no space where the source has none', () => {
-    expect(extract('<Say>(<strong>brave</strong>)</Say>')).toBe('(<0>brave</0>)');
-  });
-});
-
-describe('whitespace at the container edges', () => {
-  it('trims the indentation a multiline container introduces', () => {
-    expect(
-      extract(`<Say>
-        Hello, world!
-      </Say>`),
-    ).toBe('Hello, world!');
-  });
-
-  it('joins wrapped lines of plain text with a single space', () => {
+/**
+ * The counterpart: a break between two runs of text is the only thing that was
+ * separating the words, so it rejoins as the single space it renders as.
+ */
+describe('a line break inside a run of text', () => {
+  it('joins wrapped lines with a single space', () => {
     expect(
       extract(`<Say>
         Hello,
@@ -113,56 +77,126 @@ describe('whitespace at the container edges', () => {
     ).toBe('Hello, world!');
   });
 
-  it('trims around a leading and trailing element', () => {
+  it('joins lines around a blank line with a single space', () => {
     expect(
       extract(`<Say>
-        <strong>Hello</strong>, world
+        Hello,
+
+        world!
       </Say>`),
-    ).toBe('<0>Hello</0>, world');
+    ).toBe('Hello, world!');
+  });
+
+  it('trims the indentation a multiline container introduces', () => {
+    expect(
+      extract(`<Say>
+        Hello, world!
+      </Say>`),
+    ).toBe('Hello, world!');
+  });
+
+  it('reads a tab as a space', () => {
+    expect(extract('<Say>\n\t\tHello,\n\t\tworld!\n\t</Say>')).toBe('Hello, world!');
   });
 });
 
 /**
- * The counterpart to the block above: a line break usually means a space, but
- * punctuation belongs tight against what precedes it. A formatter wrapping long
- * JSX strands punctuation at the start of a line routinely, and a space in
- * front of it would ship to every locale.
+ * Inside a line there is no break to attribute anything to, so every space is
+ * one the author typed and every one of them renders.
  */
-describe('punctuation at the start of a line', () => {
-  it('takes no space before a full stop left on its own line', () => {
-    expect(
-      extract(`<Say>
-        Kiai Security — only authorize apps you trust. Report malicious
-        integrations in
-        <a href="https://discord.gg/example">our support server</a>
-        .
-      </Say>`),
-    ).toBe(
-      'Kiai Security — only authorize apps you trust. Report malicious integrations in <0>our support server</0>.',
+describe('whitespace written inside a line', () => {
+  it('keeps single spaces around an element', () => {
+    expect(extract('<Say>Hello <strong>brave</strong> world!</Say>')).toBe(
+      'Hello <0>brave</0> world!',
     );
   });
 
-  it('takes no space before a clause that opens with a comma', () => {
-    expect(
-      extract(`<Say>
-        Signed,
-        <strong>the team</strong>
-        , with thanks
-      </Say>`),
-    ).toBe('Signed, <0>the team</0>, with thanks');
+  it('keeps a run of spaces as written', () => {
+    expect(extract('<Say>Hello   <strong>brave</strong>   world!</Say>')).toBe(
+      'Hello   <0>brave</0>   world!',
+    );
   });
 
-  it('keeps a space the author wrote on the same line', () => {
-    // Only an implicit line break is collapsed away; this space is deliberate.
-    expect(extract('<Say>Ready <strong>set</strong> ?</Say>')).toBe('Ready <0>set</0> ?');
+  it('keeps no space where the source has none', () => {
+    expect(extract('<Say>(<strong>brave</strong>)</Say>')).toBe('(<0>brave</0>)');
   });
 
-  it('keeps a space before an opening bracket on the next line', () => {
+  it('keeps a space against the edge of the line the break interrupts', () => {
     expect(
       extract(`<Say>
-        See <a href="/d">the docs</a>
-        (they are short)
+        See <a href="/d">the docs</a> and
+        <a href="/x">the examples</a> too
       </Say>`),
-    ).toBe('See <0>the docs</0> (they are short)');
+    ).toBe('See <0>the docs</0> and<1>the examples</1> too');
+  });
+});
+
+/**
+ * How a space survives a break. Prettier writes `{' '}` itself when it wraps a
+ * line that ends in one, so this is the shape the formatter already produces —
+ * it extracts as the space it renders as, rather than as a placeholder no
+ * translator can see or move.
+ */
+describe('whitespace written as an expression', () => {
+  it("extracts {' '} as a space", () => {
+    expect(
+      extract(`<Say>
+        Nothing here. <a href="#new">Add a task</a> or drag one across from{' '}
+        <strong>To do</strong>.
+      </Say>`),
+    ).toBe('Nothing here. <0>Add a task</0> or drag one across from <1>To do</1>.');
+  });
+
+  it("extracts {'\\n'} as a line break", () => {
+    expect(extract(`<Say>Hello,{'\\n'}world!</Say>`)).toBe('Hello,\nworld!');
+  });
+
+  it('extracts a template literal with nothing interpolated', () => {
+    expect(extract('<Say>Hello,{` `}world!</Say>')).toBe('Hello, world!');
+  });
+
+  it('extracts any other literal string as the text it renders as', () => {
+    expect(extract(`<Say>Hello, {'world'}!</Say>`)).toBe('Hello, world!');
+  });
+
+  // A number written into a sentence is content a translator should be able to
+  // read and move, not a value the catalogue asks the caller for.
+  it('extracts a literal number as the text it renders as', () => {
+    expect(extract('<Say>Top {10} results</Say>')).toBe('Top 10 results');
+  });
+
+  // The counterpart to the container edges being trimmed: what is trimmed is
+  // the indentation, and a space asked for explicitly is not that.
+  it('keeps a space at the edge of a message', () => {
+    expect(extract(`<Say>{' '}Hello{' '}</Say>`)).toBe(' Hello ');
+  });
+
+  it('folds the surrounding text into a single run', () => {
+    expect(extract(`<Say>Hello,{' '}world!</Say>`)).toBe('Hello, world!');
+  });
+
+  it('carries a space between two choice elements', () => {
+    // examples/tanstack-start/src/routes/{-$locale}/index.tsx
+    expect(
+      extract(`<Say>
+        <Say.Plural _={s} one="# session" other="# sessions" />{' '}
+        ·{' '}
+        <Say.Plural _={w} one="# workshop" other="# workshops" />
+      </Say>`),
+    ).toBe(`{s, plural,
+  one {# session}
+  other {# sessions}
+} · {w, plural,
+  one {# workshop}
+  other {# workshops}
+}`);
+  });
+
+  it('leaves nothing behind for an empty string', () => {
+    expect(extract(`<Say>Hello,{''} world!</Say>`)).toBe('Hello, world!');
+  });
+
+  it('still extracts an interpolated value as a placeholder', () => {
+    expect(extract('<Say>Hello, {name}!</Say>')).toBe('Hello, {name}!');
   });
 });

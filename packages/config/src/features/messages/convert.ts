@@ -8,11 +8,45 @@ import {
   type Message,
 } from './types.js';
 
+/**
+ * Quote the characters ICU reads as syntax, so text a message means literally
+ * arrives as text rather than as an argument the catalogue never declared.
+ *
+ * A brace is quoted as `'{'`, which is ICU's own escape. An apostrophe is the
+ * character doing that quoting, so it is doubled — but only where ICU would
+ * otherwise read it as opening a quote, which is in front of a brace or
+ * another apostrophe. Everywhere else it is already literal, and doubling it
+ * would rewrite the id of every message that contains one.
+ *
+ * `#` is deliberately left alone: inside a plural it is the number being
+ * formatted, which is the whole point of writing it.
+ */
+function escapeIcuLiteral(text: string) {
+  let escaped = '';
+
+  for (let i = 0; i < text.length; i++) {
+    const character = text[i]!;
+
+    if (character === '{' || character === '}') {
+      // One quoted run for a whole stretch of braces, so `{{` is `'{{'`.
+      const start = i;
+      while (text[i + 1] === '{' || text[i + 1] === '}') i++;
+      escaped += `'${text.slice(start, i + 1)}'`;
+    } else if (character === "'" && /['{}]/.test(text[i + 1] ?? '')) {
+      escaped += "''";
+    } else {
+      escaped += character;
+    }
+  }
+
+  return escaped;
+}
+
 export function convertMessageToIcu(message: Message) {
   function internalConvertMessageToIcu(message: Message): string {
     switch (true) {
       case message instanceof LiteralMessage:
-        return String(message.text);
+        return escapeIcuLiteral(String(message.text));
 
       case message instanceof ArgumentMessage: {
         const parts = [String(message.identifier)];
@@ -59,5 +93,9 @@ export function convertMessageToIcu(message: Message) {
     }
   }
 
-  return internalConvertMessageToIcu(message).trim();
+  // Not trimmed. A message carries the text it was written with, and a space
+  // at either end is as deliberate as one in the middle — `{' '}` is how a JSX
+  // message asks for one, and every character of a template literal is already
+  // exactly what it says. Trimming here would quietly overrule both.
+  return internalConvertMessageToIcu(message);
 }
