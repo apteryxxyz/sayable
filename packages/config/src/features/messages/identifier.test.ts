@@ -31,6 +31,92 @@ describe('assignSequenceIdentifiers', () => {
     expect((message.children[2] as ArgumentMessage).identifier).toBe('1');
   });
 
+  // The rule an explicit name already follows, applied to a name nobody wrote:
+  // a repeat is one placeholder precisely when nothing distinguishes it.
+  it('gives equivalent arguments the same number', () => {
+    const message = new CompositeMessage(
+      {},
+      [],
+      [],
+      [
+        new ArgumentMessage(AUTO_INCREMENT_IDENTIFIER, 'count'),
+        new LiteralMessage(' x '),
+        new ArgumentMessage(AUTO_INCREMENT_IDENTIFIER, 'count'),
+        new ArgumentMessage(AUTO_INCREMENT_IDENTIFIER, 'other'),
+      ],
+      null,
+    );
+    assignSequenceIdentifiers(message, { current: 0 }, (a, b) => a === b);
+    expect(message.children.map((c) => (c as ArgumentMessage).identifier)).toEqual([
+      '0',
+      undefined,
+      '0',
+      '1',
+    ]);
+  });
+
+  it('gives equivalent elements the same tag', () => {
+    const message = new CompositeMessage(
+      {},
+      [],
+      [],
+      [
+        new ElementMessage(AUTO_INCREMENT_IDENTIFIER, [], 'a'),
+        new ElementMessage(AUTO_INCREMENT_IDENTIFIER, [], 'a'),
+        new ElementMessage(AUTO_INCREMENT_IDENTIFIER, [], 'b'),
+      ],
+      null,
+    );
+    assignSequenceIdentifiers(message, { current: 0 }, (a, b) => a === b);
+    expect(message.children.map((c) => (c as ElementMessage).identifier)).toEqual(['0', '0', '1']);
+  });
+
+  // An element and an argument are two different things to a message even when
+  // the expressions behind them match, so they are numbered apart — the same
+  // split `collectAssignedIdentifiers` claims explicit names under.
+  it('numbers a tag and a value apart', () => {
+    const element = new ElementMessage(AUTO_INCREMENT_IDENTIFIER, [], 'x');
+    const argument = new ArgumentMessage(AUTO_INCREMENT_IDENTIFIER, 'x');
+    assignSequenceIdentifiers(
+      new CompositeMessage({}, [], [], [element, argument], null),
+      { current: 0 },
+      (a, b) => a === b,
+    );
+    expect(element.identifier).toBe('0');
+    expect(argument.identifier).toBe('1');
+  });
+
+  // One value formatted two ways is one value: the caller supplies it once and
+  // a translator moves one placeholder, with the formatting riding along.
+  it('gives a choice the number of an equivalent argument', () => {
+    const argument = new ArgumentMessage(AUTO_INCREMENT_IDENTIFIER, 'n');
+    const choice = new ChoiceMessage(
+      'plural',
+      AUTO_INCREMENT_IDENTIFIER,
+      [{ identifier: 'other', value: new LiteralMessage('#') }],
+      'n',
+    );
+    assignSequenceIdentifiers(
+      new CompositeMessage({}, [], [], [argument, choice], null),
+      { current: 0 },
+      (a, b) => a === b,
+    );
+    expect(argument.identifier).toBe('0');
+    expect(choice.identifier).toBe('0');
+  });
+
+  it('never reuses a number an explicit identifier has taken', () => {
+    const first = new ArgumentMessage(AUTO_INCREMENT_IDENTIFIER, 'x');
+    const second = new ArgumentMessage(AUTO_INCREMENT_IDENTIFIER, 'y');
+    assignSequenceIdentifiers(
+      new CompositeMessage({}, [], [], [new ArgumentMessage('0', 'z'), first, second], null),
+      { current: 0 },
+      (a, b) => a === b,
+    );
+    expect(first.identifier).toBe('1');
+    expect(second.identifier).toBe('2');
+  });
+
   it('leaves explicit identifiers untouched', () => {
     const arg = new ArgumentMessage('named', null);
     assignSequenceIdentifiers(new CompositeMessage({}, [], [], [arg], null));

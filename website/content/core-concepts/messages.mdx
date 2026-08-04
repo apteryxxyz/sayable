@@ -61,6 +61,15 @@ say`Signed in as ${user.profile.name ?? 'Anonymous'}`; // → "Signed in as {0}"
 
 Pull values into local variables before interpolating them, translators get readable placeholders, and the message stays stable across refactors.
 
+The same value written twice is one placeholder, so it is numbered once — the rule a name you write
+yourself already follows, where a repeat is allowed precisely when nothing distinguishes it. Identical
+elements share a tag the same way, while two that differ in any prop stay apart.
+
+```ts
+say`${guesses.length} x ${guesses.length}`; // → "{0} x {0}"
+say`${guesses.length} x ${answers.length}`; // → "{0} x {1}"
+```
+
 When you cannot, name the placeholder by interpolating a single-key object, the key is the name:
 
 ```ts

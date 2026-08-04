@@ -123,6 +123,45 @@ describe('createJsxTransformer.extract', () => {
     expect(message!.message).toBe('Open <0/>');
   });
 
+  // The same value written twice is one value, and the same element written
+  // twice is one tag — the rule an explicit name and an explicit `say-tag`
+  // already follow, applied to the ones nobody wrote.
+  it('numbers a repeated expression once', () => {
+    const [message] = transformer.extract(
+      'const x = <Say>{items.length} of {items.length}</Say>;',
+      'file.tsx',
+    );
+    expect(message!.message).toBe('{0} of {0}');
+  });
+
+  it('tags identical elements once', () => {
+    const [message] = transformer.extract(
+      'const x = <Say><b>one</b> and <b>two</b></Say>;',
+      'file.tsx',
+    );
+    expect(message!.message).toBe('<0>one</0> and <0>two</0>');
+  });
+
+  // Two elements a translator has to be able to tell apart stay apart, and the
+  // props they compile to keep their own handlers and hrefs.
+  it('tags elements that differ apart', () => {
+    const [message] = transformer.extract(
+      'const x = <Say><a href="/x">one</a> and <a href="/y">two</a></Say>;',
+      'file.tsx',
+    );
+    expect(message!.message).toBe('<0>one</0> and <1>two</1>');
+  });
+
+  // One value formatted two ways, which is the whole reason to write the two
+  // fragments rather than format ahead of the message.
+  it('numbers one value formatted two ways once', () => {
+    const [message] = transformer.extract(
+      'const x = <Say><Say.Date _={sprint.endsAt} style="medium" /> at <Say.Time _={sprint.endsAt} style="short" /></Say>;',
+      'file.tsx',
+    );
+    expect(message!.message).toBe('{0, date, medium} at {0, time, short}');
+  });
+
   it('returns an empty array when there are no messages', () => {
     expect(transformer.extract('const x = <div>plain</div>;', 'file.tsx')).toEqual([]);
   });

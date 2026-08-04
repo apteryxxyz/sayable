@@ -109,13 +109,40 @@ export function assignSequenceIdentifiers(
     return identifier;
   }
 
+  // The numbers handed out so far, against the expression each was handed out
+  // for. Tags and values are numbered apart for the same reason they are
+  // claimed apart: an element and an argument that happen to be equivalent are
+  // still two different things to a message.
+  const numbered = { tags: [] as [unknown, string][], values: [] as [unknown, string][] };
+
+  /**
+   * The number this expression already has, or a fresh one. An anonymous
+   * placeholder is named by its position, so the same value written twice would
+   * otherwise arrive as two names — `{0} x {1}` for one length, which asks a
+   * translator to keep two holes in step and the caller to supply one value
+   * under two props. This is the rule explicit names already follow, where a
+   * repeat is allowed precisely when nothing distinguishes it.
+   */
+  function number(assigned: [unknown, string][], expression: unknown) {
+    const seen = assigned.find(([e]) => equivalent(e, expression));
+    if (seen) return seen[1];
+
+    const identifier = next();
+    assigned.push([expression, identifier]);
+    return identifier;
+  }
+
   function walk(message: Message) {
     if (
       message instanceof ArgumentMessage ||
       message instanceof ElementMessage ||
       message instanceof ChoiceMessage
     )
-      if (message.identifier === AUTO_INCREMENT_IDENTIFIER) message.identifier = next();
+      if (message.identifier === AUTO_INCREMENT_IDENTIFIER)
+        message.identifier = number(
+          message instanceof ElementMessage ? numbered.tags : numbered.values,
+          message.expression,
+        );
     if (message instanceof CompositeMessage || message instanceof ElementMessage)
       for (const child of message.children) walk(child);
     if (message instanceof ChoiceMessage)
