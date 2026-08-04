@@ -46,11 +46,13 @@ export default (_: unknown, { catalogues = 'inline' }: Options = {}): PluginObj 
               const catalogue = loadCatalogue(config, resolve(dirname(importer), importee));
               if (!catalogue) return;
 
-              const specifier = path.node.specifiers.find(
-                (s) => s.type === 'ImportDefaultSpecifier',
-              );
-              if (!specifier)
-                throw path.buildCodeFrameError('SayKit inline imports require a default import');
+              // The whole declaration is replaced by one binding, so anything
+              // bound alongside the default would be dropped silently.
+              const [specifier, ...rest] = path.node.specifiers;
+              if (specifier?.type !== 'ImportDefaultSpecifier' || rest.length > 0)
+                throw path.buildCodeFrameError(
+                  'SayKit inline imports require a single default import',
+                );
 
               path.replaceWith(
                 t.variableDeclaration('const', [

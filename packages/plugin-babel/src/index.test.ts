@@ -68,7 +68,7 @@ describe('plugin-babel catalogue imports', () => {
     expect(out).toContain('Hello');
   });
 
-  // With a bundler integration wired up (see `webpack/index.ts` and
+  // With a bundler integration wired up (see `next/loader.ts` and
   // `metro/transformer.ts`) the import has to survive — inlining it strips the
   // dependency edge the bundler invalidates on, which is what broke hot reload
   // in https://github.com/k0d13/saykit/issues/71.
@@ -81,7 +81,16 @@ describe('plugin-babel catalogue imports', () => {
   it('requires a default import when inlining', () => {
     writeFileSync(join(dir, 'messages.json'), JSON.stringify([{ message: 'Hello' }]));
     expect(() => run(`import { m } from './messages.json';`, join(dir, 'app.ts'))).toThrow(
-      'require a default import',
+      'require a single default import',
+    );
+  });
+
+  // Inlining replaces the whole declaration with one binding, so a named
+  // specifier alongside the default has to be rejected rather than dropped.
+  it('rejects a default import mixed with named specifiers', () => {
+    writeFileSync(join(dir, 'messages.json'), JSON.stringify([{ message: 'Hello' }]));
+    expect(() => run(`import m, { extra } from './messages.json';`, join(dir, 'app.ts'))).toThrow(
+      'require a single default import',
     );
   });
 });
