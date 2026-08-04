@@ -37,8 +37,8 @@ function render(stats: PageStats | null) {
   estimate.className = 'estimate';
   // Translators: the headline estimate. # is a number of minutes.
   estimate.textContent = say.plural(minutes, {
-    one: 'About # minute',
-    other: 'About # minutes',
+    one: `About ${minutes} minute`,
+    other: `About ${minutes} minutes`,
   });
   root.append(estimate);
 
@@ -50,11 +50,21 @@ function render(stats: PageStats | null) {
   );
 
   if (stats.images > 0) {
-    root.append(line(say.plural(stats.images, { one: '# image', other: '# images' }), 'muted'));
+    root.append(
+      line(
+        say.plural(stats.images, { one: `${stats.images} image`, other: `${stats.images} images` }),
+        'muted',
+      ),
+    );
   }
 
   if (stats.links > 0) {
-    root.append(line(say.plural(stats.links, { one: '# link', other: '# links' }), 'muted'));
+    root.append(
+      line(
+        say.plural(stats.links, { one: `${stats.links} link`, other: `${stats.links} links` }),
+        'muted',
+      ),
+    );
   }
 
   if (stats.language && !stats.language.startsWith(say.locale)) {

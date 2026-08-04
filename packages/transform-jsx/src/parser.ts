@@ -29,28 +29,7 @@ export function parseJSXContainerElement(element: t.JSXElement): CompositeMessag
   if (!processed) return null;
   const [accessor] = processed;
 
-  // The children the JSX transform itself would compile, so a message extracts
-  // as the text that renders. Text children come back with their whitespace
-  // collapsed the way JSX collapses it — a line break and the indentation
-  // around it are layout and disappear, while two lines that both hold text
-  // rejoin with the single space that separated the words — every expression
-  // container comes back unwrapped, and a comment child comes back as nothing.
-  const children = t.react.buildChildren(element).reduce<Message[]>((p, c) => {
-    const literal = getExpressionAsLiteralText(c);
-
-    if (literal !== undefined) {
-      pushLiteral(p, literal);
-    } else if (t.isJSXElement(c)) {
-      p.push(parseJSXElement(c, true));
-    } else if (t.isJSXFragment(c)) {
-      p.push(new ElementMessage(AUTO_INCREMENT_IDENTIFIER, [], c));
-    } else if (t.isExpression(c)) {
-      const [identifier, value] = unwrapPlaceholder(c);
-      p.push(new ArgumentMessage(identifier, value));
-    }
-
-    return p;
-  }, []);
+  const children = buildMessageChildren(element);
 
   const descriptorId = findAttributeValueIfStringLiteralAsString(
     element.openingElement.attributes,
@@ -119,9 +98,13 @@ export function parseJSXOpeningElement(element: t.JSXOpeningElement): CompositeM
             value: parseJSXElement(a.value.expression, true),
           });
         } else if (t.isJSXFragment(a.value.expression)) {
+          // A branch is a sentence rather than an element, so a fragment around
+          // one is how JSX writes a case that interpolates — `one={<>{n} day</>}`
+          // for the `# day` a plain string attribute cannot express.
+          const fragment = a.value.expression;
           b.push({
             identifier,
-            value: new ElementMessage(AUTO_INCREMENT_IDENTIFIER, [], a.value.expression),
+            value: new CompositeMessage({}, [], [], buildMessageChildren(fragment), fragment),
           });
         } else if (t.isExpression(a.value.expression)) {
           const [name, value] = unwrapPlaceholder(a.value.expression);
@@ -170,6 +153,33 @@ function findPluralOffset(attributes: t.JSXOpeningElement['attributes']) {
     return expression.value;
   }
   return undefined;
+}
+
+/**
+ * The children the JSX transform itself would compile, so a message extracts as
+ * the text that renders. Text children come back with their whitespace
+ * collapsed the way JSX collapses it — a line break and the indentation around
+ * it are layout and disappear, while two lines that both hold text rejoin with
+ * the single space that separated the words — every expression container comes
+ * back unwrapped, and a comment child comes back as nothing.
+ */
+function buildMessageChildren(element: t.JSXElement | t.JSXFragment) {
+  return t.react.buildChildren(element).reduce<Message[]>((p, c) => {
+    const literal = getExpressionAsLiteralText(c);
+
+    if (literal !== undefined) {
+      pushLiteral(p, literal);
+    } else if (t.isJSXElement(c)) {
+      p.push(parseJSXElement(c, true));
+    } else if (t.isJSXFragment(c)) {
+      p.push(new ElementMessage(AUTO_INCREMENT_IDENTIFIER, [], c));
+    } else if (t.isExpression(c)) {
+      const [identifier, value] = unwrapPlaceholder(c);
+      p.push(new ArgumentMessage(identifier, value));
+    }
+
+    return p;
+  }, []);
 }
 
 /**

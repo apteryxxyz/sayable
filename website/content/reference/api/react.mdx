@@ -50,7 +50,7 @@ import { TypeTable } from 'fumadocs-ui/components/type-table';
 ### `<Say.Plural>`
 
 ```tsx
-<Say.Plural _={count} one="1 item" other="# items" />
+<Say.Plural _={count} one="1 item" other={<>{count} items</>} />
 ```
 
 Props:
@@ -77,7 +77,7 @@ Props:
 ### `<Say.Ordinal>`
 
 ```tsx
-<Say.Ordinal _={position} _1="1st" _2="2nd" _3="3rd" other="#th" />
+<Say.Ordinal _={position} _1="1st" _2="2nd" _3="3rd" other={<>{position}th</>} />
 ```
 
 Same props as `<Say.Plural>`, CLDR plural categories plus exact-number branches.

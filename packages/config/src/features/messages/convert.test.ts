@@ -88,8 +88,34 @@ describe('convertMessageToIcu', () => {
       'plural',
       'count',
       [
-        { identifier: 'one', value: new LiteralMessage('you and # other') },
-        { identifier: 'other', value: new LiteralMessage('you and # others') },
+        {
+          identifier: 'one',
+          value: new CompositeMessage(
+            {},
+            [],
+            [],
+            [
+              new LiteralMessage('you and '),
+              new ArgumentMessage('count', dummy),
+              new LiteralMessage(' other'),
+            ],
+            dummy,
+          ),
+        },
+        {
+          identifier: 'other',
+          value: new CompositeMessage(
+            {},
+            [],
+            [],
+            [
+              new LiteralMessage('you and '),
+              new ArgumentMessage('count', dummy),
+              new LiteralMessage(' others'),
+            ],
+            dummy,
+          ),
+        },
       ],
       dummy,
       1,
@@ -106,7 +132,7 @@ describe('convertMessageToIcu', () => {
     const message = new ChoiceMessage(
       'plural',
       'count',
-      [{ identifier: 'other', value: new LiteralMessage('#') }],
+      [{ identifier: 'other', value: new ArgumentMessage('count', dummy) }],
       dummy,
       0,
     );
@@ -115,6 +141,104 @@ describe('convertMessageToIcu', () => {
         other {#}
       }"
     `);
+  });
+
+  it('should escape a brace an author wrote as text', () => {
+    const message = new LiteralMessage("save as {name}, it's fine");
+    expect(convertMessageToIcu(message)) //
+      .toMatchInlineSnapshot(`"save as '{'name'}', it''s fine"`);
+  });
+
+  // `#` is the plural's own selector spelled the way ICU spells it, so the two
+  // are one placeholder and one prop rather than a number written twice.
+  it('should write a plural selector inside its own branch as a hash', () => {
+    const message = new ChoiceMessage(
+      'plural',
+      'count',
+      [{ identifier: 'other', value: new ArgumentMessage('count', dummy) }],
+      dummy,
+    );
+    expect(convertMessageToIcu(message)).toMatchInlineSnapshot(`
+      "{count, plural,
+        other {#}
+      }"
+    `);
+  });
+
+  it('should leave another argument in a plural branch named', () => {
+    const message = new ChoiceMessage(
+      'plural',
+      'count',
+      [{ identifier: 'other', value: new ArgumentMessage('total', dummy) }],
+      dummy,
+    );
+    expect(convertMessageToIcu(message)).toMatchInlineSnapshot(`
+      "{count, plural,
+        other {{total}}
+      }"
+    `);
+  });
+
+  // A formatted argument is not interchangeable with `#`, which formats itself
+  // the way the plural does.
+  it('should leave a formatted selector named', () => {
+    const message = new ChoiceMessage(
+      'plural',
+      'count',
+      [
+        {
+          identifier: 'other',
+          value: new ArgumentMessage('count', dummy, { type: 'number', style: 'percent' }),
+        },
+      ],
+      dummy,
+    );
+    expect(convertMessageToIcu(message)).toContain('{count, number, percent}');
+  });
+
+  it('should escape a hash inside a plural branch but not outside one', () => {
+    const message = new CompositeMessage(
+      {},
+      [],
+      [],
+      [
+        new LiteralMessage('issue #1: '),
+        new ChoiceMessage(
+          'plural',
+          'count',
+          [{ identifier: 'other', value: new LiteralMessage('#1 of many') }],
+          dummy,
+        ),
+      ],
+      dummy,
+    );
+    expect(convertMessageToIcu(message)).toMatchInlineSnapshot(`
+      "issue #1: {count, plural,
+        other {'#'1 of many}
+      }"
+    `);
+  });
+
+  // `#` reaches through a nested select to the plural enclosing it, so text in
+  // there still needs quoting.
+  it('should keep a hash live inside a select nested in a plural', () => {
+    const message = new ChoiceMessage(
+      'plural',
+      'count',
+      [
+        {
+          identifier: 'other',
+          value: new ChoiceMessage(
+            'select',
+            'kind',
+            [{ identifier: 'other', value: new LiteralMessage('#') }],
+            dummy,
+          ),
+        },
+      ],
+      dummy,
+    );
+    expect(convertMessageToIcu(message)).toContain("other {'#'}");
   });
 
   // `select` matches literal strings and has no number to offset, so emitting

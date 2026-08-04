@@ -30,7 +30,7 @@ describe('createJsxTransformer.extract', () => {
 
   it('extracts a JSX choice element reference', () => {
     const [message] = transformer.extract(
-      'const x = <Say.Plural _={count} one="# item" other="# items" />;',
+      'const x = <Say.Plural _={count} one={<>{count} item</>} other={<>{count} items</>} />;',
       'file.tsx',
     );
     expect(message!.message).toBe(`{count, plural,

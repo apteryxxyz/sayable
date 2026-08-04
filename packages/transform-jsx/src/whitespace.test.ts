@@ -52,7 +52,7 @@ describe('a line break between two children', () => {
     expect(
       extract(`<Say>
         their
-        <Say.Ordinal _={n} one="#st" other="#th" />
+        <Say.Ordinal _={n} one={<>{n}st</>} other={<>{n}th</>} />
       </Say>`),
     ).toBe(`their{n, selectordinal,
   one {#st}
@@ -170,9 +170,9 @@ describe('whitespace written as an expression', () => {
   it('carries a space between two choice elements', () => {
     expect(
       extract(`<Say>
-        <Say.Plural _={s} one="# session" other="# sessions" />{' '}
+        <Say.Plural _={s} one={<>{s} session</>} other={<>{s} sessions</>} />{' '}
         ·{' '}
-        <Say.Plural _={w} one="# workshop" other="# workshops" />
+        <Say.Plural _={w} one={<>{w} workshop</>} other={<>{w} workshops</>} />
       </Say>`),
     ).toBe(`{s, plural,
   one {# session}

@@ -1,7 +1,7 @@
 {
   "_acTPG": "{done, plural,\n  =0 {Nothing ticked off yet today}\n  one {# habit done today}\n  other {# habits done today}\n}",
   "3Sdni6": "Mark as done",
-  "FKAopz": "Streaks reset at midnight in your device's time zone. Missing a day is fine — the habit is the point, not the number.",
+  "CcxDnS": "Streaks reset at midnight in your device''s time zone. Missing a day is fine — the habit is the point, not the number.",
   "je4rt5": "{0, select,\n  daily {Every day}\n  weekdays {Weekdays}\n  weekly {Once a week}\n  other {Sometimes}\n}",
   "mDC5Yn": "<0>{1}</0> of <0>{2}</0> this week",
   "oDK2dx": "{0, plural,\n  one {# day streak}\n  other {# day streak}\n}",

@@ -40,12 +40,12 @@ export class AnnounceCommand extends withSay(Command) {
         say`We are discussing **${currentPick.title}**.`,
         say.plural(currentPick.meetsInDays, {
           0: 'That is today.',
-          one: 'That is in # day.',
-          other: 'That is in # days.',
+          one: `That is in ${currentPick.meetsInDays} day.`,
+          other: `That is in ${currentPick.meetsInDays} days.`,
         }),
         say.plural(members.length, {
-          one: '# person is signed up.',
-          other: '# people are signed up.',
+          one: `${members.length} person is signed up.`,
+          other: `${members.length} people are signed up.`,
         }),
       ].join('\n'),
     });

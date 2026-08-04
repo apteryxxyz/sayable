@@ -11,7 +11,13 @@ function Seats({ session }: { session: Session }) {
   if (session.seatsLeft === null) return <Say>Open to everyone</Say>;
   if (session.seatsLeft === 0) return <Say>Fully booked</Say>;
 
-  return <Say.Plural _={session.seatsLeft} one="# seat left" other="# seats left" />;
+  return (
+    <Say.Plural
+      _={session.seatsLeft}
+      one={<>{session.seatsLeft} seat left</>}
+      other={<>{session.seatsLeft} seats left</>}
+    />
+  );
 }
 
 function SessionRow({ session }: { session: Session }) {
@@ -39,7 +45,13 @@ function SessionRow({ session }: { session: Session }) {
             break="Break"
             other="Session"
           />{' '}
-          · <Say.Plural _={session.durationMinutes} one="# minute" other="# minutes" /> ·{' '}
+          ·{' '}
+          <Say.Plural
+            _={session.durationMinutes}
+            one={<>{session.durationMinutes} minute</>}
+            other={<>{session.durationMinutes} minutes</>}
+          />{' '}
+          ·{' '}
           <Say.Select
             _={session.track}
             platform="Platform track"
@@ -61,10 +73,10 @@ function SessionRow({ session }: { session: Session }) {
                   their{' '}
                   <Say.Ordinal
                     _={session.previousTalks + 1}
-                    one="#st"
-                    two="#nd"
-                    few="#rd"
-                    other="#th"
+                    one={<>{session.previousTalks + 1}st</>}
+                    two={<>{session.previousTalks + 1}nd</>}
+                    few={<>{session.previousTalks + 1}rd</>}
+                    other={<>{session.previousTalks + 1}th</>}
                   />{' '}
                   time on this stage
                 </Say>
@@ -108,8 +120,19 @@ function SchedulePage() {
             free through the fallback chain, without restating it.
           */}
           <Say>
-            The full program — <Say.Plural _={sessions.length} one="# session" other="# sessions" />
-            , including <Say.Plural _={workshops} one="# workshop" other="# workshops" />.
+            The full program —{' '}
+            <Say.Plural
+              _={sessions.length}
+              one={<>{sessions.length} session</>}
+              other={<>{sessions.length} sessions</>}
+            />
+            , including{' '}
+            <Say.Plural
+              _={workshops}
+              one={<>{workshops} workshop</>}
+              other={<>{workshops} workshops</>}
+            />
+            .
           </Say>
         </p>
       </header>

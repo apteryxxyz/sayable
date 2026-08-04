@@ -3,12 +3,24 @@ import type { Task } from '../board.js';
 
 function DueLabel({ dueInDays }: { dueInDays: number }) {
   if (dueInDays < 0) {
-    return <Say.Plural _={Math.abs(dueInDays)} one="# day overdue" other="# days overdue" />;
+    return (
+      <Say.Plural
+        _={Math.abs(dueInDays)}
+        one={<>{Math.abs(dueInDays)} day overdue</>}
+        other={<>{Math.abs(dueInDays)} days overdue</>}
+      />
+    );
   }
 
   if (dueInDays === 0) return <Say>Due today</Say>;
 
-  return <Say.Plural _={dueInDays} one="Due in # day" other="Due in # days" />;
+  return (
+    <Say.Plural
+      _={dueInDays}
+      one={<>Due in {dueInDays} day</>}
+      other={<>Due in {dueInDays} days</>}
+    />
+  );
 }
 
 export function TaskCard({ task }: { task: Task }) {
@@ -56,8 +68,8 @@ export function TaskCard({ task }: { task: Task }) {
           <Say.Plural
             _={total - done}
             _0="All subtasks done"
-            one="# subtask left"
-            other="# subtasks left"
+            one={<>{total - done} subtask left</>}
+            other={<>{total - done} subtasks left</>}
           />
         </span>
 
@@ -65,8 +77,8 @@ export function TaskCard({ task }: { task: Task }) {
           <span>
             <Say.Plural
               _={task.comments}
-              one="# unresolved comment"
-              other="# unresolved comments"
+              one={<>{task.comments} unresolved comment</>}
+              other={<>{task.comments} unresolved comments</>}
             />
           </span>
         )}

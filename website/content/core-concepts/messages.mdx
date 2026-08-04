@@ -86,7 +86,7 @@ leave alone keeps its number. It works in `say.plural`, `say.ordinal` and `say.s
 too, and in `<Say>` interpolations:
 
 ```tsx
-say.plural({ items: cart.length }, { one: '# item', other: '# items' });
+say.plural({ items: cart.length }, { one: 'one item', other: 'several items' });
 
 <Say>Signed in as {{ who: user.profile.name }}</Say>;
 ```
@@ -104,7 +104,7 @@ A name belongs to a value, not to a position, so interpolating the same value tw
 placeholder, and a translator can move it around the sentence or drop it entirely:
 
 ```ts
-say`${name} invited ${name}'s team`; // → "{name} invited {name}'s team"
+say`${name} invited ${name} to the team`; // → "{name} invited {name} to the team"
 say`${{ total: cart.total }} of ${{ total: cart.total }}`; // → "{total} of {total}"
 ```
 
@@ -127,7 +127,7 @@ Branch on a count using CLDR plural categories:
 ```ts
 say.plural(quantity, {
   one: 'You have 1 item',
-  other: 'You have # items',
+  other: `You have ${quantity} items`,
 });
 ```
 
@@ -140,7 +140,17 @@ Extracted:
 }
 ```
 
-The `#` placeholder is replaced with the numeric value at runtime.
+Interpolating the selector into a branch is how a branch shows the number. It extracts as ICU's `#`,
+which the runtime replaces with the value the message branched on, and it is the same placeholder and
+the same value as the selector rather than a second one. Interpolating anything else in a branch
+works too, and stays a named placeholder. A `#` you type yourself is text, and is escaped so it
+reaches the reader as a `#`.
+
+<Callout type="info">
+  In JSX a branch attribute is a plain string, which has nowhere to put a value, so write the branch
+  as a fragment instead: `one={<>{count} item</>}`. In a template branch the `say` tag is redundant,
+  the branch is already part of the message around it.
+</Callout>
 
 All six CLDR categories work (`zero`, `one`, `two`, `few`, `many`, `other`), and you can branch on
 exact numbers alongside them:
@@ -149,7 +159,7 @@ exact numbers alongside them:
 say.plural(count, {
   0: 'No items',
   1: 'One item',
-  other: '# items',
+  other: `${count} items`,
 });
 ```
 
@@ -168,8 +178,8 @@ written: the sentence branches on a total of three but shows two.
 say.plural(likes, {
   offset: 1,
   0: 'Nobody has liked this yet',
-  one: 'You and # other liked this',
-  other: 'You and # others liked this',
+  one: `You and ${likes} other liked this`,
+  other: `You and ${likes} others liked this`,
 });
 ```
 
@@ -193,14 +203,14 @@ Numbers like "1st", "2nd", "3rd". Reach for CLDR categories rather than exact nu
 
 ```ts
 say.ordinal(position, {
-  one: '#st',
-  two: '#nd',
-  few: '#rd',
-  other: '#th',
+  one: `${position}st`,
+  two: `${position}nd`,
+  few: `${position}rd`,
+  other: `${position}th`,
 });
 ```
 
-Exact numbers work here too, but they match only themselves, so `1: '#st'` gets 1st right and leaves
+Exact numbers work here too, but they match only themselves, so `1:` gets 1st right and leaves
 21st and 31st as "21th". The `one` category covers all three, which is the point of the categories.
 
 ## Select
@@ -238,6 +248,23 @@ form to use instead.
 
 Numeric keys are fine here and match as strings, unlike in `say.plural` and `say.ordinal` where they
 select an exact value.
+
+## Reserved characters
+
+A catalogue entry is an ICU message, and ICU keeps a few characters for itself: `{` and `}` open and
+close a placeholder, `#` stands for the number inside a plural or an ordinal, and `'` is how ICU
+escapes all of them. Text you write is text, so SayKit escapes those on the way into the catalogue
+and the reader sees exactly what you typed:
+
+```ts
+say`Wrap it in {braces}`; // → "Wrap it in '{'braces'}'"
+say`It's here`; // → "It''s here"
+say.plural(n, { other: `Issue #1, ${n} times` }); // → "Issue '#'1, # times"
+```
+
+Nothing is escaped in a placeholder name or an element tag, which are SayKit's own rather than
+yours. The quoting only reaches the catalogue, so a translator working in the file sees ICU and
+writes ICU, while you never have to think about it in source.
 
 ## Numbers, dates, and times
 
@@ -359,16 +386,22 @@ JSX elements inside `<Say>` are preserved across translations as numbered tags:
 Translators can move `<0>...</0>` around to fit the target language's grammar, and SayKit re-renders it with the original element at runtime. A number tells a translator nothing about what the element does, so you can name one with `say-tag`, and an element with no children extracts as `<1/>` rather than a pair, see [naming tags](/integrations/react#naming-tags).
 
 Every macro above has a JSX counterpart. The selector is the `_` prop, branches are props, and
-`offset` and `style` are props too:
+`offset` and `style` are props too. A branch that shows the number is written as a fragment, since a
+string attribute has nowhere to put a value:
 
 ```tsx
-<Say.Plural _={count} one="# item" other="# items" />
+<Say.Plural _={count} one={<>{count} item</>} other={<>{count} items</>} />
 
-<Say.Ordinal _={position} _1="1st" _2="2nd" _3="3rd" other="#th" />
+<Say.Ordinal _={position} _1="1st" _2="2nd" _3="3rd" other={<>{position}th</>} />
 
 <Say.Select _={gender} male="He liked it" female="She liked it" other="They liked it" />
 
-<Say.Plural _={likes} offset={1} one="You and # other liked this" other="You and # others liked this" />
+<Say.Plural
+  _={likes}
+  offset={1}
+  one={<>You and {likes} other liked this</>}
+  other={<>You and {likes} others liked this</>}
+/>
 ```
 
 `<Say.Number>`, `<Say.Date>`, and `<Say.Time>` are fragments here as well, so they nest inside a

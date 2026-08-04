@@ -300,11 +300,12 @@ export class Say<
    * ```ts
    * say.plural(count, {
    *   one: 'You have 1 item',
-   *   other: 'You have # items',
+   *   other: `You have ${count} items`,
    * })
    * ```
    *
-   * The `#` symbol inside options is replaced with the numeric value.
+   * Interpolating the selector into a branch extracts as ICU's `#`, the number
+   * the message branched on. A `#` you write yourself is text.
    * @param _ Number to determine the plural form of
    * @param options Pluralisation rules keyed by CLDR categories or specific numbers
    * @returns The plural form of the number
@@ -318,15 +319,17 @@ export class Say<
 
   /**
    * Define an ordinal message (e.g. "1st", "2nd", "3rd").
-   * The `#` symbol inside options is replaced with the numeric value.
+   *
+   * Interpolating the selector into a branch extracts as ICU's `#`, the number
+   * the message branched on. A `#` you write yourself is text.
    *
    * @example
    * ```ts
    * say.ordinal(position, {
-   *   1: '#st',
-   *   2: '#nd',
-   *   3: '#rd',
-   *   other: '#th',
+   *   1: `${position}st`,
+   *   2: `${position}nd`,
+   *   3: `${position}rd`,
+   *   other: `${position}th`,
    * })
    * ```
    *

@@ -290,14 +290,19 @@ describe('parseJSXOpeningElement', () => {
     expect(choice.branches[0]!.value).toBeInstanceOf(ElementMessage);
   });
 
-  it('accepts a JSX fragment expression as a branch value', () => {
+  // A fragment is the sentence itself rather than an element in it, so its
+  // children are the branch — which is how a case interpolates its selector.
+  it('reads a JSX fragment branch value as the branch content', () => {
     const result = parser.parseJSXOpeningElement(
       jsx`
-      <Say.plural _={count} one={<></>} />
+      <Say.plural _={count} one={<>{count} day</>} />
     `.openingElement,
     );
     const choice = result!.children[0] as ChoiceMessage;
-    expect(choice.branches[0]!.value).toBeInstanceOf(ElementMessage);
+    const branch = choice.branches[0]!.value as CompositeMessage;
+    expect(branch).toBeInstanceOf(CompositeMessage);
+    expect(branch.children[0]).toBeInstanceOf(ArgumentMessage);
+    expect(branch.children[1]).toBeInstanceOf(LiteralMessage);
   });
 
   it('skips branch attributes with no value', () => {

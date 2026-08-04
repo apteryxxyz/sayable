@@ -22,15 +22,15 @@ const headline = say.select(deployment.outcome, {
 
 const files = say.plural(deployment.changedFiles, {
   0: 'no files changed',
-  one: '# file changed',
-  other: '# files changed',
+  one: `${deployment.changedFiles} file changed`,
+  other: `${deployment.changedFiles} files changed`,
 });
 
 const attempt = say.ordinal(deployment.todayCount, {
-  one: '#st',
-  two: '#nd',
-  few: '#rd',
-  other: '#th',
+  one: `${deployment.todayCount}st`,
+  two: `${deployment.todayCount}nd`,
+  few: `${deployment.todayCount}rd`,
+  other: `${deployment.todayCount}th`,
 });
 
 console.log(headline);
@@ -40,8 +40,8 @@ console.log(say`This is the ${attempt} deploy to ${deployment.environment} today
 if (deployment.failures.length > 0) {
   console.log(
     say.plural(deployment.failures.length, {
-      one: '# check failed:',
-      other: '# checks failed:',
+      one: `${deployment.failures.length} check failed:`,
+      other: `${deployment.failures.length} checks failed:`,
     }),
   );
   for (const failure of deployment.failures) console.log(`  - ${failure}`);

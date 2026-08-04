@@ -29,7 +29,11 @@ export function AddToCart({ slug, disabled }: { slug: string; disabled: boolean 
       {quantity === 0 ? (
         <Say>Add to basket</Say>
       ) : (
-        <Say.Plural _={quantity} one="# bag in basket" other="# bags in basket" />
+        <Say.Plural
+          _={quantity}
+          one={<>{quantity} bag in basket</>}
+          other={<>{quantity} bags in basket</>}
+        />
       )}
     </button>
   );

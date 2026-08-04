@@ -14,7 +14,7 @@ for (const locale of locales) {
 
   console.log(`[${locale}]`);
   console.log(say`Welcome to the library`);
-  console.log(say.plural(books, { one: '# book on loan', other: '# books on loan' }));
+  console.log(say.plural(books, { one: `${books} book on loan`, other: `${books} books on loan` }));
   // Untranslated in `fr`, so it falls back to the source locale — the Babel
   // plugin merges the fallback chain into each record at compile time.
   console.log(say`Your card expires soon`);
