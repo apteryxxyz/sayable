@@ -131,21 +131,24 @@ export function duration(seconds: number): string {
   if (!Number.isFinite(seconds)) return String(seconds);
 
   const sign = seconds < 0 ? '-' : '';
-  let value = Math.abs(seconds);
+
+  // Round to the millisecond *before* splitting the value up. Rounding a
+  // seconds field that is already 59.9999 gives `60`, which has to carry into
+  // the minutes — rounding it in place would write `0:60.000`.
+  const total = Math.round(Math.abs(seconds) * 1000) / 1000;
+
+  const secs = total % 60;
+  const minutes = Math.floor(total / 60);
+  const hours = Math.floor(minutes / 60);
 
   // A fractional second stays a string from here on. Rounding it to three
   // places is the whole point, and `Number('1.500')` would undo that.
-  const secs = value % 60;
-  const parts: (string | number)[] = [Math.round(secs) === secs ? secs : secs.toFixed(3)];
-  if (value < 60) {
-    // One `:` is always written, so a sub-minute duration still reads as a
-    // duration rather than as a bare number of seconds.
-    parts.unshift(0);
-  } else {
-    value = Math.round((value - Number(parts[0])) / 60);
-    parts.unshift(value % 60);
-    if (value >= 60) parts.unshift(Math.round((value - Number(parts[0])) / 60));
-  }
+  const written = Math.round(secs) === secs ? String(secs) : secs.toFixed(3);
+
+  // One `:` is always written, so a sub-minute duration still reads as a
+  // duration rather than as a bare number of seconds.
+  const parts: (string | number)[] =
+    hours > 0 ? [hours, minutes % 60, written] : [minutes, written];
 
   // Every part but the first is padded to two digits, and the leading one is
   // not — a duration reads as `1:01:01`, never `01:01:01`. The width is judged

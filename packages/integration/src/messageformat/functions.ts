@@ -50,14 +50,20 @@ export const functions = {
     // *is* — so a second selector reading this one offsets from the number the
     // message was given rather than from an already-shifted one.
     result.valueOf = () => value;
+
+    // Built once and kept, like the formatters in `values.ts`: the locale and
+    // the rule type are fixed for the placeholder, and constructing an `Intl`
+    // object is the expensive half of selecting.
+    let rules: Intl.PluralRules | undefined;
     result.selectKey = (keys) => {
       const exact = String(value);
       if (keys.has(exact)) return exact;
-      // `Intl.PluralRules` takes a number, never a bigint.
-      const category = new Intl.PluralRules(ctx.locales as string[], {
+      rules ??= new Intl.PluralRules(ctx.locales as string[], {
         localeMatcher: ctx.localeMatcher,
         type: ordinal ? 'ordinal' : 'cardinal',
-      }).select(Number(shifted));
+      });
+      // `Intl.PluralRules` takes a number, never a bigint.
+      const category = rules.select(Number(shifted));
       return keys.has(category) ? category : null;
     };
     return result;

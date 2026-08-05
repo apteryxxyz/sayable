@@ -46,7 +46,7 @@ describe('operands', () => {
 
   // `undefined` is a missing value rather than a bad one, and MF2 reports the
   // missing variable itself.
-  it('treats a missing number as zero rather than an error', () => {
+  it('treats a missing number as NaN rather than an error', () => {
     expect(numeric(undefined)).toBeNaN();
   });
 
@@ -187,6 +187,21 @@ describe('styles', () => {
   it('falls back for an empty skeleton', () => {
     expect(format('{d, date, ::}', { d: when })).toBe('Jan 2, 2020');
   });
+
+  // `qqqq` is valid ICU — a stand-alone quarter — that `Intl` cannot show.
+  // Keeping the fields that did resolve would render a date the message never
+  // asked for, so one unshowable field fails the whole skeleton.
+  it('falls back rather than dropping a field it cannot show', () => {
+    expect(format('{d, date, ::yMMMdqqqq}', { d: when })).toBe('Jan 2, 2020');
+    expect(format("{d, date, ::yMMMd'x'}", { d: when })).toBe('Jan 2, 2020');
+  });
+
+  // The styles come from a plain object, so a key every object inherits must
+  // not pass for one an author asked for.
+  it('rejects an inherited property name as a style', () => {
+    expect(format('{d, date, toString}', { d: when })).toBe('Jan 2, 2020');
+    expect(format('{d, date, constructor}', { d: when })).toBe('Jan 2, 2020');
+  });
 });
 
 /**
@@ -241,6 +256,18 @@ describe('duration', () => {
     [3600, '1:00:00'],
     [359999, '99:59:59'],
   ])('formats %o', (seconds, expected) => {
+    expect(duration(seconds)).toBe(expected);
+  });
+
+  // Seconds are rounded to the millisecond, and a value that rounds up to a
+  // whole minute has to carry rather than be written as `:60`.
+  it.each([
+    [59.9999, '1:00'],
+    [119.9999, '2:00'],
+    [3599.9999, '1:00:00'],
+    [59.5, '0:59.500'],
+    [59.4994, '0:59.499'],
+  ])('carries a rounded second in %o', (seconds, expected) => {
     expect(duration(seconds)).toBe(expected);
   });
 });

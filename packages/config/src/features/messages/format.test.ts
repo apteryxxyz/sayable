@@ -98,6 +98,16 @@ describe('validateArgumentStyle', () => {
     expect(() => validateArgumentStyle('date', '::qqqq')).toThrow("Invalid date skeleton '::qqqq'");
   });
 
+  // `qqqq` is valid ICU — a stand-alone quarter — that `Intl` cannot show. A
+  // skeleton naming it alongside fields that do resolve is still rejected, so
+  // this agrees with the runtime rather than letting a field be dropped.
+  it('rejects a skeleton that only partly resolves', () => {
+    expect(() => validateArgumentStyle('date', '::yMMMdqqqq')).toThrow(
+      "Invalid date skeleton '::yMMMdqqqq'",
+    );
+    expect(() => validateArgumentStyle('date', "::yMMMd'x'")).toThrow('Invalid date skeleton');
+  });
+
   // The named styles are a closed list, so the error names the skeleton escape
   // too — otherwise an author reading it would think the list was all there is.
   it('names the skeleton escape for every type', () => {

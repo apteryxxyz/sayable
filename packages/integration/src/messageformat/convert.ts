@@ -198,11 +198,12 @@ function declaration({ arg, name, type, offset }: Selector): Model.Declaration {
  * ordering is what makes `=1` beat `one` and `one` beat `other`.
  */
 function sortKeys(keys: (string | number)[]) {
-  return Array.from(new Set(keys)).sort((a, b) => {
-    if (typeof a === 'number' || b === 'other') return -1;
-    if (typeof b === 'number' || a === 'other') return 1;
-    return 0;
-  });
+  // Ranked rather than compared pairwise, so the order is total: comparing two
+  // exact numbers by the rules alone answers `-1` whichever way round they are
+  // asked, which is not an ordering and would leave anything that later depends
+  // on it reading an arbitrary one.
+  const rank = (key: string | number) => (typeof key === 'number' ? 0 : key === 'other' ? 2 : 1);
+  return Array.from(new Set(keys)).sort((a, b) => rank(a) - rank(b));
 }
 
 /**

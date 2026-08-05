@@ -57,15 +57,21 @@ export function dateTimeStyle(kind: 'date' | 'time', style: string): Intl.DateTi
     const errors: string[] = [];
     const tokens = parseDateTokens(style.slice(2));
     const opt = getDateTimeFormatOptions(tokens, (_type, message) => errors.push(message));
-    // A skeleton that yielded nothing usable is a typo, not a format. Falling
-    // back to the locale default here would silently show the wrong fields.
-    if (Object.keys(opt).length === 0) throw new StyleError(errors[0] ?? `Empty skeleton ${style}`);
+    // Any field `Intl` could not show fails the whole skeleton. Keeping the
+    // fields that did resolve would answer a question nobody asked — a
+    // `::yMMMdqqqq` that quietly drops its quarter is the silent misformat this
+    // module exists to prevent, and it is what the build-time check rejects.
+    if (errors.length > 0) throw new StyleError(errors[0]!);
+    // Every token resolved and none of them named a field.
+    if (Object.keys(opt).length === 0) throw new StyleError(`Empty skeleton ${style}`);
     return opt;
   }
 
   // MF1's own default, for both `date` and `time`, is `medium`.
   if (style === '') return named.medium;
-  if (style in named) return named[style as keyof typeof named];
+  // `hasOwn` rather than `in`: the styles come from a plain object, so a key
+  // every object inherits must not pass for one an author asked for.
+  if (Object.hasOwn(named, style)) return named[style as keyof typeof named];
   throw new StyleError(`Unsupported ${kind} style ${style}`);
 }
 
