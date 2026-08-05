@@ -360,6 +360,21 @@ describe('parseCallExpression', () => {
     );
   });
 
+  it.each([
+    ['date', '::yyyyMMdd'],
+    ['number', '::currency/EUR'],
+  ] as const)('parses a %s call expression with the skeleton %s', (kind, style) => {
+    const result = parser.parseCallExpression(expr(`say.${kind}(v, { style: '${style}' })`));
+    const argument = result!.children[0] as ArgumentMessage;
+    expect(argument.format).toEqual({ type: kind, style });
+  });
+
+  it('rejects a skeleton the formatter cannot resolve', () => {
+    expect(() => parser.parseCallExpression(expr("say.date(when, { style: '::qqqq' })"))).toThrow(
+      "Invalid date skeleton '::qqqq'",
+    );
+  });
+
   // The style is baked into the extracted message, so a value only known at
   // runtime cannot name one. It is dropped rather than guessed at.
   it('ignores a style that is not a string literal', () => {

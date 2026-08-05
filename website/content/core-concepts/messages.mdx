@@ -275,14 +275,14 @@ the macros above, these are **fragments** rather than whole messages, so they go
 say`You have ${say.number(items.length)} items`;
 say`Battery at ${say.number(level, { style: 'percent' })}`;
 say`Published ${say.date(post.publishedAt, { style: 'long' })}`;
-say`Total: ${say.number({ cartTotal: getTotal() })}`;
+say`Total: ${say.number({ cartTotal: getTotal() }, { style: '::currency/EUR' })}`;
 ```
 
 ```text
 You have {0, number} items
 Battery at {0, number, percent}
 Published {0, date, long}
-Total: {cartTotal, number}
+Total: {cartTotal, number, ::currency/EUR}
 ```
 
 Naming works as it does anywhere else. The reason to write these rather than call `Intl` yourself is
@@ -292,21 +292,41 @@ put the number somewhere else entirely.
 `style` is optional, and omitting it still gives locale-aware output, `{n, number}` applies the right
 grouping separators and decimal mark. An unrecognised style fails the build.
 
-| Macro        | Styles                                                     |
-| ------------ | ---------------------------------------------------------- |
-| `say.number` | `integer`, `percent`, or a literal pattern like `#,##0.00` |
-| `say.date`   | `short`, `medium`, `long`, `full`                          |
-| `say.time`   | `short`, `medium`, `long`, `full`                          |
+| Macro        | Styles                                                                 |
+| ------------ | ---------------------------------------------------------------------- |
+| `say.number` | `integer`, `percent`, a skeleton, or a literal pattern like `#,##0.00` |
+| `say.date`   | `short`, `medium`, `long`, `full`, or a skeleton                       |
+| `say.time`   | `short`, `medium`, `long`, `full`, or a skeleton                       |
 
-<Callout type="warn">
-  There is no `currency` style, because ICU MessageFormat 1 has nowhere to write the currency code.
-  Format currency with `Intl.NumberFormat` and interpolate the result, its position in the sentence
-  stays translatable even though its formatting does not.
+### Skeletons
+
+A named style asks for a whole format. A **skeleton** — written with a `::` prefix — asks for the
+parts instead, and leaves their arrangement to the locale. It is how you reach the formats the four
+names have no word for:
+
+```ts
+say`Total ${say.number(total, { style: '::currency/EUR' })}`; // → "Total €1,234.50"
+say`${say.number(views, { style: '::compact-short' })} views`; // → "12K views"
+say`Since ${say.date(joined, { style: '::yMMMM' })}`; // → "Since January 2020"
+say`Doors at ${say.time(opensAt, { style: '::Hm' })}`; // → "Doors at 19:30"
+```
+
+A skeleton is checked at build time by being resolved, not by being matched against a list, so it
+fails with a file and a line rather than reaching a reader. That covers more than typos: `::qqqq` is
+perfectly good ICU — a stand-alone quarter — but `Intl` has no way to show one, so it is rejected
+too. A skeleton is rejected whole, so `::yMMMdqqqq` fails rather than quietly dropping the quarter
+and formatting the rest.
+
+<Callout>
+  There is no `currency` **style**, because ICU MessageFormat 1 has nowhere to write the code. A
+  currency skeleton names it — `::currency/EUR` — which is the way to ask for one.
 </Callout>
 
-Skeletons (`::compact-short`, `::yMMMd`) are not supported, the runtime formatter rejects them, which
-also rules out compact notation and units. Neither are `spellout` or ICU's rule-based `ordinal`,
-which have no `Intl` equivalent, or `choice`, deprecated in ICU itself in favour of `plural`.
+A skeleton's `::percent` writes the sign but does not scale, so `0.25` formats as `0.25%`. The named
+`percent` style scales as well, which is `::percent scale/100` spelled out.
+
+`spellout` and ICU's rule-based `ordinal` are still unsupported, having no `Intl` equivalent, as is
+`choice`, deprecated in ICU itself in favour of `plural`.
 
 ## Descriptors
 

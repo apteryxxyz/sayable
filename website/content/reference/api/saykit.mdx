@@ -212,10 +212,13 @@ would otherwise be numbered. The wrapper is read at build time and never reaches
 ```ts
 say`Your total is ${{ cartTotal: getCartTotal() }}`; // → "Your total is {cartTotal}"
 
-say.plural({ items: cart.length }, {
-  one: `${{ items: cart.length }} item`,
-  other: `${{ items: cart.length }} items`,
-});
+say.plural(
+  { items: cart.length },
+  {
+    one: `${{ items: cart.length }} item`,
+    other: `${{ items: cart.length }} items`,
+  },
+);
 ```
 
 The name must be a valid identifier, an invalid one fails the build. See
@@ -250,6 +253,19 @@ Either `messages` is required (and `loader` optional), or `loader` is required (
 ### `NumeralOptions` / `SelectOptions`
 
 Option-bag types for `plural`, `ordinal`, and `select`. Both require an `other` key.
+
+### `NumberOptions` / `DateTimeOptions`
+
+Option-bag types for `number`, `date`, and `time`. Each carries an optional `style`.
+
+### `Skeleton`
+
+```ts
+type Skeleton = `::${string}`;
+```
+
+An ICU skeleton, accepted as a `style` by every format macro. See
+[Skeletons](/core-concepts/messages#skeletons).
 
 ## Next
 

@@ -1,4 +1,4 @@
-import { mf1ToMessage } from '@messageformat/icu-messageformat-1';
+import { compile } from './messageformat/index.js';
 import type {
   DateTimeOptions,
   Disallow,
@@ -89,7 +89,7 @@ export class Say<
   #locales: Locale[];
   #loader?: Loader;
   #messages: Map<Locale, Say.Messages>;
-  #formats: Map<string, ReturnType<typeof mf1ToMessage>>;
+  #formats: Map<string, ReturnType<typeof compile>>;
   #active: Locale | undefined;
 
   constructor(options: Say.Options<Locale, Loader>) {
@@ -278,7 +278,7 @@ export class Say<
 
     const key = `${locale}:${descriptor.id}`;
     const format =
-      this.#formats.get(key) ?? this.#formats.set(key, mf1ToMessage(locale, message)).get(key)!;
+      this.#formats.get(key) ?? this.#formats.set(key, compile(locale, message)).get(key)!;
     return String(format.format(resolveDescriptorValues(descriptor)));
   }
 
@@ -382,10 +382,12 @@ export class Say<
    * say`You have ${say.number(items.length)} items`
    * say`Battery at ${say.number(level, { style: 'percent' })}`
    * say`Total: ${say.number({ cartTotal: getTotal() }, { style: '#,##0.00' })}`
+   * say`Total: ${say.number(total, { style: '::currency/EUR' })}`
    * ```
    *
    * @param _ Number to format
-   * @param options Formatting style, either a named style or a literal number pattern
+   * @param options Formatting style: a named style, an ICU skeleton such as
+   *   `::currency/EUR`, or a literal number pattern such as `#,##0.00`
    * @returns The formatted number
    * @remark This is a macro and must be used with the relevant saykit plugin
    */
@@ -402,10 +404,12 @@ export class Say<
    * ```ts
    * say`Published ${say.date(post.publishedAt)}`
    * say`Published ${say.date(post.publishedAt, { style: 'full' })}`
+   * say`Published ${say.date(post.publishedAt, { style: '::yMMMM' })}`
    * ```
    *
    * @param _ Date to format
-   * @param options Formatting style
+   * @param options Formatting style, either a named style or an ICU skeleton
+   *   such as `::yyyyMMdd`
    * @returns The formatted date
    * @remark This is a macro and must be used with the relevant saykit plugin
    */
@@ -425,10 +429,12 @@ export class Say<
    * ```ts
    * say`Doors open at ${say.time(opensAt)}`
    * say`Doors open at ${say.time(opensAt, { style: 'short' })}`
+   * say`Doors open at ${say.time(opensAt, { style: '::Hm' })}`
    * ```
    *
    * @param _ Date to format
-   * @param options Formatting style
+   * @param options Formatting style, either a named style or an ICU skeleton
+   *   such as `::Hm`
    * @returns The formatted time
    * @remark This is a macro and must be used with the relevant saykit plugin
    */

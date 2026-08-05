@@ -38,20 +38,29 @@ export interface SelectOptions<Branch = string> {
 }
 
 /**
+ * An ICU skeleton: a `::`-prefixed description of the parts a value is written
+ * with, rather than a name for a whole format. `::currency/EUR` and
+ * `::yyyyMMdd` say what to show and leave the arrangement to the locale.
+ *
+ * A skeleton is where the formats the named styles have no word for live —
+ * currency, compact notation, a year and month with no day — so every argument
+ * type accepts one alongside its named styles.
+ */
+export type Skeleton = `::${string}`;
+
+/**
  * Formatting for a `{arg, number}` placeholder.
  *
- * `currency` is not offered: MF1 has nowhere to write the currency code, so
- * `{price, number, currency}` formats as a literal `{$price}` rather than an
- * amount. A literal pattern such as `#,##0.00` is accepted for the cases the
- * named styles do not cover.
+ * A literal `NumberFormat` pattern such as `#,##0.00` is also accepted, for the
+ * cases neither the named styles nor a skeleton spell more clearly.
  */
 export interface NumberOptions {
-  style?: 'integer' | 'percent' | (string & {});
+  style?: 'integer' | 'percent' | Skeleton | (string & {});
 }
 
 /**
  * Formatting for a `{arg, date}` or `{arg, time}` placeholder.
  */
 export interface DateTimeOptions {
-  style?: 'short' | 'medium' | 'long' | 'full';
+  style?: 'short' | 'medium' | 'long' | 'full' | Skeleton;
 }
