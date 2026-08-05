@@ -52,8 +52,8 @@ describe('validateArgumentStyle', () => {
     expect(() => validateArgumentStyle('time', 'relative')).toThrow('Invalid time style');
   });
 
-  // MF1 has nowhere to write the currency code, so this formats as a literal
-  // `{$price}`. The literal-pattern escape must not readmit it as a "pattern".
+  // MF1 has nowhere to write the currency code, so this formats as a bare
+  // number. The literal-pattern escape must not readmit it as a "pattern".
   it('rejects the currency style, which the formatter cannot honour', () => {
     expect(() => validateArgumentStyle('number', 'currency')).toThrow('Invalid number style');
     expect(() => validateArgumentStyle('date', 'currency')).toThrow('Invalid date style');
@@ -61,12 +61,51 @@ describe('validateArgumentStyle', () => {
 
   // A pattern is what has a digit placeholder in it; a bare word is a style
   // name, and every style name we do not support has to stay rejected.
-  it.each(['spellout', 'duration', 'compact', 'meduim', '::compact-short'])(
+  it.each(['spellout', 'duration', 'compact', 'meduim'])(
     'rejects the bare word %o as a number pattern',
     (style) => {
       expect(() => validateArgumentStyle('number', style)).toThrow('Invalid number style');
     },
   );
+
+  // A skeleton is the open-ended half of a style, so it is checked by being
+  // resolved rather than by being looked up.
+  it.each([
+    ['number', '::currency/EUR'],
+    ['number', '::compact-short'],
+    ['number', '::percent scale/100'],
+    ['number', '::scale/1000'],
+    ['number', '::.00'],
+    ['date', '::yyyyMMdd'],
+    ['date', '::yMMMM'],
+    ['time', '::Hm'],
+  ] as const)('accepts the %s skeleton %s', (type, style) => {
+    expect(() => validateArgumentStyle(type, style)).not.toThrow();
+  });
+
+  it('rejects a skeleton that names no fields', () => {
+    expect(() => validateArgumentStyle('date', '::')).toThrow(
+      "Invalid date skeleton '::': it names no fields",
+    );
+    // Every token is understood, but a literal shows nothing on its own.
+    expect(() => validateArgumentStyle('date', "::'x'")).toThrow('Invalid date skeleton');
+  });
+
+  it('rejects a skeleton the formatter cannot resolve', () => {
+    expect(() => validateArgumentStyle('number', '::bogus')).toThrow(
+      "Invalid number skeleton '::bogus'",
+    );
+    expect(() => validateArgumentStyle('date', '::qqqq')).toThrow("Invalid date skeleton '::qqqq'");
+  });
+
+  // The named styles are a closed list, so the error names the skeleton escape
+  // too — otherwise an author reading it would think the list was all there is.
+  it('names the skeleton escape for every type', () => {
+    expect(() => validateArgumentStyle('date', 'nope')).toThrow('a skeleton such as ::yyyyMMdd');
+    expect(() => validateArgumentStyle('number', 'nope')).toThrow(
+      'a skeleton such as ::currency/EUR',
+    );
+  });
 
   it('names the literal pattern escape only for numbers', () => {
     expect(() => validateArgumentStyle('number', '#{}')).toThrow('literal number pattern');

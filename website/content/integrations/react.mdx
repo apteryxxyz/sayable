@@ -103,9 +103,17 @@ They are fragments rather than whole messages, so they nest inside a `<Say>`:
 ```
 
 `style` is optional: `integer` or `percent` on `<Say.Number>` (or a pattern like `#,##0.00`), and
-`short`, `medium`, `long`, or `full` on `<Say.Date>` and `<Say.Time>`. See
-[Messages](/core-concepts/messages#numbers-dates-and-times) for what each one extracts to, and why
-there is no `currency`.
+`short`, `medium`, `long`, or `full` on `<Say.Date>` and `<Say.Time>`. Every one of them also takes
+an ICU skeleton, which is how you ask for a currency or for fields the named styles cannot spell:
+
+```tsx
+<Say>
+  Total <Say.Number _={total} style="::currency/EUR" /> since
+  <Say.Date _={{ joined }} style="::yMMMM" />
+</Say>
+```
+
+See [Messages](/core-concepts/messages#numbers-dates-and-times) for what each one extracts to.
 
 <Callout type="warn">
   Don't use the `{' '}` spacing escape inside a `<Say>`. It is an expression child like any other, so

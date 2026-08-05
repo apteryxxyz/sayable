@@ -41,6 +41,9 @@
     "prepack": "pnpm build"
   },
   "dependencies": {
-    "@messageformat/icu-messageformat-1": "^0.12.0"
+    "@messageformat/date-skeleton": "2.0.0-0",
+    "@messageformat/number-skeleton": "2.0.0-0",
+    "@messageformat/parser": "^5.1.1",
+    "messageformat": "^4.0.0"
   }
 }

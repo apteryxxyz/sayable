@@ -155,10 +155,12 @@ export namespace Say {
    * ```tsx
    * <Say>You have <Say.Number _={items.length} /> items</Say>
    * <Say>Battery at <Say.Number _={level} style="percent" /></Say>
+   * <Say>Total <Say.Number _={total} style="::currency/EUR" /></Say>
    * ```
    *
    * @param props._ Number to format
-   * @param props.style Formatting style, either a named style or a literal number pattern
+   * @param props.style Formatting style: a named style, an ICU skeleton such as
+   *   `::currency/EUR`, or a literal number pattern such as `#,##0.00`
    * @returns The formatted number, as a React node
    * @remark This is a macro and must be used with the relevant saykit plugin
    */
@@ -175,10 +177,12 @@ export namespace Say {
    * @example
    * ```tsx
    * <Say>Published <Say.Date _={post.publishedAt} style="medium" /></Say>
+   * <Say>Published <Say.Date _={post.publishedAt} style="::yMMMM" /></Say>
    * ```
    *
    * @param props._ Date to format
-   * @param props.style Formatting style
+   * @param props.style Formatting style, either a named style or an ICU
+   *   skeleton such as `::yyyyMMdd`
    * @returns The formatted date, as a React node
    * @remark This is a macro and must be used with the relevant saykit plugin
    */
@@ -198,10 +202,12 @@ export namespace Say {
    * @example
    * ```tsx
    * <Say>Doors open at <Say.Time _={opensAt} style="short" /></Say>
+   * <Say>Doors open at <Say.Time _={opensAt} style="::Hm" /></Say>
    * ```
    *
    * @param props._ Date to format
-   * @param props.style Formatting style
+   * @param props.style Formatting style, either a named style or an ICU
+   *   skeleton such as `::Hm`
    * @returns The formatted time, as a React node
    * @remark This is a macro and must be used with the relevant saykit plugin
    */

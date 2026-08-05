@@ -339,6 +339,71 @@ describe('formatted arguments', () => {
     expect(format(message, values)).toBe(expected);
   });
 
+  // Skeletons are why the MF1 conversion is ours rather than the upstream
+  // package's: it renders a style into MF2's option vocabulary, which has no
+  // word for a currency on a number or for any of these fields on a date.
+  it.each([
+    ['{n, number, ::.00}', { n: 1234.5 }, '1,234.50'],
+    ['{n, number, ::group-off}', { n: 1234.5 }, '1234.5'],
+    ['{n, number, ::compact-short}', { n: 12345 }, '12K'],
+    ['{n, number, ::scale/1000}', { n: 1.5 }, '1,500'],
+    // A skeleton's `percent` only writes the sign. The named MF1 style scales
+    // as well, which is `percent scale/100` spelled out.
+    ['{n, number, ::percent}', { n: 25 }, '25%'],
+    ['{n, number, ::percent scale/100}', { n: 0.25 }, '25%'],
+  ])('formats the number skeleton %s', (message, values, expected) => {
+    expect(format(message, values)).toBe(expected);
+  });
+
+  // MF1 has nowhere to write a currency code, so `{n, number, currency}` cannot
+  // name one and falls back to a plain number. A skeleton carries the code.
+  it('formats a currency, which only a skeleton can ask for', () => {
+    expect(format('{n, number, ::currency/EUR}', { n: 1234.5 })).toBe('€1,234.50');
+    expect(format('{n, number, currency}', { n: 1234.5 })).toBe('1,234.5');
+  });
+
+  it.each([
+    ['{d, date, ::yyyyMMdd}', '01/02/2020'],
+    ['{d, date, ::yMMMM}', 'January 2020'],
+    ['{d, date, ::MMMd}', 'Jan 2'],
+    ['{d, date, ::EEEE}', 'Thursday'],
+    ['{d, time, ::Hm}', '12:04'],
+  ])('formats the date skeleton %s', (message, expected) => {
+    expect(format(message, { d: when })).toBe(expected);
+  });
+
+  // A style is authored once and read by everyone. A message that renders in a
+  // slightly wrong shape is recoverable; one that renders `{$d}` is not.
+  it.each([
+    ['{d, date, bogus}', 'Jan 2, 2020'],
+    ['{d, date, ::qqqq}', 'Jan 2, 2020'],
+  ])('falls back to the default format for %s', (message, expected) => {
+    expect(format(message, { d: when })).toBe(expected);
+  });
+
+  it('falls back to a plain number for an unreadable number style', () => {
+    expect(format('{n, number, ::bogus}', { n: 1234.5 })).toBe('1,234.5');
+  });
+
+  // No macro authors a `duration`, so this only ever arrives from a catalogue
+  // written by hand. `Intl` has no clock-reading format, so we write it out.
+  it.each([
+    [0, '0:00'],
+    [5, '0:05'],
+    [61, '1:01'],
+    [3661, '1:01:01'],
+    [-61, '-1:01'],
+    [1.5, '0:01.500'],
+  ])('formats {n, duration} of %d', (n, expected) => {
+    expect(plain(format('{n, duration}', { n }))).toBe(expected);
+  });
+
+  // An argument type with no formatter still writes its value, rather than
+  // taking the rest of the message down with it.
+  it('falls back to the plain value for an unknown argument type', () => {
+    expect(plain(format('{n, spellout}', { n: 42 }))).toBe('42');
+  });
+
   it.each([
     ['{d, date}', 'Jan 2, 2020'],
     ['{d, date, short}', '1/2/2020'],
