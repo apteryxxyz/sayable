@@ -1,5 +1,14 @@
 # @saykit/transform-jsx
 
+## 0.9.1
+
+### Patch Changes
+
+- 4f2b3a9: Extract `// TRANSLATORS:` comments from where they are actually written — above a statement, above a selector or argument call, and as a `{/* … */}` child in JSX
+- Updated dependencies [4f2b3a9]
+  - @saykit/transform-js@0.9.1
+  - @saykit/config@0.9.1
+
 ## 0.9.0
 
 ### Patch Changes
