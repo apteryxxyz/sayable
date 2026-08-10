@@ -454,10 +454,10 @@ string attribute has nowhere to put a value:
 
 <Callout type="info">
   A message extracts as the text JSX renders, so a line break and the indentation around it are
-  layout and never reach a catalogue. Whitespace that has to survive a break is written as ` ` — the
-  same escape Prettier inserts when it wraps a line ending in a space — and it extracts as the space
-  it renders as, not as a placeholder. A literal expression child such as `{'—'}` or `{10}` is read
-  the same way, as the text it renders as.
+  layout and never reach a catalogue. Whitespace that has to survive a break is written as{' '}
+  <code>{"{' '}"}</code> — the same escape Prettier inserts when it wraps a line ending in a space —
+  and it extracts as the space it renders as, not as a placeholder. A literal expression child such
+  as `{'—'}` or `{10}` is read the same way, as the text it renders as.
 </Callout>
 
 <Callout type="info">
