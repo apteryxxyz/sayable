@@ -1,3 +1,4 @@
+import type { NodePath } from '@babel/traverse';
 import * as t from '@babel/types';
 import {
   ArgumentMessage,
@@ -32,7 +33,7 @@ export function parseTaggedTemplateExpression(
 
   return new CompositeMessage(
     { id: descriptorId, context: descriptorContext },
-    getTranslatorComments(tagged.leadingComments ?? []),
+    getTranslatorComments(tagged.leadingComments),
     tagged.loc ? [`${tagged.loc.filename}:${tagged.loc.start.line}`] : [],
     children,
     accessor,
@@ -67,7 +68,7 @@ export function parseCallExpression(call: t.CallExpression): CompositeMessage | 
   const wrap = (children: Message[]) =>
     new CompositeMessage(
       { id: descriptorId, context: descriptorContext },
-      [],
+      getTranslatorComments(call.leadingComments),
       call.loc ? [`${call.loc.filename}:${call.loc.start.line}`] : [],
       children,
       accessor,
@@ -305,10 +306,80 @@ function findPropertyValueIfStringLiteralAsString(object: t.ObjectExpression, ke
   return undefined;
 }
 
-function getTranslatorComments(comments: t.Comment[]) {
-  return comments.reduce<string[]>((a, c) => {
+const TRANSLATOR_COMMENT_PREFIX = 'translators:';
+
+/**
+ * The notes a translator is meant to read, taken from the comments written
+ * above a message — `// TRANSLATORS: keep this under 20 characters`. A comment
+ * that does not open with the marker is a note to whoever is reading the code,
+ * and stays there.
+ */
+export function getTranslatorComments(comments: readonly t.Comment[] | null | undefined) {
+  return (comments ?? []).reduce<string[]>((a, c) => {
     const text = c.value.trim();
-    if (text.toLowerCase().startsWith('translators:')) a.push(text.slice(12).trim());
+    if (text.toLowerCase().startsWith(TRANSLATOR_COMMENT_PREFIX))
+      a.push(text.slice(TRANSLATOR_COMMENT_PREFIX.length).trim());
     return a;
   }, []);
+}
+
+/**
+ * The comments written in front of a message, in the order they were written.
+ *
+ * A comment on its own line is attached by Babel to whatever node happens to
+ * begin at it — `const a = say\`Hi\`` puts it on the declaration, not on the
+ * template — so a message is rarely the node holding its own notes. Walking out
+ * to the statement gathers them from wherever they landed.
+ */
+export function collectLeadingComments(path: NodePath<t.Node>) {
+  const levels: (readonly t.Comment[])[] = [];
+  let current: NodePath<t.Node> | null = path;
+
+  while (current) {
+    levels.push(current.node.leadingComments ?? []);
+
+    const parent: NodePath<t.Node> | null = current.parentPath;
+    // Only a program has nothing around it, and a program is not a message.
+    /* v8 ignore next */
+    if (!parent) break;
+
+    // Among JSX children a comment is written as `{/* … */}`, an element of the
+    // list rather than something attached to the element it describes.
+    if (t.isJSXElement(parent.node) || t.isJSXFragment(parent.node)) {
+      levels.push(getPrecedingJSXComments(parent.node, current.node));
+      break;
+    }
+
+    // A statement is the widest thing a comment above a message can belong to —
+    // anything further out wraps code the message is only one part of. An
+    // export is the exception, being a wrapper around the statement itself.
+    if (t.isStatement(current.node) && !t.isExportDeclaration(parent.node)) break;
+
+    current = parent;
+  }
+
+  // Innermost first on the way up, and outermost first in the source. A comment
+  // that landed on an ancestor is also reachable through a descendant whose own
+  // list this traversal already filled in, so identity dedupes the overlap.
+  return [...new Set(levels.reverse().flat())];
+}
+
+/**
+ * The comments in the `{/* … *\/}` children standing immediately in front of an
+ * element, which is how a comment about a message is written inside JSX. Only
+ * the whitespace that lays the markup out may come between them.
+ */
+function getPrecedingJSXComments(parent: t.JSXElement | t.JSXFragment, node: t.Node) {
+  const index = parent.children.indexOf(node as t.JSXElement);
+  /* v8 ignore next */
+  if (index === -1) return [];
+
+  const comments: t.Comment[] = [];
+  for (let i = index - 1; i >= 0; i--) {
+    const sibling = parent.children[i]!;
+    if (t.isJSXText(sibling) && !sibling.value.trim()) continue;
+    if (!t.isJSXExpressionContainer(sibling) || !t.isJSXEmptyExpression(sibling.expression)) break;
+    comments.unshift(...(sibling.expression.innerComments ?? []));
+  }
+  return comments;
 }

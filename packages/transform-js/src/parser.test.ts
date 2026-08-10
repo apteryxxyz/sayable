@@ -1,4 +1,5 @@
-import { parseExpression } from '@babel/parser';
+import { parse, parseExpression } from '@babel/parser';
+import traverse_ from '@babel/traverse';
 import * as t from '@babel/types';
 import {
   ArgumentMessage,
@@ -10,6 +11,8 @@ import {
 } from '@saykit/config/features/messages';
 import { describe, expect, it } from 'vitest';
 import * as parser from './parser.js';
+
+const traverse = ((traverse_ as any).default || traverse_) as typeof traverse_;
 
 // Parse a snippet of real source into its expression node, the way the
 // transformer does (see index.ts). `test.js` becomes the reference filename.
@@ -227,6 +230,18 @@ describe('parseCallExpression', () => {
     const call = expr<t.CallExpression>("say.plural(count, { other: 'x' })");
     call.loc = null;
     expect(parser.parseCallExpression(call)!.references).toEqual([]);
+  });
+
+  it('extracts translator comments', () => {
+    const result = parser.parseCallExpression(
+      expr<t.CallExpression>('// Translators: Round the total\nsay.number(total)'),
+    );
+    expect(result!.comments).toEqual(['Round the total']);
+  });
+
+  it('ignores non-translator leading comments', () => {
+    const result = parser.parseCallExpression(expr('// just a note\nsay.number(total)'));
+    expect(result!.comments).toEqual([]);
   });
 
   it('parses a select call expression', () => {
@@ -610,5 +625,98 @@ describe('isEquivalentPlaceholder, on values', () => {
   it('treats anything that is not a node as distinguishable', () => {
     expect(parser.isEquivalentPlaceholder(null, null)).toBe(false);
     expect(parser.isEquivalentPlaceholder(expr('name'), undefined)).toBe(false);
+  });
+});
+
+describe('collectLeadingComments', () => {
+  // The JSX parser reaches these paths through this package, so they are
+  // exercised here against the source rather than the built dependency.
+  function collect(code: string, find: (node: t.Node) => boolean) {
+    const ast = parse(code, {
+      sourceType: 'module',
+      sourceFilename: 'test.tsx',
+      plugins: ['typescript', 'jsx'],
+      attachComment: true,
+      tokens: true,
+      ranges: true,
+    });
+
+    let comments: readonly t.Comment[] = [];
+    traverse(ast, {
+      enter(path) {
+        if (!find(path.node)) return;
+        comments = parser.collectLeadingComments(path);
+        path.stop();
+      },
+    });
+    return comments.map((c) => c.value.trim());
+  }
+
+  const say = (node: t.Node) => t.isTaggedTemplateExpression(node);
+  const element = (node: t.Node) =>
+    t.isJSXElement(node) &&
+    t.isJSXIdentifier(node.openingElement.name) &&
+    node.openingElement.name.name === 'Say';
+
+  it('walks out to the statement holding the message', () => {
+    expect(collect('// a note\nconst a = say`Hi`;', say)).toEqual(['a note']);
+  });
+
+  it('walks out through an export to the declaration it wraps', () => {
+    expect(collect('// a note\nexport const a = say`Hi`;', say)).toEqual(['a note']);
+  });
+
+  it('stops at the statement', () => {
+    expect(collect('// a note\nfunction f() {\n  return say`Hi`;\n}', say)).toEqual([]);
+  });
+
+  it('reads a comment child in front of a JSX message', () => {
+    expect(collect('const x = <p>{/* a note */}<Say>Hi</Say></p>;', element)).toEqual(['a note']);
+  });
+
+  it('reads a comment child in front of a JSX message in a fragment', () => {
+    expect(collect('const x = <>{/* a note */}<Say>Hi</Say></>;', element)).toEqual(['a note']);
+  });
+
+  it('reads through the whitespace laying out the markup', () => {
+    expect(
+      collect('const x = (\n  <p>\n    {/* a note */}\n    <Say>Hi</Say>\n  </p>\n);', element),
+    ).toEqual(['a note']);
+  });
+
+  it('stops at a child that is not a comment', () => {
+    expect(collect('const x = <p>{/* a note */}<b>x</b><Say>Hi</Say></p>;', element)).toEqual([]);
+  });
+
+  it('stops at an expression child holding something other than a comment', () => {
+    expect(collect('const x = <p>{/* a note */}{value}<Say>Hi</Say></p>;', element)).toEqual([]);
+  });
+
+  it('reads an empty expression child that holds no comment as nothing', () => {
+    expect(collect('const x = <p>{}<Say>Hi</Say></p>;', element)).toEqual([]);
+  });
+
+  it('does not reach out of a child list to the statement around it', () => {
+    expect(collect('// a note\nconst x = <p><Say>Hi</Say></p>;', element)).toEqual([]);
+  });
+
+  it('reports a comment once when an ancestor already carries it', () => {
+    // The transformer assigns what this collects back on to the node, so a
+    // second pass over the same tree must not double the comment up.
+    const ast = parse('// a note\nconst a = say`Hi`;', {
+      sourceType: 'module',
+      attachComment: true,
+      tokens: true,
+      ranges: true,
+    });
+
+    let collected: readonly t.Comment[] = [];
+    traverse(ast, {
+      Expression(path) {
+        path.node.leadingComments = parser.collectLeadingComments(path);
+        if (t.isTaggedTemplateExpression(path.node)) collected = path.node.leadingComments;
+      },
+    });
+    expect(collected.map((c) => c.value.trim())).toEqual(['a note']);
   });
 });

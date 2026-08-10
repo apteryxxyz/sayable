@@ -118,6 +118,68 @@ describe('createJsTransformer.extract', () => {
   });
 });
 
+describe('translator comments', () => {
+  const comments = (code: string) => transformer.extract(code, 'file.ts').map((m) => m.comments);
+
+  // A comment on its own line is attached to whichever node starts at it, which
+  // is almost never the message itself.
+  it.each([
+    ['an expression statement', '// TRANSLATORS: hi\nsay`Hello`;'],
+    ['a declaration', '// TRANSLATORS: hi\nconst a = say`Hello`;'],
+    ['an exported declaration', '// TRANSLATORS: hi\nexport const a = say`Hello`;'],
+    ['a default export', '// TRANSLATORS: hi\nexport default say`Hello`;'],
+    ['a return', 'function f() {\n  // TRANSLATORS: hi\n  return say`Hello`;\n}'],
+    ['an object property', 'const o = {\n  // TRANSLATORS: hi\n  a: say`Hello`,\n};'],
+    ['an array element', 'const o = [\n  // TRANSLATORS: hi\n  say`Hello`,\n];'],
+    ['a call argument', 'f(\n  // TRANSLATORS: hi\n  say`Hello`,\n);'],
+    ['a block comment', '/* TRANSLATORS: hi */\nconst a = say`Hello`;'],
+    ['the message itself', 'const a = /* TRANSLATORS: hi */ say`Hello`;'],
+  ])('reads a comment written above %s', (_, code) => {
+    expect(comments(code)).toEqual([['hi']]);
+  });
+
+  it('reads a comment written above a selector call', () => {
+    expect(comments('// TRANSLATORS: hi\nconst a = say.plural(n, { other: `days` });')).toEqual([
+      ['hi'],
+    ]);
+  });
+
+  it('reads a comment written above an argument call', () => {
+    expect(comments('// TRANSLATORS: hi\nconst a = say.number(total);')).toEqual([['hi']]);
+  });
+
+  it('keeps several comments in the order they were written', () => {
+    expect(comments('// TRANSLATORS: one\n// TRANSLATORS: two\nconst a = say`Hello`;')).toEqual([
+      ['one', 'two'],
+    ]);
+  });
+
+  it('matches the marker regardless of case', () => {
+    expect(comments('// translators: hi\nconst a = say`Hello`;')).toEqual([['hi']]);
+  });
+
+  it('ignores a comment without the marker', () => {
+    expect(comments('// a note for whoever reads this\nconst a = say`Hello`;')).toEqual([[]]);
+  });
+
+  it('takes only the marked comment out of a run of them', () => {
+    expect(comments('// a note\n// TRANSLATORS: hi\nconst a = say`Hello`;')).toEqual([['hi']]);
+  });
+
+  // A statement is as wide as attribution goes: a comment above a function
+  // describes the function, not every message written inside it.
+  it('does not reach past the statement holding the message', () => {
+    expect(comments('// TRANSLATORS: hi\nfunction f() {\n  return say`Hello`;\n}')).toEqual([[]]);
+  });
+
+  it('does not carry a comment on to the next message', () => {
+    expect(comments('// TRANSLATORS: hi\nconst a = say`Hello`;\nconst b = say`Bye`;')).toEqual([
+      ['hi'],
+      [],
+    ]);
+  });
+});
+
 describe('createJsTransformer.transform', () => {
   it('rewrites a tagged template into a `.call`', () => {
     const output = transformer.transform('const greeting = say`Hello, ${name}!`;', 'file.ts');

@@ -11,7 +11,7 @@ import {
   validateBranchIdentifier,
   type Message,
 } from '@saykit/config/features/messages';
-import { unwrapPlaceholder } from '@saykit/transform-js/parser';
+import { getTranslatorComments, unwrapPlaceholder } from '@saykit/transform-js/parser';
 
 /**
  * Attribute used to name the ICU tag an embedded element extracts as, e.g.
@@ -43,7 +43,7 @@ export function parseJSXContainerElement(element: t.JSXElement): CompositeMessag
 
   return new CompositeMessage(
     { id: descriptorId, context: descriptorContext },
-    [],
+    getTranslatorComments(element.leadingComments),
     getReferences(element),
     children,
     accessor as t.Expression,
@@ -51,7 +51,15 @@ export function parseJSXContainerElement(element: t.JSXElement): CompositeMessag
   );
 }
 
-export function parseJSXOpeningElement(element: t.JSXOpeningElement): CompositeMessage | null {
+/**
+ * A self-closing `Say` element. Comments are passed in rather than read off the
+ * node, since they were written in front of the element as a whole and Babel
+ * attaches them there.
+ */
+export function parseJSXOpeningElement(
+  element: t.JSXOpeningElement,
+  comments?: readonly t.Comment[] | null,
+): CompositeMessage | null {
   if (!element.selfClosing) return null;
   const processed = processJSXOpeningElement(element);
   if (!processed) return null;
@@ -66,7 +74,7 @@ export function parseJSXOpeningElement(element: t.JSXOpeningElement): CompositeM
   const wrap = (children: Message[]) =>
     new CompositeMessage(
       { id: descriptorId, context: descriptorContext },
-      [],
+      getTranslatorComments(comments),
       getReferences(element),
       children,
       accessor as t.Expression,
@@ -265,7 +273,7 @@ export function parseJSXElement(
 ): CompositeMessage | ElementMessage;
 export function parseJSXElement(element: t.JSXElement, fallback?: boolean): Message | null {
   const message = element.openingElement.selfClosing
-    ? parseJSXOpeningElement(element.openingElement)
+    ? parseJSXOpeningElement(element.openingElement, element.leadingComments)
     : parseJSXContainerElement(element);
 
   if (message) return message;

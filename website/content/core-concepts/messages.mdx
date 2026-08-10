@@ -378,6 +378,24 @@ msgid "Sign in"
 msgstr "Sign in"
 ```
 
+The comment belongs to the statement the message is written in, so it can sit above a declaration, a `return`, an object property, or the message itself:
+
+```ts
+// TRANSLATORS: Shown while the report is generating
+const label = say`One moment…`;
+```
+
+It doesn't reach any further than that statement — a comment above a function describes the function, not every message inside it.
+
+Inside JSX there is nothing in front of an element for a comment to attach to, so write one as a child instead:
+
+```tsx
+<div>
+  {/* TRANSLATORS: Button text, keep under 20 characters */}
+  <Say>Continue</Say>
+</div>
+```
+
 Use them when:
 
 - the meaning of a message isn't obvious from the text
@@ -436,10 +454,10 @@ string attribute has nowhere to put a value:
 
 <Callout type="info">
   A message extracts as the text JSX renders, so a line break and the indentation around it are
-  layout and never reach a catalogue. Whitespace that has to survive a break is written as `{' '}` —
-  the same escape Prettier inserts when it wraps a line ending in a space — and it extracts as the
-  space it renders as, not as a placeholder. A literal expression child such as `{'—'}` or `{10}` is
-  read the same way, as the text it renders as.
+  layout and never reach a catalogue. Whitespace that has to survive a break is written as{' '}
+  <code>{"{' '}"}</code> — the same escape Prettier inserts when it wraps a line ending in a space —
+  and it extracts as the space it renders as, not as a placeholder. A literal expression child such
+  as `{'—'}` or `{10}` is read the same way, as the text it renders as.
 </Callout>
 
 <Callout type="info">

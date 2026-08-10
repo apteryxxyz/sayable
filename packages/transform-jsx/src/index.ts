@@ -4,7 +4,11 @@ import traverse_ from '@babel/traverse';
 import type { Transformer } from '@saykit/config';
 import { assignSequenceIdentifiers, CompositeMessage } from '@saykit/config/features/messages';
 import { generateSayCallExpression } from '@saykit/transform-js/generator';
-import { isEquivalentPlaceholder, parseExpression } from '@saykit/transform-js/parser';
+import {
+  collectLeadingComments,
+  isEquivalentPlaceholder,
+  parseExpression,
+} from '@saykit/transform-js/parser';
 import { generateSayJSXElement } from './generator.js';
 import { parseJSXElement } from './parser.js';
 
@@ -45,7 +49,10 @@ function createJsxTransformer(): Transformer {
 
       traverse(program, {
         Expression(path) {
-          path.node.leadingComments = path.node.leadingComments ?? [];
+          // Only extraction cares where a comment was written — the transform
+          // leaves comments where they are, and moving them would duplicate
+          // them into the generated call.
+          path.node.leadingComments = collectLeadingComments(path);
           const message = parseExpression(path.node);
           if (message) {
             assignSequenceIdentifiers(message, { current: 0 }, isEquivalentPlaceholder);
@@ -55,7 +62,7 @@ function createJsxTransformer(): Transformer {
         },
 
         JSXElement(path) {
-          path.node.leadingComments = path.node.leadingComments ?? [];
+          path.node.leadingComments = collectLeadingComments(path);
           const message = parseJSXElement(path.node);
           if (message) {
             assignSequenceIdentifiers(message, { current: 0 }, isEquivalentPlaceholder);
@@ -81,7 +88,6 @@ function createJsxTransformer(): Transformer {
 
       traverse(program, {
         Expression(path) {
-          path.node.leadingComments = path.node.leadingComments ?? [];
           const message = parseExpression(path.node);
           if (message) {
             assignSequenceIdentifiers(message, { current: 0 }, isEquivalentPlaceholder);
@@ -92,7 +98,6 @@ function createJsxTransformer(): Transformer {
         },
 
         JSXElement(path) {
-          path.node.leadingComments = path.node.leadingComments ?? [];
           const message = parseJSXElement(path.node);
           if (message) {
             assignSequenceIdentifiers(message, { current: 0 }, isEquivalentPlaceholder);

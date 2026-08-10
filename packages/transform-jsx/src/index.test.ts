@@ -167,6 +167,67 @@ describe('createJsxTransformer.extract', () => {
   });
 });
 
+describe('translator comments', () => {
+  const comments = (code: string) => transformer.extract(code, 'file.tsx').map((m) => m.comments);
+
+  it.each([
+    ['a declaration', '// TRANSLATORS: hi\nconst x = <Say>Hello</Say>;'],
+    ['a return', 'function C() {\n  // TRANSLATORS: hi\n  return <Say>Hello</Say>;\n}'],
+    ['an implicit return', 'const C = () => (\n  // TRANSLATORS: hi\n  <Say>Hello</Say>\n);'],
+    ['a self-closing element', '// TRANSLATORS: hi\nconst x = <Say.Number _={total} />;'],
+  ])('reads a comment written above %s', (_, code) => {
+    expect(comments(code)).toEqual([['hi']]);
+  });
+
+  it('reads a comment written above a tagged template in an attribute', () => {
+    expect(
+      comments('const x = (\n  <B\n    // TRANSLATORS: hi\n    label={say`Hello`}\n  />\n);'),
+    ).toEqual([['hi']]);
+  });
+
+  // Among children there is no node in front of the element for a comment to
+  // attach to, so JSX writes one as a child of its own.
+  it('reads a comment child standing in front of the message', () => {
+    expect(
+      comments(
+        'const x = (\n  <div>\n    {/* TRANSLATORS: hi */}\n    <Say>Hello</Say>\n  </div>\n);',
+      ),
+    ).toEqual([['hi']]);
+  });
+
+  it('reads a comment child standing in front of a self-closing message', () => {
+    expect(
+      comments(
+        'const x = (\n  <div>\n    {/* TRANSLATORS: hi */}\n    <Say.Number _={total} />\n  </div>\n);',
+      ),
+    ).toEqual([['hi']]);
+  });
+
+  it('keeps several comment children in the order they were written', () => {
+    expect(
+      comments(
+        'const x = (\n  <div>\n    {/* TRANSLATORS: one */}\n    {/* TRANSLATORS: two */}\n    <Say>Hello</Say>\n  </div>\n);',
+      ),
+    ).toEqual([['one', 'two']]);
+  });
+
+  it('ignores a comment child something else stands between', () => {
+    expect(
+      comments(
+        'const x = (\n  <div>\n    {/* TRANSLATORS: hi */}\n    <b>x</b>\n    <Say>Hello</Say>\n  </div>\n);',
+      ),
+    ).toEqual([[]]);
+  });
+
+  // The comment above the statement describes the markup, and there is no
+  // saying which of the messages inside it was meant.
+  it('does not reach out of a child list to the statement around it', () => {
+    expect(
+      comments('// TRANSLATORS: hi\nconst x = (\n  <div>\n    <Say>Hello</Say>\n  </div>\n);'),
+    ).toEqual([[]]);
+  });
+});
+
 describe('createJsxTransformer.transform', () => {
   it('rewrites a Say element into a self-closing Say with an id', () => {
     const output = transformer.transform(
