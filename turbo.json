@@ -3,7 +3,7 @@
   "tasks": {
     "check": {
       "dependsOn": ["^check"],
-      "inputs": ["src/**"],
+      "inputs": ["src/**", "tsconfig.json", "package.json"],
       "outputLogs": "new-only"
     },
     "lint": {
@@ -18,7 +18,7 @@
     },
     "build": {
       "dependsOn": ["^build"],
-      "inputs": ["src/**"],
+      "inputs": ["src/**", "tsdown.config.ts", "tsconfig.json", "package.json"],
       "outputs": ["dist/**", ".next/**"],
       "outputLogs": "new-only"
     },

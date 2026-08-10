@@ -25,6 +25,7 @@
     "!dist/**/*.map"
   ],
   "type": "module",
+  "sideEffects": false,
   "exports": {
     ".": {
       "types": "./dist/runtime.d.mts",

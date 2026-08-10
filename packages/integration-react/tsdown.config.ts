@@ -6,7 +6,8 @@ const SERVER_IMPORT = 'import { getSay as GET_SAY } from "./server.mjs";';
 
 export default defineConfig({
   entry: ['src/runtime/index.ts', 'src/runtime/client.ts', 'src/runtime/server.ts'],
-  target: 'es2020',
+  target: 'es2022',
+  outputOptions: { comments: { jsdoc: false } },
   async onSuccess() {
     const index = await readFile('dist/index.mjs', 'utf8');
     await writeFile('dist/index.server.mjs', SERVER_IMPORT + index);
