@@ -9,4 +9,5 @@ export default defineConfig({
     'src/next/loader.ts',
   ],
   format: 'cjs',
+  outputOptions: { comments: { jsdoc: false } },
 });

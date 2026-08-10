@@ -1,5 +1,5 @@
 import { dirname, relative, resolve } from 'node:path';
-import { types as t, type PluginObj, type parse as Parse } from '@babel/core';
+import type { ConfigAPI, PluginObj, parse as Parse, types } from '@babel/core';
 import { resolveConfig } from '@saykit/config/features/loader';
 import { loadCatalogue } from './catalogue.js';
 
@@ -26,7 +26,10 @@ export interface Options {
   catalogues?: 'inline' | 'module';
 }
 
-export default (_: unknown, { catalogues = 'inline' }: Options = {}): PluginObj => {
+export default (
+  { types: t }: ConfigAPI & { types: typeof types },
+  { catalogues = 'inline' }: Options = {},
+): PluginObj => {
   const config = resolveConfig();
 
   return {
