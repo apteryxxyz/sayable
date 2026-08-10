@@ -1,5 +1,15 @@
 # saykit
 
+## 0.9.0
+
+### Minor Changes
+
+- e876c1e: Accept ICU skeletons as an argument style, so `{d, date, ::yyyyMMdd}` and `{n, number, ::currency/EUR}` format
+
+### Patch Changes
+
+- 70e4957: Ship smaller builds, keeping doc comments in the type declarations rather than the code
+
 ## 0.8.0
 
 ### Minor Changes

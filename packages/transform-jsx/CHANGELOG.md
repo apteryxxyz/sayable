@@ -1,5 +1,15 @@
 # @saykit/transform-jsx
 
+## 0.9.0
+
+### Patch Changes
+
+- 70e4957: Ship smaller builds, keeping doc comments in the type declarations rather than the code
+- Updated dependencies [70e4957]
+- Updated dependencies [e876c1e]
+  - @saykit/config@0.9.0
+  - @saykit/transform-js@0.9.0
+
 ## 0.8.0
 
 ### Minor Changes
