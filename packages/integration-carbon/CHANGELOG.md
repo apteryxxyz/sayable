@@ -1,5 +1,11 @@
 # @saykit/carbon
 
+## 0.9.0
+
+### Patch Changes
+
+- 70e4957: Ship smaller builds, keeping doc comments in the type declarations rather than the code
+
 ## 0.8.0
 
 ## 0.7.0

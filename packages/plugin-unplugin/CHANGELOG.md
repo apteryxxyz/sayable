@@ -1,5 +1,14 @@
 # unplugin-saykit
 
+## 0.9.0
+
+### Patch Changes
+
+- 70e4957: Stop publishing the test bundle, which took the package from 574kb to 4kb
+- Updated dependencies [70e4957]
+- Updated dependencies [e876c1e]
+  - @saykit/config@0.9.0
+
 ## 0.8.0
 
 ### Patch Changes
