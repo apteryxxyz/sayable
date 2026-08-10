@@ -1,15 +1,8 @@
-import { sha256 } from 'js-sha256';
+import { createHash } from 'node:crypto';
 
 export function generateHash(input: string, context?: string) {
-  const hasher = sha256.create();
-  hasher.update(`${input}\u{001F}${context || ''}`);
-  const result = hasher.toString();
-
-  const elements = result.match(/.{1,2}/g)?.map((b) => parseInt(b, 16)) || [];
-  const bytes = Uint8Array.from(elements);
-  return btoa(String.fromCharCode(...bytes))
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=+$/, '')
+  return createHash('sha256')
+    .update(`${input}\u{001F}${context || ''}`)
+    .digest('base64url')
     .slice(0, 6);
 }

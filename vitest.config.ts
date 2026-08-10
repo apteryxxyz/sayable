@@ -1,10 +1,9 @@
-import tsconfigPaths from 'vite-tsconfig-paths';
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
-  plugins: [tsconfigPaths({ projectDiscovery: 'lazy', ignoreConfigErrors: true })],
   resolve: {
     alias: { 'server-only': 'data:text/javascript,export {}' },
+    tsconfigPaths: true,
   },
   test: {
     globals: true,

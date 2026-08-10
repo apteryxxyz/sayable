@@ -53,10 +53,13 @@
     "prepack": "pnpm build"
   },
   "dependencies": {
-    "@babel/core": "^7.29.7",
     "@saykit/config": "workspace:^"
   },
   "devDependencies": {
+    "@babel/core": "^7.29.7",
     "@types/babel__core": "^7.20.5"
+  },
+  "peerDependencies": {
+    "@babel/core": "^7.0.0 || ^8.0.0"
   }
 }
