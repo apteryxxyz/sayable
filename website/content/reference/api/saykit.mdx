@@ -376,7 +376,7 @@ namespace Store {
 ### `Catalogue.Options<Locale>`
 
 `Record<Locale, Catalogue.Source>`: where each locale's messages come from, keyed by locale. The
-keys are the catalogue's locales, and the first of them is the default locale.
+keys are the catalogue's locales, and the first of them is the fallback `match()` resolves to.
 
 ### `NumeralOptions` / `SelectOptions`
 

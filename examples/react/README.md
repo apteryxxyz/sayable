@@ -56,7 +56,7 @@ category. The `_`-prefix is stripped during extraction, so the catalogue holds s
 
 ## Code-split catalogues
 
-`src/i18n.ts` passes a `loader` instead of `messages`, with one `import()` per locale. Vite emits a
+`src/i18n.ts` writes one `import()` thunk per locale straight into the catalogue. Vite emits a
 chunk per catalogue, so a French visitor never downloads the Polish or Japanese strings. The
 trade-off is that `catalogue.load(locale)` must be awaited before the view exists. `src/main.tsx` does it
 once at module scope for the detected locale, and again on each switch.
