@@ -33,9 +33,10 @@ describe('SayPlugin', () => {
 describe('guild `say` extension', () => {
   it('matches the guild preferred locale and returns its view', () => {
     const guild = proto<Guild>(Guild.prototype, { preferred_locale: 'fr' });
-    expect(guild.say.locale).toBe('fr');
+    const view = guild.say;
+    expect(view.locale).toBe('fr');
     // Second access reuses the catalogue's memoised view.
-    expect(guild.say.locale).toBe('fr');
+    expect(guild.say).toBe(view);
   });
 
   it('throws when no say instance is registered', () => {

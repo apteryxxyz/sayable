@@ -11,15 +11,15 @@ on:
     # automatically, so `authorize` filters down to the label that matters.
     types: [opened, synchronize, reopened, labeled]
     paths:
-      - "package.json"
-      - "pnpm-lock.yaml"
-      - "pnpm-workspace.yaml"
-      - "turbo.json"
-      - "packages/**/src/**"
-      - "packages/**/package.json"
-      - ".changeset/**"
-      - ".github/workflows/pull-request.yml"
-      - ".github/workflows/quality.yml"
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - 'turbo.json'
+      - 'packages/**/src/**'
+      - 'packages/**/package.json'
+      - '.changeset/**'
+      - '.github/workflows/pull-request.yml'
+      - '.github/workflows/quality.yml'
   # An approving review is the other thing that releases a preview. `paths` is
   # not available here, so this fires for reviews on any pull request — the jobs
   # below sort out which of those is actually asking for something.

@@ -50,11 +50,11 @@ against whichever view you passed in, usually `interaction.say`.
 person who ran the command. That is right for ephemeral replies and modals.
 
 `guild.say` is the view for the guild's `preferred_locale`. Use it when the message is for the
-whole channel: `/announce` posts in the server's language, because it would be strange for a public
+whole channel: `/announce` posts in the server's language because it would be strange for a public
 notice to appear in Japanese only because the person who triggered it reads Japanese.
 
-Both are views off the same catalogue, and a view cannot be changed, so neither can disturb the
-catalogue or each other.
+Both are views off the same catalogue, and a view cannot be changed, so a view can disturb neither the
+catalogue nor the other view.
 
 ## Locale codes
 

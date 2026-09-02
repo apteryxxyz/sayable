@@ -113,10 +113,11 @@ formatting something else.
 
 ### `match(...guesses)`
 
-Pick the best supported locale from one or more guesses. Each argument can be a string or array of
-strings; all guesses are flattened in order. Guesses come from cookies, headers and URL segments, so
-`undefined`, `null` and empty strings are allowed and skipped rather than throwing, and you can pass
-a value straight through without narrowing it first.
+Pick the best supported locale from one or more guesses. Each argument is a `Catalogue.Guess`: a
+string, `null`, `undefined`, or a one-level readonly array of those; all guesses are flattened in
+order. Guesses come from cookies, headers and URL segments, so nullish and empty-string values are
+allowed and skipped rather than throwing, and you can pass a value straight through without
+narrowing it first.
 
 ```ts
 catalogue.match('fr-CA', 'en');
@@ -288,9 +289,7 @@ namespace View {
 
 ```ts
 namespace Catalogue {
-  type Loader<Locale extends string> = (
-    locale: Locale,
-  ) => View.Messages | Promise<View.Messages>;
+  type Loader<Locale extends string> = (locale: Locale) => View.Messages | Promise<View.Messages>;
 }
 ```
 

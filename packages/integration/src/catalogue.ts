@@ -115,6 +115,11 @@ export function createCatalogue<
   const Locale extends string = string,
   Loader extends Catalogue.Loader<Locale> | undefined = undefined,
 >(options: Catalogue.Options<Locale, Loader>): Catalogue<Locale> {
+  // At least one locale, so `defaultLocale` and every `match` that falls back
+  // to it have a locale to be.
+  if (options.locales.length === 0)
+    throw new Error('A catalogue needs at least one locale, none were given');
+
   // Copied, so a caller that keeps hold of the array it passed in cannot
   // later change which locales this catalogue has. Everything downstream reads
   // this: `match`, `load`'s default targets, and iteration.
@@ -123,6 +128,12 @@ export function createCatalogue<
 
   const store = new Map<Locale, View.Messages>();
   const views = new Map<Locale, View<Locale>>();
+
+  // One in-flight load per locale, so callers that ask for the same locale at
+  // once share a single loader call. Cleared once it settles: a load that
+  // filled is answered by `store` from then on, and one that rejected is free
+  // to be tried again.
+  const pending = new Map<Locale, Promise<void>>();
 
   /**
    * Fill a locale's messages, once. A view holds the messages it was built
@@ -162,9 +173,18 @@ export function createCatalogue<
         if (!loader)
           throw new Error(`No loader provided, cannot load messages for locale '${locale}'`);
 
+        const inFlight = pending.get(locale);
+        if (inFlight) {
+          tasks.push(inFlight);
+          continue;
+        }
+
         const result = loader(locale);
-        if (result instanceof Promise) tasks.push(result.then((m) => fill(locale, m)));
-        else fill(locale, result);
+        if (result instanceof Promise) {
+          const task = result.then((m) => fill(locale, m)).finally(() => pending.delete(locale));
+          pending.set(locale, task);
+          tasks.push(task);
+        } else fill(locale, result);
       }
 
       if (tasks.length > 0) return Promise.all(tasks).then(() => undefined);

@@ -10,15 +10,15 @@ once.
 
 ## What it demonstrates
 
-| Concern                                                      | Where                                              |
-| ------------------------------------------------------------ | -------------------------------------------------- |
-| `unstable_createWithSay`, resolving the view before render   | `src/i18n.ts`, used in `layout.tsx` and `page.tsx` |
-| `getSay()` inside a plain server component                   | `src/app/[locale]/product-card.tsx`                |
-| `SayProvider` at the root, fed by `withSay`'s injected props | `src/app/[locale]/layout.tsx`                      |
-| `<Say>` in a **client** component                            | `add-to-cart.tsx`, `locale-switcher.tsx`           |
-| `generateStaticParams` from iterating a `Say`                | `src/app/[locale]/layout.tsx`                      |
-| Locale detection: path → cookie → `Accept-Language`          | `src/proxy.ts`                                     |
-| Babel wiring (Next.js runs Babel, not a bundler plugin)      | `.babelrc`                                         |
+| Concern                                                                                    | Where                                              |
+| ------------------------------------------------------------------------------------------ | -------------------------------------------------- |
+| `unstable_createWithSay`, resolving the view before render                                 | `src/i18n.ts`, used in `layout.tsx` and `page.tsx` |
+| `getSay()` inside a plain server component                                                 | `src/app/[locale]/product-card.tsx`                |
+| `SayProvider` at the root, fed by `withSay`'s injected props                               | `src/app/[locale]/layout.tsx`                      |
+| `<Say>` in a **client** component                                                          | `add-to-cart.tsx`, `locale-switcher.tsx`           |
+| `generateStaticParams` from iterating a `Catalogue`, whose values are locale-bound `View`s | `src/app/[locale]/layout.tsx`                      |
+| Locale detection: path → cookie → `Accept-Language`                                        | `src/proxy.ts`                                     |
+| Babel wiring (Next.js runs Babel, not a bundler plugin)                                    | `.babelrc`                                         |
 
 ## The server/client split
 
