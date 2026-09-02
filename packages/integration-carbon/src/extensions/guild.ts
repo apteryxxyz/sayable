@@ -1,24 +1,22 @@
 import { Guild } from '@buape/carbon';
-import type { Say } from 'saykit';
+import type { Catalogue, View } from 'saykit';
 import { kSay } from '~/constants.js';
 
 declare module '@buape/carbon' {
   interface Guild {
-    get say(): Say;
-    [kSay]: Say;
+    get say(): View;
   }
 }
 
 export function applyGuildExtension() {
   Object.defineProperty(Guild.prototype, 'say', {
     get(this: Guild) {
-      const say = Reflect.get(globalThis, kSay) as Say;
-      if (!say) throw new Error('No `say` instance available');
+      const catalogue = Reflect.get(globalThis, kSay) as Catalogue | undefined;
+      if (!catalogue) throw new Error('No `say` instance available');
 
-      this[kSay] ??= say.clone();
-      const locale = this[kSay].match([this.rawData.preferred_locale]);
-      this[kSay].activate(locale);
-      return this[kSay];
+      // Views are immutable and memoised, so a guild reads one rather than
+      // cloning the catalogue to keep its locale to itself.
+      return catalogue.locale(catalogue.match([this.rawData.preferred_locale]));
     },
   });
 

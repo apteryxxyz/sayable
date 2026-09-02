@@ -1,17 +1,18 @@
 import { BaseInteraction, Guild } from '@buape/carbon';
-import { Say } from 'saykit';
+import { createCatalogue } from 'saykit';
 import { afterEach, describe, expect, it } from 'vitest';
 import { kSay } from '~/constants.js';
 import { SayPlugin } from '~/plugin.js';
 
-const makeSay = () => new Say({ locales: ['en', 'fr'], messages: { en: {}, fr: {} } });
+const makeCatalogue = () =>
+  createCatalogue({ locales: ['en', 'fr'], messages: { en: {}, fr: {} } });
 
 // Constructing the plugin installs the `say` getters on the Carbon prototypes.
-const say = makeSay();
-const plugin = new SayPlugin(say);
+const catalogue = makeCatalogue();
+const plugin = new SayPlugin(catalogue);
 
 // Keep the global registered by default; individual tests may clear it.
-afterEach(() => Reflect.set(globalThis, kSay, say));
+afterEach(() => Reflect.set(globalThis, kSay, catalogue));
 
 /** Minimal object backed by a Carbon prototype, carrying the raw data the getter reads. */
 const proto = <T>(prototype: object, rawData: unknown) => {
@@ -23,9 +24,9 @@ const proto = <T>(prototype: object, rawData: unknown) => {
 };
 
 describe('SayPlugin', () => {
-  it('has the saykit id and registers the say instance globally', () => {
+  it('has the saykit id and registers the catalogue globally', () => {
     expect(plugin.id).toBe('saykit');
-    expect(Reflect.get(globalThis, kSay)).toBe(say);
+    expect(Reflect.get(globalThis, kSay)).toBe(catalogue);
   });
 });
 
