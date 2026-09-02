@@ -91,7 +91,7 @@ function createSayCommand<Args extends unknown[], Instance extends BaseCommand>(
     ) {
       super(...args);
 
-      const records = Array.from(catalogue).reduce<Record<string, any>>((acc, [say, locale]) => {
+      const records = Array.from(catalogue).reduce<Record<string, any>>((acc, [locale, say]) => {
         acc[locale] = properties(say);
         return acc;
       }, {});

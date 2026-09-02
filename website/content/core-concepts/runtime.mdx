@@ -159,10 +159,10 @@ This is what `SayProvider` uses on the client, where the server has already pick
 
 ## Iterating locales
 
-A catalogue is iterable. It yields `[say, locale]` for every configured locale:
+A catalogue is iterable. It yields `[locale, say]` for every configured locale:
 
 ```ts
-for (const [say, locale] of catalogue) {
+for (const [locale, say] of catalogue) {
   console.log(locale, say`Hello!`);
 }
 ```

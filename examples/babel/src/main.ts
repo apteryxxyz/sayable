@@ -10,7 +10,7 @@ const books = 3;
 
 // Iterating a catalogue yields each locale's view, so there is no locale to
 // activate and nothing to put back afterwards.
-for (const [say, locale] of catalogue) {
+for (const [locale, say] of catalogue) {
   console.log(`[${locale}]`);
   console.log(say`Welcome to the library`);
   console.log(say.plural(books, { one: `${books} book on loan`, other: `${books} books on loan` }));

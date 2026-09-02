@@ -156,8 +156,8 @@ describe('Catalogue iteration', () => {
   it('yields a view for each locale', () => {
     const catalogue = createCatalogue(opts({ locales: ['en', 'fr'], messages }));
     const entries = [...catalogue];
-    expect(entries.map(([, locale]) => locale)).toEqual(['en', 'fr']);
-    for (const [say, locale] of entries) expect(say.locale).toBe(locale);
+    expect(entries.map(([locale]) => locale)).toEqual(['en', 'fr']);
+    for (const [locale, say] of entries) expect(say.locale).toBe(locale);
   });
 
   it('throws for a locale with no messages', () => {

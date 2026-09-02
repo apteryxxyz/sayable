@@ -130,10 +130,10 @@ Returns the matched locale.
 
 ### Iteration
 
-Catalogues are iterable. They yield `[say, locale]` pairs for every configured locale.
+Catalogues are iterable. They yield `[locale, say]` pairs for every configured locale.
 
 ```ts
-for (const [say, locale] of catalogue) {
+for (const [locale, say] of catalogue) {
   console.log(locale, say`Hello!`);
 }
 ```

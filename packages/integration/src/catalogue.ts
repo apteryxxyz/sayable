@@ -80,11 +80,11 @@ export interface Catalogue<Locale extends string = string> {
   match(...guesses: (string | string[])[]): Locale;
 
   /**
-   * Every locale's view, paired with its locale.
+   * Every locale, paired with its view.
    *
    * @throws If any locale has no messages loaded
    */
-  [Symbol.iterator](): IterableIterator<[View<Locale>, Locale]>;
+  [Symbol.iterator](): IterableIterator<[Locale, View<Locale>]>;
 }
 
 /**
@@ -171,7 +171,7 @@ export function createCatalogue<
 
     *[Symbol.iterator]() {
       for (const locale of locales) {
-        yield [catalogue.locale(locale), locale] as [View<Locale>, Locale];
+        yield [locale, catalogue.locale(locale)] as [Locale, View<Locale>];
       }
     },
   };
