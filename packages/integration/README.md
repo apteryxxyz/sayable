@@ -4,7 +4,7 @@
 
 [![Coverage](https://codecov.io/gh/k0d13/saykit/graph/badge.svg?flag=integration)](https://codecov.io/gh/k0d13/saykit?flags%5B0%5D=integration)
 
-The core runtime for [SayKit](https://saykit.js.org). Exports `createCatalogue`, which stores your locales and loads message catalogues, and `createView`, which binds one locale and formats messages using ICU MessageFormat.
+The core runtime for [SayKit](https://saykit.js.org). Exports `createCatalogue`, which stores your locales and loads message catalogues, `createView`, which binds one locale and formats messages using ICU MessageFormat, and `createStore`, which holds the current view and swaps it when you switch locale.
 
 You author messages with the `` say`...` `` tagged template (and `say.plural`, `say.ordinal`, `say.select`); a SayKit build-tool plugin rewrites them at build time into small runtime calls.
 
@@ -32,6 +32,17 @@ const say = catalogue.locale('en');
 
 say`Hello, ${name}!`;
 say.plural(count, { one: '1 item', other: `${count} items` });
+```
+
+In a browser, where the locale can change, hold a store instead of a view:
+
+```ts
+import { createStore } from 'saykit';
+
+const store = createStore(catalogue, 'en');
+
+store.subscribe((say) => render(say));
+await store.set('fr');
 ```
 
 ## Documentation

@@ -1,13 +1,15 @@
 ---
 title: Runtime
-description: Catalogues and views, locales, messages, loading, matching
+description: Catalogues, views and stores, locales, messages, loading, matching, switching
 ---
 
-SayKit's runtime is two objects with one job each.
+SayKit's runtime is three objects with one job each.
 
 A **catalogue** holds your locales, their message catalogues, and the loader that fetches the ones it does not have yet. It never formats anything and has no notion of a current locale.
 
 A **view** is one locale bound to a set of messages. It is what you call to format a message, it is immutable, and it is the only thing your application code ever holds.
+
+A **store** holds one view at a time and tells you when that changed. It is the only one of the three that mutates, and it is what switching locale in a browser looks like.
 
 ```ts
 import { createCatalogue } from 'saykit';
@@ -72,7 +74,7 @@ catalogue.locale('fr') === catalogue.locale('fr'); // true
   `catalogue.loaded('fr')`.
 </Callout>
 
-A view has no reference back to its catalogue, so it cannot change locale. That is deliberate: switching locale means holding a different view, not mutating the one you have. Nothing downstream has to clone or freeze to protect itself from someone else's locale change.
+A view has no reference back to its catalogue, so it cannot change locale. That is deliberate: switching locale means holding a different view, not mutating the one you have. Nothing downstream has to clone or freeze to protect itself from someone else's locale change. When something does need to swap which view is current, that is a [store](#switching-locale).
 
 ## Reading state
 
@@ -133,6 +135,43 @@ catalogue.match(headerLocales, [cookieLocale]);
 
 See [locale detection](/guides/locale-detection) for usage patterns.
 
+## Switching locale
+
+A catalogue does not switch and a view cannot, so switching is its own object. A **store** holds the current view, swaps it for another, and tells whoever is listening:
+
+```ts
+import { createStore } from 'saykit';
+
+const store = createStore(catalogue, 'en');
+
+store.current; // the view for 'en'
+store.locale; // 'en'
+
+const unsubscribe = store.subscribe((say) => render(say));
+
+await store.set('fr');
+store.current; // the view for 'fr'
+```
+
+`set()` loads the locale first if the catalogue does not have it yet, and like `load()` it is synchronous when your loader is, so a locale that is already loaded switches inside the same tick.
+
+Only successful switches notify. Setting the locale that is already current does nothing, and a load that throws leaves the current view where it was, so a subscriber only ever sees a view it can format against. If two switches overlap, the last one you asked for wins, whichever load finishes first.
+
+The current view's identity changes with the locale, which is what lets a subscriber compare snapshots, and because views are memoised, switching away and back gives you the same view again:
+
+```ts
+const en = store.current;
+await store.set('fr');
+await store.set('en');
+store.current === en; // true
+```
+
+<Callout type="warn">
+  A store is the one part of the runtime that mutates, so it belongs in a browser: one locale at a
+  time, one user, module scope. On a server, where several locales are in flight at once, look a
+  view up per request instead of sharing a store.
+</Callout>
+
 ## Concurrency
 
 There is nothing to clone. A catalogue is shared safely because it has no current locale to leak, and a view is shared safely because it cannot be changed.
@@ -190,7 +229,7 @@ Each view caches the formats it compiles, so a message is parsed once per locale
 A typical client-side bootstrap:
 
 ```ts title="src/i18n.ts"
-import { createCatalogue } from 'saykit';
+import { createCatalogue, createStore } from 'saykit';
 import en from './locales/en.po';
 import fr from './locales/fr.po';
 
@@ -200,7 +239,10 @@ const catalogue = createCatalogue({
 });
 
 export default catalogue;
-export const say = catalogue.locale(catalogue.match(navigator.languages as string[]));
+
+// A store rather than a view, so the app can switch locale later. Read
+// `store.current` at the point you format, not once into a module binding.
+export const store = createStore(catalogue, catalogue.match(navigator.languages as string[]));
 ```
 
 A typical per-request server-side bootstrap:

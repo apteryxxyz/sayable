@@ -3,16 +3,18 @@ title: saykit
 description: API reference for the saykit core runtime
 ---
 
-The `saykit` package exports `createCatalogue`, `createView`, and a handful of supporting types.
+The `saykit` package exports `createCatalogue`, `createView`, `createStore`, and a handful of
+supporting types.
 
 ```ts
-import { createCatalogue, createView } from 'saykit';
-import type { Catalogue, View } from 'saykit';
+import { createCatalogue, createStore, createView } from 'saykit';
+import type { Catalogue, Store, View } from 'saykit';
 ```
 
-There are two objects, with one job each. A **catalogue** owns the locales, their messages, and the
-loader that fetches the ones it does not have yet; it never formats anything. A **view** is one
-locale bound to a set of messages: callable, immutable, and the only thing application code holds.
+There are three objects, with one job each. A **catalogue** owns the locales, their messages, and
+the loader that fetches the ones it does not have yet; it never formats anything. A **view** is one
+locale bound to a set of messages: callable, immutable, and the only thing application code holds. A
+**store** holds one view at a time and says when it changed, which is what switching locale is.
 
 ## `createCatalogue(options)`
 
@@ -203,6 +205,79 @@ In normal application code, you don't write this, the build transform emits it f
 
 Compiled formats are cached on the view, so a message is parsed once per locale per process.
 
+## `createStore(catalogue, locale?)`
+
+```ts
+createStore<Locale>(catalogue: Catalogue<Locale>, locale?: Locale): Store<Locale>;
+```
+
+Builds a [store](#store) over a catalogue, starting on `locale`, or on `catalogue.defaultLocale` if
+you leave it out. Throws if the starting locale has no messages loaded.
+
+```ts
+const store = createStore(catalogue, 'en');
+```
+
+## `Store`
+
+Which view is current, and when that changed. A catalogue does not switch and a view cannot, so
+switching is its own object, and the only one that mutates.
+
+That mutation is why a store is a browser value: one locale at a time, one user, module scope. On a
+server, where several locales are in flight at once, look a view up per request instead.
+
+The returned store is frozen. What it holds changes, which is its whole job; which methods it holds
+does not.
+
+### Properties
+
+<TypeTable
+  type={{
+    current: {
+      description:
+        'The current view. Its identity changes when the locale does, which is what lets a subscriber compare snapshots.',
+      type: 'View<Locale>',
+    },
+    locale: {
+      description: 'The locale the current view is bound to.',
+      type: 'Locale',
+    },
+  }}
+/>
+
+Because a catalogue memoises its views, switching away from a locale and back hands the same view
+back again.
+
+### `set(code)`
+
+Switch to another locale, loading its messages first if the catalogue does not have them yet.
+
+```ts
+store.set('fr');
+await store.set('ja');
+```
+
+Like [`load`](#loadlocales), this returns a promise only when the loader does: a locale that is
+already loaded switches synchronously, so a subscriber sees the new view in the same tick.
+
+Switching to the locale that is already current does nothing and notifies nobody. A load that throws
+leaves the current view where it was, and the locale can be asked for again.
+
+Only the last switch counts. If a slow locale resolves after a later `set` has already landed, its
+result is dropped rather than applied on top, and that includes a `set` back to the locale you were
+already on, which calls a pending switch off.
+
+### `subscribe(listener)`
+
+Listen for switches. Returns a function that removes the listener.
+
+```ts
+const unsubscribe = store.subscribe((say) => render(say));
+```
+
+The listener is called after `current` has changed, with the view that is now current. It is not
+called on subscribe, the current view is already readable.
+
 ## Macros
 
 These are recognised by the SayKit build-tool plugins and rewritten into `say.call(...)`
@@ -290,6 +365,14 @@ namespace View {
 ```ts
 namespace Catalogue {
   type Loader<Locale extends string> = (locale: Locale) => View.Messages | Promise<View.Messages>;
+}
+```
+
+### `Store.Listener<Locale>`
+
+```ts
+namespace Store {
+  type Listener<Locale extends string> = (view: View<Locale>) => void;
 }
 ```
 
