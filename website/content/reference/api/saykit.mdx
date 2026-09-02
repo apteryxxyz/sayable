@@ -102,8 +102,9 @@ catalogue.load('fr');
 await catalogue.load('fr', 'ja');
 ```
 
-If a loader is required but missing, throws. Returns `undefined` synchronously if every loader is
-sync, or a promise otherwise.
+If a loader is required but missing, throws. The loader is called once per locale being loaded, so
+this returns `undefined` synchronously when no call to it returned a promise, and a promise
+otherwise.
 
 A locale is filled **once**. Loading one that already has messages is a no-op, and there is no way
 to replace a locale's messages afterwards. That is what lets a view be built once and stay correct:
