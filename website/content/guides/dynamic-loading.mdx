@@ -127,7 +127,7 @@ function LocaleOption({ locale }: { locale: string }) {
 }
 ```
 
-A thunk is called once. `load()` on a locale that already has its messages never goes near it and returns the view synchronously, so this is safe to call repeatedly, and two loads that overlap share one call rather than fetching twice.
+`load()` on a locale that already has its messages never goes near its thunk and returns the view synchronously, so this is safe to call repeatedly, and two loads that overlap share one call rather than fetching twice. Only a thunk that rejected is called again.
 
 ## Server-side
 

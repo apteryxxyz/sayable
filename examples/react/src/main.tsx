@@ -12,7 +12,10 @@ const initialSay = await catalogue.load(initial);
 document.documentElement.lang = initial;
 
 function App() {
-  const [say, setSay] = useState(initialSay);
+  // A view is callable, and React reads a function passed to `useState` as a
+  // lazy initialiser and one passed to the setter as an updater. Both are
+  // wrapped so the view is stored rather than called.
+  const [say, setSay] = useState(() => initialSay);
 
   const change = useCallback(async (next: Locale) => {
     // `load` hands back the locale's view, and goes near its thunk only the
@@ -21,7 +24,8 @@ function App() {
     //
     // A view is immutable and memoised, so state holds the view itself: the
     // new one is a different value, which is exactly what re-renders the tree.
-    setSay(await catalogue.load(next));
+    const nextSay = await catalogue.load(next);
+    setSay(() => nextSay);
     document.documentElement.lang = next;
   }, []);
 

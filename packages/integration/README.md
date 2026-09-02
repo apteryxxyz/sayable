@@ -42,6 +42,8 @@ import { createStore } from 'saykit';
 const store = createStore(catalogue, 'en');
 
 store.subscribe((say) => render(say));
+render(store.current);
+
 await store.set('fr');
 ```
 

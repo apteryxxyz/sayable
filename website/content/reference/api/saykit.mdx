@@ -104,8 +104,9 @@ Returns a promise only when the thunk does. A locale whose messages are already 
 near its thunk and comes back synchronously, which is what lets a switch between loaded locales stay
 in one tick. A locale with no entry at all throws.
 
-A thunk is called **once**, and two loads that overlap share that one call rather than fetching
-twice. A thunk that rejects is forgotten, so its locale can be asked for again.
+Two loads that overlap share one call rather than fetching twice, and a locale that fills never
+calls its thunk again. A thunk that rejects is forgotten instead of cached, so the next load calls
+it afresh.
 
 A locale is filled **once**, and there is no way to replace its messages afterwards. That is what
 lets a view be built once and stay correct: nothing can swap out the messages it was built over, so
@@ -264,8 +265,10 @@ await store.set('ja');
 Like [`load`](#loadcode), this returns a promise only when the thunk does: a locale that is
 already loaded switches synchronously, so a subscriber sees the new view in the same tick.
 
-Switching to the locale that is already current does nothing and notifies nobody. A load that throws
-leaves the current view where it was, and the locale can be asked for again.
+Switching to the locale that is already current does nothing and notifies nobody, though asking
+again for a locale still being switched to hands back the switch already in flight rather than
+starting a second one. A load that throws leaves the current view where it was, and the locale can
+be asked for again.
 
 Only the last switch counts. If a slow locale resolves after a later `set` has already landed, its
 result is dropped rather than applied on top, and that includes a `set` back to the locale you were

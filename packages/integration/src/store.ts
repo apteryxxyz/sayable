@@ -127,6 +127,9 @@ export function createStore<Locale extends string>(
 
   function swap(view: View<Locale>, at: number) {
     if (at !== generation) return;
+    // A switch back mid-load lands on the view that is already current, and a
+    // subscriber is told what changed, so there is nothing to say.
+    if (view === current) return;
 
     current = view;
     for (const listener of listeners) listener(current);

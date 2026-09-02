@@ -195,6 +195,8 @@ describe('Store#set', () => {
       },
     });
     const store = createStore(catalogue, 'en');
+    const listener = vi.fn();
+    store.subscribe(listener);
 
     const switching = store.set('de');
     // Asked for while the load is still in flight: the store is on 'en' and
@@ -204,6 +206,31 @@ describe('Store#set', () => {
     resolve({ greeting: 'Hallo' });
     await switching;
     expect(store.locale).toBe('en');
+    // The switch back landed on the view that was already current, so there
+    // was never a change to report.
+    expect(listener).not.toHaveBeenCalled();
+  });
+
+  it('hands a second caller the switch already in flight', async () => {
+    const thunk = vi.fn(
+      async () => new Promise<View.Messages>((r) => setTimeout(() => r({ greeting: 'Hallo' }), 0)),
+    );
+    const catalogue = createCatalogue({
+      locales: ['en', 'de'],
+      messages: { en: messages.en, de: thunk },
+    });
+    const store = createStore(catalogue, 'en');
+
+    const first = store.set('de');
+    // Same locale, still loading: the same switch comes back rather than
+    // `undefined`, so awaiting it waits for the switch instead of resuming
+    // while the store is still on 'en'.
+    const second = store.set('de');
+    expect(second).toBe(first);
+
+    await second;
+    expect(store.locale).toBe('de');
+    expect(thunk).toHaveBeenCalledOnce();
   });
 });
 

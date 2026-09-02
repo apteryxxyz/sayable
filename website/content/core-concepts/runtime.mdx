@@ -105,7 +105,7 @@ A locale whose messages are already here does not go near its thunk and comes ba
 await Promise.all(catalogue.locales.map((locale) => catalogue.load(locale)));
 ```
 
-A thunk is called once, and two loads that overlap share that one call rather than fetching twice. A thunk that rejects is forgotten, so the locale can be asked for again.
+Two loads that overlap share one call rather than fetching twice, and a locale that fills never calls its thunk again. A thunk that rejects is forgotten instead of cached, so the next load calls it afresh.
 
 A locale is filled **once**, and there is no way to replace its messages afterwards. That is what makes a view safe to hold indefinitely: nothing can swap out the messages it was built over, so a view can never quietly start formatting something else.
 
