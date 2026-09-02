@@ -142,7 +142,7 @@ export function createCatalogue<
 
     locale(locale) {
       const messages = store.get(locale);
-      if (!messages) throw new Error('No messages loaded for locale');
+      if (!messages) throw new Error(`No messages loaded for locale '${locale}'`);
 
       let view = views.get(locale);
       if (!view) views.set(locale, (view = createView(locale, messages)));
@@ -159,7 +159,8 @@ export function createCatalogue<
       const tasks: Promise<unknown>[] = [];
       for (const locale of targets) {
         if (store.has(locale)) continue;
-        if (!loader) throw new Error('No loader provided, cannot load messages');
+        if (!loader)
+          throw new Error(`No loader provided, cannot load messages for locale '${locale}'`);
 
         const result = loader(locale);
         if (result instanceof Promise) tasks.push(result.then((m) => fill(locale, m)));

@@ -41,7 +41,7 @@ describe('guild `say` extension', () => {
   it('throws when no say instance is registered', () => {
     Reflect.deleteProperty(globalThis, kSay);
     const guild = proto<Guild>(Guild.prototype, { preferred_locale: 'fr' });
-    expect(() => guild.say).toThrow('No `say` instance available');
+    expect(() => guild.say).toThrow('No catalogue registered');
   });
 });
 
@@ -54,6 +54,6 @@ describe('interaction `say` extension', () => {
   it('throws when no say instance is registered', () => {
     Reflect.deleteProperty(globalThis, kSay);
     const interaction = proto<BaseInteraction<never>>(BaseInteraction.prototype, { locale: 'fr' });
-    expect(() => interaction.say).toThrow('No `say` instance available');
+    expect(() => interaction.say).toThrow('No catalogue registered');
   });
 });

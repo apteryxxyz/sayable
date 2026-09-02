@@ -75,7 +75,7 @@ describe('createCatalogue', () => {
 
 describe('Catalogue#locale', () => {
   it('throws when there are no messages for the locale', () => {
-    expect(() => make().locale('de')).toThrow('No messages loaded for locale');
+    expect(() => make().locale('de')).toThrow("No messages loaded for locale 'de'");
   });
 
   it('returns a view bound to the locale', () => {
@@ -140,7 +140,9 @@ describe('Catalogue#load', () => {
 
   it('throws when no loader is provided', () => {
     const catalogue = createCatalogue(opts({ locales: ['de'], messages: {} }));
-    expect(() => catalogue.load('de')).toThrow('No loader provided, cannot load messages');
+    expect(() => catalogue.load('de')).toThrow(
+      "No loader provided, cannot load messages for locale 'de'",
+    );
   });
 
   it('assigns synchronously returned messages', () => {
@@ -168,7 +170,7 @@ describe('Catalogue iteration', () => {
   });
 
   it('throws for a locale with no messages', () => {
-    expect(() => [...make()]).toThrow('No messages loaded for locale');
+    expect(() => [...make()]).toThrow("No messages loaded for locale 'de'");
   });
 });
 
