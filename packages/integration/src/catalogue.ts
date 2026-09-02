@@ -148,7 +148,13 @@ export function createCatalogue<const Locale extends string = string>(
   // this: `match`, and iteration.
   const locales: readonly Locale[] = Object.freeze([...options.locales]);
 
-  const sources = { ...options.messages } as Record<Locale, Catalogue.Source | undefined>;
+  // Null prototype, so a locale named after something on `Object.prototype`,
+  // such as `constructor`, reads as unconfigured rather than picking up an
+  // inherited function and being called as though it were a source.
+  const sources = Object.assign(
+    Object.create(null) as Record<Locale, Catalogue.Source | undefined>,
+    options.messages,
+  );
 
   const store = new Map<Locale, View.Messages>();
   const views = new Map<Locale, View<Locale>>();

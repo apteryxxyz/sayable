@@ -46,7 +46,9 @@ export interface Store<Locale extends string = string> {
    * subscriber sees the new view in the same tick.
    *
    * Switching to the locale that is already current does nothing and notifies
-   * nobody. A load that throws leaves the current view where it was.
+   * nobody, though asking again for a locale still being switched to hands
+   * back the switch already in flight. A load that throws leaves the current
+   * view where it was.
    *
    * @param locale Locale to switch to
    * @returns Nothing, or a promise that resolves once the switch is done
@@ -108,6 +110,21 @@ export function createStore<Locale extends string>(
    */
   let intended = current.locale;
 
+  /**
+   * The switch to {@link intended} while it is still in flight, so a second
+   * caller asking for the locale already being switched to gets that same
+   * promise rather than nothing, and awaiting it waits for the switch.
+   */
+  let pending: Promise<void> | undefined;
+
+  /**
+   * Clear the in-flight switch once it settles, unless a later switch has
+   * already replaced it and is the one now waiting.
+   */
+  function settle(at: number) {
+    if (at === generation) pending = undefined;
+  }
+
   function swap(view: View<Locale>, at: number) {
     if (at !== generation) return;
 
@@ -133,7 +150,7 @@ export function createStore<Locale extends string>(
     },
 
     set(target) {
-      if (target === intended) return;
+      if (target === intended) return pending;
 
       const at = ++generation;
       intended = target;
@@ -145,16 +162,22 @@ export function createStore<Locale extends string>(
         const loading = catalogue.load(target);
 
         if (loading instanceof Promise)
-          return loading.then(
-            (view) => swap(view, at),
+          return (pending = loading.then(
+            (view) => {
+              settle(at);
+              swap(view, at);
+            },
             (error: unknown) => {
+              settle(at);
               undo(at);
               throw error;
             },
-          );
+          ));
 
+        pending = undefined;
         swap(loading, at);
       } catch (error) {
+        pending = undefined;
         undo(at);
         throw error;
       }
