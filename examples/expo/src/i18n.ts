@@ -7,10 +7,7 @@ import ja from './locales/ja.json';
 export const locales = ['en', 'fr', 'ja'] as const;
 export type Locale = (typeof locales)[number];
 
-const catalogue = createCatalogue({
-  locales: [...locales],
-  messages: { en, fr, ja },
-});
+const catalogue = createCatalogue({ en, fr, ja });
 
 /**
  * The device's language preferences, most-preferred first. `expo-localization`

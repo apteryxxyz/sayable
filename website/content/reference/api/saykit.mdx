@@ -16,41 +16,27 @@ messages come from, whether that is inline or on demand; it never formats anythi
 locale bound to a set of messages: callable, immutable, and the only thing application code holds. A
 **store** holds one view at a time and says when it changed, which is what switching locale is.
 
-## `createCatalogue(options)`
+## `createCatalogue(messages)`
 
 ```ts
-createCatalogue<Locale>(options: Catalogue.Options<Locale>): Catalogue<Locale>;
+createCatalogue<Locale>(messages: Catalogue.Options<Locale>): Catalogue<Locale>;
 ```
 
 ```ts
 const catalogue = createCatalogue({
-  locales: ['en', 'fr', 'pl'],
-  messages: { en, fr: () => import('./locales/fr.po'), pl: () => import('./locales/pl.po') },
+  en,
+  fr: () => import('./locales/fr.po'),
+  pl: () => import('./locales/pl.po'),
 });
 ```
 
 import { TypeTable } from 'fumadocs-ui/components/type-table';
 
-<TypeTable
-  type={{
-    locales: {
-      description: 'All supported locales. The first is treated as the source locale.',
-      type: 'Locale[]',
-      required: true,
-    },
-    defaultLocale: {
-      description:
-        'The locale to fall back to, and what `match` returns when nothing else fits. Defaults to the first of `locales`.',
-      type: 'Locale',
-    },
-    messages: {
-      description:
-        "Where each locale's messages come from, keyed by locale. An entry is either the messages themselves or a thunk producing them, called the first time that locale is asked for. Every locale needs one.",
-      type: 'Record<Locale, Catalogue.Source>',
-      required: true,
-    },
-  }}
-/>
+The argument is the record of messages itself, so there is no options object and no separate list of
+locales. Its keys are the catalogue's locales, in the order you write them, and the first of them is
+the fallback `match` resolves to. Each value is a [`Catalogue.Source`](#cataloguesource): the
+messages themselves, or a thunk producing them, called the first time that locale is asked for.
+Throws if the record is empty.
 
 The returned catalogue is frozen. That fixes its methods; its lazy locales still fill in over time
 through `load`.
@@ -60,12 +46,9 @@ through `load`.
 <TypeTable
   type={{
     locales: {
-      description: 'All configured locales.',
-      type: 'readonly Locale[]',
-    },
-    defaultLocale: {
-      description: 'The fallback locale, either configured or the first of `locales`.',
-      type: 'Locale',
+      description:
+        'All locales, in the order they were written. Never empty, and the first of them is the fallback `match` resolves to.',
+      type: 'readonly [Locale, ...Locale[]]',
     },
   }}
 />
@@ -136,7 +119,7 @@ Matching order:
 
 1. exact match against `locales`
 2. language-prefix match (`fr-CA` &rarr; `fr`)
-3. `defaultLocale`, as a final fallback
+3. the first of `locales`, as a final fallback
 
 Returns the matched locale.
 
@@ -216,8 +199,8 @@ Compiled formats are cached on the view, so a message is parsed once per locale 
 createStore<Locale>(catalogue: Catalogue<Locale>, locale?: Locale): Store<Locale>;
 ```
 
-Builds a [store](#store) over a catalogue, starting on `locale`, or on `catalogue.defaultLocale` if
-you leave it out. Throws if the starting locale has no messages loaded.
+Builds a [store](#store) over a catalogue, starting on `locale`, or on the first of
+`catalogue.locales` if you leave it out. Throws if the starting locale has no messages loaded.
 
 ```ts
 const store = createStore(catalogue, 'en');
@@ -392,8 +375,8 @@ namespace Store {
 
 ### `Catalogue.Options<Locale>`
 
-`locales` and `messages` are required, and `messages` needs an entry for every locale.
-`defaultLocale` is optional and falls back to the first of `locales`.
+`Record<Locale, Catalogue.Source>`: where each locale's messages come from, keyed by locale. The
+keys are the catalogue's locales, and the first of them is the default locale.
 
 ### `NumeralOptions` / `SelectOptions`
 

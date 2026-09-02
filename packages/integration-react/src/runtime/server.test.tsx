@@ -26,11 +26,7 @@ vi.mock('react', async (importOriginal) => {
 
 const { getSay, setSay, unstable_createWithSay } = await import('~/runtime/server.js');
 
-const make = () =>
-  createCatalogue({
-    locales: ['en', 'fr'],
-    messages: { en: { greeting: 'Hi' }, fr: { greeting: 'Salut' } },
-  });
+const make = () => createCatalogue({ en: { greeting: 'Hi' }, fr: { greeting: 'Salut' } });
 
 describe('server runtime', () => {
   // Runs first, before any setSay, so the ref is still uninitialised.

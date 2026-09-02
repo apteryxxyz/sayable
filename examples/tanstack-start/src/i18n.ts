@@ -1,5 +1,4 @@
 import { createCatalogue } from 'saykit';
-import { locales } from './config';
 import enGB from './locales/en-GB.json';
 import enNZ from './locales/en-NZ.json';
 import en from './locales/en.json';
@@ -15,13 +14,10 @@ import fr from './locales/fr.json';
  * which is immutable and cannot be reactivated out from under another one.
  */
 const catalogue = createCatalogue({
-  locales: [...locales],
-  messages: {
-    en: en,
-    'en-GB': enGB,
-    'en-NZ': enNZ,
-    fr: fr,
-  },
+  en: en,
+  'en-GB': enGB,
+  'en-NZ': enNZ,
+  fr: fr,
 });
 
 export default catalogue;

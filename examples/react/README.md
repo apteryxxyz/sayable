@@ -8,7 +8,7 @@ routing — so the React integration itself stays in focus.
 
 | API                                                                | Where                              |
 | ------------------------------------------------------------------ | ---------------------------------- |
-| `createCatalogue({ locales, loader })`, no eager catalogues        | `src/i18n.ts`                      |
+| `createCatalogue({ ...thunks })`, no eager catalogues              | `src/i18n.ts`                      |
 | `catalogue.load(locale)`, async, cached per locale                 | `src/main.tsx`                     |
 | `SayProvider` fed from React state, so switching locale re-renders | `src/main.tsx`                     |
 | `useSay()` for the current view (not for rendering)                | `src/components/locale-picker.tsx` |

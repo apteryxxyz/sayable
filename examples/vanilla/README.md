@@ -10,7 +10,7 @@ This is the smallest complete picture of how SayKit works, and the best example 
 
 | API                                                           | Where                                 |
 | ------------------------------------------------------------- | ------------------------------------- |
-| `createCatalogue({ locales, messages })`                      | `src/i18n.ts`                         |
+| `createCatalogue({ ...messages })`                            | `src/i18n.ts`                         |
 | `catalogue.match(navigator.languages)`, locale detection      | `src/main.ts`                         |
 | `catalogue.locale(code)`, runtime locale switching            | `src/main.ts` (the language picker)   |
 | `` say`…` `` with interpolation                               | `src/main.ts`                         |

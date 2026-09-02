@@ -19,10 +19,10 @@ For each guess, in order, `match()` tries two things:
 1. **Exact** match against your configured `locales`.
 2. **Language-prefix** match (`fr-CA` to `fr`, or `fr` to `fr-CA`).
 
-The first guess that satisfies either step wins. If no guess matches, `defaultLocale` is returned as a fallback, which is the first configured locale unless you set one.
+The first guess that satisfies either step wins. If no guess matches, the first locale the catalogue was written with is returned as a fallback.
 
 ```ts
-const catalogue = createCatalogue({ locales: ['en', 'fr'], messages: { en, fr } });
+const catalogue = createCatalogue({ en, fr });
 
 catalogue.match(['de', 'fr-CA', 'en']); // 'fr'
 // 'de': no exact, no prefix

@@ -97,8 +97,8 @@ function createSayCommand<Args extends unknown[], Instance extends BaseCommand>(
       }, {});
 
       // Discord takes one set of names and localisations for the rest, so the
-      // catalogue's default locale is the one the command is registered under.
-      const options = combineCommandOptions(records, catalogue.defaultLocale);
+      // catalogue's first locale is the one the command is registered under.
+      const options = combineCommandOptions(records, catalogue.locales[0]);
       Object.assign(this, options);
     }
   }

@@ -24,13 +24,10 @@ import { createCatalogue } from 'saykit';
 import en from './locales/en.po';
 import fr from './locales/fr.po';
 
-const catalogue = createCatalogue({
-  locales: ['en', 'fr'],
-  messages: { en, fr },
-});
+const catalogue = createCatalogue({ en, fr });
 ```
 
-Every locale needs an entry in `messages`, written either way round:
+The keys are your locales, so there is no separate list to keep in step. Each entry is written either way round:
 
 - the messages themselves, useful when catalogues are bundled at build time
 - a thunk producing them, useful when you want to import on demand
@@ -38,18 +35,15 @@ Every locale needs an entry in `messages`, written either way round:
 
 ```ts
 const catalogue = createCatalogue({
-  locales: ['en', 'fr', 'ja'],
-  messages: {
-    en,
-    fr: () => import('./locales/fr.po'),
-    ja: () => import('./locales/ja.po'),
-  },
+  en,
+  fr: () => import('./locales/fr.po'),
+  ja: () => import('./locales/ja.po'),
 });
 ```
 
 A thunk is left alone until its locale is asked for. It usually resolves to a module rather than to the messages themselves, and the catalogue reads them off its default export.
 
-`defaultLocale` is optional and defaults to the first of `locales`. It is what `match()` falls back to when nothing else fits.
+The default locale is the first key you write. It is what `match()` falls back to when nothing else fits.
 
 See [dynamic loading](/guides/dynamic-loading) for a deeper look at the thunk pattern.
 
@@ -83,8 +77,7 @@ A view has no reference back to its catalogue, so it cannot change locale. That 
 A catalogue and a view expose different things, because they know different things:
 
 ```ts
-catalogue.locales; // ['en', 'fr']
-catalogue.defaultLocale; // 'en'
+catalogue.locales; // ['en', 'fr'], never empty, first is the fallback
 catalogue.loaded('fr'); // true
 
 say.locale; // 'fr'
@@ -122,7 +115,7 @@ Matching prefers in order:
 
 1. exact match against `locales`
 2. language-prefix match (`fr-CA` &rarr; `fr`)
-3. `defaultLocale` as final fallback
+3. the first of `locales`, as a final fallback
 
 `match()` takes any number of strings or arrays of strings; everything is flattened:
 
@@ -232,10 +225,7 @@ import { createCatalogue, createStore } from 'saykit';
 import en from './locales/en.po';
 import fr from './locales/fr.po';
 
-const catalogue = createCatalogue({
-  locales: ['en', 'fr'],
-  messages: { en, fr },
-});
+const catalogue = createCatalogue({ en, fr });
 
 export default catalogue;
 
@@ -250,11 +240,8 @@ A typical per-request server-side bootstrap:
 import { createCatalogue } from 'saykit';
 
 const catalogue = createCatalogue({
-  locales: ['en', 'fr'],
-  messages: {
-    en: () => import('./locales/en.po'),
-    fr: () => import('./locales/fr.po'),
-  },
+  en: () => import('./locales/en.po'),
+  fr: () => import('./locales/fr.po'),
 });
 
 export function getSayFor(headers: Headers) {

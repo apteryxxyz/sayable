@@ -62,9 +62,9 @@ catalogue nor the other view.
 tags. Discord sends those exact strings, so `catalogue.match` lands an exact hit instead of falling back
 to prefix matching.
 
-`src/i18n.ts` sets `defaultLocale: 'en-US'` on the catalogue. That is not for rendering: it decides
-which locale becomes the _default_ name and description when the command definitions are built,
-with the others attached as localisations.
+`src/i18n.ts` writes `en-US` first, so it is the catalogue's default locale. That is not for
+rendering: it decides which locale becomes the _default_ name and description when the command
+definitions are built, with the others attached as localisations.
 
 ## Running it
 

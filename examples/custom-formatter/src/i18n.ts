@@ -6,10 +6,7 @@ import fr from './locales/fr.yml';
 export const locales = ['en', 'fr', 'de'] as const;
 export type Locale = (typeof locales)[number];
 
-const catalogue = createCatalogue({
-  locales: [...locales],
-  messages: { en, fr, de },
-});
+const catalogue = createCatalogue({ en, fr, de });
 
 /**
  * A CLI's locale comes from the environment, not a browser. `LC_ALL` wins over

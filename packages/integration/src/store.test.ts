@@ -1,6 +1,6 @@
 import { inspect } from 'node:util';
 import { describe, expect, it, vi } from 'vitest';
-import { type Catalogue, createCatalogue, createStore, type View } from './index.js';
+import { createCatalogue, createStore, type View } from './index.js';
 
 type Locale = 'en' | 'fr' | 'de';
 
@@ -16,18 +16,11 @@ const messages = {
 } satisfies Partial<Record<Locale, View.Messages>>;
 
 /**
- * Build options with partial (or empty) messages. The public `Options` type
- * requires an entry for every locale; several tests deliberately exercise what
- * happens when one is missing, so they opt out of that constraint.
+ * A catalogue over all three locales, with 'de' behind a thunk nobody has
+ * loaded, so tests have both a filled locale and an empty one.
  */
-const opts = (o: {
-  locales: Locale[];
-  defaultLocale?: Locale;
-  messages?: Partial<Record<Locale, Catalogue.Source>>;
-}) => o as Catalogue.Options<Locale>;
-
 function make() {
-  return createCatalogue(opts({ locales: ['en', 'fr', 'de'], messages }));
+  return createCatalogue({ ...messages, de: () => ({ greeting: 'Hallo' }) });
 }
 
 describe('createStore', () => {
@@ -42,7 +35,9 @@ describe('createStore', () => {
   });
 
   it('throws when the starting locale has no messages', () => {
-    expect(() => createStore(make(), 'de')).toThrow("No messages for locale 'de'");
+    expect(() => createStore(make(), 'de')).toThrow(
+      "Messages for locale 'de' have not been loaded yet",
+    );
   });
 
   it('hands back the view the catalogue memoised', () => {
@@ -69,10 +64,7 @@ describe('Store#set', () => {
 
   it('loads a locale the catalogue does not have yet', async () => {
     const thunk = vi.fn(async () => ({ greeting: 'Hallo' }));
-    const catalogue = createCatalogue({
-      locales: ['en', 'de'],
-      messages: { en: messages.en, de: thunk },
-    });
+    const catalogue = createCatalogue({ en: messages.en, de: thunk });
     const store = createStore(catalogue, 'en');
 
     const result = store.set('de');
@@ -86,10 +78,7 @@ describe('Store#set', () => {
   });
 
   it('stays synchronous when the thunk is', () => {
-    const catalogue = createCatalogue({
-      locales: ['en', 'de'],
-      messages: { en: messages.en, de: () => ({ greeting: 'Hallo' }) },
-    });
+    const catalogue = createCatalogue({ en: messages.en, de: () => ({ greeting: 'Hallo' }) });
     const store = createStore(catalogue, 'en');
 
     expect(store.set('de')).toBeUndefined();
@@ -107,12 +96,9 @@ describe('Store#set', () => {
 
   it('keeps the current view when the load fails', async () => {
     const catalogue = createCatalogue({
-      locales: ['en', 'de'],
-      messages: {
-        en: messages.en,
-        de: async () => {
-          throw new Error('offline');
-        },
+      en: messages.en,
+      de: async () => {
+        throw new Error('offline');
       },
     });
     const store = createStore(catalogue, 'en');
@@ -127,13 +113,10 @@ describe('Store#set', () => {
   it('lets a locale whose load failed be asked for again', async () => {
     let attempt = 0;
     const catalogue = createCatalogue({
-      locales: ['en', 'de'],
-      messages: {
-        en: messages.en,
-        de: async () => {
-          if (++attempt === 1) throw new Error('offline');
-          return { greeting: 'Hallo' };
-        },
+      en: messages.en,
+      de: async () => {
+        if (++attempt === 1) throw new Error('offline');
+        return { greeting: 'Hallo' };
       },
     });
     const store = createStore(catalogue, 'en');
@@ -143,28 +126,25 @@ describe('Store#set', () => {
     expect(store.locale).toBe('de');
   });
 
-  it('rethrows when the locale has no messages to load', () => {
-    const store = createStore(createCatalogue(opts({ locales: ['en', 'de'], messages })), 'en');
+  it('rethrows when the catalogue has no such locale', () => {
+    const store = createStore(createCatalogue(messages), 'en');
 
-    expect(() => store.set('de')).toThrow("No messages for locale 'de'");
+    expect(() => store.set('zz' as 'en' | 'fr')).toThrow("No messages for locale 'zz'");
     expect(store.locale).toBe('en');
   });
 
   it('applies the last switch, not the last to resolve', async () => {
     const resolvers = new Map<string, (loaded: View.Messages) => void>();
     const catalogue = createCatalogue({
-      locales: ['en', 'fr', 'de'],
-      messages: {
-        en: messages.en,
-        fr: () =>
-          new Promise<View.Messages>((resolve) => {
-            resolvers.set('fr', resolve);
-          }),
-        de: () =>
-          new Promise<View.Messages>((resolve) => {
-            resolvers.set('de', resolve);
-          }),
-      },
+      en: messages.en,
+      fr: () =>
+        new Promise<View.Messages>((resolve) => {
+          resolvers.set('fr', resolve);
+        }),
+      de: () =>
+        new Promise<View.Messages>((resolve) => {
+          resolvers.set('de', resolve);
+        }),
     });
     const store = createStore(catalogue, 'en');
 
@@ -185,14 +165,11 @@ describe('Store#set', () => {
   it('cancels a switch that is overtaken by a switch back', async () => {
     let resolve!: (loaded: View.Messages) => void;
     const catalogue = createCatalogue({
-      locales: ['en', 'de'],
-      messages: {
-        en: messages.en,
-        de: () =>
-          new Promise<View.Messages>((r) => {
-            resolve = r;
-          }),
-      },
+      en: messages.en,
+      de: () =>
+        new Promise<View.Messages>((r) => {
+          resolve = r;
+        }),
     });
     const store = createStore(catalogue, 'en');
     const listener = vi.fn();
@@ -215,10 +192,7 @@ describe('Store#set', () => {
     const thunk = vi.fn(
       async () => new Promise<View.Messages>((r) => setTimeout(() => r({ greeting: 'Hallo' }), 0)),
     );
-    const catalogue = createCatalogue({
-      locales: ['en', 'de'],
-      messages: { en: messages.en, de: thunk },
-    });
+    const catalogue = createCatalogue({ en: messages.en, de: thunk });
     const store = createStore(catalogue, 'en');
 
     const first = store.set('de');

@@ -23,10 +23,7 @@ import { createCatalogue } from 'saykit';
 import en from './locales/en.po';
 import fr from './locales/fr.po';
 
-const catalogue = createCatalogue({
-  locales: ['en', 'fr'],
-  messages: { en, fr },
-});
+const catalogue = createCatalogue({ en, fr });
 
 const say = catalogue.locale('en');
 

@@ -6,10 +6,7 @@ import fr from '../_locales/fr/messages.json';
 export const locales = ['en', 'fr', 'de'] as const;
 export type Locale = (typeof locales)[number];
 
-const catalogue = createCatalogue({
-  locales: [...locales],
-  messages: { en, fr, de },
-});
+const catalogue = createCatalogue({ en, fr, de });
 
 /**
  * Chrome exposes the browser's UI language, not the page's. That is the right

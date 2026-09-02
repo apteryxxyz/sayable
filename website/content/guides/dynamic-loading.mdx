@@ -41,10 +41,7 @@ import { createCatalogue } from 'saykit';
 import en from './locales/en.po';
 import fr from './locales/fr.po';
 
-const catalogue = createCatalogue({
-  locales: ['en', 'fr'],
-  messages: { en, fr },
-});
+const catalogue = createCatalogue({ en, fr });
 
 export default catalogue;
 ```
@@ -57,13 +54,10 @@ Both catalogues are part of the bundle. `catalogue.locale('fr')` is synchronous,
 import { createCatalogue } from 'saykit';
 
 const catalogue = createCatalogue({
-  locales: ['en', 'fr', 'ja', 'de'],
-  messages: {
-    en: () => import('./locales/en.po'),
-    fr: () => import('./locales/fr.po'),
-    ja: () => import('./locales/ja.po'),
-    de: () => import('./locales/de.po'),
-  },
+  en: () => import('./locales/en.po'),
+  fr: () => import('./locales/fr.po'),
+  ja: () => import('./locales/ja.po'),
+  de: () => import('./locales/de.po'),
 });
 
 export default catalogue;
@@ -93,13 +87,10 @@ import { createCatalogue } from 'saykit';
 import en from './locales/en.po';
 
 const catalogue = createCatalogue({
-  locales: ['en', 'fr', 'ja', 'de'],
-  messages: {
-    en,
-    fr: () => import('./locales/fr.po'),
-    ja: () => import('./locales/ja.po'),
-    de: () => import('./locales/de.po'),
-  },
+  en,
+  fr: () => import('./locales/fr.po'),
+  ja: () => import('./locales/ja.po'),
+  de: () => import('./locales/de.po'),
 });
 
 export default catalogue;
@@ -137,13 +128,10 @@ On the server, you usually load only the locale this request needs:
 import { createCatalogue } from 'saykit';
 
 const catalogue = createCatalogue({
-  locales: ['en', 'fr', 'ja', 'de'],
-  messages: {
-    en: () => import('./locales/en.po'),
-    fr: () => import('./locales/fr.po'),
-    ja: () => import('./locales/ja.po'),
-    de: () => import('./locales/de.po'),
-  },
+  en: () => import('./locales/en.po'),
+  fr: () => import('./locales/fr.po'),
+  ja: () => import('./locales/ja.po'),
+  de: () => import('./locales/de.po'),
 });
 
 export function getSayFor(locale: string) {
@@ -163,11 +151,8 @@ A thunk doesn't have to return a promise. If you have everything available synch
 
 ```ts
 const catalogue = createCatalogue({
-  locales: ['en', 'fr'],
-  messages: {
-    en: () => buildCatalogueFor('en'), // sync
-    fr: () => buildCatalogueFor('fr'),
-  },
+  en: () => buildCatalogueFor('en'), // sync
+  fr: () => buildCatalogueFor('fr'),
 });
 
 catalogue.load('fr'); // returns the view, not a promise

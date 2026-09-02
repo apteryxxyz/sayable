@@ -14,13 +14,10 @@ export type Locale = (typeof locales)[number];
  * messages off its default export.
  */
 const catalogue = createCatalogue({
-  locales: [...locales],
-  messages: {
-    en: () => import('./locales/en.po'),
-    fr: () => import('./locales/fr.po'),
-    pl: () => import('./locales/pl.po'),
-    ja: () => import('./locales/ja.po'),
-  },
+  en: () => import('./locales/en.po'),
+  fr: () => import('./locales/fr.po'),
+  pl: () => import('./locales/pl.po'),
+  ja: () => import('./locales/ja.po'),
 });
 
 export default catalogue;

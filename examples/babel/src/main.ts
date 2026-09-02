@@ -2,9 +2,7 @@ import { createCatalogue } from 'saykit';
 import en from './locales/en.po';
 import fr from './locales/fr.po';
 
-const locales = ['en', 'fr'] as const;
-
-const catalogue = createCatalogue({ locales: [...locales], messages: { en, fr } });
+const catalogue = createCatalogue({ en, fr });
 
 const books = 3;
 

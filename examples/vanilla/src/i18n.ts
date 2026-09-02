@@ -12,9 +12,6 @@ export type Locale = (typeof locales)[number];
  * resolves each `.po` file at build time and inlines it as a plain JS object,
  * so what ships is a record of strings and nothing more.
  */
-const catalogue = createCatalogue({
-  locales: [...locales],
-  messages: { en, fr, pl, ja },
-});
+const catalogue = createCatalogue({ en, fr, pl, ja });
 
 export default catalogue;

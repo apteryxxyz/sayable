@@ -26,19 +26,13 @@ export namespace Catalogue {
    */
   export type Produced = View.Messages | { default: View.Messages };
 
-  export type Options<Locale extends string> = {
-    locales: Locale[];
-    /**
-     * The locale to fall back to. Defaults to the first of {@link locales}.
-     */
-    defaultLocale?: NoInfer<Locale>;
-    /**
-     * Where each locale's messages come from. Every locale needs an entry,
-     * though an entry may be a thunk that is only called if the locale is
-     * actually used.
-     */
-    messages: Record<Locale, Source>;
-  };
+  /**
+   * Where each locale's messages come from, keyed by locale.
+   *
+   * The keys are the catalogue's locales, in the order they are written, and
+   * the first of them is the default locale.
+   */
+  export type Options<Locale extends string> = Record<Locale, Source>;
 }
 
 /**
@@ -50,15 +44,12 @@ export namespace Catalogue {
  */
 export interface Catalogue<Locale extends string = string> {
   /**
-   * All available locales.
+   * All available locales, in the order they were written.
+   *
+   * Never empty, and the first of them is the fallback: the locale
+   * {@link match} resolves to when nothing else does.
    */
-  readonly locales: readonly Locale[];
-
-  /**
-   * The locale to fall back to, and the one {@link match} resolves to when
-   * nothing else does.
-   */
-  readonly defaultLocale: Locale;
+  readonly locales: readonly [Locale, ...Locale[]];
 
   /**
    * A view bound to one locale: callable, immutable, and memoised, so asking
@@ -107,7 +98,8 @@ export interface Catalogue<Locale extends string = string> {
    * narrowing each one first.
    *
    * @param guesses List of locale guesses
-   * @returns The best matching locale, or {@link defaultLocale} if no matches are found
+   * @returns The best matching locale, or the first of {@link locales} if no
+   *   matches are found
    */
   match(...guesses: Catalogue.Guess[]): Locale;
 
@@ -125,36 +117,39 @@ export interface Catalogue<Locale extends string = string> {
  * @example
  * ```ts
  * const catalogue = createCatalogue({
- *   locales: ['en', 'fr', 'pl'],
- *   messages: { en, fr: () => import('./locales/fr.po'), pl: () => import('./locales/pl.po') },
+ *   en,
+ *   fr: () => import('./locales/fr.po'),
+ *   pl: () => import('./locales/pl.po'),
  * });
  *
  * const say = catalogue.locale('en');
  * ```
  *
- * @param options Locales, and where each one's messages come from
+ * @param messages Where each locale's messages come from, keyed by locale
  * @returns The catalogue
  */
 export function createCatalogue<const Locale extends string = string>(
-  options: Catalogue.Options<Locale>,
+  messages: Catalogue.Options<Locale>,
 ): Catalogue<Locale> {
-  // At least one locale, so `defaultLocale` and every `match` that falls back
-  // to it have a locale to be.
-  if (options.locales.length === 0)
-    throw new Error('A catalogue needs at least one locale, none were given');
-
-  // Copied, so a caller that keeps hold of the array it passed in cannot
-  // later change which locales this catalogue has. Everything downstream reads
-  // this: `match`, and iteration.
-  const locales: readonly Locale[] = Object.freeze([...options.locales]);
-
   // Null prototype, so a locale named after something on `Object.prototype`,
   // such as `constructor`, reads as unconfigured rather than picking up an
   // inherited function and being called as though it were a source.
   const sources = Object.assign(
     Object.create(null) as Record<Locale, Catalogue.Source | undefined>,
-    options.messages,
+    messages,
   );
+
+  // The keys are the locales, in the order they were written, and the first of
+  // them is the fallback. Copied out once, so a caller that keeps hold of the
+  // object it passed in cannot later change which locales this catalogue has.
+  const keys = Object.freeze(Object.keys(sources) as Locale[]);
+
+  // At least one locale, so every `match` that falls back to the first of them
+  // has a locale to fall back to. Checked here rather than in the type, so a
+  // record built at runtime says what is wrong rather than reading as empty.
+  if (keys.length === 0) throw new Error('A catalogue needs at least one locale, none were given');
+
+  const locales = keys as readonly [Locale, ...Locale[]];
 
   const store = new Map<Locale, View.Messages>();
   const views = new Map<Locale, View<Locale>>();
@@ -187,8 +182,6 @@ export function createCatalogue<const Locale extends string = string>(
 
   const catalogue: Catalogue<Locale> = {
     locales,
-
-    defaultLocale: options.defaultLocale ?? locales[0]!,
 
     locale(locale) {
       const messages = store.get(locale);
@@ -242,7 +235,7 @@ export function createCatalogue<const Locale extends string = string>(
       const flat = guesses
         .flat()
         .filter((guess): guess is string => typeof guess === 'string' && guess !== '');
-      if (flat.length === 0) return catalogue.defaultLocale;
+      if (flat.length === 0) return locales[0];
 
       for (const guess of flat) {
         if (locales.includes(guess as Locale)) return guess as Locale;
@@ -252,7 +245,7 @@ export function createCatalogue<const Locale extends string = string>(
         if (match) return match;
       }
 
-      return catalogue.defaultLocale;
+      return locales[0];
     },
 
     *[Symbol.iterator]() {
@@ -262,8 +255,8 @@ export function createCatalogue<const Locale extends string = string>(
     },
   };
 
-  for (const locale in options.messages) {
-    const source = options.messages[locale];
+  for (const locale of locales) {
+    const source = sources[locale]!;
     // A thunk is left alone until the locale is asked for, which is the whole
     // point of writing one.
     if (typeof source !== 'function') fill(locale, source);

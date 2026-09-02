@@ -3,7 +3,7 @@ import { type Catalogue, createCatalogue, type View } from 'saykit';
 import { describe, expect, it } from 'vitest';
 import { withSay } from './with-say.js';
 
-const catalogue = () => createCatalogue({ locales: ['en', 'fr'], messages: { en: {}, fr: {} } });
+const catalogue = () => createCatalogue({ en: {}, fr: {} });
 
 describe('withSay', () => {
   it('throws for a base class that is neither a command nor a component', () => {

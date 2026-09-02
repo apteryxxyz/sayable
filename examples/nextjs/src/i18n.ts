@@ -1,15 +1,11 @@
 import 'server-only';
 import { unstable_createWithSay } from '@saykit/react/server';
 import { createCatalogue } from 'saykit';
-import { locales } from './config';
 import en from './locales/en.po';
 import fr from './locales/fr.po';
 import pl from './locales/pl.po';
 
-const catalogue = createCatalogue({
-  locales: [...locales],
-  messages: { en, fr, pl },
-});
+const catalogue = createCatalogue({ en, fr, pl });
 
 /**
  * Wraps a server component so a view is matched and published into

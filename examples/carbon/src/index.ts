@@ -10,7 +10,7 @@ import catalogue from './i18n.js';
 
 // Components and modals are built from one locale's view rather than from the
 // whole catalogue: only a command definition carries Discord localisations.
-const say = catalogue.locale(catalogue.defaultLocale);
+const say = catalogue.locale(catalogue.locales[0]);
 
 const client = new Client(
   {

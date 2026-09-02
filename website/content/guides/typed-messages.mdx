@@ -79,11 +79,8 @@ const en = await import('./locales/en.po').then((m) => m.default);
 ```ts
 // A thunk per locale (recommended for many locales)
 createCatalogue({
-  locales: ['en', 'fr'],
-  messages: {
-    en: () => import('./locales/en.po'),
-    fr: () => import('./locales/fr.po'),
-  },
+  en: () => import('./locales/en.po'),
+  fr: () => import('./locales/fr.po'),
 });
 ```
 

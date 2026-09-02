@@ -80,13 +80,14 @@ export interface Store<Locale extends string = string> {
  * ```
  *
  * @param catalogue The catalogue to take views from
- * @param locale The locale to start on, defaults to {@link Catalogue.defaultLocale}
+ * @param locale The locale to start on, defaults to the first of
+ *   {@link Catalogue.locales}
  * @returns The store
  * @throws If the starting locale has no messages loaded
  */
 export function createStore<Locale extends string>(
   catalogue: Catalogue<Locale>,
-  locale: Locale = catalogue.defaultLocale,
+  locale: Locale = catalogue.locales[0],
 ): Store<Locale> {
   // Read now rather than on first access, so a store that was built over a
   // locale nobody has loaded says so here, next to the call that named it,

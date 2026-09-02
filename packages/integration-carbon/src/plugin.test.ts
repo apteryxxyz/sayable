@@ -4,8 +4,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { kSay } from '~/constants.js';
 import { SayPlugin } from '~/plugin.js';
 
-const makeCatalogue = () =>
-  createCatalogue({ locales: ['en', 'fr'], messages: { en: {}, fr: {} } });
+const makeCatalogue = () => createCatalogue({ en: {}, fr: {} });
 
 // Constructing the plugin installs the `say` getters on the Carbon prototypes.
 const catalogue = makeCatalogue();

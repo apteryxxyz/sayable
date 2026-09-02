@@ -24,7 +24,7 @@ function plain(formatted: string) {
 }
 
 function make() {
-  return createCatalogue({ locales: ['en', 'fr'], messages });
+  return createCatalogue(messages);
 }
 
 describe('createView', () => {
@@ -162,7 +162,7 @@ describe('formatted arguments', () => {
   const when = new Date(2020, 0, 2, 12, 4, 5);
 
   function format(message: string, values: Record<string, unknown>) {
-    return createCatalogue({ locales: ['en-US'], messages: { 'en-US': { m: message } } })
+    return createCatalogue({ 'en-US': { m: message } })
       .locale('en-US')
       .call({ id: 'm', ...values });
   }
