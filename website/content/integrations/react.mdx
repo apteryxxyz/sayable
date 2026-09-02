@@ -144,21 +144,20 @@ Render `SayProvider` once near the top of your client tree, with the active loca
 
 ```tsx title="src/main.tsx"
 import { SayProvider } from '@saykit/react/client';
-import say from './i18n';
+import catalogue from './i18n';
 
-const locale = say.match([navigator.language]);
-say.activate(locale);
+const say = catalogue.locale(catalogue.match([navigator.language]));
 
-<SayProvider locale={locale} messages={say.messages}>
+<SayProvider locale={say.locale} messages={say.messages}>
   <App />
 </SayProvider>;
 ```
 
-Internally, `SayProvider` constructs a frozen `Say` instance scoped to the locale you pass in. Anything beneath it, `<Say>`, `<Say.Plural>`, `useSay()`, resolves against that locale.
+Internally, `SayProvider` builds a `View` over the locale and messages you pass in. Anything beneath it, `<Say>`, `<Say.Plural>`, `useSay()`, resolves against that locale.
 
 ### `useSay`
 
-If you need the `Say` instance itself in a client component (for example, to compose a runtime string in an event handler), call `useSay()`:
+If you need the view itself in a client component (for example, to compose a runtime string in an event handler), call `useSay()`:
 
 ```tsx
 function ConfirmButton({ count }: { count: number }) {
@@ -172,7 +171,7 @@ function ConfirmButton({ count }: { count: number }) {
 }
 ```
 
-`useSay()` returns a frozen `Say`, you can read messages and format strings from it, but you can't activate a different locale or load more messages.
+`useSay()` returns the `View` for the provider's locale. It is immutable, so it formats and reads messages but cannot switch locale; that is the provider's job.
 
 ## Server runtime
 
@@ -188,19 +187,16 @@ Call `setSay()` once per request, before any server component renders a `<Say>`:
 
 ```ts
 import { setSay } from '@saykit/react/server';
-import { Say } from 'saykit';
+import catalogue from './i18n';
 
-const say = new Say({ locales: ['en', 'fr'], messages: { en, fr } });
-say.activate('fr');
-
-setSay(say);
+setSay(catalogue.locale('fr'));
 ```
 
-`setSay()` clones and freezes whatever you pass, the registered instance is request-scoped and won't mutate any shared state.
+A view is already immutable, so `setSay()` stores exactly what you hand it. The registration itself is request-scoped, and nothing about the view can change under a concurrent request.
 
 ### `getSay`
 
-`getSay()` returns the registered instance for the current request. It's the server equivalent of `useSay()`:
+`getSay()` returns the registered view for the current request. It's the server equivalent of `useSay()`:
 
 ```tsx
 import { getSay } from '@saykit/react/server';
@@ -218,18 +214,18 @@ For frameworks that pass props into root components (a route's layout, a page co
 ```ts title="src/i18n.ts"
 import 'server-only';
 import { unstable_createWithSay } from '@saykit/react/server';
-import { Say } from 'saykit';
+import { createCatalogue } from 'saykit';
 import en from './locales/en.po';
 import fr from './locales/fr.po';
 
-const say = new Say({ locales: ['en', 'fr'], messages: { en, fr } });
-export const withSay = unstable_createWithSay(say);
-export default say;
+const catalogue = createCatalogue({ locales: ['en', 'fr'], messages: { en, fr } });
+export const withSay = unstable_createWithSay(catalogue);
+export default catalogue;
 ```
 
 ```tsx
 import { SayProvider } from '@saykit/react/client';
-import say, { withSay } from './i18n';
+import { withSay } from './i18n';
 
 async function RootLayout({ locale, messages, children, ...props }) {
   return (
@@ -250,7 +246,7 @@ export default withSay(RootLayout, (props) => getLocaleFrom(props));
 
 1. calls `getLocale(props)` and `match()`es it against your configured locales
 2. loads the matched locale's messages
-3. activates the locale on the shared `Say`
+3. takes that locale's view off the shared catalogue
 4. registers it via `setSay()`
 5. renders the wrapped component with `locale` and `messages` injected
 

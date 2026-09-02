@@ -128,21 +128,21 @@ Props:
     },
     messages: {
       description: 'The message catalogue for the locale.',
-      type: 'Say.Messages',
+      type: 'View.Messages',
       required: true,
     },
     children: {
-      description: 'The tree to provide a `Say` to.',
+      description: 'The tree to provide a view to.',
       type: 'ReactNode',
     },
   }}
 />
 
-Internally constructs a frozen `Say` scoped to the locale.
+Internally builds a `View` over the locale and messages, with `createView`.
 
 ### `useSay()`
 
-Returns the frozen `Say` from the nearest `<SayProvider>`. Throws if no provider is in the tree.
+Returns the `View` from the nearest `<SayProvider>`. Throws if no provider is in the tree.
 
 ```ts
 function fn() {
@@ -155,18 +155,17 @@ function fn() {
 
 ### `setSay(say)`
 
-Register a `Say` instance for the current request. Must be called before any server component renders `<Say>`.
+Register a `View` for the current request. Must be called before any server component renders `<Say>`.
 
 ```ts
-setSay(activeSayInstance);
-setSay(() => buildSayInstance()); // also accepts a thunk
+setSay(catalogue.locale(locale));
 ```
 
-The instance is cloned and frozen on registration, mutations to the original after this call don't leak in.
+A view is immutable, so it is stored exactly as it arrives, with nothing to clone or freeze against a concurrent request.
 
 ### `getSay()`
 
-Returns the registered `Say` for the current request. Throws if none has been registered.
+Returns the registered `View` for the current request. Throws if none has been registered.
 
 ```ts
 const say = getSay();
@@ -174,12 +173,12 @@ const say = getSay();
 
 The server equivalent of `useSay()`.
 
-### `unstable_createWithSay(say)`
+### `unstable_createWithSay(catalogue)`
 
-Returns a `withSay()` higher-order component factory bound to a `Say` instance.
+Returns a `withSay()` higher-order component factory bound to a `Catalogue`.
 
 ```ts
-const withSay = unstable_createWithSay(say);
+const withSay = unstable_createWithSay(catalogue);
 ```
 
 `withSay(Component, getLocale)`:
@@ -189,7 +188,7 @@ const withSay = unstable_createWithSay(say);
     Component: {
       description:
         'A server component to wrap. Receives `locale` and `messages` props plus the originals.',
-      type: '(props: P & { locale: string; messages: Say.Messages }) => ReactNode',
+      type: '(props: P & { locale: string; messages: View.Messages }) => ReactNode',
       required: true,
     },
     getLocale: {
@@ -201,14 +200,14 @@ const withSay = unstable_createWithSay(say);
   }}
 />
 
-The wrapper runs `match()`, `load()`, `activate()`, and `setSay()` before rendering. Useful in App Router layouts and pages where the URL param dictates the locale.
+The wrapper runs `match()`, `load()`, `locale()`, and `setSay()` before rendering. Useful in App Router layouts and pages where the URL param dictates the locale.
 
 ## Types
 
 ### `PropsWithSay<P>`
 
 ```ts
-type PropsWithSay<P = unknown> = P & { locale: string; messages: Say.Messages };
+type PropsWithSay<P = unknown> = P & { locale: string; messages: View.Messages };
 ```
 
 The shape `withSay`-wrapped components receive.

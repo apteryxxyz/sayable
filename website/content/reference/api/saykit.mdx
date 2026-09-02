@@ -3,21 +3,28 @@ title: saykit
 description: API reference for the saykit core runtime
 ---
 
-The `saykit` package exports the `Say` class and a handful of supporting types.
+The `saykit` package exports `createCatalogue`, `createView`, and a handful of supporting types.
 
 ```ts
-import { Say } from 'saykit';
-import type { ReadonlySay } from 'saykit';
+import { createCatalogue, createView } from 'saykit';
+import type { Catalogue, View } from 'saykit';
 ```
 
-## `Say`
+There are two objects, with one job each. A **catalogue** owns the locales, their messages, and the
+loader that fetches the ones it does not have yet; it never formats anything. A **view** is one
+locale bound to a set of messages: callable, immutable, and the only thing application code holds.
 
-A container for locales, messages, the active locale, and formatting.
-
-### `new Say(options)`
+## `createCatalogue(options)`
 
 ```ts
-new Say<Locale, Loader>(options: Say.Options<Locale, Loader>);
+createCatalogue<Locale, Loader>(options: Catalogue.Options<Locale, Loader>): Catalogue<Locale>;
+```
+
+```ts
+const catalogue = createCatalogue({
+  locales: ['en', 'fr', 'pl'],
+  messages: { en, fr, pl },
+});
 ```
 
 import { TypeTable } from 'fumadocs-ui/components/type-table';
@@ -29,18 +36,26 @@ import { TypeTable } from 'fumadocs-ui/components/type-table';
       type: 'Locale[]',
       required: true,
     },
+    defaultLocale: {
+      description:
+        'The locale to fall back to, and what `match` returns when nothing else fits. Defaults to the first of `locales`.',
+      type: 'Locale',
+    },
     messages: {
       description:
         'Inline message catalogues, keyed by locale. Required if no `loader` is provided.',
-      type: 'Partial<Record<Locale, Say.Messages>>',
+      type: 'Partial<Record<Locale, View.Messages>>',
     },
     loader: {
       description:
         'Optional function that returns messages for a locale. Can be sync or async. Required if `messages` is not exhaustive.',
-      type: '(locale: Locale) => Say.Messages | Promise<Say.Messages>',
+      type: '(locale: Locale) => View.Messages | Promise<View.Messages>',
     },
   }}
 />
+
+The returned catalogue is frozen. That fixes its methods; its messages still fill in over time
+through `load`.
 
 ### Properties
 
@@ -48,85 +63,125 @@ import { TypeTable } from 'fumadocs-ui/components/type-table';
   type={{
     locales: {
       description: 'All configured locales.',
-      type: 'Locale[]',
+      type: 'readonly Locale[]',
     },
-    locale: {
-      description: 'The currently active locale. Throws if no locale is active.',
+    defaultLocale: {
+      description: 'The fallback locale, either configured or the first of `locales`.',
       type: 'Locale',
-    },
-    messages: {
-      description:
-        'The message catalogue for the active locale. Throws if no locale is active or catalogue is missing.',
-      type: 'Say.Messages',
     },
   }}
 />
 
+A catalogue has no active locale and no `messages` property. Both of those belong to a view.
+
+### `locale(code)`
+
+Returns the [view](#view) bound to that locale. Memoised, so asking twice returns the same view.
+Throws if the locale has no messages loaded yet.
+
+```ts
+const say = catalogue.locale('fr');
+```
+
+### `loaded(code)`
+
+Whether a locale has messages, and so whether `locale(code)` will hand back a view for it.
+
+```ts
+if (!catalogue.loaded('fr')) await catalogue.load('fr');
+```
+
 ### `load(...locales)`
 
-Loads message catalogues for the given locales through the configured loader. With no arguments, loads every configured locale.
+Loads message catalogues for the given locales through the configured loader. With no arguments,
+loads every configured locale.
 
 ```ts
-say.load();
-say.load('fr');
-say.load('fr', 'ja');
+catalogue.load();
+catalogue.load('fr');
+await catalogue.load('fr', 'ja');
 ```
 
-Already-loaded locales are skipped. If a loader is required but missing, throws. Returns `this` synchronously if all loaders are sync, or a promise resolving to `this` otherwise.
+If a loader is required but missing, throws. Returns `undefined` synchronously if every loader is
+sync, or a promise otherwise.
 
-### `assign(locale, messages)` / `assign(record)`
-
-Directly attach messages without going through a loader.
-
-```ts
-say.assign('fr', { abc123: 'Bonjour !' });
-say.assign({ en: { ... }, fr: { ... } });
-```
-
-Returns `this`.
-
-### `activate(locale)`
-
-Set the active locale. The locale must be loaded or assigned first.
-
-```ts
-say.activate('fr');
-```
-
-Returns `this`.
+A locale is filled **once**. Loading one that already has messages is a no-op, and there is no way
+to replace a locale's messages afterwards. That is what lets a view be built once and stay correct:
+nothing can swap out the messages it was built over, so a view you are holding can never start
+formatting something else.
 
 ### `match(...guesses)`
 
-Pick the best supported locale from one or more guesses. Each argument can be a string or array of strings; all guesses are flattened in order.
+Pick the best supported locale from one or more guesses. Each argument can be a string or array of
+strings; all guesses are flattened in order.
 
 ```ts
-say.match('fr-CA', 'en');
-say.match(['fr-CA', 'en-US'], 'de');
+catalogue.match('fr-CA', 'en');
+catalogue.match(['fr-CA', 'en-US'], 'de');
 ```
 
 Matching order:
 
 1. exact match against `locales`
 2. language-prefix match (`fr-CA` &rarr; `fr`)
-3. the first configured locale, as a final fallback
+3. `defaultLocale`, as a final fallback
 
 Returns the matched locale.
 
-### `clone()`
+### Iteration
 
-Returns a new `Say` with the same locales, messages, and loader. The new instance is independent, activating a locale on it doesn't affect the original.
-
-### `freeze()`
-
-Returns a `ReadonlySay` view. Frozen instances can still read state and format messages, but cannot `load`, `assign`, or `activate`.
+Catalogues are iterable. They yield `[say, locale]` pairs for every configured locale.
 
 ```ts
-const readonly = say.clone().activate('fr').freeze();
+for (const [say, locale] of catalogue) {
+  console.log(locale, say`Hello!`);
+}
 ```
+
+Each `say` is that locale's view, the same value `catalogue.locale(locale)` returns. Throws if any
+configured locale has no messages loaded.
+
+## `createView(locale, messages)`
+
+```ts
+createView<Locale>(locale: Locale, messages: View.Messages): View<Locale>;
+```
+
+Builds a view directly, with no catalogue behind it. A view needs nothing from a catalogue beyond a
+record of messages, so an app that only ever has one locale in hand can skip the catalogue entirely.
+
+```ts
+const say = createView('fr', messages);
+say`Hello!`;
+```
+
+Views built this way are not memoised or shared. When you have a catalogue, prefer
+`catalogue.locale(code)`.
+
+## `View`
+
+One locale, bound to the messages it formats against. Callable, frozen, and with no reference back
+to the catalogue it came from, so it cannot change locale. Switching locale means holding a
+different view.
+
+### Properties
+
+<TypeTable
+  type={{
+    locale: {
+      description: 'The locale this view is bound to.',
+      type: 'Locale',
+    },
+    messages: {
+      description: 'The messages this view formats against.',
+      type: 'View.Messages',
+    },
+  }}
+/>
 
 ### `call(descriptor)`
 
-Format a compiled message descriptor against the active locale's catalogue.
+Format a compiled message descriptor against this view's messages.
 
 ```ts
 say.call({ id: 'abc123', name: 'Ada' }); // → "Hello, Ada!"
@@ -141,21 +196,12 @@ through untouched, so a hand-written or custom-transformer-generated call works 
 
 In normal application code, you don't write this, the build transform emits it from your `` say`...` `` macros.
 
-### Iteration
-
-`Say` instances are iterable. They yield `[frozenLocaleSay, locale]` pairs for every configured locale.
-
-```ts
-for (const [localised, locale] of say) {
-  console.log(locale, localised`Hello!`);
-}
-```
-
-Each `localised` is a frozen clone with that locale already activated.
+Compiled formats are cached on the view, so a message is parsed once per locale per process.
 
 ## Macros
 
-These methods are recognised by the SayKit build-tool plugins and rewritten into `say.call(...)` invocations. Calling them at runtime without a plugin throws.
+These are recognised by the SayKit build-tool plugins and rewritten into `say.call(...)`
+invocations. Calling them at runtime without a plugin throws.
 
 ### `` say`template` ``
 
@@ -226,29 +272,28 @@ The name must be a valid identifier, an invalid one fails the build. See
 
 ## Types
 
-### `Say.Messages`
+### `View.Messages`
 
 ```ts
-namespace Say {
+namespace View {
   type Messages = { [key: string]: string };
 }
 ```
 
-### `Say.Loader<Locale>`
+### `Catalogue.Loader<Locale>`
 
 ```ts
-namespace Say {
-  type Loader<Locale extends string> = (locale: Locale) => Messages | Promise<Messages>;
+namespace Catalogue {
+  type Loader<Locale extends string> = (
+    locale: Locale,
+  ) => View.Messages | Promise<View.Messages>;
 }
 ```
 
-### `Say.Options<Locale, Loader>`
+### `Catalogue.Options<Locale, Loader>`
 
-Either `messages` is required (and `loader` optional), or `loader` is required (and `messages` optional).
-
-### `ReadonlySay<Locale, Loader>`
-
-`Say` with `load`, `assign`, and `activate` typed as `never`. Returned by `say.freeze()`.
+Either `messages` is required (and `loader` optional), or `loader` is required (and `messages`
+optional). `defaultLocale` is optional either way.
 
 ### `NumeralOptions` / `SelectOptions`
 

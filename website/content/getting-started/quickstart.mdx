@@ -161,43 +161,42 @@ You only need the entries you have actually translated, anything missing falls b
 pnpm saykit clean
 ```
 
-## 7. Provide a `Say` at runtime
+## 7. Provide a catalogue at runtime
 
-Create one `Say` instance for your app:
+Create one catalogue for your app:
 
 ```tsx title="src/i18n.ts"
-import { Say } from 'saykit';
+import { createCatalogue } from 'saykit';
 import en from './locales/en.po';
 import fr from './locales/fr.po';
 
-const say = new Say({
+const catalogue = createCatalogue({
   locales: ['en', 'fr'],
   messages: { en, fr },
 });
 
-export default say;
+export default catalogue;
 ```
 
-Activate a locale and wrap your tree in `SayProvider`:
+Pick a locale and wrap your tree in `SayProvider`:
 
 ```tsx title="src/main.tsx"
 import { SayProvider } from '@saykit/react/client';
 import { createRoot } from 'react-dom/client';
 import App from './app';
-import say from './i18n';
+import catalogue from './i18n';
 
-const locale = say.match([navigator.language]);
-say.activate(locale);
+const say = catalogue.locale(catalogue.match([navigator.language]));
 
 createRoot(document.getElementById('root')!).render(
-  <SayProvider locale={locale} messages={say.messages}>
+  <SayProvider locale={say.locale} messages={say.messages}>
     <App />
   </SayProvider>,
 );
 ```
 
-That's it. Your app now renders in the matched locale, and switching locales is just an
-`activate()` + re-render away.
+That's it. Your app now renders in the matched locale, and switching locales is just a different
+view plus a re-render away.
 
 ## Where to next?
 

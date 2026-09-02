@@ -78,7 +78,7 @@ const en = await import('./locales/en.po').then((m) => m.default);
 
 ```ts
 // Per-locale loader function (recommended for many locales)
-new Say({
+createCatalogue({
   loader: (l) => import(`./locales/${l}.po`).then((m) => m.default),
 });
 ```

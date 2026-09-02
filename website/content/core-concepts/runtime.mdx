@@ -1,24 +1,28 @@
 ---
 title: Runtime
-description: The Say class, locales, messages, activation, matching, freezing
+description: Catalogues and views, locales, messages, loading, matching
 ---
 
-The `Say` class is SayKit's runtime. It holds your locales and message catalogues, tracks the active locale, and formats compiled messages on demand.
+SayKit's runtime is two objects with one job each.
+
+A **catalogue** holds your locales, their message catalogues, and the loader that fetches the ones it does not have yet. It never formats anything and has no notion of a current locale.
+
+A **view** is one locale bound to a set of messages. It is what you call to format a message, it is immutable, and it is the only thing your application code ever holds.
 
 ```ts
-import { Say } from 'saykit';
+import { createCatalogue } from 'saykit';
 ```
 
-You usually create one `Say` per app. Framework integrations wrap that instance, `SayProvider` in React, `SayPlugin` in Carbon, but the underlying API is the same everywhere.
+You usually create one catalogue per app. Framework integrations wrap it, `SayProvider` in React and `SayPlugin` in Carbon, but the underlying API is the same everywhere.
 
-## Creating an instance
+## Creating a catalogue
 
 ```ts
-import { Say } from 'saykit';
+import { createCatalogue } from 'saykit';
 import en from './locales/en.po';
 import fr from './locales/fr.po';
 
-const say = new Say({
+const catalogue = createCatalogue({
   locales: ['en', 'fr'],
   messages: { en, fr },
 });
@@ -31,7 +35,7 @@ You can pass:
 - both, preload some, lazy-load the rest
 
 ```ts
-const say = new Say({
+const catalogue = createCatalogue({
   locales: ['en', 'fr', 'ja'],
   messages: { en },
   loader: async (locale) => {
@@ -41,84 +45,75 @@ const say = new Say({
 });
 ```
 
+`defaultLocale` is optional and defaults to the first of `locales`. It is what `match()` falls back to when nothing else fits.
+
 See [dynamic loading](/guides/dynamic-loading) for a deeper look at the loader pattern.
 
-## Reading state
+## Getting a view
 
-A `Say` instance exposes three properties:
+`locale()` returns the view bound to that locale:
 
 ```ts
-say.locales; // ['en', 'fr']
-say.locale; // 'en' (currently active)
-say.messages; // { 'abc123': 'Hello!', ... } (for the active locale)
+const say = catalogue.locale('fr');
+
+say.locale; // 'fr'
+say.messages; // { 'abc123': 'Bonjour !', ... }
+say`Hello!`; // 'Bonjour !'
+```
+
+Views are memoised, so asking twice returns the same value:
+
+```ts
+catalogue.locale('fr') === catalogue.locale('fr'); // true
 ```
 
 <Callout type="warn">
-  `say.locale` throws if no locale is active. `say.messages` throws if no catalogue is loaded for
-  the active locale. Activate a locale before reading either.
+  `locale()` throws if that locale has no messages yet. Load it first, or check with
+  `catalogue.loaded('fr')`.
 </Callout>
+
+A view has no reference back to its catalogue, so it cannot change locale. That is deliberate: switching locale means holding a different view, not mutating the one you have. Nothing downstream has to clone or freeze to protect itself from someone else's locale change.
+
+## Reading state
+
+The two objects expose different things, because they know different things:
+
+```ts
+catalogue.locales; // ['en', 'fr']
+catalogue.defaultLocale; // 'en'
+catalogue.loaded('fr'); // true
+
+say.locale; // 'fr'
+say.messages; // { 'abc123': 'Bonjour !', ... }
+```
 
 ## Loading messages
 
 `load()` runs your configured loader for the given locales:
 
 ```ts
-await say.load('fr');
-await say.load('fr', 'ja');
+await catalogue.load('fr');
+await catalogue.load('fr', 'ja');
 ```
 
 With no arguments, every configured locale is loaded:
 
 ```ts
-await say.load();
+await catalogue.load();
 ```
 
-Locales that are already loaded are skipped. Calling `load()` without a configured loader throws.
+Locales that already have messages are skipped. Calling `load()` without a configured loader throws.
 
 If your loader is synchronous, `load()` is synchronous too. If your loader returns a promise, so does `load()`.
 
-## Assigning messages
-
-Use `assign()` when you already have messages in hand and want to attach them directly, no loader required.
-
-```ts
-say.assign('fr', {
-  greeting: 'Bonjour !',
-});
-```
-
-Or for multiple locales at once:
-
-```ts
-say.assign({
-  en: { greeting: 'Hello!' },
-  fr: { greeting: 'Bonjour !' },
-});
-```
-
-This is useful when messages are embedded in the bundle, hydrated from a server, or pulled from another store.
-
-## Activating a locale
-
-A locale must be loaded (or assigned) before you can activate it:
-
-```ts
-await say.load('fr');
-say.activate('fr');
-```
-
-```ts
-say.activate('fr'); // throws if `fr` has not been loaded or assigned
-```
-
-Once a locale is active, compiled `say.call(...)` invocations resolve against its catalogue.
+A locale is filled **once**, and there is no way to replace its messages afterwards. That is what makes a view safe to hold indefinitely: nothing can swap out the messages it was built over, so a view can never quietly start formatting something else.
 
 ## Matching guesses
 
 Use `match()` to pick the best supported locale from a list of guesses, browser locales, an `Accept-Language` header, a URL segment, whatever:
 
 ```ts
-say.match(['fr-CA', 'en-US']);
+catalogue.match(['fr-CA', 'en-US']);
 // → 'fr' if your configured locales include 'fr'
 ```
 
@@ -126,58 +121,49 @@ Matching prefers in order:
 
 1. exact match against `locales`
 2. language-prefix match (`fr-CA` &rarr; `fr`)
-3. the first configured locale as final fallback
+3. `defaultLocale` as final fallback
 
 `match()` takes any number of strings or arrays of strings; everything is flattened:
 
 ```ts
-say.match('fr-CA', 'en-US');
-say.match(['fr-CA', 'en-US']);
-say.match(headerLocales, [cookieLocale]);
+catalogue.match('fr-CA', 'en-US');
+catalogue.match(['fr-CA', 'en-US']);
+catalogue.match(headerLocales, [cookieLocale]);
 ```
 
 See [locale detection](/guides/locale-detection) for usage patterns.
 
-## Cloning
+## Concurrency
 
-`clone()` returns a fresh `Say` with the same locales, messages, and loader:
-
-```ts
-const requestSay = say.clone();
-requestSay.activate('fr');
-```
-
-Cloning is the right way to handle a per-request, per-interaction, or per-render locale without mutating a shared instance. The Carbon and React server integrations do this for you under the hood.
-
-## Freezing
-
-`freeze()` returns a read-only view:
+There is nothing to clone. A catalogue is shared safely because it has no current locale to leak, and a view is shared safely because it cannot be changed.
 
 ```ts
-const readonlySay = say.clone().activate('fr').freeze();
+// Two requests, two locales, one catalogue, no defensive copies.
+const english = catalogue.locale('en');
+const french = catalogue.locale('fr');
 ```
 
-A frozen `Say` can still:
+This is the whole reason for the split. A per-request, per-interaction, or per-render locale is just a view you looked up, and the Carbon and React server integrations do exactly that under the hood.
 
-- read `locale`, `locales`, `messages`
-- call `match()`
-- format messages via `say.call(...)`
+## Views without a catalogue
 
-But it can no longer:
+A view needs nothing from a catalogue beyond a record of messages, so `createView` builds one directly:
 
-- `load()`
-- `assign()`
-- `activate()`
+```ts
+import { createView } from 'saykit';
 
-Freezing is how the React integration hands a `Say` to client components, safely scoped to one locale, with no way to mutate it accidentally.
+const say = createView('fr', messages);
+```
+
+This is what `SayProvider` uses on the client, where the server has already picked a locale and serialised only that locale's messages across the boundary. When you do have a catalogue, prefer `catalogue.locale(code)`, so views stay memoised.
 
 ## Iterating locales
 
-A `Say` instance is iterable. It yields `[frozenSay, locale]` for every configured locale, with each `frozenSay` already activated to that locale:
+A catalogue is iterable. It yields `[say, locale]` for every configured locale:
 
 ```ts
-for (const [localised, locale] of say) {
-  console.log(locale, localised`Hello!`);
+for (const [say, locale] of catalogue) {
+  console.log(locale, say`Hello!`);
 }
 ```
 
@@ -197,32 +183,32 @@ say.call({
 
 In application code you rarely write this directly, the build transform generates it from your `` say`...` `` and `<Say>` macros. The descriptor always has an `id`; extra properties become ICU placeholders. The transform emits each value behind one underscore so it cannot collide with the descriptor's own keys, and `call` strips exactly one back off, keys written without one are passed through unchanged.
 
+Each view caches the formats it compiles, so a message is parsed once per locale for the life of the process.
+
 ## Putting it together
 
 A typical client-side bootstrap:
 
 ```ts title="src/i18n.ts"
-import { Say } from 'saykit';
+import { createCatalogue } from 'saykit';
 import en from './locales/en.po';
 import fr from './locales/fr.po';
 
-const say = new Say({
+const catalogue = createCatalogue({
   locales: ['en', 'fr'],
   messages: { en, fr },
 });
 
-const guess = navigator.language ?? 'en';
-say.activate(say.match(guess));
-
-export default say;
+export default catalogue;
+export const say = catalogue.locale(catalogue.match(navigator.languages as string[]));
 ```
 
 A typical per-request server-side bootstrap:
 
 ```ts title="src/server-i18n.ts"
-import { Say } from 'saykit';
+import { createCatalogue } from 'saykit';
 
-const baseSay = new Say({
+const catalogue = createCatalogue({
   locales: ['en', 'fr'],
   loader: (l) => import(`./locales/${l}.po`).then((m) => m.default),
 });
@@ -231,10 +217,9 @@ export async function getSayFor(headers: Headers) {
   const acceptLang = headers.get('accept-language') ?? '';
   const guesses = acceptLang.split(',').map((s) => s.split(';')[0]!.trim());
 
-  const requestSay = baseSay.clone();
-  const locale = requestSay.match(guesses);
-  await requestSay.load(locale);
-  return requestSay.activate(locale).freeze();
+  const locale = catalogue.match(guesses);
+  await catalogue.load(locale);
+  return catalogue.locale(locale);
 }
 ```
 

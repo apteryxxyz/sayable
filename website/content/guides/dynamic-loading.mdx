@@ -3,7 +3,7 @@ title: Dynamic loading
 description: Load locale catalogues lazily to keep bundles small
 ---
 
-SayKit gives you two ways to wire messages into a `Say` instance:
+SayKit gives you two ways to wire messages into a catalogue:
 
 - **Inline**, pass `messages` directly. Every locale is bundled, ready to use.
 - **Loader**, pass a `loader` function. Locales load on demand.
@@ -37,26 +37,26 @@ import { Package, Zap } from 'lucide-react';
 The simplest setup:
 
 ```ts title="src/i18n.ts"
-import { Say } from 'saykit';
+import { createCatalogue } from 'saykit';
 import en from './locales/en.po';
 import fr from './locales/fr.po';
 
-const say = new Say({
+const catalogue = createCatalogue({
   locales: ['en', 'fr'],
   messages: { en, fr },
 });
 
-export default say;
+export default catalogue;
 ```
 
-Both catalogues are part of the bundle. `activate('fr')` is synchronous, no loading state ever.
+Both catalogues are part of the bundle. `catalogue.locale('fr')` is synchronous, no loading state ever.
 
 ## Loader pattern
 
 ```ts title="src/i18n.ts"
-import { Say } from 'saykit';
+import { createCatalogue } from 'saykit';
 
-const say = new Say({
+const catalogue = createCatalogue({
   locales: ['en', 'fr', 'ja', 'de'],
   loader: async (locale) => {
     const mod = await import(`./locales/${locale}.po`);
@@ -64,14 +64,14 @@ const say = new Say({
   },
 });
 
-export default say;
+export default catalogue;
 ```
 
 Bundlers turn the dynamic `import()` into a separate chunk per locale. The catalogue for the active locale loads on first use:
 
 ```ts
-await say.load('fr');
-say.activate('fr');
+await catalogue.load('fr');
+const say = catalogue.locale('fr');
 ```
 
 The shape of the dynamic import (`./locales/${locale}.po`) matters, most bundlers (Vite, Webpack, Rolldown, esbuild) can statically analyse this pattern and produce one chunk per literal locale.
@@ -88,10 +88,10 @@ The shape of the dynamic import (`./locales/${locale}.po`) matters, most bundler
 Preload the source locale, lazy-load everything else:
 
 ```ts title="src/i18n.ts"
-import { Say } from 'saykit';
+import { createCatalogue } from 'saykit';
 import en from './locales/en.po';
 
-const say = new Say({
+const catalogue = createCatalogue({
   locales: ['en', 'fr', 'ja', 'de'],
   messages: { en },
   loader: async (locale) => {
@@ -100,17 +100,15 @@ const say = new Say({
   },
 });
 
-say.activate('en');
-
-export default say;
+export default catalogue;
 ```
 
 Initial render is synchronous, the source locale is always there. Switching locales triggers a single network fetch (or chunk load), and you control when:
 
 ```ts
 async function switchTo(locale: string) {
-  await say.load(locale);
-  say.activate(locale);
+  await catalogue.load(locale);
+  return catalogue.locale(locale);
 }
 ```
 
@@ -120,9 +118,8 @@ In a locale switcher, prefetch the catalogue on hover so the actual switch is in
 
 ```tsx
 function LocaleOption({ locale }: { locale: string }) {
-  const say = useSay();
   return (
-    <a href={`/${locale}`} onMouseEnter={() => say.load(locale)}>
+    <a href={`/${locale}`} onMouseEnter={() => catalogue.load(locale)}>
       {locale}
     </a>
   );
@@ -136,39 +133,38 @@ Calling `load()` on an already-loaded locale is a no-op, so this is safe to call
 On the server, you usually load only the locale this request needs:
 
 ```ts
-import { Say } from 'saykit';
+import { createCatalogue } from 'saykit';
 
-const baseSay = new Say({
+const catalogue = createCatalogue({
   locales: ['en', 'fr', 'ja', 'de'],
   loader: (l) => import(`./locales/${l}.po`).then((m) => m.default),
 });
 
 export async function getSayFor(locale: string) {
-  const request = baseSay.clone();
-  const matched = request.match(locale);
-  await request.load(matched);
-  return request.activate(matched).freeze();
+  const matched = catalogue.match(locale);
+  await catalogue.load(matched);
+  return catalogue.locale(matched);
 }
 ```
 
-Cloning isolates per-request state; freezing makes the result safe to pass to multiple components.
+There is nothing to isolate. The catalogue has no current locale to leak between requests, and the view it hands back cannot be changed, so it is safe to pass anywhere.
 
 ## Sync loaders
 
 Loaders don't have to return a promise. If you have everything available synchronously, say you build catalogues at request start, or you're in a CLI, return the object directly:
 
 ```ts
-const say = new Say({
+const catalogue = createCatalogue({
   locales: ['en', 'fr'],
   loader: (locale) => buildCatalogueFor(locale), // sync
 });
 
-say.load('fr'); // returns the Say (not a promise)
+catalogue.load('fr'); // returns undefined, not a promise
 ```
 
 When all loaders are synchronous, `load()` returns synchronously too.
 
 ## Next
 
-- [Runtime](/core-concepts/runtime), full Say API
+- [Runtime](/core-concepts/runtime), the full catalogue and view API
 - [Locale detection](/guides/locale-detection), deciding what to load
