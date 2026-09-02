@@ -33,7 +33,7 @@ This is a pnpm monorepo. The published packages live in [`packages/*`](./package
 
 | Package                                             | Description                                                          |
 | --------------------------------------------------- | -------------------------------------------------------------------- |
-| [`saykit`](./packages/integration)                  | Core runtime: the `Say` class, macros, and ICU formatting            |
+| [`saykit`](./packages/integration)                  | Core runtime: catalogues, views, macros, and ICU formatting          |
 | [`@saykit/config`](./packages/config)               | Config schema (`defineConfig`) and the `saykit` CLI                  |
 | [`@saykit/react`](./packages/integration-react)     | React integration: `<Say>`, `SayProvider`, server helpers            |
 | [`@saykit/carbon`](./packages/integration-carbon)   | Carbon Discord-bot integration                                       |
@@ -89,12 +89,12 @@ export default defineConfig({
 ```
 
 ```ts title="src/app.ts"
-import { Say } from 'saykit';
+import { createCatalogue } from 'saykit';
 import en from './locales/en.po';
 import fr from './locales/fr.po';
 
-const say = new Say({ locales: ['en', 'fr'], messages: { en, fr } });
-say.activate('en');
+const catalogue = createCatalogue({ locales: ['en', 'fr'], messages: { en, fr } });
+const say = catalogue.locale('en');
 
 console.log(say`Hello, ${'world'}!`);
 ```

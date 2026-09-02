@@ -4,7 +4,7 @@
 
 [![Coverage](https://codecov.io/gh/k0d13/saykit/graph/badge.svg?flag=integration)](https://codecov.io/gh/k0d13/saykit?flags%5B0%5D=integration)
 
-The core runtime for [SayKit](https://saykit.js.org). Exports the `Say` class, which stores your locales, loads message catalogues, and formats messages using ICU MessageFormat.
+The core runtime for [SayKit](https://saykit.js.org). Exports `createCatalogue`, which stores your locales and loads message catalogues, and `createView`, which binds one locale and formats messages using ICU MessageFormat.
 
 You author messages with the `` say`...` `` tagged template (and `say.plural`, `say.ordinal`, `say.select`); a SayKit build-tool plugin rewrites them at build time into small runtime calls.
 
@@ -19,16 +19,16 @@ You will normally also want [`@saykit/config`](https://github.com/k0d13/saykit/t
 ## Usage
 
 ```ts
-import { Say } from 'saykit';
+import { createCatalogue } from 'saykit';
 import en from './locales/en.po';
 import fr from './locales/fr.po';
 
-const say = new Say({
+const catalogue = createCatalogue({
   locales: ['en', 'fr'],
   messages: { en, fr },
 });
 
-say.activate('en');
+const say = catalogue.locale('en');
 
 say`Hello, ${name}!`;
 say.plural(count, { one: '1 item', other: `${count} items` });
