@@ -75,9 +75,9 @@ By the time the bundler looks at the file, it _is_ a module — so `import summa
 './templates/summary.email'` just works. TypeScript needs telling separately, which is what
 `src/templates.d.ts` is for; the transformer runs in the bundler, long after the type-checker.
 
-Note the generated function takes `say` as a parameter instead of importing one. A template should
-not decide which catalogue it belongs to — that keeps it compatible with the per-request `clone()`
-pattern the server examples use.
+Note the generated function takes a view as a parameter instead of importing one. A template should
+not decide which catalogue it belongs to, which keeps it compatible with the per-request
+`catalogue.locale(locale)` the server examples use.
 
 ## Transformers compose
 

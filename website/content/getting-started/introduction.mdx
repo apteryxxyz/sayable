@@ -7,7 +7,7 @@ description: Compile-time i18n for JavaScript, TypeScript, React, and beyond
 
 SayKit is a framework-agnostic internationalisation toolkit built around **compile-time message extraction**, **typed configuration**, and **small runtime primitives**.
 
-You author messages inline with tagged templates or JSX. A build-tool plugin extracts them to translation files and rewrites your source to small runtime calls. At runtime, a tiny `Say` instance formats those messages using ICU MessageFormat, with plurals, ordinals, and select, against whichever locale you've activated.
+You author messages inline with tagged templates or JSX. A build-tool plugin extracts them to translation files and rewrites your source to small runtime calls. At runtime, a tiny view formats those messages using ICU MessageFormat, with plurals, ordinals, and select, against the one locale it is bound to.
 
 <Callout type="warn">
   SayKit is in active development (pre-1.0). Public APIs may change before the stable 1.0 release.

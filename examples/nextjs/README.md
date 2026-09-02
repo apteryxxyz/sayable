@@ -12,7 +12,7 @@ once.
 
 | Concern                                                      | Where                                              |
 | ------------------------------------------------------------ | -------------------------------------------------- |
-| `unstable_createWithSay` — resolve + activate before render  | `src/i18n.ts`, used in `layout.tsx` and `page.tsx` |
+| `unstable_createWithSay`, resolving the view before render   | `src/i18n.ts`, used in `layout.tsx` and `page.tsx` |
 | `getSay()` inside a plain server component                   | `src/app/[locale]/product-card.tsx`                |
 | `SayProvider` at the root, fed by `withSay`'s injected props | `src/app/[locale]/layout.tsx`                      |
 | `<Say>` in a **client** component                            | `add-to-cart.tsx`, `locale-switcher.tsx`           |

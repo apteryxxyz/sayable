@@ -31,10 +31,10 @@ describe('SayPlugin', () => {
 });
 
 describe('guild `say` extension', () => {
-  it('clones, matches and activates the preferred locale', () => {
+  it('matches the guild preferred locale and returns its view', () => {
     const guild = proto<Guild>(Guild.prototype, { preferred_locale: 'fr' });
     expect(guild.say.locale).toBe('fr');
-    // Second access reuses the per-guild clone.
+    // Second access reuses the catalogue's memoised view.
     expect(guild.say.locale).toBe('fr');
   });
 
@@ -46,7 +46,7 @@ describe('guild `say` extension', () => {
 });
 
 describe('interaction `say` extension', () => {
-  it('clones, matches and activates the interaction locale', () => {
+  it('matches the interaction locale and returns its view', () => {
     const interaction = proto<BaseInteraction<never>>(BaseInteraction.prototype, { locale: 'fr' });
     expect(interaction.say.locale).toBe('fr');
   });

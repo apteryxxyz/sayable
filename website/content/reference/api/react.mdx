@@ -111,6 +111,8 @@ Props:
 
 Wraps a client tree with a locale and message catalogue. Required before any client-side use of `<Say>` or `useSay()`.
 
+It takes the view's data rather than the view itself. A view is a callable closure, so it cannot cross the server/client boundary; its locale and messages are plain data and can. The provider builds a view from them on the client and memoises it, so `useSay()` returns the same value until the locale or messages change.
+
 ```tsx
 <SayProvider locale={locale} messages={messages}>
   {children}

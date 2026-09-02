@@ -49,11 +49,12 @@ against whichever view you passed in, usually `interaction.say`.
 `interaction.say` is the view for `interaction.rawData.locale`, the language of the one
 person who ran the command. That is right for ephemeral replies and modals.
 
-`guild.say` is activated from the guild's `preferred_locale`. Use it when the message is for the
+`guild.say` is the view for the guild's `preferred_locale`. Use it when the message is for the
 whole channel: `/announce` posts in the server's language, because it would be strange for a public
 notice to appear in Japanese only because the person who triggered it reads Japanese.
 
-Both are clones, so neither can disturb the shared instance or each other.
+Both are views off the same catalogue, and a view cannot be changed, so neither can disturb the
+catalogue or each other.
 
 ## Locale codes
 

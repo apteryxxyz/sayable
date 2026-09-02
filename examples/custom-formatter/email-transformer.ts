@@ -43,8 +43,8 @@ export function createEmailTransformer(): Transformer {
 
       // The emitted module takes the `View` as an argument rather than
       // importing one. A template should not decide which catalogue it belongs
-      // to — the caller does, and that keeps this compatible with the
-      // per-request `clone()` pattern the server examples use.
+      // to: the caller does, and that keeps this compatible with the
+      // per-request `catalogue.locale(locale)` the server examples use.
       return [
         `// generated from ${id} by the .email transformer`,
         `export default function render(say, values = {}) {`,

@@ -12,8 +12,8 @@ import { currentPick } from '../club.js';
 /**
  * `/pick` — what the club is reading, and when it meets.
  *
- * The `withSay(Command)` constructor takes `(say, properties)` where
- * `properties` is called **once per locale**. Its return value is merged into
+ * The `withSay(Command)` constructor takes `(catalogue, properties)` where
+ * `properties` is called **once per locale**, with that locale's view. Its return value is merged into
  * Discord's `name_localizations` / `description_localizations`, so the command
  * shows up in a French user's client as `/choix` without a second registration.
  */
@@ -26,8 +26,8 @@ export class PickCommand extends withSay(Command) {
   }
 
   async run(interaction: CommandInteraction) {
-    // `interaction.say` is a per-interaction clone, already activated to the
-    // locale Discord reported for *this user*. It is safe to use concurrently.
+    // `interaction.say` is the immutable view for the locale Discord reported
+    // for *this user*. Nothing can change it, so it is safe to use concurrently.
     const say = interaction.say;
 
     const meeting =

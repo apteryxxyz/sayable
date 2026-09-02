@@ -9,8 +9,8 @@ import { currentPick, members } from '../club.js';
  *
  * A reply everyone in the channel will read should be in the server's language,
  * not in whatever the person who typed the command happens to use. `guild.say`
- * is activated from the guild's `preferred_locale` for exactly this case, while
- * `interaction.say` stays scoped to one user.
+ * is the view for the guild's `preferred_locale`, for exactly this case, while
+ * `interaction.say` is the view for one user's.
  */
 export class AnnounceCommand extends withSay(Command) {
   constructor(catalogue: Catalogue) {

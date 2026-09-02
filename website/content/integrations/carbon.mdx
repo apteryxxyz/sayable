@@ -91,7 +91,7 @@ const client = new Client({/* options */}, { commands: [new PingCommand(catalogu
 
 ## Localising commands
 
-`withSay()` wraps a Carbon class with a constructor that accepts a `Say` and a mapping function. The mapping function runs **once per locale**; SayKit uses the results to populate Carbon's per-locale command metadata.
+`withSay()` wraps a Carbon class with a constructor that accepts a `Catalogue` and a mapping function. The mapping function runs **once per locale**; SayKit uses the results to populate Carbon's per-locale command metadata.
 
 ```ts title="src/commands/ping.ts"
 import { Command, type CommandInteraction } from '@buape/carbon';
@@ -184,7 +184,7 @@ await interaction.reply({
 await someOperation(guild.say`Welcome to ${guildName}!`);
 ```
 
-The clone is cached on the interaction or guild instance, subsequent accesses re-use it.
+The catalogue memoises one view per locale, so repeated accesses hand back the same value.
 
 ## Live example
 
