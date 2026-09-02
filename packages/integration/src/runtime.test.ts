@@ -1,6 +1,6 @@
 import { inspect } from 'node:util';
 import { describe, expect, it, vi } from 'vitest';
-import { Say } from './runtime.js';
+import { type Catalogue, createCatalogue, createView, type View } from './runtime.js';
 
 type Locale = 'en' | 'fr' | 'de';
 
@@ -13,7 +13,7 @@ const messages = {
     underscored: 'Total {_total}',
   },
   fr: { greeting: 'Bonjour', items: '{count, plural, one {# article} other {# articles}}' },
-} satisfies Partial<Record<Locale, Say.Messages>>;
+} satisfies Partial<Record<Locale, View.Messages>>;
 
 /**
  * Build options with partial (or empty) messages. The public `Options` type
@@ -22,9 +22,10 @@ const messages = {
  */
 const opts = (o: {
   locales: Locale[];
-  messages?: Partial<Record<Locale, Say.Messages>>;
-  loader?: Say.Loader<Locale>;
-}) => o as Say.Options<Locale, Say.Loader<Locale> | undefined>;
+  defaultLocale?: Locale;
+  messages?: Partial<Record<Locale, View.Messages>>;
+  loader?: Catalogue.Loader<Locale>;
+}) => o as Catalogue.Options<Locale, Catalogue.Loader<Locale> | undefined>;
 
 /**
  * Drop the bidi isolation marks the formatter wraps substituted values in, so
@@ -34,182 +35,138 @@ function plain(formatted: string) {
   return formatted.replaceAll(/[⁨⁩]/g, '');
 }
 
-function make(active?: Locale) {
-  const say = new Say<Locale>(opts({ locales: ['en', 'fr', 'de'], messages }));
-  if (active) say.activate(active);
-  return say;
+function make() {
+  return createCatalogue(opts({ locales: ['en', 'fr', 'de'], messages }));
 }
 
-describe('Say constructor', () => {
-  it('assigns messages passed to the constructor', () => {
-    const say = make('en');
-    expect(say.messages).toEqual(messages.en);
+describe('createCatalogue', () => {
+  it('assigns messages passed in the options', () => {
+    expect(make().locale('en').messages).toEqual(messages.en);
   });
 
   it('works without messages when a loader is provided', () => {
     const loader = vi.fn((locale: Locale) => messages[locale as 'en' | 'fr'] ?? {});
-    const say = new Say<Locale>({ locales: ['en'], loader });
-    expect(say.locales).toEqual(['en']);
+    const catalogue = createCatalogue({ locales: ['en'], loader });
+    expect(catalogue.locales).toEqual(['en']);
     expect(loader).not.toHaveBeenCalled();
   });
-});
 
-describe('Say.locale getter', () => {
-  it('throws when no locale is active', () => {
-    expect(() => make().locale).toThrow('No active locale');
-  });
-
-  it('returns the active locale', () => {
-    expect(make('fr').locale).toBe('fr');
-  });
-});
-
-describe('Say.messages getter', () => {
-  // The active-locale case is covered by the constructor test above.
-  it('throws when no locale is active', () => {
-    expect(() => make().messages).toThrow('No active locale');
-  });
-});
-
-describe('Say.locales getter', () => {
-  it('returns all locales', () => {
+  it('exposes all locales', () => {
     expect(make().locales).toEqual(['en', 'fr', 'de']);
   });
-});
 
-describe('Say.load', () => {
-  it('throws when called on a frozen instance', () => {
-    const frozen = make('en').freeze();
-    expect(() => (frozen as unknown as Say<Locale>).load()).toThrow(
-      'Cannot load messages on a frozen Say',
-    );
+  it('defaults the default locale to the first one', () => {
+    expect(make().defaultLocale).toBe('en');
   });
 
+  it('takes a default locale from the options', () => {
+    expect(
+      createCatalogue(opts({ locales: ['en', 'fr'], messages, defaultLocale: 'fr' })).defaultLocale,
+    ).toBe('fr');
+  });
+});
+
+describe('Catalogue#locale', () => {
+  it('throws when there are no messages for the locale', () => {
+    expect(() => make().locale('de')).toThrow('No messages loaded for locale');
+  });
+
+  it('returns a view bound to the locale', () => {
+    const say = make().locale('fr');
+    expect(say.locale).toBe('fr');
+    expect(say.messages).toEqual(messages.fr);
+  });
+
+  it('memoises, so the same locale is the same view', () => {
+    const catalogue = make();
+    expect(catalogue.locale('en')).toBe(catalogue.locale('en'));
+    expect(catalogue.locale('en')).not.toBe(catalogue.locale('fr'));
+  });
+
+  it('keeps handing back the same view once a locale is filled', () => {
+    // A locale is written once, so there is no second set of messages for a
+    // view to fall out of step with.
+    const catalogue = createCatalogue({ locales: ['de'], loader: () => ({ greeting: 'Hallo' }) });
+    catalogue.load('de');
+    const view = catalogue.locale('de');
+    catalogue.load('de');
+    expect(catalogue.locale('de')).toBe(view);
+  });
+});
+
+describe('Catalogue#loaded', () => {
+  it('reports whether a locale has messages', () => {
+    const catalogue = make();
+    expect(catalogue.loaded('en')).toBe(true);
+    expect(catalogue.loaded('de')).toBe(false);
+  });
+});
+
+describe('Catalogue#load', () => {
   it('loads all locales when none are specified', () => {
     const loader = vi.fn((locale: Locale) => ({ greeting: `hi-${locale}` }));
-    const say = new Say<Locale>({ locales: ['de'], loader });
-    const result = say.load();
-    expect(result).toBe(say);
+    const catalogue = createCatalogue({ locales: ['de'], loader });
+    expect(catalogue.load()).toBeUndefined();
     expect(loader).toHaveBeenCalledWith('de');
-    expect(say.activate('de').messages).toEqual({ greeting: 'hi-de' });
+    expect(catalogue.locale('de').messages).toEqual({ greeting: 'hi-de' });
   });
 
   it('skips locales that already have messages', () => {
     const loader = vi.fn(() => ({ greeting: 'x' }));
-    const say = new Say<Locale>({ locales: ['en', 'fr'], messages, loader });
-    say.load('en', 'fr');
+    const catalogue = createCatalogue({ locales: ['en', 'fr'], messages, loader });
+    catalogue.load('en', 'fr');
     expect(loader).not.toHaveBeenCalled();
   });
 
+  it('fills a locale once, so a second load cannot replace it', async () => {
+    let call = 0;
+    const catalogue = createCatalogue({
+      locales: ['de'],
+      loader: async () => ({ greeting: `load-${++call}` }),
+    });
+
+    // Two loads in flight at once: the second resolves after the first has
+    // already filled the locale, and must not overwrite it.
+    await Promise.all([catalogue.load('de'), catalogue.load('de')]);
+    expect(catalogue.locale('de').call({ id: 'greeting' })).toBe('load-1');
+  });
+
   it('throws when no loader is provided', () => {
-    const say = new Say<Locale>(opts({ locales: ['de'], messages: {} }));
-    expect(() => say.load('de')).toThrow('No loader provided, cannot load messages');
+    const catalogue = createCatalogue(opts({ locales: ['de'], messages: {} }));
+    expect(() => catalogue.load('de')).toThrow('No loader provided, cannot load messages');
   });
 
   it('assigns synchronously returned messages', () => {
-    const say = new Say<Locale>({ locales: ['de'], loader: () => ({ greeting: 'Hallo' }) });
-    const result = say.load('de');
-    expect(result).toBe(say);
-    expect(say.activate('de').messages).toEqual({ greeting: 'Hallo' });
+    const catalogue = createCatalogue({ locales: ['de'], loader: () => ({ greeting: 'Hallo' }) });
+    expect(catalogue.load('de')).toBeUndefined();
+    expect(catalogue.locale('de').messages).toEqual({ greeting: 'Hallo' });
   });
 
   it('returns a promise and assigns when the loader is async', async () => {
     const loader = vi.fn(async (locale: Locale) => ({ greeting: `async-${locale}` }));
-    const say = new Say<Locale>({ locales: ['de'], loader });
-    const result = say.load('de');
+    const catalogue = createCatalogue({ locales: ['de'], loader });
+    const result = catalogue.load('de');
     expect(result).toBeInstanceOf(Promise);
-    const resolved = await result;
-    expect(resolved).toBe(say);
-    expect(say.activate('de').messages).toEqual({ greeting: 'async-de' });
+    await result;
+    expect(catalogue.locale('de').messages).toEqual({ greeting: 'async-de' });
   });
 });
 
-describe('Say.assign', () => {
-  it('throws when called on a frozen instance', () => {
-    const frozen = make('en').freeze();
-    expect(() => (frozen as unknown as Say<Locale>).assign('en', {})).toThrow(
-      'Cannot assign messages on a frozen Say',
-    );
-  });
-
-  it('assigns messages to a single locale', () => {
-    const say = new Say<Locale>(opts({ locales: ['de'], messages: {} }));
-    say.assign('de', { greeting: 'Hallo' });
-    expect(say.activate('de').messages).toEqual({ greeting: 'Hallo' });
-  });
-
-  it('bulk assigns messages from a record', () => {
-    const say = new Say<Locale>(opts({ locales: ['en', 'fr'], messages: {} }));
-    say.assign(messages);
-    expect(say.activate('fr').messages).toEqual(messages.fr);
-  });
-
-  it('returns this', () => {
-    const say = new Say<Locale>(opts({ locales: ['de'], messages: {} }));
-    expect(say.assign('de', {})).toBe(say);
-  });
-});
-
-describe('Say.activate', () => {
-  it('throws when called on a frozen instance', () => {
-    const frozen = make('en').freeze();
-    expect(() => (frozen as unknown as Say<Locale>).activate('fr')).toThrow(
-      'Cannot activate locale on a frozen Say',
-    );
-  });
-
-  it('throws when there are no messages for the locale', () => {
-    expect(() => make().activate('de')).toThrow('No messages loaded for locale');
-  });
-
-  it('sets the active locale and returns this', () => {
-    const say = make();
-    expect(say.activate('en')).toBe(say);
-    expect(say.locale).toBe('en');
-  });
-});
-
-describe('Say.clone', () => {
-  it('copies locales, messages and active locale', () => {
-    const say = make('fr');
-    const copy = say.clone();
-    expect(copy).toBeInstanceOf(Say);
-    expect(copy.locales).toEqual(['en', 'fr', 'de']);
-    expect(copy.locale).toBe('fr');
-    expect(copy.messages).toEqual(messages.fr);
-    // Reactivating the clone does not affect the original.
-    copy.activate('en');
-    expect(copy.locale).toBe('en');
-    expect(say.locale).toBe('fr');
-  });
-
-  it('clones an instance with no active locale', () => {
-    const copy = make().clone();
-    expect(() => copy.locale).toThrow('No active locale');
-  });
-});
-
-describe('Say.freeze', () => {
-  it('makes the instance immutable', () => {
-    const frozen = make('en').freeze();
-    expect(Object.isFrozen(frozen)).toBe(true);
-  });
-});
-
-describe('Say iteration', () => {
-  it('yields a frozen, activated clone for each locale', () => {
-    const say = new Say<Locale>(opts({ locales: ['en', 'fr'], messages }));
-    const entries = [...say];
+describe('Catalogue iteration', () => {
+  it('yields a view for each locale', () => {
+    const catalogue = createCatalogue(opts({ locales: ['en', 'fr'], messages }));
+    const entries = [...catalogue];
     expect(entries.map(([, locale]) => locale)).toEqual(['en', 'fr']);
-    for (const [instance, locale] of entries) {
-      expect(Object.isFrozen(instance)).toBe(true);
-      expect(instance.locale).toBe(locale);
-    }
+    for (const [say, locale] of entries) expect(say.locale).toBe(locale);
+  });
+
+  it('throws for a locale with no messages', () => {
+    expect(() => [...make()]).toThrow('No messages loaded for locale');
   });
 });
 
-describe('Say.match', () => {
-  // Locales are ['en', 'fr', 'de'], so 'en' is the first-locale fallback.
+describe('Catalogue#match', () => {
+  // Locales are ['en', 'fr', 'de'], so 'en' is the default-locale fallback.
   it.each([
     ['no guesses are given', [], 'en'],
     ['guesses are empty arrays', [[]], 'en'],
@@ -219,55 +176,74 @@ describe('Say.match', () => {
     ['a guess has an empty prefix', ['', 'de'], 'de'],
     ['nothing matches', ['zz', 'xx-YY'], 'en'],
   ])('resolves the locale when %s', (_, guesses, expected) => {
-    expect(make().match(...(guesses as Parameters<ReturnType<typeof make>['match']>))).toBe(
-      expected,
+    expect(make().match(...(guesses as (string | string[])[]))).toBe(expected);
+  });
+
+  it('falls back to the configured default locale', () => {
+    const catalogue = createCatalogue(
+      opts({ locales: ['en', 'fr'], messages, defaultLocale: 'fr' }),
     );
+    expect(catalogue.match('zz')).toBe('fr');
   });
 });
 
-describe('Say.call', () => {
-  it('formats a message for the active locale', () => {
-    const say = make('en');
+describe('createView', () => {
+  it('builds a view over a bare record of messages, with no catalogue', () => {
+    const say = createView('en', messages.en);
+    expect(say.locale).toBe('en');
+    expect(say.call({ id: 'greeting' })).toBe('Hello');
+  });
+
+  it('is what a catalogue memoises, so a direct view is a second value', () => {
+    // Same messages, same locale, but built outside the catalogue: views are
+    // memoised per catalogue rather than interned globally.
+    expect(createView('en', messages.en)).not.toBe(make().locale('en'));
+  });
+});
+
+describe('View#call', () => {
+  const say = make().locale('en');
+
+  it('formats a message for the locale the view is bound to', () => {
     expect(say.call({ id: 'greeting' })).toBe('Hello');
   });
 
   it('formats a message with placeholders', () => {
-    const say = make('en');
     expect(say.call({ id: 'items', count: 1 })).toBe('1 item');
     expect(say.call({ id: 'items', count: 5 })).toBe('5 items');
   });
 
   it('caches the compiled format across calls', () => {
-    const say = make('fr');
-    expect(say.call({ id: 'items', count: 1 })).toBe('1 article');
+    const fr = make().locale('fr');
+    expect(fr.call({ id: 'items', count: 1 })).toBe('1 article');
     // Second call hits the cached format.
-    expect(say.call({ id: 'items', count: 2 })).toBe('2 articles');
+    expect(fr.call({ id: 'items', count: 2 })).toBe('2 articles');
   });
 
   it('throws when the message id is not found', () => {
-    expect(() => make('en').call({ id: 'missing' })).toThrow('Message for missing is not a string');
+    expect(() => say.call({ id: 'missing' })).toThrow('Message for missing is not a string');
   });
 
   it('strips the underscore the transform compiles values behind', () => {
-    expect(plain(make('en').call({ id: 'named', _name: 'Ada' }))).toBe('Hello, Ada');
+    expect(plain(say.call({ id: 'named', _name: 'Ada' }))).toBe('Hello, Ada');
   });
 
   it('formats keys written without one, so a hand-written call still works', () => {
-    expect(plain(make('en').call({ id: 'named', name: 'Ada' }))).toBe('Hello, Ada');
+    expect(plain(say.call({ id: 'named', name: 'Ada' }))).toBe('Hello, Ada');
   });
 
   it('formats a value named after the descriptor id', () => {
     // The lookup still uses the id; the value only fills `{id}` in the message.
-    expect(plain(make('en').call({ id: 'identified', _id: '42' }))).toBe('Order 42');
+    expect(plain(say.call({ id: 'identified', _id: '42' }))).toBe('Order 42');
   });
 
   it('does not expose the message id as a value', () => {
     // `{id}` is left unresolved rather than filled with the message's own id.
-    expect(plain(make('en').call({ id: 'identified' }))).not.toContain('identified');
+    expect(plain(say.call({ id: 'identified' }))).not.toContain('identified');
   });
 
   it('strips exactly one underscore, so a name that starts with one survives', () => {
-    expect(plain(make('en').call({ id: 'underscored', __total: '9' }))).toBe('Total 9');
+    expect(plain(say.call({ id: 'underscored', __total: '9' }))).toBe('Total 9');
   });
 
   it('treats a value named `__proto__` as a value, not as a prototype', () => {
@@ -279,28 +255,40 @@ describe('Say.call', () => {
       value: { polluted: true },
       enumerable: true,
     });
-    expect(plain(make('en').call(descriptor))).toBe('Hello, Ada');
+    expect(plain(say.call(descriptor))).toBe('Hello, Ada');
     expect(({} as { polluted?: boolean }).polluted).toBeUndefined();
   });
 
   it('ignores keys a descriptor only inherits', () => {
     const descriptor = Object.assign(Object.create({ _name: 'Ghost' }), { id: 'named' });
-    expect(plain(make('en').call(descriptor))).not.toContain('Ghost');
+    expect(plain(say.call(descriptor))).not.toContain('Ghost');
   });
 });
 
-describe('Say inspect', () => {
-  it('includes the active locale when one is set', () => {
-    expect(inspect(make('en'))).toBe("Say<'en'> {}");
+describe('View immutability', () => {
+  it('is frozen', () => {
+    expect(Object.isFrozen(make().locale('en'))).toBe(true);
   });
 
-  it('omits the locale when none is active', () => {
-    expect(inspect(make())).toBe('Say {}');
+  it('the catalogue is frozen too', () => {
+    expect(Object.isFrozen(make())).toBe(true);
   });
 });
 
-describe('Say macros', () => {
-  const say = make('en');
+describe('View inspect', () => {
+  it('names the locale it is bound to', () => {
+    expect(inspect(make().locale('en'))).toBe("View<'en'> {}");
+  });
+});
+
+describe('View macros', () => {
+  const say = make().locale('en');
+
+  it('throws when the message macro itself survives to runtime', () => {
+    expect(() => (say as unknown as (s: TemplateStringsArray) => string)`Hello`).toThrow(
+      "'say' is a macro and must be used with the relevant saykit plugin",
+    );
+  });
 
   it.each([
     ['plural', () => say.plural(1, { other: '#' })],
@@ -311,7 +299,7 @@ describe('Say macros', () => {
     ['time', () => say.time(new Date())],
   ])('throws for %s', (name, call) => {
     expect(call).toThrow(
-      `'Say#${name}' is a macro and must be used with the relevant saykit plugin`,
+      `'say.${name}' is a macro and must be used with the relevant saykit plugin`,
     );
   });
 });
@@ -325,8 +313,8 @@ describe('formatted arguments', () => {
   const when = new Date(2020, 0, 2, 12, 4, 5);
 
   function format(message: string, values: Record<string, unknown>) {
-    return new Say({ locales: ['en-US'], messages: { 'en-US': { m: message } } })
-      .activate('en-US')
+    return createCatalogue({ locales: ['en-US'], messages: { 'en-US': { m: message } } })
+      .locale('en-US')
       .call({ id: 'm', ...values });
   }
 
