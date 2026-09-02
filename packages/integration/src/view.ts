@@ -89,7 +89,7 @@ export interface View<Locale extends string = string> {
   /**
    * The messages this view formats against.
    */
-  readonly messages: View.Messages;
+  readonly messages: Readonly<View.Messages>;
 
   /**
    * Get the translation for a descriptor.
@@ -252,6 +252,12 @@ export function createView<Locale extends string>(
   locale: Locale,
   messages: View.Messages,
 ): View<Locale> {
+  // Copied and frozen. A format is compiled from a message the first time it
+  // is used and kept, so a messages record that could change afterwards would
+  // leave `call` formatting from the old string while `view.messages` shows the
+  // new one. Freezing a copy means the two can never disagree.
+  const own: View.Messages = Object.freeze({ ...messages });
+
   const formats = new Map<string, ReturnType<typeof compile>>();
 
   const say = (() => {
@@ -259,7 +265,7 @@ export function createView<Locale extends string>(
   }) as unknown as View<Locale>;
 
   function call(descriptor: { id: string; [match: string | number]: unknown }) {
-    const message = messages[descriptor.id];
+    const message = own[descriptor.id];
     if (typeof message !== 'string')
       throw new Error(`Message for ${descriptor.id} is not a string`);
 
@@ -272,7 +278,7 @@ export function createView<Locale extends string>(
   return Object.freeze(
     Object.defineProperties(say, {
       locale: { value: locale, enumerable: true },
-      messages: { value: messages, enumerable: true },
+      messages: { value: own, enumerable: true },
       // Own, so it shadows `Function.prototype.call`: the transform compiles
       // every message down to `say.call({ id, ... })`.
       call: { value: call },

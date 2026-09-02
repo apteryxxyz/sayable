@@ -103,7 +103,10 @@ export function createCatalogue<
   const Locale extends string = string,
   Loader extends Catalogue.Loader<Locale> | undefined = undefined,
 >(options: Catalogue.Options<Locale, Loader>): Catalogue<Locale> {
-  const locales = options.locales;
+  // Copied, so a caller that keeps hold of the array it passed in cannot
+  // later change which locales this catalogue has. Everything downstream reads
+  // this: `match`, `load`'s default targets, and iteration.
+  const locales: readonly Locale[] = Object.freeze([...options.locales]);
   const loader = options.loader;
 
   const store = new Map<Locale, View.Messages>();

@@ -59,6 +59,13 @@ describe('createCatalogue', () => {
     expect(make().defaultLocale).toBe('en');
   });
 
+  it('copies the locales it was given, so the caller cannot add one later', () => {
+    const locales: Locale[] = ['en'];
+    const catalogue = createCatalogue(opts({ locales, messages }));
+    locales.push('fr');
+    expect(catalogue.locales).toEqual(['en']);
+  });
+
   it('takes a default locale from the options', () => {
     expect(
       createCatalogue(opts({ locales: ['en', 'fr'], messages, defaultLocale: 'fr' })).defaultLocale,
@@ -268,6 +275,19 @@ describe('View#call', () => {
 describe('View immutability', () => {
   it('is frozen', () => {
     expect(Object.isFrozen(make().locale('en'))).toBe(true);
+  });
+
+  it('copies the messages it was given, so the caller cannot change them later', () => {
+    const source = { greeting: 'Hello' };
+    const say = createView('en', source);
+    source.greeting = 'Goodbye';
+    expect(say.messages).toEqual({ greeting: 'Hello' });
+    expect(say.call({ id: 'greeting' })).toBe('Hello');
+  });
+
+  it('freezes its messages, so a compiled format cannot go stale', () => {
+    const say = createView('en', { greeting: 'Hello' });
+    expect(Object.isFrozen(say.messages)).toBe(true);
   });
 
   it('the catalogue is frozen too', () => {
