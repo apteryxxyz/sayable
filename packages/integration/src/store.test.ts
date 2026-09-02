@@ -17,15 +17,14 @@ const messages = {
 
 /**
  * Build options with partial (or empty) messages. The public `Options` type
- * requires a complete locale record or a loader; several tests deliberately
- * exercise the looser runtime behaviour, so they opt out of that constraint.
+ * requires an entry for every locale; several tests deliberately exercise what
+ * happens when one is missing, so they opt out of that constraint.
  */
 const opts = (o: {
   locales: Locale[];
   defaultLocale?: Locale;
-  messages?: Partial<Record<Locale, View.Messages>>;
-  loader?: Catalogue.Loader<Locale>;
-}) => o as Catalogue.Options<Locale, Catalogue.Loader<Locale> | undefined>;
+  messages?: Partial<Record<Locale, Catalogue.Source>>;
+}) => o as Catalogue.Options<Locale>;
 
 function make() {
   return createCatalogue(opts({ locales: ['en', 'fr', 'de'], messages }));
@@ -43,7 +42,7 @@ describe('createStore', () => {
   });
 
   it('throws when the starting locale has no messages', () => {
-    expect(() => createStore(make(), 'de')).toThrow("No messages loaded for locale 'de'");
+    expect(() => createStore(make(), 'de')).toThrow("No messages for locale 'de'");
   });
 
   it('hands back the view the catalogue memoised', () => {
@@ -69,11 +68,10 @@ describe('Store#set', () => {
   });
 
   it('loads a locale the catalogue does not have yet', async () => {
-    const loader = vi.fn(async () => ({ greeting: 'Hallo' }));
+    const thunk = vi.fn(async () => ({ greeting: 'Hallo' }));
     const catalogue = createCatalogue({
       locales: ['en', 'de'],
-      messages: { en: messages.en },
-      loader,
+      messages: { en: messages.en, de: thunk },
     });
     const store = createStore(catalogue, 'en');
 
@@ -84,14 +82,13 @@ describe('Store#set', () => {
 
     await result;
     expect(store.locale).toBe('de');
-    expect(loader).toHaveBeenCalledWith('de');
+    expect(thunk).toHaveBeenCalledOnce();
   });
 
-  it('stays synchronous when the loader is', () => {
+  it('stays synchronous when the thunk is', () => {
     const catalogue = createCatalogue({
       locales: ['en', 'de'],
-      messages: { en: messages.en },
-      loader: () => ({ greeting: 'Hallo' }),
+      messages: { en: messages.en, de: () => ({ greeting: 'Hallo' }) },
     });
     const store = createStore(catalogue, 'en');
 
@@ -111,9 +108,11 @@ describe('Store#set', () => {
   it('keeps the current view when the load fails', async () => {
     const catalogue = createCatalogue({
       locales: ['en', 'de'],
-      messages: { en: messages.en },
-      loader: async () => {
-        throw new Error('offline');
+      messages: {
+        en: messages.en,
+        de: async () => {
+          throw new Error('offline');
+        },
       },
     });
     const store = createStore(catalogue, 'en');
@@ -129,10 +128,12 @@ describe('Store#set', () => {
     let attempt = 0;
     const catalogue = createCatalogue({
       locales: ['en', 'de'],
-      messages: { en: messages.en },
-      loader: async () => {
-        if (++attempt === 1) throw new Error('offline');
-        return { greeting: 'Hallo' };
+      messages: {
+        en: messages.en,
+        de: async () => {
+          if (++attempt === 1) throw new Error('offline');
+          return { greeting: 'Hallo' };
+        },
       },
     });
     const store = createStore(catalogue, 'en');
@@ -142,12 +143,10 @@ describe('Store#set', () => {
     expect(store.locale).toBe('de');
   });
 
-  it('rethrows a loader that throws synchronously', () => {
+  it('rethrows when the locale has no messages to load', () => {
     const store = createStore(createCatalogue(opts({ locales: ['en', 'de'], messages })), 'en');
 
-    expect(() => store.set('de')).toThrow(
-      "No loader provided, cannot load messages for locale 'de'",
-    );
+    expect(() => store.set('de')).toThrow("No messages for locale 'de'");
     expect(store.locale).toBe('en');
   });
 
@@ -155,11 +154,17 @@ describe('Store#set', () => {
     const resolvers = new Map<string, (loaded: View.Messages) => void>();
     const catalogue = createCatalogue({
       locales: ['en', 'fr', 'de'],
-      messages: { en: messages.en },
-      loader: (locale: Locale) =>
-        new Promise<View.Messages>((resolve) => {
-          resolvers.set(locale, resolve);
-        }),
+      messages: {
+        en: messages.en,
+        fr: () =>
+          new Promise<View.Messages>((resolve) => {
+            resolvers.set('fr', resolve);
+          }),
+        de: () =>
+          new Promise<View.Messages>((resolve) => {
+            resolvers.set('de', resolve);
+          }),
+      },
     });
     const store = createStore(catalogue, 'en');
 
@@ -181,11 +186,13 @@ describe('Store#set', () => {
     let resolve!: (loaded: View.Messages) => void;
     const catalogue = createCatalogue({
       locales: ['en', 'de'],
-      messages: { en: messages.en },
-      loader: () =>
-        new Promise<View.Messages>((r) => {
-          resolve = r;
-        }),
+      messages: {
+        en: messages.en,
+        de: () =>
+          new Promise<View.Messages>((r) => {
+            resolve = r;
+          }),
+      },
     });
     const store = createStore(catalogue, 'en');
 

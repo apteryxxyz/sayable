@@ -1,4 +1,4 @@
-import { createCatalogue, type View } from 'saykit';
+import { createCatalogue } from 'saykit';
 
 export const locales = ['en', 'fr', 'pl', 'ja'] as const;
 export type Locale = (typeof locales)[number];
@@ -7,24 +7,20 @@ export type Locale = (typeof locales)[number];
  * One dynamic import per locale. Vite turns each of these into its own chunk,
  * so a French visitor never downloads the Polish or Japanese catalogue.
  *
- * A single `import(`./locales/${locale}.po`)` would work too, but spelling the
- * map out keeps the set of shipped locales statically analysable — and typed.
- */
-const sources: Record<Locale, () => Promise<{ default: View.Messages }>> = {
-  en: () => import('./locales/en.po'),
-  fr: () => import('./locales/fr.po'),
-  pl: () => import('./locales/pl.po'),
-  ja: () => import('./locales/ja.po'),
-};
-
-/**
- * Built with a `loader` instead of eager `messages`. `catalogue.load(locale)`
- * returns a promise when the loader does, and caches per locale — calling it
- * again for an already-loaded locale is free.
+ * A thunk is left alone until its locale is first asked for, and it is called
+ * once: `catalogue.load(locale)` hands back the same view every time after
+ * that, so switching back and forth costs one request per locale for the life
+ * of the page. Each import resolves to a module, and the catalogue reads the
+ * messages off its default export.
  */
 const catalogue = createCatalogue({
   locales: [...locales],
-  loader: async (locale: Locale) => (await sources[locale]()).default,
+  messages: {
+    en: () => import('./locales/en.po'),
+    fr: () => import('./locales/fr.po'),
+    pl: () => import('./locales/pl.po'),
+    ja: () => import('./locales/ja.po'),
+  },
 });
 
 export default catalogue;

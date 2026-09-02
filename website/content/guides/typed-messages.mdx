@@ -77,10 +77,13 @@ const en = await import('./locales/en.po').then((m) => m.default);
 ```
 
 ```ts
-// Per-locale loader function (recommended for many locales)
+// A thunk per locale (recommended for many locales)
 createCatalogue({
   locales: ['en', 'fr'],
-  loader: (l) => import(`./locales/${l}.po`).then((m) => m.default),
+  messages: {
+    en: () => import('./locales/en.po'),
+    fr: () => import('./locales/fr.po'),
+  },
 });
 ```
 

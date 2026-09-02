@@ -8,20 +8,20 @@ import catalogue, { type Locale } from './i18n.js';
 // Resolve and fetch the starting catalogue before the first paint, so the app
 // never flashes untranslated content.
 const initial = catalogue.match(navigator.languages as string[]);
-await catalogue.load(initial);
+const initialSay = await catalogue.load(initial);
 document.documentElement.lang = initial;
 
 function App() {
-  const [say, setSay] = useState(() => catalogue.locale(initial));
+  const [say, setSay] = useState(initialSay);
 
   const change = useCallback(async (next: Locale) => {
-    // `load` is a no-op for a locale that is already cached, so switching back
-    // and forth costs one network request per locale for the life of the page.
-    await catalogue.load(next);
-
+    // `load` hands back the locale's view, and goes near its thunk only the
+    // first time, so switching back and forth costs one network request per
+    // locale for the life of the page.
+    //
     // A view is immutable and memoised, so state holds the view itself: the
     // new one is a different value, which is exactly what re-renders the tree.
-    setSay(catalogue.locale(next));
+    setSay(await catalogue.load(next));
     document.documentElement.lang = next;
   }, []);
 

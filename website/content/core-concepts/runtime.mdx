@@ -5,7 +5,7 @@ description: Catalogues, views and stores, locales, messages, loading, matching,
 
 SayKit's runtime is three objects with one job each.
 
-A **catalogue** holds your locales, their message catalogues, and the loader that fetches the ones it does not have yet. It never formats anything and has no notion of a current locale.
+A **catalogue** holds your locales and where each one's messages come from, whether that is the messages themselves or a function that fetches them on demand. It never formats anything and has no notion of a current locale.
 
 A **view** is one locale bound to a set of messages. It is what you call to format a message, it is immutable, and it is the only thing your application code ever holds.
 
@@ -30,26 +30,28 @@ const catalogue = createCatalogue({
 });
 ```
 
-You can pass:
+Every locale needs an entry in `messages`, written either way round:
 
-- inline `messages`, useful when catalogues are bundled at build time
-- a `loader` function, useful when you want to fetch or import on demand
-- both, preload some, lazy-load the rest
+- the messages themselves, useful when catalogues are bundled at build time
+- a thunk producing them, useful when you want to import on demand
+- a mix, bundle some, lazy-load the rest
 
 ```ts
 const catalogue = createCatalogue({
   locales: ['en', 'fr', 'ja'],
-  messages: { en },
-  loader: async (locale) => {
-    const mod = await import(`./locales/${locale}.po`);
-    return mod.default;
+  messages: {
+    en,
+    fr: () => import('./locales/fr.po'),
+    ja: () => import('./locales/ja.po'),
   },
 });
 ```
 
+A thunk is left alone until its locale is asked for. It usually resolves to a module rather than to the messages themselves, and the catalogue reads them off its default export.
+
 `defaultLocale` is optional and defaults to the first of `locales`. It is what `match()` falls back to when nothing else fits.
 
-See [dynamic loading](/guides/dynamic-loading) for a deeper look at the loader pattern.
+See [dynamic loading](/guides/dynamic-loading) for a deeper look at the thunk pattern.
 
 ## Getting a view
 
@@ -70,15 +72,15 @@ catalogue.locale('fr') === catalogue.locale('fr'); // true
 ```
 
 <Callout type="warn">
-  `locale()` throws if that locale has no messages yet. Load it first, or check with
-  `catalogue.loaded('fr')`.
+  `locale()` is synchronous, so it throws for a locale whose thunk nobody has called yet. Reach that
+  one through `load()`, or check first with `catalogue.loaded('fr')`.
 </Callout>
 
 A view has no reference back to its catalogue, so it cannot change locale. That is deliberate: switching locale means holding a different view, not mutating the one you have. Nothing downstream has to clone or freeze to protect itself from someone else's locale change. When something does need to swap which view is current, that is a [store](#switching-locale).
 
 ## Reading state
 
-The two objects expose different things, because they know different things:
+A catalogue and a view expose different things, because they know different things:
 
 ```ts
 catalogue.locales; // ['en', 'fr']
@@ -91,22 +93,19 @@ say.messages; // { 'abc123': 'Bonjour !', ... }
 
 ## Loading messages
 
-`load()` runs your configured loader for the given locales:
+`load()` calls a locale's thunk, if it has one and nothing has called it yet, and hands back that locale's view:
 
 ```ts
-await catalogue.load('fr');
-await catalogue.load('fr', 'ja');
+const say = await catalogue.load('fr');
 ```
 
-With no arguments, every configured locale is loaded:
+A locale whose messages are already here does not go near its thunk and comes back synchronously, so `load()` returns a promise only when a thunk does. Pay them all up front by loading them together:
 
 ```ts
-await catalogue.load();
+await Promise.all(catalogue.locales.map((locale) => catalogue.load(locale)));
 ```
 
-Locales that already have messages are skipped. Calling `load()` without a configured loader throws.
-
-If your loader is synchronous, `load()` is synchronous too. If your loader returns a promise, so does `load()`.
+A thunk is called once, and two loads that overlap share that one call rather than fetching twice. A thunk that rejects is forgotten, so the locale can be asked for again.
 
 A locale is filled **once**, and there is no way to replace its messages afterwards. That is what makes a view safe to hold indefinitely: nothing can swap out the messages it was built over, so a view can never quietly start formatting something else.
 
@@ -153,7 +152,7 @@ await store.set('fr');
 store.current; // the view for 'fr'
 ```
 
-`set()` loads the locale first if the catalogue does not have it yet, and like `load()` it is synchronous when your loader is, so a locale that is already loaded switches inside the same tick.
+`set()` loads the locale first if the catalogue does not have it yet, and like `load()` it is synchronous when the thunk is, so a locale that is already loaded switches inside the same tick.
 
 Only successful switches notify. Setting the locale that is already current does nothing, and a load that throws leaves the current view where it was, so a subscriber only ever sees a view it can format against. If two switches overlap, the last one you asked for wins, whichever load finishes first.
 
@@ -252,16 +251,17 @@ import { createCatalogue } from 'saykit';
 
 const catalogue = createCatalogue({
   locales: ['en', 'fr'],
-  loader: (l) => import(`./locales/${l}.po`).then((m) => m.default),
+  messages: {
+    en: () => import('./locales/en.po'),
+    fr: () => import('./locales/fr.po'),
+  },
 });
 
-export async function getSayFor(headers: Headers) {
+export function getSayFor(headers: Headers) {
   const acceptLang = headers.get('accept-language') ?? '';
   const guesses = acceptLang.split(',').map((s) => s.split(';')[0]!.trim());
 
-  const locale = catalogue.match(guesses);
-  await catalogue.load(locale);
-  return catalogue.locale(locale);
+  return catalogue.load(catalogue.match(guesses));
 }
 ```
 

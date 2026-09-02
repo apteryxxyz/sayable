@@ -16,15 +16,14 @@ const messages = {
 
 /**
  * Build options with partial (or empty) messages. The public `Options` type
- * requires a complete locale record or a loader; several tests deliberately
- * exercise the looser runtime behaviour, so they opt out of that constraint.
+ * requires an entry for every locale; several tests deliberately exercise what
+ * happens when one is missing, so they opt out of that constraint.
  */
 const opts = (o: {
   locales: Locale[];
   defaultLocale?: Locale;
-  messages?: Partial<Record<Locale, View.Messages>>;
-  loader?: Catalogue.Loader<Locale>;
-}) => o as Catalogue.Options<Locale, Catalogue.Loader<Locale> | undefined>;
+  messages?: Partial<Record<Locale, Catalogue.Source>>;
+}) => o as Catalogue.Options<Locale>;
 
 function make() {
   return createCatalogue(opts({ locales: ['en', 'fr', 'de'], messages }));
@@ -35,11 +34,12 @@ describe('createCatalogue', () => {
     expect(make().locale('en').messages).toEqual(messages.en);
   });
 
-  it('works without messages when a loader is provided', () => {
-    const loader = vi.fn((locale: Locale) => messages[locale as 'en' | 'fr'] ?? {});
-    const catalogue = createCatalogue({ locales: ['en'], loader });
+  it('leaves a thunk alone until its locale is asked for', () => {
+    const thunk = vi.fn(() => messages.en);
+    const catalogue = createCatalogue({ locales: ['en'], messages: { en: thunk } });
     expect(catalogue.locales).toEqual(['en']);
-    expect(loader).not.toHaveBeenCalled();
+    expect(catalogue.loaded('en')).toBe(false);
+    expect(thunk).not.toHaveBeenCalled();
   });
 
   it('exposes all locales', () => {
@@ -65,8 +65,15 @@ describe('createCatalogue', () => {
 });
 
 describe('Catalogue#locale', () => {
-  it('throws when there are no messages for the locale', () => {
-    expect(() => make().locale('de')).toThrow("No messages loaded for locale 'de'");
+  it('throws when the locale has no messages at all', () => {
+    expect(() => make().locale('de')).toThrow("No messages for locale 'de'");
+  });
+
+  it('throws differently for a thunk nobody has loaded, which is recoverable', () => {
+    const catalogue = createCatalogue({ locales: ['de'], messages: { de: () => ({}) } });
+    expect(() => catalogue.locale('de')).toThrow(
+      "Messages for locale 'de' have not been loaded yet",
+    );
   });
 
   it('returns a view bound to the locale', () => {
@@ -84,9 +91,11 @@ describe('Catalogue#locale', () => {
   it('keeps handing back the same view once a locale is filled', () => {
     // A locale is written once, so there is no second set of messages for a
     // view to fall out of step with.
-    const catalogue = createCatalogue({ locales: ['de'], loader: () => ({ greeting: 'Hallo' }) });
-    catalogue.load('de');
-    const view = catalogue.locale('de');
+    const catalogue = createCatalogue({
+      locales: ['de'],
+      messages: { de: () => ({ greeting: 'Hallo' }) },
+    });
+    const view = catalogue.load('de');
     catalogue.load('de');
     expect(catalogue.locale('de')).toBe(view);
   });
@@ -101,54 +110,85 @@ describe('Catalogue#loaded', () => {
 });
 
 describe('Catalogue#load', () => {
-  it('loads all locales when none are specified', () => {
-    const loader = vi.fn((locale: Locale) => ({ greeting: `hi-${locale}` }));
-    const catalogue = createCatalogue({ locales: ['de'], loader });
-    expect(catalogue.load()).toBeUndefined();
-    expect(loader).toHaveBeenCalledWith('de');
-    expect(catalogue.locale('de').messages).toEqual({ greeting: 'hi-de' });
-  });
+  it('calls the thunk and hands back the view', () => {
+    const thunk = vi.fn(() => ({ greeting: 'Hallo' }));
+    const catalogue = createCatalogue({ locales: ['de'], messages: { de: thunk } });
 
-  it('skips locales that already have messages', () => {
-    const loader = vi.fn(() => ({ greeting: 'x' }));
-    const catalogue = createCatalogue({ locales: ['en', 'fr'], messages, loader });
-    catalogue.load('en', 'fr');
-    expect(loader).not.toHaveBeenCalled();
-  });
-
-  it('fills a locale once, so a second load cannot replace it', async () => {
-    let call = 0;
-    const catalogue = createCatalogue({
-      locales: ['de'],
-      loader: async () => ({ greeting: `load-${++call}` }),
-    });
-
-    // Two loads in flight at once: the second resolves after the first has
-    // already filled the locale, and must not overwrite it.
-    await Promise.all([catalogue.load('de'), catalogue.load('de')]);
-    expect(catalogue.locale('de').call({ id: 'greeting' })).toBe('load-1');
-  });
-
-  it('throws when no loader is provided', () => {
-    const catalogue = createCatalogue(opts({ locales: ['de'], messages: {} }));
-    expect(() => catalogue.load('de')).toThrow(
-      "No loader provided, cannot load messages for locale 'de'",
-    );
-  });
-
-  it('assigns synchronously returned messages', () => {
-    const catalogue = createCatalogue({ locales: ['de'], loader: () => ({ greeting: 'Hallo' }) });
-    expect(catalogue.load('de')).toBeUndefined();
+    const view = catalogue.load('de');
+    expect(view).toBe(catalogue.locale('de'));
+    expect(thunk).toHaveBeenCalledOnce();
     expect(catalogue.locale('de').messages).toEqual({ greeting: 'Hallo' });
   });
 
-  it('returns a promise and assigns when the loader is async', async () => {
-    const loader = vi.fn(async (locale: Locale) => ({ greeting: `async-${locale}` }));
-    const catalogue = createCatalogue({ locales: ['de'], loader });
+  it('does not call a thunk for a locale that already has messages', () => {
+    const thunk = vi.fn(() => ({ greeting: 'x' }));
+    const catalogue = createCatalogue({
+      locales: ['en', 'de'],
+      messages: { en: messages.en, de: thunk },
+    });
+
+    catalogue.load('de');
+    expect(catalogue.load('en')).toBe(catalogue.locale('en'));
+    expect(catalogue.load('de')).toBe(catalogue.locale('de'));
+    expect(thunk).toHaveBeenCalledOnce();
+  });
+
+  it('unwraps the module a dynamic import resolves to', async () => {
+    const catalogue = createCatalogue({
+      locales: ['de'],
+      messages: { de: async () => ({ default: { greeting: 'Hallo' } }) },
+    });
+
+    const view = await catalogue.load('de');
+    expect(view.messages).toEqual({ greeting: 'Hallo' });
+  });
+
+  it('shares one call between loads that overlap', async () => {
+    let call = 0;
+    const catalogue = createCatalogue({
+      locales: ['de'],
+      messages: { de: async () => ({ greeting: `load-${++call}` }) },
+    });
+
+    // Two loads in flight at once: the second finds the first still running
+    // and waits on it rather than starting the thunk again.
+    const [first, second] = await Promise.all([catalogue.load('de'), catalogue.load('de')]);
+    expect(first).toBe(second);
+    expect(call).toBe(1);
+    expect(catalogue.locale('de').call({ id: 'greeting' })).toBe('load-1');
+  });
+
+  it('lets a locale whose thunk rejected be loaded again', async () => {
+    let attempt = 0;
+    const catalogue = createCatalogue({
+      locales: ['de'],
+      messages: {
+        de: async () => {
+          if (++attempt === 1) throw new Error('offline');
+          return { greeting: 'Hallo' };
+        },
+      },
+    });
+
+    await expect(catalogue.load('de')).rejects.toThrow('offline');
+    expect((await catalogue.load('de')).messages).toEqual({ greeting: 'Hallo' });
+  });
+
+  it('throws for a locale with no entry at all', () => {
+    const catalogue = createCatalogue(opts({ locales: ['de'], messages: {} }));
+    expect(() => catalogue.load('de')).toThrow("No messages for locale 'de'");
+  });
+
+  it('returns a promise only when the thunk does', async () => {
+    const catalogue = createCatalogue({
+      locales: ['en', 'de'],
+      messages: { en: () => messages.en, de: async () => ({ greeting: 'Hallo' }) },
+    });
+
+    expect(catalogue.load('en')).not.toBeInstanceOf(Promise);
     const result = catalogue.load('de');
     expect(result).toBeInstanceOf(Promise);
-    await result;
-    expect(catalogue.locale('de').messages).toEqual({ greeting: 'async-de' });
+    expect((await result).messages).toEqual({ greeting: 'Hallo' });
   });
 });
 
@@ -161,7 +201,7 @@ describe('Catalogue iteration', () => {
   });
 
   it('throws for a locale with no messages', () => {
-    expect(() => [...make()]).toThrow("No messages loaded for locale 'de'");
+    expect(() => [...make()]).toThrow("No messages for locale 'de'");
   });
 });
 

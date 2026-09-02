@@ -136,7 +136,8 @@ Those two are the whole list, because they are the two bundlers that cannot be r
 
 <Callout type="warn">
   Only **static** imports of catalogues are handled. `import('./locales/en.po')` (dynamic import) is
-  not. For dynamic locale loading, use a `Say` loader and let your bundler handle the imports.
+  not. For dynamic locale loading, write a thunk per locale in `messages` and let your bundler
+  handle the imports.
 </Callout>
 
 ## `unplugin` vs Babel: which one?

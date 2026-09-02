@@ -41,7 +41,7 @@ export interface Store<Locale extends string = string> {
    * Switch to another locale, loading its messages first if the catalogue does
    * not have them yet.
    *
-   * Like {@link Catalogue.load}, this returns a promise only when the loader
+   * Like {@link Catalogue.load}, this returns a promise only when the thunk
    * does: a locale that is already loaded switches synchronously, so a
    * subscriber sees the new view in the same tick.
    *
@@ -108,10 +108,10 @@ export function createStore<Locale extends string>(
    */
   let intended = current.locale;
 
-  function swap(target: Locale, at: number) {
+  function swap(view: View<Locale>, at: number) {
     if (at !== generation) return;
 
-    current = catalogue.locale(target);
+    current = view;
     for (const listener of listeners) listener(current);
   }
 
@@ -139,20 +139,21 @@ export function createStore<Locale extends string>(
       intended = target;
 
       try {
-        // A locale the catalogue already has switches without touching the
-        // loader, which is what keeps an already-loaded switch synchronous.
-        const loading = catalogue.loaded(target) ? undefined : catalogue.load(target);
+        // A locale whose messages are already here comes back from `load`
+        // without going near its thunk, which is what keeps a switch between
+        // loaded locales synchronous.
+        const loading = catalogue.load(target);
 
-        if (loading)
+        if (loading instanceof Promise)
           return loading.then(
-            () => swap(target, at),
+            (view) => swap(view, at),
             (error: unknown) => {
               undo(at);
               throw error;
             },
           );
 
-        swap(target, at);
+        swap(loading, at);
       } catch (error) {
         undo(at);
         throw error;

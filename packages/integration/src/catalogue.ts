@@ -8,28 +8,42 @@ export namespace Catalogue {
    */
   export type Guess = string | null | undefined | readonly (string | null | undefined)[];
 
-  export type Loader<Locale extends string> = (
-    locale: Locale,
-  ) => View.Messages | Promise<View.Messages>;
+  /**
+   * Where one locale's messages come from: the messages themselves, or a
+   * function that produces them the first time the locale is asked for.
+   *
+   * A thunk is normally a dynamic import, which is what splits a locale into
+   * its own chunk: `fr: () => import('./locales/fr.po')`. It is written per
+   * locale rather than as one function keyed by locale, so a bundler can see
+   * each import statically and there is no locale a catalogue lists but cannot
+   * produce.
+   */
+  export type Source = View.Messages | (() => Catalogue.Produced | Promise<Catalogue.Produced>);
 
-  export type Options<
-    Locale extends string,
-    Loader extends Catalogue.Loader<Locale> | undefined,
-  > = {
+  /**
+   * What a thunk produces: a locale's messages, or the module a dynamic import
+   * resolves to, which holds them as its default export.
+   */
+  export type Produced = View.Messages | { default: View.Messages };
+
+  export type Options<Locale extends string> = {
     locales: Locale[];
     /**
      * The locale to fall back to. Defaults to the first of {@link locales}.
      */
     defaultLocale?: NoInfer<Locale>;
-  } & (
-    | { messages: Record<Locale, View.Messages>; loader?: Loader }
-    | { messages?: Partial<Record<Locale, View.Messages>>; loader: Loader }
-  );
+    /**
+     * Where each locale's messages come from. Every locale needs an entry,
+     * though an entry may be a thunk that is only called if the locale is
+     * actually used.
+     */
+    messages: Record<Locale, Source>;
+  };
 }
 
 /**
- * Everything an application knows how to say: its locales, their messages, and
- * the loader that fetches the ones it does not have yet.
+ * Everything an application knows how to say: its locales and where their
+ * messages come from.
  *
  * A catalogue never formats anything and has no active locale. Formatting is
  * what a {@link View} does, and a view is what `locale` hands back.
@@ -52,31 +66,37 @@ export interface Catalogue<Locale extends string = string> {
    *
    * @param locale Locale to bind to
    * @returns The view for the locale
-   * @throws If no messages are loaded for the locale
+   * @throws If the locale's messages have not been produced yet, which is the
+   *   case for a thunk nobody has {@link load}ed
    */
   locale(locale: Locale): View<Locale>;
 
   /**
-   * Whether a locale's messages are available, and so whether
-   * {@link Catalogue.locale} will hand back a view for it.
+   * Whether a locale's messages are here, and so whether
+   * {@link Catalogue.locale} will hand back a view for it. Messages written
+   * inline are here from the start; a thunk's are here once it has been
+   * {@link load}ed.
    *
    * @param locale Locale to check
    */
   loaded(locale: Locale): boolean;
 
   /**
-   * Loads messages for the given locales.
-   * If no locales are provided, all available locales are loaded.
-   * Requires a {@link Catalogue.Loader} to be provided.
-   * If `loader` returns a promise, so will this method.
+   * Calls a locale's thunk, if it has one and nothing has called it yet, and
+   * hands back the locale's view.
    *
-   * A locale is filled once. Loading one that already has messages is a no-op,
-   * which is what lets a view be built once and stay correct: nothing can
-   * replace the messages it was built over.
+   * If the thunk returns a promise, so does this. A locale whose messages are
+   * already here does not go near its thunk and comes back synchronously,
+   * which is what lets a switch between loaded locales stay in one tick.
    *
-   * @param locales Locales to load messages for, defaults to {@link Catalogue.locales}
+   * A thunk is called once, and a locale is filled once. That is what lets a
+   * view be built once and stay correct: nothing can replace the messages it
+   * was built over.
+   *
+   * @param locale Locale to load
+   * @returns The view for the locale
    */
-  load(...locales: Locale[]): void | Promise<void>;
+  load(locale: Locale): View<Locale> | Promise<View<Locale>>;
 
   /**
    * Matches the best locale from a list of guesses.
@@ -94,7 +114,7 @@ export interface Catalogue<Locale extends string = string> {
   /**
    * Every locale, paired with its view.
    *
-   * @throws If any locale has no messages loaded
+   * @throws If any locale's messages have not been produced yet
    */
   [Symbol.iterator](): IterableIterator<[Locale, View<Locale>]>;
 }
@@ -104,17 +124,20 @@ export interface Catalogue<Locale extends string = string> {
  *
  * @example
  * ```ts
- * const catalogue = createCatalogue({ locales: ['en', 'fr', 'pl'], messages: { en, fr, pl } });
+ * const catalogue = createCatalogue({
+ *   locales: ['en', 'fr', 'pl'],
+ *   messages: { en, fr: () => import('./locales/fr.po'), pl: () => import('./locales/pl.po') },
+ * });
+ *
  * const say = catalogue.locale('en');
  * ```
  *
- * @param options Locales, and the messages or loader that fill them
+ * @param options Locales, and where each one's messages come from
  * @returns The catalogue
  */
-export function createCatalogue<
-  const Locale extends string = string,
-  Loader extends Catalogue.Loader<Locale> | undefined = undefined,
->(options: Catalogue.Options<Locale, Loader>): Catalogue<Locale> {
+export function createCatalogue<const Locale extends string = string>(
+  options: Catalogue.Options<Locale>,
+): Catalogue<Locale> {
   // At least one locale, so `defaultLocale` and every `match` that falls back
   // to it have a locale to be.
   if (options.locales.length === 0)
@@ -122,18 +145,20 @@ export function createCatalogue<
 
   // Copied, so a caller that keeps hold of the array it passed in cannot
   // later change which locales this catalogue has. Everything downstream reads
-  // this: `match`, `load`'s default targets, and iteration.
+  // this: `match`, and iteration.
   const locales: readonly Locale[] = Object.freeze([...options.locales]);
-  const loader = options.loader;
+
+  const sources = { ...options.messages } as Record<Locale, Catalogue.Source | undefined>;
 
   const store = new Map<Locale, View.Messages>();
   const views = new Map<Locale, View<Locale>>();
 
-  // One in-flight load per locale, so callers that ask for the same locale at
-  // once share a single loader call. Cleared once it settles: a load that
-  // filled is answered by `store` from then on, and one that rejected is free
-  // to be tried again.
-  const pending = new Map<Locale, Promise<void>>();
+  /**
+   * Thunks already called and still running, so two loads of the same locale
+   * share one call rather than racing to fill it. A locale is filled once
+   * either way; this is what keeps a dynamic import from being started twice.
+   */
+  const loading = new Map<Locale, Promise<View<Locale>>>();
 
   /**
    * Fill a locale's messages, once. A view holds the messages it was built
@@ -142,8 +167,16 @@ export function createCatalogue<
    * formatting text nobody can reach any more. Writing once removes the
    * question rather than answering it.
    */
-  function fill(locale: Locale, messages: View.Messages) {
-    if (!store.has(locale)) store.set(locale, messages);
+  function fill(locale: Locale, produced: Catalogue.Produced) {
+    // A thunk is usually a dynamic import, which resolves to a module rather
+    // than to the messages themselves. Every message is a string, so a
+    // `default` holding an object is a module's default export and never a
+    // message named `default`.
+    const messages =
+      typeof produced.default === 'object' ? (produced.default as View.Messages) : produced;
+
+    if (!store.has(locale)) store.set(locale, messages as View.Messages);
+    return catalogue.locale(locale);
   }
 
   const catalogue: Catalogue<Locale> = {
@@ -153,7 +186,12 @@ export function createCatalogue<
 
     locale(locale) {
       const messages = store.get(locale);
-      if (!messages) throw new Error(`No messages loaded for locale '${locale}'`);
+      if (!messages)
+        throw new Error(
+          typeof sources[locale] === 'function'
+            ? `Messages for locale '${locale}' have not been loaded yet`
+            : `No messages for locale '${locale}'`,
+        );
 
       let view = views.get(locale);
       if (!view) views.set(locale, (view = createView(locale, messages)));
@@ -164,30 +202,34 @@ export function createCatalogue<
       return store.has(locale);
     },
 
-    load(...requested) {
-      const targets = requested.length > 0 ? requested : locales;
+    load(locale) {
+      if (store.has(locale)) return catalogue.locale(locale);
 
-      const tasks: Promise<unknown>[] = [];
-      for (const locale of targets) {
-        if (store.has(locale)) continue;
-        if (!loader)
-          throw new Error(`No loader provided, cannot load messages for locale '${locale}'`);
+      const pending = loading.get(locale);
+      if (pending) return pending;
 
-        const inFlight = pending.get(locale);
-        if (inFlight) {
-          tasks.push(inFlight);
-          continue;
-        }
+      const source = sources[locale];
+      if (typeof source !== 'function') throw new Error(`No messages for locale '${locale}'`);
 
-        const result = loader(locale);
-        if (result instanceof Promise) {
-          const task = result.then((m) => fill(locale, m)).finally(() => pending.delete(locale));
-          pending.set(locale, task);
-          tasks.push(task);
-        } else fill(locale, result);
-      }
+      const produced = source();
+      if (!(produced instanceof Promise)) return fill(locale, produced);
 
-      if (tasks.length > 0) return Promise.all(tasks).then(() => undefined);
+      const task = produced.then(
+        (messages) => {
+          loading.delete(locale);
+          return fill(locale, messages);
+        },
+        (error: unknown) => {
+          // Dropped rather than kept, so a locale whose import failed can be
+          // asked for again instead of handing every later caller the same
+          // rejection.
+          loading.delete(locale);
+          throw error;
+        },
+      );
+
+      loading.set(locale, task);
+      return task;
     },
 
     match(...guesses) {
@@ -214,13 +256,16 @@ export function createCatalogue<
     },
   };
 
-  if (options.messages) {
-    for (const locale in options.messages) fill(locale, options.messages[locale]!);
+  for (const locale in options.messages) {
+    const source = options.messages[locale];
+    // A thunk is left alone until the locale is asked for, which is the whole
+    // point of writing one.
+    if (typeof source !== 'function') fill(locale, source);
   }
 
   // Frozen for the same reason a view is: nothing should be able to swap a
-  // catalogue's methods out from under the code holding it. Its messages still
-  // fill in over time, which is what `load` is for, and the maps they live in
-  // are closure state rather than properties of this object.
+  // catalogue's methods out from under the code holding it. Its lazy locales
+  // still fill in over time, which is what `load` is for, and the maps they
+  // live in are closure state rather than properties of this object.
   return Object.freeze(catalogue);
 }

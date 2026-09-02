@@ -11,21 +11,21 @@ import { createCatalogue, createStore, createView } from 'saykit';
 import type { Catalogue, Store, View } from 'saykit';
 ```
 
-There are three objects, with one job each. A **catalogue** owns the locales, their messages, and
-the loader that fetches the ones it does not have yet; it never formats anything. A **view** is one
+There are three objects, with one job each. A **catalogue** owns the locales and where each one's
+messages come from, whether that is inline or on demand; it never formats anything. A **view** is one
 locale bound to a set of messages: callable, immutable, and the only thing application code holds. A
 **store** holds one view at a time and says when it changed, which is what switching locale is.
 
 ## `createCatalogue(options)`
 
 ```ts
-createCatalogue<Locale, Loader>(options: Catalogue.Options<Locale, Loader>): Catalogue<Locale>;
+createCatalogue<Locale>(options: Catalogue.Options<Locale>): Catalogue<Locale>;
 ```
 
 ```ts
 const catalogue = createCatalogue({
   locales: ['en', 'fr', 'pl'],
-  messages: { en, fr, pl },
+  messages: { en, fr: () => import('./locales/fr.po'), pl: () => import('./locales/pl.po') },
 });
 ```
 
@@ -45,18 +45,14 @@ import { TypeTable } from 'fumadocs-ui/components/type-table';
     },
     messages: {
       description:
-        'Inline message catalogues, keyed by locale. Required if no `loader` is provided.',
-      type: 'Partial<Record<Locale, View.Messages>>',
-    },
-    loader: {
-      description:
-        'Optional function that returns messages for a locale. Can be sync or async. Required if `messages` is not exhaustive.',
-      type: '(locale: Locale) => View.Messages | Promise<View.Messages>',
+        "Where each locale's messages come from, keyed by locale. An entry is either the messages themselves or a thunk producing them, called the first time that locale is asked for. Every locale needs one.",
+      type: 'Record<Locale, Catalogue.Source>',
+      required: true,
     },
   }}
 />
 
-The returned catalogue is frozen. That fixes its methods; its messages still fill in over time
+The returned catalogue is frozen. That fixes its methods; its lazy locales still fill in over time
 through `load`.
 
 ### Properties
@@ -79,7 +75,8 @@ A catalogue has no active locale and no `messages` property. Both of those belon
 ### `locale(code)`
 
 Returns the [view](#view) bound to that locale. Memoised, so asking twice returns the same view.
-Throws if the locale has no messages loaded yet.
+Synchronous, so it throws for a locale whose thunk nobody has called yet, and throws differently for
+a locale with no messages at all.
 
 ```ts
 const say = catalogue.locale('fr');
@@ -87,31 +84,38 @@ const say = catalogue.locale('fr');
 
 ### `loaded(code)`
 
-Whether a locale has messages, and so whether `locale(code)` will hand back a view for it.
+Whether a locale's messages are here, and so whether `locale(code)` will hand back a view for it.
+Inline messages are here from the start; a thunk's are here once it has been loaded.
 
 ```ts
 if (!catalogue.loaded('fr')) await catalogue.load('fr');
 ```
 
-### `load(...locales)`
+### `load(code)`
 
-Loads message catalogues for the given locales through the configured loader. With no arguments,
-loads every configured locale.
+Calls a locale's thunk, if it has one and nothing has called it yet, and hands back the locale's
+view.
 
 ```ts
-catalogue.load();
-catalogue.load('fr');
-await catalogue.load('fr', 'ja');
+const say = await catalogue.load('fr');
 ```
 
-If a loader is required but missing, throws. The loader is called once per locale being loaded, so
-this returns `undefined` synchronously when no call to it returned a promise, and a promise
-otherwise.
+Returns a promise only when the thunk does. A locale whose messages are already here does not go
+near its thunk and comes back synchronously, which is what lets a switch between loaded locales stay
+in one tick. A locale with no entry at all throws.
 
-A locale is filled **once**. Loading one that already has messages is a no-op, and there is no way
-to replace a locale's messages afterwards. That is what lets a view be built once and stay correct:
-nothing can swap out the messages it was built over, so a view you are holding can never start
-formatting something else.
+A thunk is called **once**, and two loads that overlap share that one call rather than fetching
+twice. A thunk that rejects is forgotten, so its locale can be asked for again.
+
+A locale is filled **once**, and there is no way to replace its messages afterwards. That is what
+lets a view be built once and stay correct: nothing can swap out the messages it was built over, so
+a view you are holding can never start formatting something else.
+
+To pay every import at boot rather than on first use:
+
+```ts
+await Promise.all(catalogue.locales.map((locale) => catalogue.load(locale)));
+```
 
 ### `match(...guesses)`
 
@@ -257,7 +261,7 @@ store.set('fr');
 await store.set('ja');
 ```
 
-Like [`load`](#loadlocales), this returns a promise only when the loader does: a locale that is
+Like [`load`](#loadcode), this returns a promise only when the thunk does: a locale that is
 already loaded switches synchronously, so a subscriber sees the new view in the same tick.
 
 Switching to the locale that is already current does nothing and notifies nobody. A load that throws
@@ -360,13 +364,20 @@ namespace View {
 }
 ```
 
-### `Catalogue.Loader<Locale>`
+### `Catalogue.Source`
+
+Where one locale's messages come from.
 
 ```ts
 namespace Catalogue {
-  type Loader<Locale extends string> = (locale: Locale) => View.Messages | Promise<View.Messages>;
+  type Source = View.Messages | (() => Produced | Promise<Produced>);
+  type Produced = View.Messages | { default: View.Messages };
 }
 ```
+
+A thunk is normally a dynamic import, which resolves to a module rather than to the messages
+themselves; the catalogue reads them off its default export. Every message is a string, so a
+`default` holding an object is a module and never a message named `default`.
 
 ### `Store.Listener<Locale>`
 
@@ -376,10 +387,10 @@ namespace Store {
 }
 ```
 
-### `Catalogue.Options<Locale, Loader>`
+### `Catalogue.Options<Locale>`
 
-Either `messages` is required (and `loader` optional), or `loader` is required (and `messages`
-optional). `defaultLocale` is optional either way.
+`locales` and `messages` are required, and `messages` needs an entry for every locale.
+`defaultLocale` is optional and falls back to the first of `locales`.
 
 ### `NumeralOptions` / `SelectOptions`
 

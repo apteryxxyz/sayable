@@ -54,8 +54,7 @@ export function unstable_createWithSay(catalogue: Catalogue) {
     return async function WithSay(props: P) {
       const guess = await getLocale(props);
       const locale = catalogue.match(guess);
-      await catalogue.load(locale);
-      const say = catalogue.locale(locale);
+      const say = await catalogue.load(locale);
       setSay(say);
 
       return createElement(Component, {
