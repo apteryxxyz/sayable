@@ -1,6 +1,6 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { Say } from 'saykit';
+import { createCatalogue } from 'saykit';
 import { describe, expect, it, vi } from 'vitest';
 
 // React's `cache` only memoises inside a Server Component render. Under test we
@@ -27,7 +27,7 @@ vi.mock('react', async (importOriginal) => {
 const { getSay, setSay, unstable_createWithSay } = await import('~/runtime/server.js');
 
 const make = () =>
-  new Say({
+  createCatalogue({
     locales: ['en', 'fr'],
     messages: { en: { greeting: 'Hi' }, fr: { greeting: 'Salut' } },
   });
@@ -36,26 +36,21 @@ describe('server runtime', () => {
   // Runs first, before any setSay, so the ref is still uninitialised.
   it('getSay throws before setSay has been called', () => {
     expect(() => getSay()).toThrow(
-      'Attempt to access the server-only Say instance before initialisation',
+      'Attempt to access the server-only Say view before initialisation',
     );
   });
 
-  it('setSay stores a frozen clone from a Say instance', () => {
-    const say = make().activate('fr');
+  it('setSay stores the view it is given', () => {
+    const say = make().locale('fr');
     setSay(say);
     expect(getSay().locale).toBe('fr');
-    // Identity compared as a boolean — `expect(...).not.toBe(say)` recurses on
-    // Say instances in vitest's matcher and overflows the stack.
-    expect(getSay() === (say as unknown)).toBe(false);
+    // Identity compared as a boolean, because `expect(...).toBe(say)` recurses on
+    // views in vitest's matcher and overflows the stack.
+    expect(getSay() === (say as unknown)).toBe(true);
     expect(Object.isFrozen(getSay())).toBe(true);
   });
 
-  it('setSay accepts a factory function', () => {
-    setSay(() => make().activate('en'));
-    expect(getSay().locale).toBe('en');
-  });
-
-  it('unstable_createWithSay activates the matched locale and injects props', async () => {
+  it('unstable_createWithSay binds the matched locale and injects props', async () => {
     const withSay = unstable_createWithSay(make());
     const Wrapped = withSay(
       (props: { locale: string; messages: { greeting: string } }) =>

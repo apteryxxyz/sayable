@@ -1,17 +1,16 @@
 'use client';
 
 import { createContext, createElement, type PropsWithChildren, useContext, useMemo } from 'react';
-import { type ReadonlySay, Say } from 'saykit';
+import { createView, type View } from 'saykit';
 
-type SayRef = { current: ReadonlySay | null };
-const SayContext = createContext<SayRef>({ current: null });
+const SayContext = createContext<View | null>(null);
 SayContext.displayName = 'SayContext';
 
 /**
- * Provide a localised {@link runtime.Say} instance to descendant **client** components via context.
+ * Provide a localised {@link View} to descendant **client** components via context.
  * Must wrap any component tree using {@link useSay} or {@link Say}.
  *
- * The instance is rebuilt whenever `locale` or `messages` changes, so keep `messages`
+ * The view is rebuilt whenever `locale` or `messages` changes, so keep `messages`
  * referentially stable (module scope, or memoised) rather than passing a fresh object
  * literal on every render.
  *
@@ -24,29 +23,26 @@ export function SayProvider({
   children,
 }: PropsWithChildren<{
   locale: string;
-  messages: Say.Messages;
+  messages: View.Messages;
 }>) {
   // Rebuilt whenever the locale or its messages change, so a locale switch
-  // reaches descendants rather than being pinned to the first render.
-  const ref = useMemo(() => {
-    const instance = new Say({ locales: [locale], loader: () => messages });
-    instance.load(locale);
-    instance.activate(locale);
-    return { current: instance.freeze() };
-  }, [locale, messages]);
+  // reaches descendants rather than being pinned to the first render. A view
+  // needs no catalogue behind it, and being immutable it goes into context as
+  // itself rather than behind a ref.
+  const say = useMemo(() => createView(locale, messages), [locale, messages]);
 
-  return createElement(SayContext.Provider, { value: ref }, children);
+  return createElement(SayContext.Provider, { value: say }, children);
 }
 
 /**
- * Get the current {@link Say} **client** instance.
+ * Get the current {@link View}, on the client.
  * Must be called within a {@link SayProvider}.
  *
- * @returns The current {@link Say} instance
+ * @returns The current {@link View}
  * @throws If no provider is in the component tree
  */
 export function useSay() {
-  const ref = useContext(SayContext);
-  if (!ref.current) throw new Error("'useSay' must be used within a 'SayProvider'");
-  return ref.current;
+  const say = useContext(SayContext);
+  if (!say) throw new Error("'useSay' must be used within a 'SayProvider'");
+  return say;
 }

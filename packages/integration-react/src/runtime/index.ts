@@ -20,7 +20,7 @@ import {
   resolveValuePropKeys,
 } from '~/types.js';
 
-declare function GET_SAY(): import('saykit').ReadonlySay;
+declare function GET_SAY(): import('saykit').View;
 
 /**
  * Render the translation for a descriptor.
@@ -44,7 +44,7 @@ export function Say(props: { id: string; whitespace?: boolean; [match: string]: 
   const values = resolveValuePropKeys(rest);
 
   return createElement(Renderer, {
-    // The props go through still prefixed: `Say#call` does the single strip for
+    // The props go through still prefixed: `Say#call``View#call` does the single strip for
     // every caller, so there is nowhere for it to happen twice. The id is
     // merged in last, so a message free to name a value `id` still cannot
     // displace the message being looked up.

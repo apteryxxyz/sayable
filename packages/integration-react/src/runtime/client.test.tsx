@@ -12,7 +12,7 @@ function Consumer() {
 }
 
 describe('SayProvider / useSay', () => {
-  it('provides a frozen, activated Say instance to descendants', () => {
+  it('provides a view bound to the locale to descendants', () => {
     const html = renderToStaticMarkup(
       createElement(
         SayProvider,
@@ -23,7 +23,7 @@ describe('SayProvider / useSay', () => {
     expect(html).toBe('<span>fr:Bonjour</span>');
   });
 
-  it('rebuilds the instance when the locale changes', () => {
+  it('rebuilds the view when the locale changes', () => {
     const { rerender } = render(
       <SayProvider locale="fr" messages={{ greeting: 'Bonjour' }}>
         <Consumer />
