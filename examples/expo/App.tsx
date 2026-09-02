@@ -6,11 +6,10 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { HabitCard } from './src/habit-card';
 import { completedToday, type Habit, habits as seed } from './src/habits';
-import say, { deviceLocale, type Locale, locales } from './src/i18n';
+import catalogue, { deviceLocale, type Locale, locales } from './src/i18n';
 
 // Resolve the device's language once, at module scope, before the first render.
 const initialLocale = deviceLocale();
-say.activate(initialLocale);
 
 function Home({ locale, onLocale }: { locale: Locale; onLocale: (next: Locale) => void }) {
   const [habits, setHabits] = useState<Habit[]>(seed);
@@ -66,14 +65,11 @@ function Home({ locale, onLocale }: { locale: Locale; onLocale: (next: Locale) =
 
 export default function App() {
   const [locale, setLocale] = useState<Locale>(initialLocale);
-  const change = (next: Locale) => {
-    setLocale(next);
-    say.activate(next);
-  };
+  const change = (next: Locale) => setLocale(next);
 
   return (
     <SafeAreaProvider>
-      <SayProvider locale={locale} messages={say.messages}>
+      <SayProvider locale={locale} messages={catalogue.locale(locale).messages}>
         <Home locale={locale} onLocale={change} />
       </SayProvider>
     </SafeAreaProvider>

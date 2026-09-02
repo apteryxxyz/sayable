@@ -8,10 +8,10 @@ routing — so the React integration itself stays in focus.
 
 | API                                                                | Where                              |
 | ------------------------------------------------------------------ | ---------------------------------- |
-| `new Say({ locales, loader })` — no eager catalogues               | `src/i18n.ts`                      |
-| `say.load(locale)` — async, cached per locale                      | `src/main.tsx`                     |
+| `createCatalogue({ locales, loader })`, no eager catalogues        | `src/i18n.ts`                      |
+| `catalogue.load(locale)`, async, cached per locale                 | `src/main.tsx`                     |
 | `SayProvider` fed from React state, so switching locale re-renders | `src/main.tsx`                     |
-| `useSay()` for the active locale (not for rendering)               | `src/components/locale-picker.tsx` |
+| `useSay()` for the current view (not for rendering)                | `src/components/locale-picker.tsx` |
 | `<Say>` with interpolation                                         | throughout                         |
 | `<Say>` with **nested elements** → `<0>` / `<1>` tags              | `board.tsx`, `task-card.tsx`       |
 | `<Say.Plural>` including an exact `_0` branch                      | `board.tsx`, `task-card.tsx`       |
@@ -58,7 +58,7 @@ category. The `_`-prefix is stripped during extraction, so the catalogue holds s
 
 `src/i18n.ts` passes a `loader` instead of `messages`, with one `import()` per locale. Vite emits a
 chunk per catalogue, so a French visitor never downloads the Polish or Japanese strings. The
-trade-off is that `say.load(locale)` must be awaited before `activate` — `src/main.tsx` does it
+trade-off is that `catalogue.load(locale)` must be awaited before the view exists. `src/main.tsx` does it
 once at module scope for the detected locale, and again on each switch.
 
 ## Running it

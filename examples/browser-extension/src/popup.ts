@@ -1,7 +1,7 @@
-import { activateUiLocale } from './i18n.js';
+import { uiSay } from './i18n.js';
 import { minutesFor, type PageStats } from './reading.js';
 
-const say = activateUiLocale();
+const say = uiSay();
 const root = document.querySelector<HTMLElement>('#popup')!;
 
 function line(text: string, className?: string) {

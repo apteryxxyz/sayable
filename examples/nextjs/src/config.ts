@@ -1,6 +1,6 @@
 /**
  * The locale list lives here, apart from `src/i18n.ts`, because `i18n.ts` is
- * `server-only` — it holds the catalogues and the server `Say` instance. Client
+ * `server-only` — it holds the catalogue and the server view. Client
  * components (the locale switcher) and the middleware both need to know which
  * locales exist without dragging any of that across the boundary.
  */

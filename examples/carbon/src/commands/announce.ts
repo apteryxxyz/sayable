@@ -1,6 +1,6 @@
 import { Command, type CommandInteraction } from '@buape/carbon';
 import { withSay } from '@saykit/carbon';
-import type { Say } from 'saykit';
+import type { Catalogue } from 'saykit';
 import { currentPick, members } from '../club.js';
 
 /**
@@ -13,8 +13,8 @@ import { currentPick, members } from '../club.js';
  * `interaction.say` stays scoped to one user.
  */
 export class AnnounceCommand extends withSay(Command) {
-  constructor(say: Say) {
-    super(say, (say) => ({
+  constructor(catalogue: Catalogue) {
+    super(catalogue, (say) => ({
       name: say`announce`,
       description: say`Post the next meeting in the server's language.`,
     }));

@@ -1,17 +1,16 @@
-import { Say } from 'saykit';
+import { createCatalogue } from 'saykit';
 import en from './locales/en.po';
 import fr from './locales/fr.po';
 
 const locales = ['en', 'fr'] as const;
-type Locale = (typeof locales)[number];
 
-const say = new Say<Locale>({ locales: [...locales], messages: { en, fr } });
+const catalogue = createCatalogue({ locales: [...locales], messages: { en, fr } });
 
 const books = 3;
 
-for (const locale of locales) {
-  say.activate(locale);
-
+// Iterating a catalogue yields each locale's view, so there is no locale to
+// activate and nothing to put back afterwards.
+for (const [say, locale] of catalogue) {
   console.log(`[${locale}]`);
   console.log(say`Welcome to the library`);
   console.log(say.plural(books, { one: `${books} book on loan`, other: `${books} books on loan` }));

@@ -10,9 +10,9 @@ This is the smallest complete picture of how SayKit works, and the best example 
 
 | API                                                           | Where                                 |
 | ------------------------------------------------------------- | ------------------------------------- |
-| `new Say({ locales, messages })`                              | `src/i18n.ts`                         |
-| `say.match(navigator.languages)` — locale detection           | `src/main.ts`                         |
-| `say.activate(locale)` — runtime locale switching             | `src/main.ts` (the language picker)   |
+| `createCatalogue({ locales, messages })`                      | `src/i18n.ts`                         |
+| `catalogue.match(navigator.languages)`, locale detection      | `src/main.ts`                         |
+| `catalogue.locale(code)`, runtime locale switching            | `src/main.ts` (the language picker)   |
 | `` say`…` `` with interpolation                               | `src/main.ts`                         |
 | `say({ context })` to disambiguate identical source text      | `src/main.ts` (`My loans`)            |
 | `say.plural` with CLDR categories **and** an exact `0` case   | `renderSummary`                       |

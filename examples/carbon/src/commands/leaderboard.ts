@@ -5,13 +5,13 @@ import {
   CommandWithSubcommands,
 } from '@buape/carbon';
 import { withSay } from '@saykit/carbon';
-import type { Say } from 'saykit';
+import type { Catalogue } from 'saykit';
 import { findMember, leaderboard, members } from '../club.js';
 
 /** `/leaderboard books` — who has finished the most this year. */
 class BooksCommand extends withSay(Command) {
-  constructor(say: Say) {
-    super(say, (say) => ({
+  constructor(catalogue: Catalogue) {
+    super(catalogue, (say) => ({
       name: say`books`,
       description: say`Rank everyone by books finished this year.`,
     }));
@@ -45,8 +45,8 @@ class BooksCommand extends withSay(Command) {
 
 /** `/leaderboard pages` — a weekly view, with an optional per-member lookup. */
 class PagesCommand extends withSay(Command) {
-  constructor(say: Say) {
-    super(say, (say) => ({
+  constructor(catalogue: Catalogue) {
+    super(catalogue, (say) => ({
       name: say`pages`,
       description: say`See pages read this week.`,
       options: [
@@ -107,11 +107,11 @@ class PagesCommand extends withSay(Command) {
 }
 
 export class LeaderboardCommand extends withSay(CommandWithSubcommands) {
-  constructor(say: Say) {
-    super(say, (say) => ({
+  constructor(catalogue: Catalogue) {
+    super(catalogue, (say) => ({
       name: say`leaderboard`,
       description: say`Reading stats for the club.`,
-      subcommands: [new BooksCommand(say), new PagesCommand(say)],
+      subcommands: [new BooksCommand(catalogue), new PagesCommand(catalogue)],
     }));
   }
 }

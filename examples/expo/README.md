@@ -8,14 +8,14 @@ React Native is the reason the `whitespace` prop exists. This example is where t
 
 ## What it demonstrates
 
-| Concern                                               | Where                           |
-| ----------------------------------------------------- | ------------------------------- |
-| `<Say whitespace={false}>` for React Native           | `src/habit-card.tsx`            |
-| Device locale via `expo-localization` + `say.match`   | `src/i18n.ts`                   |
-| Metro/Babel wiring (no bundler plugin)                | `babel.config.js`               |
-| `@saykit/format-json` — plain flat catalogues         | `saykit.config.ts`              |
-| `<Say.Plural>` with a `_0` branch, `<Say.Select>`     | `App.tsx`, `src/habit-card.tsx` |
-| Multi-line JSX copy collapsing to one catalogue entry | `App.tsx`                       |
+| Concern                                                   | Where                           |
+| --------------------------------------------------------- | ------------------------------- |
+| `<Say whitespace={false}>` for React Native               | `src/habit-card.tsx`            |
+| Device locale via `expo-localization` + `catalogue.match` | `src/i18n.ts`                   |
+| Metro/Babel wiring (no bundler plugin)                    | `babel.config.js`               |
+| `@saykit/format-json` — plain flat catalogues             | `saykit.config.ts`              |
+| `<Say.Plural>` with a `_0` branch, `<Say.Select>`         | `App.tsx`, `src/habit-card.tsx` |
+| Multi-line JSX copy collapsing to one catalogue entry     | `App.tsx`                       |
 
 ## The `whitespace` prop
 
@@ -56,9 +56,9 @@ lookup gets repeated for no benefit.
 
 ## Locale switching
 
-There is no URL to hang the locale off, so this app calls `say.activate(next)` directly and keeps
-the active locale in React state. Passing that state to `SayProvider` is what triggers the
-re-render — mutating the `Say` alone would not.
+There is no URL to hang the locale off, so this app keeps the locale in React state and takes the
+matching view off the catalogue when it renders. Passing that state to `SayProvider` is what
+triggers the re-render.
 
 Catalogues are imported eagerly here rather than through a `loader`. Three small JSON files are
 cheaper to bundle than to fetch over a mobile connection, and the app ships offline-first.

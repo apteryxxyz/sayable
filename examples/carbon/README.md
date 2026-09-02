@@ -11,7 +11,7 @@ This example shows both halves.
 
 | Concern                                                       | Where                         |
 | ------------------------------------------------------------- | ----------------------------- |
-| `SayPlugin` — installs `interaction.say` / `guild.say`        | `src/index.ts`                |
+| `SayPlugin`, installs `interaction.say` / `guild.say`         | `src/index.ts`                |
 | `withSay(Command)` — `(say, properties)`, run once per locale | `src/commands/pick.ts`        |
 | `withSay(CommandWithSubcommands)` + localised options         | `src/commands/leaderboard.ts` |
 | `withSay(Button)` / `withSay(Modal)` — `(properties)` only    | `pick.ts`, `join.ts`          |
@@ -23,29 +23,30 @@ This example shows both halves.
 
 ```ts
 class PickCommand extends withSay(Command) {
-  constructor(say: Say) {
-    super(say, (say) => ({ name: say`pick`, description: say`…` }));
+  constructor(catalogue: Catalogue) {
+    super(catalogue, (say) => ({ name: say`pick`, description: say`…` }));
   }
 }
 
 class RemindMeButton extends withSay(Button) {
-  constructor(say: Say) {
+  constructor(say: View) {
     super({ label: say`Remind me the day before` });
   }
 }
 ```
 
-For a **command**, `properties` is a function and it is called once for every configured locale.
+For a **command**, `properties` is a function and it is called once for every configured locale,
+receiving that locale's view.
 The results are folded into Discord's `name_localizations` and `description_localizations`, so a
 French user sees `/choix` and a German user sees `/auswahl` — one registration, every language.
 
 For a **component or modal**, there is nothing pre-registered with Discord: the object is built at
 the moment someone is looking at it. So the overload takes plain properties, already resolved
-against whichever `Say` you passed in — usually `interaction.say`.
+against whichever view you passed in, usually `interaction.say`.
 
 ## `interaction.say` vs `guild.say`
 
-`interaction.say` is a clone activated from `interaction.rawData.locale` — the language of the one
+`interaction.say` is the view for `interaction.rawData.locale`, the language of the one
 person who ran the command. That is right for ephemeral replies and modals.
 
 `guild.say` is activated from the guild's `preferred_locale`. Use it when the message is for the
@@ -57,10 +58,10 @@ Both are clones, so neither can disturb the shared instance or each other.
 ## Locale codes
 
 `saykit.config.ts` uses Discord's own codes (`en-US`, `fr`, `de`, `ja`) rather than bare language
-tags. Discord sends those exact strings, so `say.match` lands an exact hit instead of falling back
+tags. Discord sends those exact strings, so `catalogue.match` lands an exact hit instead of falling back
 to prefix matching.
 
-`src/i18n.ts` calls `say.activate('en-US')` at module scope. That is not for rendering — it sets
+`src/i18n.ts` sets `defaultLocale: 'en-US'` on the catalogue. That is not for rendering: it decides
 which locale becomes the _default_ name and description when the command definitions are built,
 with the others attached as localisations.
 

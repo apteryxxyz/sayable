@@ -1,14 +1,14 @@
 import { Say } from '@saykit/react';
 import { SayProvider } from '@saykit/react/client';
 import type { ReactNode } from 'react';
-import type { Say as SayType } from 'saykit';
-import say, { withSay } from '../../i18n';
+import type { View } from 'saykit';
+import catalogue, { withSay } from '../../i18n';
 import './styles.css';
 import { LocaleSwitcher } from './locale-switcher';
 
-/** Pre-render one route per configured locale. Iterating a `Say` yields `[instance, locale]`. */
+/** Pre-render one route per configured locale. */
 export function generateStaticParams() {
-  return Array.from(say).map(([, locale]) => ({ locale }));
+  return catalogue.locales.map((locale) => ({ locale }));
 }
 
 /**
@@ -21,7 +21,7 @@ type RootLayoutProps = {
   params: Promise<{ locale: string }>;
   children: ReactNode;
   locale: string;
-  messages: SayType.Messages;
+  messages: View.Messages;
 };
 
 async function RootLayout({ locale, messages, children }: RootLayoutProps) {

@@ -12,7 +12,7 @@ This is the example for **making SayKit write files in a layout something else a
 | `json({ dialect: 'webextension' })`                             | `saykit.config.ts` |
 | `{locale}` used as a **directory**, not a filename              | `saykit.config.ts` |
 | Bucket-declared `messages` for the keys the manifest references | `saykit.config.ts` |
-| `chrome.i18n.getUILanguage()` + `say.match`                     | `src/i18n.ts`      |
+| `chrome.i18n.getUILanguage()` + `catalogue.match`               | `src/i18n.ts`      |
 | Keeping the catalogue out of the content script                 | `src/content.ts`   |
 
 ## Writing straight into `_locales/`

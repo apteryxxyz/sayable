@@ -3,39 +3,37 @@ import { StrictMode, useCallback, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Board } from './components/board.js';
 import { LocalePicker } from './components/locale-picker.js';
-import say, { type Locale } from './i18n.js';
+import catalogue, { type Locale } from './i18n.js';
+
+// Resolve and fetch the starting catalogue before the first paint, so the app
+// never flashes untranslated content.
+const initial = catalogue.match(navigator.languages as string[]);
+await catalogue.load(initial);
+document.documentElement.lang = initial;
 
 function App() {
-  const [locale, setLocale] = useState(say.locale);
-  const [messages, setMessages] = useState(say.messages);
+  const [say, setSay] = useState(() => catalogue.locale(initial));
 
   const change = useCallback(async (next: Locale) => {
     // `load` is a no-op for a locale that is already cached, so switching back
     // and forth costs one network request per locale for the life of the page.
-    await say.load(next);
-    say.activate(next);
+    await catalogue.load(next);
 
-    setLocale(next);
-    setMessages(say.messages);
+    // A view is immutable and memoised, so state holds the view itself: the
+    // new one is a different value, which is exactly what re-renders the tree.
+    setSay(catalogue.locale(next));
     document.documentElement.lang = next;
   }, []);
 
   return (
-    // `SayProvider` builds its own frozen `Say` from these two props. Passing
-    // `messages` as state is what makes a locale change re-render the tree.
-    <SayProvider locale={locale} messages={messages}>
+    // `SayProvider` builds its own view from these two props, which is what
+    // carries the locale across to the client components below.
+    <SayProvider locale={say.locale} messages={say.messages}>
       <LocalePicker onChange={change} />
       <Board />
     </SayProvider>
   );
 }
-
-// Resolve and fetch the starting catalogue before the first paint, so the app
-// never flashes untranslated content.
-const initial = say.match(navigator.languages as string[]);
-await say.load(initial);
-say.activate(initial);
-document.documentElement.lang = initial;
 
 createRoot(document.querySelector('#root')!).render(
   <StrictMode>

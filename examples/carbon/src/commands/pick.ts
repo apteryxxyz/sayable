@@ -6,7 +6,7 @@ import {
   Row,
 } from '@buape/carbon';
 import { withSay } from '@saykit/carbon';
-import type { Say } from 'saykit';
+import type { Catalogue, View } from 'saykit';
 import { currentPick } from '../club.js';
 
 /**
@@ -18,8 +18,8 @@ import { currentPick } from '../club.js';
  * shows up in a French user's client as `/choix` without a second registration.
  */
 export class PickCommand extends withSay(Command) {
-  constructor(say: Say) {
-    super(say, (say) => ({
+  constructor(catalogue: Catalogue) {
+    super(catalogue, (say) => ({
       name: say`pick`,
       description: say`See what the club is reading right now.`,
     }));
@@ -61,7 +61,7 @@ export class PickCommand extends withSay(Command) {
 export class RemindMeButton extends withSay(Button) {
   customId = 'remind-me';
 
-  constructor(say: Say) {
+  constructor(say: View) {
     super({ label: say`Remind me the day before` });
   }
 

@@ -1,4 +1,4 @@
-import { Say } from 'saykit';
+import { createCatalogue, type View } from 'saykit';
 
 export const locales = ['en', 'fr', 'pl', 'ja'] as const;
 export type Locale = (typeof locales)[number];
@@ -10,7 +10,7 @@ export type Locale = (typeof locales)[number];
  * A single `import(`./locales/${locale}.po`)` would work too, but spelling the
  * map out keeps the set of shipped locales statically analysable — and typed.
  */
-const catalogues: Record<Locale, () => Promise<{ default: Say.Messages }>> = {
+const sources: Record<Locale, () => Promise<{ default: View.Messages }>> = {
   en: () => import('./locales/en.po'),
   fr: () => import('./locales/fr.po'),
   pl: () => import('./locales/pl.po'),
@@ -18,13 +18,13 @@ const catalogues: Record<Locale, () => Promise<{ default: Say.Messages }>> = {
 };
 
 /**
- * Constructed with a `loader` instead of eager `messages`. `say.load(locale)`
+ * Built with a `loader` instead of eager `messages`. `catalogue.load(locale)`
  * returns a promise when the loader does, and caches per locale — calling it
  * again for an already-loaded locale is free.
  */
-const say = new Say({
+const catalogue = createCatalogue({
   locales: [...locales],
-  loader: async (locale: Locale) => (await catalogues[locale]()).default,
+  loader: async (locale: Locale) => (await sources[locale]()).default,
 });
 
-export default say;
+export default catalogue;

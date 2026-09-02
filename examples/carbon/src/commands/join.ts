@@ -8,13 +8,13 @@ import {
   TextInputStyle,
 } from '@buape/carbon';
 import { withSay } from '@saykit/carbon';
-import type { Say } from 'saykit';
+import type { Catalogue, View } from 'saykit';
 import { currentPick } from '../club.js';
 
 /** `/join` — sign up for the current book, via a modal. */
 export class JoinCommand extends withSay(Command) {
-  constructor(say: Say) {
-    super(say, (say) => ({
+  constructor(catalogue: Catalogue) {
+    super(catalogue, (say) => ({
       name: say`join`,
       description: say`Sign up for this month's book.`,
     }));
@@ -30,7 +30,7 @@ export class JoinCommand extends withSay(Command) {
 export class JoinModal extends withSay(Modal) {
   customId = 'join';
 
-  constructor(say: Say) {
+  constructor(say: View) {
     super({
       title: say`Join the book club`,
       components: [new PaceLabel(say)],
@@ -66,7 +66,7 @@ export class JoinModal extends withSay(Modal) {
 }
 
 class PaceLabel extends withSay(Label) {
-  constructor(say: Say) {
+  constructor(say: View) {
     super({ label: say`Pages per day` }, new PaceTextInput(say));
   }
 }
@@ -74,7 +74,7 @@ class PaceLabel extends withSay(Label) {
 class PaceTextInput extends withSay(TextInput) {
   customId = 'pace';
 
-  constructor(say: Say) {
+  constructor(say: View) {
     super({ placeholder: say`e.g. 20` });
   }
 

@@ -1,4 +1,4 @@
-import { Say } from 'saykit';
+import { createCatalogue } from 'saykit';
 import de from './locales/de.yml';
 import en from './locales/en.yml';
 import fr from './locales/fr.yml';
@@ -6,7 +6,7 @@ import fr from './locales/fr.yml';
 export const locales = ['en', 'fr', 'de'] as const;
 export type Locale = (typeof locales)[number];
 
-const say = new Say<Locale>({
+const catalogue = createCatalogue({
   locales: [...locales],
   messages: { en, fr, de },
 });
@@ -20,7 +20,7 @@ export function environmentLocale() {
   const raw = process.env.LC_ALL ?? process.env.LC_MESSAGES ?? process.env.LANG ?? '';
   const tag = raw.split('.')[0]?.replace('_', '-');
 
-  return say.match(tag ? [tag] : []);
+  return catalogue.match(tag ? [tag] : []);
 }
 
-export default say;
+export default catalogue;

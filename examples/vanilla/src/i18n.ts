@@ -1,4 +1,4 @@
-import { Say } from 'saykit';
+import { createCatalogue } from 'saykit';
 import en from './locales/en.po';
 import fr from './locales/fr.po';
 import ja from './locales/ja.po';
@@ -12,9 +12,9 @@ export type Locale = (typeof locales)[number];
  * resolves each `.po` file at build time and inlines it as a plain JS object,
  * so what ships is a record of strings and nothing more.
  */
-const say = new Say<Locale>({
+const catalogue = createCatalogue({
   locales: [...locales],
   messages: { en, fr, pl, ja },
 });
 
-export default say;
+export default catalogue;

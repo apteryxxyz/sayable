@@ -1,4 +1,4 @@
-import say, { type Locale, locales } from './i18n.js';
+import catalogue, { type Locale, locales } from './i18n.js';
 import {
   closingTime,
   holdPosition,
@@ -16,8 +16,11 @@ import {
  * guesses in order, accepts an exact hit, then falls back to a language-prefix
  * hit (`fr-CA` → `fr`), and finally to the first configured locale.
  */
-const initial = say.match(navigator.languages as string[]);
-say.activate(initial);
+const initial = catalogue.match(navigator.languages as string[]);
+
+// A view is immutable, so switching locale means holding a different one
+// rather than mutating the one in hand.
+let say = catalogue.locale(initial);
 
 const app = document.querySelector<HTMLElement>('#app')!;
 
@@ -170,7 +173,7 @@ function renderLocalePicker() {
   }
 
   select.addEventListener('change', () => {
-    say.activate(select.value as Locale);
+    say = catalogue.locale(select.value as Locale);
     document.documentElement.lang = say.locale;
     render();
   });

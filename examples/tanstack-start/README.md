@@ -14,8 +14,8 @@ Read this one for two things the other examples do not cover: **fallback chains*
 | `fallbackLocales` — `en-NZ → en-GB → en`                 | `saykit.config.ts`                |
 | `@saykit/format-json` (plain flat catalogues)            | `saykit.config.ts`                |
 | Cookie + `Accept-Language` negotiation on the server     | `src/routes/{-$locale}/route.tsx` |
-| `say.match(accepted)` for prefix matching                | same                              |
-| `clone().activate().freeze()` per request                | `src/i18n.ts`                     |
+| `catalogue.match(accepted)` for prefix matching          | same                              |
+| One shared catalogue, a view per request                 | `src/i18n.ts`                     |
 | Locale resolved in a **loader**, so SSR emits final copy | `src/routes/{-$locale}/route.tsx` |
 | `useSay()` → `Intl.DateTimeFormat`                       | `src/routes/{-$locale}/index.tsx` |
 | `<Say.Plural>`, `<Say.Select>`, `<Say.Ordinal>`          | `src/routes/{-$locale}/index.tsx` |
@@ -36,13 +36,12 @@ and inherited by `en-NZ` for free.
 This is resolved **at build time**, in the plugin's `load` hook. The runtime receives one flat,
 fully-populated object per locale and never walks a chain at render time.
 
-## Why `clone()` per request
+## Why one catalogue is enough
 
-The `Say` exported from `src/i18n.ts` is a module singleton, shared by every request the server
-handles. Calling `say.activate('fr')` on it would change the locale for whoever else happens to be
-mid-render. `sayFor(locale)` returns `say.clone().activate(locale).freeze()` instead — a snapshot
-that is scoped to the request and cannot be mutated at all (`activate`, `load`, and `assign` all
-throw on a frozen instance).
+The catalogue exported from `src/i18n.ts` is a module singleton, shared by every request the server
+handles, and safely so: it has no current locale, so there is nothing for one request to change out
+from under another. The route loader calls `catalogue.locale(locale)` to get that request's view,
+which is immutable and memoised, so no copy is made and none is needed.
 
 The Next.js example solves the same problem differently, using React's request-scoped `cache()` via
 `unstable_createWithSay`. That option only exists where there are Server Components; this is the
