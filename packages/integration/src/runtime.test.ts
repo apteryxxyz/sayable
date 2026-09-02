@@ -182,8 +182,11 @@ describe('Catalogue#match', () => {
     ['a guess matches on language prefix', ['fr-CA'], 'fr'],
     ['a guess has an empty prefix', ['', 'de'], 'de'],
     ['nothing matches', ['zz', 'xx-YY'], 'en'],
+    ['a guess is absent', [undefined, 'de'], 'de'],
+    ['every guess is absent', [undefined, null], 'en'],
+    ['an absent guess is nested in an array', [[undefined, 'fr']], 'fr'],
   ])('resolves the locale when %s', (_, guesses, expected) => {
-    expect(make().match(...(guesses as (string | string[])[]))).toBe(expected);
+    expect(make().match(...(guesses as Catalogue.Guess[]))).toBe(expected);
   });
 
   it('falls back to the configured default locale', () => {

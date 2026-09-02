@@ -77,7 +77,7 @@ Use this to remember the user's choice across sessions:
 
 ```ts
 const fromCookie = request.cookies.get('locale')?.value;
-const locale = catalogue.match([fromCookie, ...headerGuesses]);
+const locale = catalogue.match(fromCookie, headerGuesses);
 ```
 
 When a user switches locale, write the cookie:

@@ -113,11 +113,14 @@ formatting something else.
 ### `match(...guesses)`
 
 Pick the best supported locale from one or more guesses. Each argument can be a string or array of
-strings; all guesses are flattened in order.
+strings; all guesses are flattened in order. Guesses come from cookies, headers and URL segments, so
+`undefined`, `null` and empty strings are allowed and skipped rather than throwing, and you can pass
+a value straight through without narrowing it first.
 
 ```ts
 catalogue.match('fr-CA', 'en');
 catalogue.match(['fr-CA', 'en-US'], 'de');
+catalogue.match(request.cookies.get('locale')?.value, headerGuesses);
 ```
 
 Matching order:

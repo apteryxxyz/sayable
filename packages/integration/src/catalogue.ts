@@ -1,6 +1,13 @@
 import { createView, type View } from './view.js';
 
 export namespace Catalogue {
+  /**
+   * One guess at a locale, or several. Guesses are read from cookies, headers
+   * and URL segments, none of which is guaranteed to be there, so an absent
+   * one is allowed and skipped.
+   */
+  export type Guess = string | null | undefined | readonly (string | null | undefined)[];
+
   export type Loader<Locale extends string> = (
     locale: Locale,
   ) => View.Messages | Promise<View.Messages>;
@@ -74,10 +81,15 @@ export interface Catalogue<Locale extends string = string> {
   /**
    * Matches the best locale from a list of guesses.
    *
+   * Guesses come from cookies, headers and URL segments, so any of them can
+   * be absent. An absent or empty guess is skipped rather than throwing, which
+   * is what lets a caller write `match(fromCookie, fromHeader)` without
+   * narrowing each one first.
+   *
    * @param guesses List of locale guesses
    * @returns The best matching locale, or {@link defaultLocale} if no matches are found
    */
-  match(...guesses: (string | string[])[]): Locale;
+  match(...guesses: Catalogue.Guess[]): Locale;
 
   /**
    * Every locale, paired with its view.
@@ -158,7 +170,9 @@ export function createCatalogue<
     },
 
     match(...guesses) {
-      const flat = guesses.flat();
+      const flat = guesses
+        .flat()
+        .filter((guess): guess is string => typeof guess === 'string' && guess !== '');
       if (flat.length === 0) return catalogue.defaultLocale;
 
       for (const guess of flat) {
