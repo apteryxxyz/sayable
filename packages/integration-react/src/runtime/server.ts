@@ -11,8 +11,16 @@ import type { Catalogue, View } from 'saykit';
  * component's children are rendered after it returns rather than inside the
  * call it makes, so there is no callback to wrap them in, which is also why
  * {@link SayScope} writes the cell rather than running around its children.
+ *
+ * It is also why the cell holds one view for the whole request: with nowhere to
+ * put a view back, a second scope replaces the first for everything rendered
+ * after it rather than for its own subtree. `warned` keeps the warning that
+ * says so to one per request.
  */
-const cell = cache<() => { view: View | undefined }>(() => ({ view: undefined }));
+const cell = cache<() => { view: View | undefined; warned: boolean }>(() => ({
+  view: undefined,
+  warned: false,
+}));
 
 /**
  * What a read says when no scope established a view.
@@ -20,6 +28,18 @@ const cell = cache<() => { view: View | undefined }>(() => ({ view: undefined })
 const NO_VIEW =
   "'getSay' must be called below a 'SayScope'. Wrap the tree in " +
   "'<SayScope catalogue={catalogue} locale={locale}>'.";
+
+/**
+ * What a second locale established in one request is warned about, in
+ * development.
+ */
+const NESTED_SCOPE = (established: string, next: string) =>
+  `A 'SayScope' established '${next}' while '${established}' was already established for this ` +
+  "request. A scope is per request rather than per subtree: React renders a server component's " +
+  'children after it returns, so there is nowhere to put the previous view back, and everything ' +
+  `rendered after this point reads '${next}' - including components outside the inner scope, and ` +
+  "the messages 'SayProvider' serialises to the client. Render the other locale in its own " +
+  'request, or resolve its view yourself and pass it to the components that need it.';
 
 /**
  * Get the current {@link View}, on the server.
@@ -70,6 +90,14 @@ export namespace SayScope {
  * through, and the scope is per request: a concurrent request renders against
  * its own.
  *
+ * Per request is also the limit. A scope does not end where its children do,
+ * because React renders a server component's children after it returns, so a
+ * second scope establishing another locale in the same request takes over for
+ * everything rendered after it — including components outside it, and the
+ * messages `<SayProvider>` serialises. Development warns when that happens.
+ * Render another locale in its own request, or resolve its view yourself and
+ * pass it to the components that need it.
+ *
  * A `<SayProvider>` written inside one takes no props of its own — the server
  * build of `@saykit/react/client` reads the established view and serialises
  * the locale and its messages across the boundary.
@@ -96,9 +124,22 @@ export async function SayScope<Locale extends string>({
   view,
   children,
 }: SayScope.Props<Locale>): Promise<ReactNode> {
+  const resolved = view ?? (await catalogue.load(catalogue.match(locale)));
+  const request = cell();
+
+  if (
+    process.env.NODE_ENV !== 'production' &&
+    !request.warned &&
+    request.view &&
+    request.view.locale !== resolved.locale
+  ) {
+    request.warned = true;
+    console.warn(NESTED_SCOPE(request.view.locale, resolved.locale));
+  }
+
   // The cell is the request's, so what is left in it is reachable for the rest
   // of the render and by nothing outside it.
-  cell().view = view ?? (await catalogue.load(catalogue.match(locale)));
+  request.view = resolved;
 
   return children;
 }

@@ -21,6 +21,9 @@ import { Say } from '@saykit/react';
 import { SayProvider } from '@saykit/react/client';
 import { createCatalogue, createStore } from 'saykit';
 
+const en = { greeting: 'Hello, {name}!' };
+const fr = { greeting: 'Bonjour, {name} !' };
+
 const store = createStore(createCatalogue({ en, fr }), 'fr');
 
 function App() {

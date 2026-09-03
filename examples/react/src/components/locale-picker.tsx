@@ -13,7 +13,18 @@ export function LocalePicker() {
   return (
     <label className="locales">
       <Say>Language</Say>
-      <select value={say.locale} onChange={(event) => void store.set(event.target.value as Locale)}>
+      <select
+        value={say.locale}
+        // `set` loads the locale's messages if the catalogue does not have them
+        // yet, so it can reject on a failed import. Reported rather than
+        // dropped: the picker stays on the locale it had, and the reason is not
+        // swallowed.
+        onChange={(event) => {
+          void Promise.resolve(store.set(event.target.value as Locale)).catch((error: unknown) => {
+            console.error(error);
+          });
+        }}
+      >
         {locales.map((locale) => (
           <option key={locale} value={locale}>
             {new Intl.DisplayNames([locale], { type: 'language' }).of(locale) ?? locale}
