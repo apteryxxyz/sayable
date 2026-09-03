@@ -56,9 +56,10 @@ lookup gets repeated for no benefit.
 
 ## Locale switching
 
-There is no URL to hang the locale off, so this app keeps the locale in React state and takes the
-matching view off the catalogue when it renders. Passing that state to `SayProvider` is what
-triggers the re-render.
+There is no URL to hang the locale off, so this app puts a store over the catalogue at module scope
+and hands it to `SayProvider`. Tapping a language calls `store.set`, which swaps the view and
+re-renders every `useSay` below the provider. The store is imported, not held in state, because a
+device has one language at a time and nothing else needs to own it.
 
 Catalogues are imported eagerly here rather than through a `loader`. Three small JSON files are
 cheaper to bundle than to fetch over a mobile connection, and the app ships offline-first.

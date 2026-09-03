@@ -1,17 +1,17 @@
 import { Say } from '@saykit/react';
-import { SayProvider } from '@saykit/react/client';
+import { SayProvider, useSay } from '@saykit/react/client';
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { HabitCard } from './src/habit-card';
 import { completedToday, type Habit, habits as seed } from './src/habits';
-import catalogue, { deviceLocale, type Locale, locales } from './src/i18n';
+import { locales, store } from './src/i18n';
 
-// Resolve the device's language once, at module scope, before the first render.
-const initialLocale = deviceLocale();
-
-function Home({ locale, onLocale }: { locale: Locale; onLocale: (next: Locale) => void }) {
+function Home() {
+  // Subscribed to the store, so tapping a language re-renders every message
+  // below without a prop being threaded through.
+  const { locale } = useSay();
   const [habits, setHabits] = useState<Habit[]>(seed);
   const done = completedToday(habits);
 
@@ -26,7 +26,7 @@ function Home({ locale, onLocale }: { locale: Locale; onLocale: (next: Locale) =
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.switcher}>
           {locales.map((option) => (
-            <Pressable key={option} onPress={() => onLocale(option)}>
+            <Pressable key={option} onPress={() => void store.set(option)}>
               <Text style={[styles.switcherItem, option === locale && styles.switcherActive]}>
                 {option}
               </Text>
@@ -64,13 +64,10 @@ function Home({ locale, onLocale }: { locale: Locale; onLocale: (next: Locale) =
 }
 
 export default function App() {
-  const [locale, setLocale] = useState<Locale>(initialLocale);
-  const change = (next: Locale) => setLocale(next);
-
   return (
     <SafeAreaProvider>
-      <SayProvider locale={locale} messages={catalogue.locale(locale).messages}>
-        <Home locale={locale} onLocale={change} />
+      <SayProvider store={store}>
+        <Home />
       </SayProvider>
     </SafeAreaProvider>
   );

@@ -4,8 +4,8 @@ import { createCatalogue } from 'saykit';
 import { describe, expect, it, vi } from 'vitest';
 
 // React's `cache` only memoises inside a Server Component render. Under test we
-// replace it with a plain single-value memoiser so the server context ref is
-// shared across `setSay`/`getSay` the way it is at runtime.
+// replace it with a plain single-value memoiser, so the request cell is shared
+// across a scope and the reads below it the way it is at runtime.
 vi.mock('react', async (importOriginal) => {
   const actual = await importOriginal<typeof import('react')>();
   return {
@@ -24,38 +24,48 @@ vi.mock('react', async (importOriginal) => {
   };
 });
 
-const { getSay, setSay, unstable_createWithSay } = await import('~/runtime/server.js');
+const { getSay, SayScope } = await import('~/runtime/server.js');
+const { SayProvider } = await import('~/runtime/client.server.js');
 
-const make = () => createCatalogue({ en: { greeting: 'Hi' }, fr: { greeting: 'Salut' } });
+const make = () =>
+  createCatalogue({
+    en: { greeting: 'Hi' },
+    fr: () => Promise.resolve({ default: { greeting: 'Salut' } }),
+  });
 
 describe('server runtime', () => {
-  // Runs first, before any setSay, so the ref is still uninitialised.
-  it('getSay throws before setSay has been called', () => {
-    expect(() => getSay()).toThrow(
-      'Attempt to access the server-only Say view before initialisation',
-    );
+  // Runs first, before any scope, so the request cell is still empty.
+  it('throws before a scope has been established', () => {
+    expect(() => getSay()).toThrow("'getSay' must be called below a 'SayScope'");
   });
 
-  it('setSay stores the view it is given', () => {
-    const say = make().locale('fr');
-    setSay(say);
+  it('SayScope negotiates the locale, loads it, and returns its children', async () => {
+    const children = createElement('span', null, 'inside');
+    const rendered = await SayScope({ catalogue: make(), locale: 'fr-CA', children });
+
+    expect(rendered).toBe(children);
     expect(getSay().locale).toBe('fr');
-    // Identity compared as a boolean, because `expect(...).toBe(say)` recurses on
-    // views in vitest's matcher and overflows the stack.
-    expect(getSay() === (say as unknown)).toBe(true);
-    expect(Object.isFrozen(getSay())).toBe(true);
+    expect(getSay().messages.greeting).toBe('Salut');
   });
 
-  it('unstable_createWithSay binds the matched locale and injects props', async () => {
-    const withSay = unstable_createWithSay(make());
-    const Wrapped = withSay(
-      (props: { locale: string; messages: { greeting: string } }) =>
-        createElement('span', null, `${props.locale}:${props.messages.greeting}`),
-      () => 'fr-CA',
-    );
+  it('takes a view as it is, instead of a catalogue and a locale', async () => {
+    const view = await make().load('fr');
+    await SayScope({ view, children: null });
 
-    const element = await Wrapped({} as never);
-    expect(renderToStaticMarkup(element)).toBe('<span>fr:Salut</span>');
-    expect(getSay().locale).toBe('fr');
+    expect(getSay() === (view as unknown)).toBe(true);
+  });
+
+  it('the server build of SayProvider fills its props from the scope', async () => {
+    await SayScope({ catalogue: make(), locale: 'en' });
+
+    const html = renderToStaticMarkup(
+      createElement(SayProvider, null, createElement('span', null, 'child')),
+    );
+    expect(html).toBe('<span>child</span>');
+
+    const element = SayProvider({ children: null });
+    const props = element.props as { locale: string; messages: { greeting: string } };
+    expect(props.locale).toBe('en');
+    expect(props.messages.greeting).toBe('Hi');
   });
 });

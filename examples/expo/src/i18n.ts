@@ -1,5 +1,5 @@
 import { getLocales } from 'expo-localization';
-import { createCatalogue } from 'saykit';
+import { createCatalogue, createStore } from 'saykit';
 import en from './locales/en.json';
 import fr from './locales/fr.json';
 import ja from './locales/ja.json';
@@ -22,5 +22,13 @@ export function deviceLocale() {
 
   return catalogue.match(tags);
 }
+
+/**
+ * Which locale is current, and how it changes. A device has one user and one
+ * language at a time, so the store is a module-scope value rather than
+ * component state: the switcher imports it and calls `set`, and everything
+ * that renders reads the view through `SayProvider`.
+ */
+export const store = createStore(catalogue, deviceLocale());
 
 export default catalogue;

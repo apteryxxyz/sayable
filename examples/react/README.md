@@ -6,18 +6,18 @@ routing — so the React integration itself stays in focus.
 
 ## What it demonstrates
 
-| API                                                                | Where                              |
-| ------------------------------------------------------------------ | ---------------------------------- |
-| `createCatalogue({ ...thunks })`, no eager catalogues              | `src/i18n.ts`                      |
-| `catalogue.load(locale)`, async, cached per locale                 | `src/main.tsx`                     |
-| `SayProvider` fed from React state, so switching locale re-renders | `src/main.tsx`                     |
-| `useSay()` for the current view (not for rendering)                | `src/components/locale-picker.tsx` |
-| `<Say>` with interpolation                                         | throughout                         |
-| `<Say>` with **nested elements** → `<0>` / `<1>` tags              | `board.tsx`, `task-card.tsx`       |
-| `<Say.Plural>` including an exact `_0` branch                      | `board.tsx`, `task-card.tsx`       |
-| `<Say.Ordinal>` nested inside a sentence                           | `board.tsx`                        |
-| `<Say.Select>` over a union type                                   | `task-card.tsx`                    |
-| Two transformers in one bucket (`.ts` + `.tsx`)                    | `saykit.config.ts`                 |
+| API                                                        | Where                              |
+| ---------------------------------------------------------- | ---------------------------------- |
+| `createCatalogue({ ...thunks })`, no eager catalogues      | `src/i18n.ts`                      |
+| `catalogue.load(locale)`, async, cached per locale         | `src/main.tsx`                     |
+| `createStore(catalogue)`, handed straight to `SayProvider` | `src/i18n.ts`, `src/main.tsx`      |
+| `useSay()` to read, `store.set()` to switch                | `src/components/locale-picker.tsx` |
+| `<Say>` with interpolation                                 | throughout                         |
+| `<Say>` with **nested elements** → `<0>` / `<1>` tags      | `board.tsx`, `task-card.tsx`       |
+| `<Say.Plural>` including an exact `_0` branch              | `board.tsx`, `task-card.tsx`       |
+| `<Say.Ordinal>` nested inside a sentence                   | `board.tsx`                        |
+| `<Say.Select>` over a union type                           | `task-card.tsx`                    |
+| Two transformers in one bucket (`.ts` + `.tsx`)            | `saykit.config.ts`                 |
 
 ## Rich text without markup in the catalogue
 

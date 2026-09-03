@@ -4,7 +4,7 @@
 
 [![Coverage](https://codecov.io/gh/k0d13/saykit/graph/badge.svg?flag=integration-react)](https://codecov.io/gh/k0d13/saykit?flags%5B0%5D=integration-react)
 
-A `<Say>` component for rendering translated content in server and client components, a `<SayProvider>` and `useSay()` for client trees, and a small server runtime (`setSay`, `getSay`, `unstable_createWithSay`).
+A `<Say>` component for rendering translated content in server and client components, a `<SayProvider>` and `useSay()` for client trees, and a `<SayScope>` and `getSay()` that mirror them on the server.
 
 ## Install
 
@@ -17,11 +17,15 @@ You will also need a SayKit build-tool plugin and a `saykit.config.ts`.
 ## Usage
 
 ```tsx
-import { Say, SayProvider } from '@saykit/react/client';
+import { Say } from '@saykit/react';
+import { SayProvider } from '@saykit/react/client';
+import { createCatalogue, createStore } from 'saykit';
+
+const store = createStore(createCatalogue({ en, fr }), 'fr');
 
 function App() {
   return (
-    <SayProvider locale="fr" messages={fr}>
+    <SayProvider store={store}>
       <Say>Hello, {name}!</Say>
       <Say.Plural _={count} one={<>{count} item</>} other={<>{count} items</>} />
     </SayProvider>

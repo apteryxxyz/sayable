@@ -192,7 +192,7 @@ import { createView } from 'saykit';
 const say = createView('fr', messages);
 ```
 
-This is what `SayProvider` uses on the client, where the server has already picked a locale and serialised only that locale's messages across the boundary. When you do have a catalogue, prefer `catalogue.locale(code)`, so views stay memoised.
+This is what `SayProvider` builds on when it is given a locale and its messages rather than a store, which is what a server has already picked and serialised across the boundary. When you do have a catalogue, prefer `catalogue.locale(code)`, so views stay memoised.
 
 ## Iterating locales
 
@@ -262,4 +262,4 @@ export function getSayFor(headers: Headers) {
 
 - [Locale detection](/guides/locale-detection), matching browser, header, cookie, and URL inputs
 - [Dynamic loading](/guides/dynamic-loading), lazy locale loading patterns
-- [React integration](/integrations/react), `SayProvider`, `useSay`, server runtime
+- [React integration](/integrations/react), `SayProvider`, `useSay`, `<SayScope>`

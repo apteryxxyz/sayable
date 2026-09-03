@@ -10,22 +10,22 @@ once.
 
 ## What it demonstrates
 
-| Concern                                                                                    | Where                                              |
-| ------------------------------------------------------------------------------------------ | -------------------------------------------------- |
-| `unstable_createWithSay`, resolving the view before render                                 | `src/i18n.ts`, used in `layout.tsx` and `page.tsx` |
-| `getSay()` inside a plain server component                                                 | `src/app/[locale]/product-card.tsx`                |
-| `SayProvider` at the root, fed by `withSay`'s injected props                               | `src/app/[locale]/layout.tsx`                      |
-| `<Say>` in a **client** component                                                          | `add-to-cart.tsx`, `locale-switcher.tsx`           |
-| `generateStaticParams` from iterating a `Catalogue`, whose values are locale-bound `View`s | `src/app/[locale]/layout.tsx`                      |
-| Locale detection: path → cookie → `Accept-Language`                                        | `src/proxy.ts`                                     |
-| Babel wiring (Next.js runs Babel, not a bundler plugin)                                    | `.babelrc`                                         |
+| Concern                                                                                    | Where                                    |
+| ------------------------------------------------------------------------------------------ | ---------------------------------------- |
+| `<SayScope>`, resolving the view for the request                                           | `src/app/[locale]/layout.tsx`            |
+| `getSay()` inside a plain server component                                                 | `src/app/[locale]/product-card.tsx`      |
+| `SayProvider` at the root, taking its props from the scope                                 | `src/app/[locale]/layout.tsx`            |
+| `<Say>` in a **client** component                                                          | `add-to-cart.tsx`, `locale-switcher.tsx` |
+| `generateStaticParams` from iterating a `Catalogue`, whose values are locale-bound `View`s | `src/app/[locale]/layout.tsx`            |
+| Locale detection: path → cookie → `Accept-Language`                                        | `src/proxy.ts`                           |
+| Babel wiring (Next.js runs Babel, not a bundler plugin)                                    | `.babelrc`                               |
 
 ## The server/client split
 
 `@saykit/react` publishes its `.` entry twice and lets the bundler pick:
 
 - In a **server** environment the `react-server` export condition resolves to a build where `<Say>`
-  reads from `getSay()` — React's request-scoped cache, populated by `withSay`.
+  reads from `getSay()` — the view the enclosing `<SayScope>` put in React's request cache.
 - In a **client** environment it resolves to the `"use client"` build, where `<Say>` reads from
   `useSay()` — the nearest `SayProvider`.
 
@@ -37,8 +37,9 @@ The component you write is identical in both cases:
 </Say>
 ```
 
-Because both halves are fed from the same `withSay` call in the root layout, server output and
-client hydration cannot disagree about which locale is active.
+Because both halves are fed from the same `<SayScope>` in the root layout — the client provider
+reads its locale and messages straight off it — server output and client hydration cannot disagree
+about which locale is active.
 
 ## Why `src/config.ts` exists separately
 

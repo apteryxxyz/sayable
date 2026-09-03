@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
 
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
+import { createCatalogue, createStore } from 'saykit';
 import { describe, expect, it } from 'vitest';
 import { SayProvider, useSay } from '~/runtime/client.js';
 
@@ -11,8 +12,10 @@ function Consumer() {
   return createElement('span', null, `${say.locale}:${say.messages.greeting}`);
 }
 
+const catalogue = () => createCatalogue({ en: { greeting: 'Hello' }, fr: { greeting: 'Bonjour' } });
+
 describe('SayProvider / useSay', () => {
-  it('provides a view bound to the locale to descendants', () => {
+  it('provides a view bound to a serialised locale', () => {
     const html = renderToStaticMarkup(
       createElement(
         SayProvider,
@@ -23,7 +26,7 @@ describe('SayProvider / useSay', () => {
     expect(html).toBe('<span>fr:Bonjour</span>');
   });
 
-  it('rebuilds the view when the locale changes', () => {
+  it('rebuilds when the serialised locale changes', () => {
     const { rerender } = render(
       <SayProvider locale="fr" messages={{ greeting: 'Bonjour' }}>
         <Consumer />
@@ -37,6 +40,49 @@ describe('SayProvider / useSay', () => {
       </SayProvider>,
     );
     expect(screen.getByText('de:Guten Tag')).toBeDefined();
+  });
+
+  it('follows a store across a locale switch', async () => {
+    const store = createStore(catalogue(), 'en');
+
+    render(
+      <SayProvider store={store}>
+        <Consumer />
+      </SayProvider>,
+    );
+    expect(screen.getByText('en:Hello')).toBeDefined();
+
+    await act(async () => {
+      await store.set('fr');
+    });
+    expect(screen.getByText('fr:Bonjour')).toBeDefined();
+  });
+
+  it('re-renders only the tree below the provider that switched', async () => {
+    const one = createStore(catalogue(), 'en');
+    const two = createStore(catalogue(), 'fr');
+
+    render(
+      <>
+        <SayProvider store={one}>
+          <Consumer />
+        </SayProvider>
+        <SayProvider store={two}>
+          <Consumer />
+        </SayProvider>
+      </>,
+    );
+
+    await act(async () => {
+      await one.set('fr');
+    });
+    expect(screen.getAllByText('fr:Bonjour')).toHaveLength(2);
+  });
+
+  it('throws when given neither a store nor a locale', () => {
+    expect(() =>
+      renderToStaticMarkup(createElement(SayProvider, null, createElement(Consumer))),
+    ).toThrow("'SayProvider' must be given a store, or a locale and its messages");
   });
 
   it('throws when used outside a provider', () => {

@@ -1,16 +1,16 @@
 import { Say } from '@saykit/react';
 import { getSay } from '@saykit/react/server';
 import { currency, freeShippingThresholdInCents, products } from '../../catalogue';
-import { withSay } from '../../i18n';
 import { ProductCard } from './product-card';
 
 type StorefrontPageProps = { params: Promise<{ locale: string }> };
 
 function StorefrontPage(_: StorefrontPageProps) {
-  // A plain server component can reach the request-scoped instance directly.
+  // The server counterpart of `useSay`: the view the enclosing `SayScope` established.
   // Useful when you need the locale as *data* — here, to format a price — rather
   // than a rendered message.
   const say = getSay();
+
   const threshold = new Intl.NumberFormat(say.locale, { style: 'currency', currency }).format(
     freeShippingThresholdInCents / 100,
   );
@@ -35,4 +35,4 @@ function StorefrontPage(_: StorefrontPageProps) {
   );
 }
 
-export default withSay(StorefrontPage, (props) => props.params.then((params) => params.locale));
+export default StorefrontPage;

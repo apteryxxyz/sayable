@@ -8,7 +8,7 @@ description: API reference for the React integration
 ```ts
 import { Say } from '@saykit/react'; // shared (server + client)
 import { SayProvider, useSay } from '@saykit/react/client'; // client only
-import { setSay, getSay, unstable_createWithSay } from '@saykit/react/server'; // server only
+import { SayScope, getSay } from '@saykit/react/server'; // server only
 ```
 
 The default `@saykit/react` import uses the `react-server` export condition to swap between the server and client implementations of `<Say>` automatically.
@@ -109,11 +109,13 @@ Props:
 
 ### `<SayProvider>`
 
-Wraps a client tree with a locale and message catalogue. Required before any client-side use of `<Say>` or `useSay()`.
+Wraps a client tree with the view its descendants resolve against. Required before any client-side use of `<Say>` or `useSay()`.
 
-It takes the view's data rather than the view itself. A view is a callable closure, so it cannot cross the server/client boundary; its locale and messages are plain data and can. The provider builds a view from them on the client and memoises it, so `useSay()` returns the same value until the locale or messages change.
+It takes either a `Store`, or a locale and its messages. A store owns a catalogue and can switch locale; it is a live object, so it belongs to an application that holds its catalogue on the client. A locale and its messages are plain data and are what a server can send across the boundary; the provider builds a single-locale store over them, which has nothing to switch to.
 
 ```tsx
+<SayProvider store={store}>{children}</SayProvider>
+
 <SayProvider locale={locale} messages={messages}>
   {children}
 </SayProvider>
@@ -123,15 +125,18 @@ Props:
 
 <TypeTable
   type={{
+    store: {
+      description:
+        'The store to follow. Switches locale, and re-renders every consumer when it does.',
+      type: 'Store',
+    },
     locale: {
-      description: 'The active locale string.',
+      description: 'The active locale string. Use with `messages`, instead of `store`.',
       type: 'string',
-      required: true,
     },
     messages: {
-      description: 'The message catalogue for the locale.',
+      description: 'The message catalogue for the locale. Use with `locale`, instead of `store`.',
       type: 'View.Messages',
-      required: true,
     },
     children: {
       description: 'The tree to provide a view to.',
@@ -140,11 +145,13 @@ Props:
   }}
 />
 
-Internally builds a `View` over the locale and messages, with `createView`.
+Throws if given neither a store nor a locale and its messages. In a server component the props are filled in from the enclosing [`<SayScope>`](#sayscope), so it is written `<SayProvider>` with none.
 
 ### `useSay()`
 
-Returns the `View` from the nearest `<SayProvider>`. Throws if no provider is in the tree.
+Returns the current `View` from the nearest `<SayProvider>`. Throws if no provider is in the tree.
+
+Subscribes to the provider's store with `useSyncExternalStore`, so the component re-renders when the locale changes.
 
 ```ts
 function fn() {
@@ -153,66 +160,56 @@ function fn() {
 }
 ```
 
+There is no hook for the store behind it. A store is a module-scope value you already hold, so switching is `store.set('fr')` on the one you built; a provider given a locale and its messages has no catalogue to switch through anyway.
+
 ## `@saykit/react/server`
 
-### `setSay(say)`
+### `<SayScope>`
 
-Register a `View` for the current request. Must be called before any server component renders `<Say>`.
+Establishes the `View` for everything rendered inside it. Given a catalogue and a locale, it negotiates with `match()` and loads the messages; given a `view`, it establishes that one as it is. Either way the view goes into React's per-request `cache()`, so a concurrent request rendering another locale reads its own.
 
-```ts
-setSay(catalogue.locale(locale));
+```tsx
+<SayScope catalogue={catalogue} locale={locale}>
+  <SayProvider>{children}</SayProvider>
+</SayScope>
 ```
 
-A view is immutable, so it is stored exactly as it arrives, with nothing to clone or freeze against a concurrent request.
-
-### `getSay()`
-
-Returns the registered `View` for the current request. Throws if none has been registered.
-
-```ts
-const say = getSay();
-```
-
-The server equivalent of `useSay()`.
-
-### `unstable_createWithSay(catalogue)`
-
-Returns a `withSay()` higher-order component factory bound to a `Catalogue`.
-
-```ts
-const withSay = unstable_createWithSay(catalogue);
-```
-
-`withSay(Component, getLocale)`:
+Props:
 
 <TypeTable
   type={{
-    Component: {
-      description:
-        'A server component to wrap. Receives `locale` and `messages` props plus the originals.',
-      type: '(props: P & { locale: string; messages: View.Messages }) => ReactNode',
-      required: true,
+    catalogue: {
+      description: 'The catalogue to take the view from. Use with `locale`, instead of `view`.',
+      type: 'Catalogue',
     },
-    getLocale: {
+    locale: {
       description:
-        'A function that produces the locale guess (string or promise-of-string) from the original props.',
-      type: '(props: P) => string | Promise<string>',
-      required: true,
+        'The locale to negotiate against the catalogue. Use with `catalogue`, instead of `view`.',
+      type: 'Catalogue.Guess',
+    },
+    view: {
+      description:
+        'A view to establish as it is, for a caller that resolved one already. Use instead of `catalogue` and `locale`.',
+      type: 'View',
+    },
+    children: {
+      description: 'The tree to establish the view for.',
+      type: 'ReactNode',
     },
   }}
 />
 
-The wrapper runs `match()`, `load()`, `locale()`, and `setSay()` before rendering. Useful in App Router layouts and pages where the URL param dictates the locale.
+### `getSay()`
 
-## Types
-
-### `PropsWithSay<P>`
+Returns the `View` the enclosing `<SayScope>` established. Throws if none is above the caller. The server counterpart of `useSay()`.
 
 ```ts
-type PropsWithSay<P = unknown> = P & { locale: string; messages: View.Messages };
+const say = getSay();
+say`Hello, ${name}!`;
+say.locale;
 ```
 
-The shape `withSay`-wrapped components receive.
+The view is held in React's per-request `cache()`, so a concurrent request rendering another locale reads its own.
 
 ## Next
 
