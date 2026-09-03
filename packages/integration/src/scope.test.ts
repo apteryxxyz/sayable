@@ -108,6 +108,14 @@ describe.each(Object.entries(storages))('createScope over %s', (_name, build) =>
     expect(scope.say.locale).toBe('fr');
   });
 
+  it('tells two uses of the same view apart', () => {
+    const scope = build();
+    const restore = scope.use(en);
+    scope.use(en);
+    restore();
+    expect(scope.say.locale).toBe('en');
+  });
+
   it('does nothing the second time a restore is called', () => {
     const scope = build();
     const restore = scope.use(en);

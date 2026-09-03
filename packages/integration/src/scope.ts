@@ -174,6 +174,15 @@ export function createScope(storage: Scope.Storage = createVariableStorage()): S
    */
   let source: Scope.Source | undefined;
 
+  /**
+   * How many times `use` has been called, and which of those calls established
+   * the source sitting there now. A restore takes the source back only while
+   * its own call is still the one holding it, and two calls given the same
+   * view are different calls.
+   */
+  let calls = 0;
+  let call = 0;
+
   function peek(): View | undefined {
     const running = storage.getStore();
     if (running) return running;
@@ -224,15 +233,25 @@ export function createScope(storage: Scope.Storage = createVariableStorage()): S
 
     use(next) {
       const previous = source;
+      const previousCall = call;
+      const mine = ++calls;
+
       source = next;
+      call = mine;
+
       return () => {
-        // Only what this call established is taken back. A later `use` has
-        // replaced it, and putting the old source back over that one would
-        // undo a call that has not finished rather than this one; a restore
-        // called twice would do the same. Either way there is nothing left
-        // here to undo.
-        if (source !== next) return;
+        // Only the call that established the current source takes it back. A
+        // later `use` has replaced it, and putting the old source back over
+        // that one would undo a call that has not finished rather than this
+        // one; a restore called twice would do the same. Either way there is
+        // nothing left here to undo.
+        //
+        // Which call rather than which source, so two `use` calls given the
+        // same view are still told apart.
+        if (call !== mine) return;
+
         source = previous;
+        call = previousCall;
       };
     },
   };
