@@ -83,17 +83,17 @@ export function SayProvider({
 export function useSay(): View {
   const store = useContext(SayContext);
   if (!store) throw new Error("'useSay' must be used within a 'SayProvider'");
-  // A view's identity changes only when the locale does, and a catalogue hands
-  // the same view back for a locale returned to, so this is a stable snapshot
-  // in both directions. The server snapshot is the same read: a store built
-  // from a serialised locale holds one view, and one built on the client holds
-  // whatever it held when the tree was rendered.
   // Called on the store rather than passed as a bare reference, so a `Store`
   // written as a class, whose `subscribe` reads `this`, works as well as the
   // one saykit builds. Memoised on the store, since a new subscribe function
   // each render would resubscribe on each one.
   const subscribe = useMemo(() => (listener: () => void) => store.subscribe(listener), [store]);
 
+  // A view's identity changes only when the locale does, and a catalogue hands
+  // the same view back for a locale returned to, so this is a stable snapshot
+  // in both directions. The server snapshot is the same read: a store built
+  // from a serialised locale holds one view, and one built on the client holds
+  // whatever it held when the tree was rendered.
   return useSyncExternalStore(
     subscribe,
     () => store.say,
