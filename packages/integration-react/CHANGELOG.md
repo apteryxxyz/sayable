@@ -1,5 +1,16 @@
 # @saykit/react
 
+## 0.10.0
+
+### Minor Changes
+
+- 588f32e: Follow a store from `SayProvider`, and replace the server helpers with `<SayScope>` and `getSay`
+- e1509d9: Replace the `Say` class with a catalogue that owns the locales and immutable per-locale views that format
+
+### Patch Changes
+
+- 55719ed: Add `createStore`, which holds the current view and switches locale, and replace the catalogue's `loader` with a thunk per locale
+
 ## 0.9.1
 
 ## 0.9.0

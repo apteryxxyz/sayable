@@ -1,5 +1,14 @@
 # saykit
 
+## 0.10.0
+
+### Minor Changes
+
+- 55719ed: Add `createStore`, which holds the current view and switches locale, and replace the catalogue's `loader` with a thunk per locale
+- e1509d9: Replace the `Say` class with a catalogue that owns the locales and immutable per-locale views that format
+- 7de7816: Add `createScope`, which resolves the view the work running right now is saying things in, over an `AsyncLocalStorage` on a server or one variable in a browser
+- 5bd6473: Take a record of messages keyed by locale in `createCatalogue`, dropping `locales` and `defaultLocale`: the keys are the locales and the first is the fallback `match` resolves to
+
 ## 0.9.1
 
 ## 0.9.0

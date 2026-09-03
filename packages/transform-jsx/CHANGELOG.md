@@ -1,5 +1,12 @@
 # @saykit/transform-jsx
 
+## 0.10.0
+
+### Patch Changes
+
+- @saykit/config@0.10.0
+- @saykit/transform-js@0.10.0
+
 ## 0.9.1
 
 ### Patch Changes
