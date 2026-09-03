@@ -100,6 +100,23 @@ describe.each(Object.entries(storages))('createScope over %s', (_name, build) =>
     expect(scope.say.locale).toBe('en');
   });
 
+  it('leaves a later use alone when an earlier restore is called', () => {
+    const scope = build();
+    const restore = scope.use(en);
+    scope.use(fr);
+    restore();
+    expect(scope.say.locale).toBe('fr');
+  });
+
+  it('does nothing the second time a restore is called', () => {
+    const scope = build();
+    const restore = scope.use(en);
+    restore();
+    scope.use(fr);
+    restore();
+    expect(scope.say.locale).toBe('fr');
+  });
+
   it('reads a view through the proxy the way it reads the view itself', () => {
     const scope = build();
     scope.run(en, () => {

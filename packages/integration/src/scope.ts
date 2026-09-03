@@ -226,6 +226,12 @@ export function createScope(storage: Scope.Storage = createVariableStorage()): S
       const previous = source;
       source = next;
       return () => {
+        // Only what this call established is taken back. A later `use` has
+        // replaced it, and putting the old source back over that one would
+        // undo a call that has not finished rather than this one; a restore
+        // called twice would do the same. Either way there is nothing left
+        // here to undo.
+        if (source !== next) return;
         source = previous;
       };
     },
