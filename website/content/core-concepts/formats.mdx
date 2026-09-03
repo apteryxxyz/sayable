@@ -105,7 +105,7 @@ Dropping line numbers is a popular choice once a project is large, references st
 
 ## JSON
 
-`@saykit/format-json` writes one JSON catalogue per locale — the de facto format for web i18n (react-intl, FormatJS, i18next). It's a lean runtime format: each entry is keyed by its message id (falling back to a stable content hash when there's no id, the same key the runtime resolves), with the translation as the value.
+`@saykit/format-json` writes one JSON catalogue per locale, the de facto format for web i18n (react-intl, FormatJS, i18next). It's a lean runtime format: each entry is keyed by its message id (falling back to a stable content hash when there's no id, the same key the runtime resolves), with the translation as the value.
 
 ```ts title="saykit.config.ts"
 import json from '@saykit/format-json';
@@ -125,11 +125,11 @@ buckets: [
 }
 ```
 
-This plain layout is lean but drops comments, context, and source references — give your messages explicit ids to get stable, readable keys.
+This plain layout is lean but drops comments, context, and source references, so give your messages explicit ids to get stable, readable keys.
 
 ### Dialects
 
-To keep the metadata a plain `{ key: value }` map can't hold, pass `dialect` to switch to a richer — but still standard — JSON layout.
+To keep the metadata a plain `{ key: value }` map can't hold, pass `dialect` to switch to a richer but still standard JSON layout.
 
 <TypeTable
   type={{
@@ -157,7 +157,7 @@ formatter: json({ dialect: 'arb' });
 }
 ```
 
-Both formats carry translator comments in their native `description` field. Context and source references have no standard slot, so SayKit round-trips them through `x-saykit-context` / `x-saykit-references` extension fields — other tooling reads the `description` and safely ignores the rest.
+Both formats carry translator comments in their native `description` field. Context and source references have no standard slot, so SayKit round-trips them through `x-saykit-context` / `x-saykit-references` extension fields, and other tooling reads the `description` and safely ignores the rest.
 
 ### References
 

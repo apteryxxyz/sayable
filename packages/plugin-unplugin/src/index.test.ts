@@ -28,7 +28,7 @@ const config = {
       },
     },
     // A non-JSON output, to cover the ESM-wrapper branch of `load`. The
-    // formatter still parses JSON; only the extension matters here.
+    // formatter still parses JSON; only the extension matters here
     {
       match: (id: string) => id.endsWith('.ts'),
       output: Object.assign(join(dir, '{locale}', 'messages.{extension}'), {
@@ -80,11 +80,11 @@ describe('unplugin load', () => {
     ]);
 
     const output = await plugin.load.handler(file);
-    // A `.json` id is left as bare JSON for the bundler's own JSON handling.
+    // A `.json` id is left as bare JSON for the bundler's own JSON handling
     expect(output).not.toContain('export default');
     const messages = record(output);
     expect(messages.greeting).toBe('Hello');
-    // No id and empty translation -> hashed key, source text as value.
+    // No id and empty translation -> hashed key, source text as value
     expect(messages[generateHash('Bye', undefined)]).toBe('Bye');
   });
 

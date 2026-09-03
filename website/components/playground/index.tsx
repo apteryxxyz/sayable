@@ -24,7 +24,7 @@ const CodeEditor = dynamic(() => import('./editor'), {
 
 /**
  * The same component in its read-only mode, so the transformed code is rendered by
- * the editor that renders the input — one set of syntax colours, one selection
+ * the editor that renders the input, one set of syntax colours, one selection
  * colour, one scrollbar. Only the placeholder differs: this pane sizes to its
  * content, so a full-height skeleton would leave a hole under the message list.
  */
@@ -72,16 +72,16 @@ export default function Playground({
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(true);
 
-  // Drop results from runs that were superseded while awaiting the CDN.
+  // Drop results from runs that were superseded while awaiting the CDN
   const run = useRef(0);
 
   // Applied after hydration so the server-rendered markup stays deterministic.
   // Also on `hashchange`, since opening a share link while already on the page is
-  // a same-document navigation that never remounts this component.
+  // a same-document navigation that never remounts this component
   useEffect(() => {
     // `?preview=<commit>` is the link the pipeline leaves on a pull request. It
     // offers a version the registry knows nothing about, so it is read before the
-    // fragment — a share link that names the preview has to find it selectable.
+    // fragment, a share link that names the preview has to find it selectable
     const asked = previewOption(window.location.search);
     if (asked) {
       setPreview(asked);
@@ -142,7 +142,7 @@ export default function Playground({
   const shareUrl = useCallback(() => {
     const commit = previewCommit(version);
     // A preview is only in the list because the URL asked for it, so a link that
-    // shares one has to ask for it too.
+    // shares one has to ask for it too
     const query = commit ? `?preview=${commit}` : '';
     const { origin, pathname } = window.location;
     return `${origin}${pathname}${query}#${encodeState({ code, version })}`;
@@ -185,7 +185,7 @@ export default function Playground({
               </div>
             }
           />
-          {/* No padding here — CodeMirror applies its own inside the scroller, so
+          {/* No padding here, CodeMirror applies its own inside the scroller, so
               the scrollbar can sit flush against the pane edge. */}
           <div className="min-h-96 overflow-hidden rounded-2xl border border-fd-border bg-fd-card lg:h-[calc(100vh-13rem)]">
             <CodeEditor value={code} onChange={setCode} />
@@ -211,7 +211,7 @@ export default function Playground({
 
           <section className="min-w-0">
             {/* Copy sits in the header like Format, so the pane needs no title bar
-                of its own — the filename was never meaningful here anyway. */}
+                of its own; the filename was never meaningful here anyway. */}
             <PaneHeader
               title="Transformed code"
               action={result ? <CopyAction value={result.output} /> : undefined}
@@ -225,9 +225,9 @@ export default function Playground({
 }
 
 /**
- * Copying is handled by the pane header, so this is the editor and nothing else —
- * no title bar, no floating button. The wrapper matches the input pane's, since
- * what's inside it is the same component.
+ * Copying is handled by the pane header, so this is the editor and nothing
+ * else: no title bar, no floating button. The wrapper matches the input pane's,
+ * since what's inside it is the same component.
  */
 function Transformed({ code }: { code?: string }) {
   if (code === undefined)

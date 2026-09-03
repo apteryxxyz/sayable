@@ -1,20 +1,11 @@
 import { Command, type CommandInteraction } from '@buape/carbon';
 import { withSay } from '@saykit/carbon';
-import type { Say } from 'saykit';
+import type { Catalogue } from 'saykit';
 import { currentPick, members } from '../club.js';
 
-/**
- * `/announce` — the one place this bot deliberately does **not** use the
- * invoking user's locale.
- *
- * A reply everyone in the channel will read should be in the server's language,
- * not in whatever the person who typed the command happens to use. `guild.say`
- * is activated from the guild's `preferred_locale` for exactly this case, while
- * `interaction.say` stays scoped to one user.
- */
 export class AnnounceCommand extends withSay(Command) {
-  constructor(say: Say) {
-    super(say, (say) => ({
+  constructor(catalogue: Catalogue) {
+    super(catalogue, (say) => ({
       name: say`announce`,
       description: say`Post the next meeting in the server's language.`,
     }));
@@ -25,7 +16,6 @@ export class AnnounceCommand extends withSay(Command) {
 
     if (!guild) {
       await interaction.reply({
-        // No guild — a DM. Fall back to the user's own locale.
         content: interaction.say`Run this in a server so I know which language to post in.`,
         ephemeral: true,
       });

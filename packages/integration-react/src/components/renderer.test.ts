@@ -14,7 +14,7 @@ import { Renderer } from '~/components/renderer.js';
 //
 // becomes the message `<0>Hello</0> <1>World</1>`. On the web the bare space
 // between the two elements is harmless, but React Native throws because a
-// string is being rendered outside of a text component.
+// string is being rendered outside of a text component
 
 /** Map every slot to a plain wrapper so the tree is easy to inspect. */
 const components = { 0: 'span', 1: 'span' } as const;
@@ -50,12 +50,12 @@ describe('Renderer whitespace handling', () => {
     const tree = Renderer({ html, components, whitespace: false });
     // The space between the two <Text> slots is gone...
     expect(strings(tree)).toEqual(['Hello', 'World']);
-    // ...so nothing renders a bare whitespace string outside of an element.
+    // ...so nothing renders a bare whitespace string outside of an element
     expect(strings(tree)).not.toContain(' ');
   });
 
   it('preserves meaningful text around elements when stripping whitespace', () => {
-    // `Hi <0>there</0>!` — the significant spaces are part of real words here.
+    // `Hi <0>there</0>!`, the significant spaces are part of real words here
     const tree = Renderer({ html: 'Hi <0>there</0>!', components, whitespace: false });
     expect(strings(tree)).toEqual(['Hi ', 'there', '!']);
   });
@@ -83,7 +83,7 @@ describe('Renderer element resolution', () => {
 
   it('falls back to a Fragment for slots missing from a components map', () => {
     const tree = Renderer({ html: '<9>orphan</9>', components: { 0: 'span' } });
-    // Unknown slot 9 resolves to Fragment (Symbol), still wrapping its text.
+    // Unknown slot 9 resolves to Fragment (Symbol), still wrapping its text
     expect(typeof types(tree)[0]).toBe('symbol');
     expect(strings(tree)).toEqual(['orphan']);
   });
@@ -91,13 +91,13 @@ describe('Renderer element resolution', () => {
   it('resolves components from a function, using the tag fallback', () => {
     const resolver = (tag?: string) => (tag === '0' ? 'strong' : undefined);
     const tree = Renderer({ html: '<0>bold</0> <1>x</1>', components: resolver });
-    // Slot 0 -> 'strong'; slot 1 -> resolver returns undefined -> tag '1'.
+    // Slot 0 -> 'strong'; slot 1 -> resolver returns undefined -> tag '1'
     expect(types(tree)).toEqual(['strong', '1']);
   });
 
   it('preserves the parsed numeric tag when a function resolver returns undefined', () => {
     const tree = Renderer({ html: 'plain <0/>', components: () => undefined });
-    // Unresolved self-closing numeric slot keeps its parsed tag name '0'.
+    // Unresolved self-closing numeric slot keeps its parsed tag name '0'
     expect(types(tree)[0]).toBe('0');
   });
 });

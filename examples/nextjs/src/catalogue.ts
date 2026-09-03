@@ -1,22 +1,14 @@
-/**
- * These values become ICU `select` branch keys in `product-card.tsx`, and ICU
- * identifiers may not contain a hyphen — `in-stock` parses as a subtraction and
- * fails at format time rather than at build time. camelCase keeps them legal.
- */
 export type Availability = 'inStock' | 'lowStock' | 'backorder' | 'discontinued';
 
 export interface Product {
   slug: string;
   name: string;
   roaster: string;
-  /** Price in minor units (cents), always formatted with `Intl.NumberFormat`. */
   priceInCents: number;
   availability: Availability;
-  /** Units left, only meaningful for `low-stock`. */
   remaining: number;
   reviews: number;
   rating: number;
-  /** Days until the next roast ships, for backordered items. */
   shipsInDays: number;
 }
 
@@ -67,7 +59,6 @@ export const products: Product[] = [
   },
 ];
 
-/** The currency the storefront prices in. Formatting is locale-dependent, the currency is not. */
 export const currency = 'EUR';
 
 export const freeShippingThresholdInCents = 3500;

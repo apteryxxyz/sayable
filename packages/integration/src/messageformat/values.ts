@@ -1,14 +1,13 @@
 import { getLocaleDir, type MessageValue } from 'messageformat/functions';
 
 /**
- * A formatted part carries its direction only when that direction is known to
- * be one of the two a reader can be isolated from. `auto` means undetermined,
- * and saying so is what the absence of the key means.
+ * A formatted part carries its direction only when it is known to be one of
+ * the two a reader can be isolated from. `auto` means undetermined, which the
+ * absence of the key says.
  */
 function part<T extends string, P>(type: T, locale: string, parts: P[]) {
   const dir = getLocaleDir(locale);
-  // The locale here always came back from `Intl`, so its direction is always
-  // one of the two. The `auto` case is what an unresolvable locale would give.
+  // The locale came back from `Intl`, so its direction is one of the two
   /* v8 ignore next 3 */
   return dir === 'ltr' || dir === 'rtl' ? { type, dir, locale, parts } : { type, locale, parts };
 }
@@ -16,11 +15,9 @@ function part<T extends string, P>(type: T, locale: string, parts: P[]) {
 /**
  * The resolved values a placeholder formats to.
  *
- * Each is a thin wrapper over one `Intl` formatter: MF2 asks a value for a
- * string or for parts, and both questions are the formatter's to answer. The
- * formatter is built lazily and kept, because `formatToParts` and `format` are
- * often both asked of the same value and constructing an `Intl` formatter is
- * the expensive half of formatting.
+ * Each is a thin wrapper over one `Intl` formatter, built lazily and kept:
+ * `formatToParts` and `format` are often both asked of the same value, and
+ * constructing the formatter is the expensive half.
  */
 
 // ===== Operands ===== //
@@ -64,7 +61,7 @@ export function temporal(operand: unknown): Date {
 /**
  * A number formatted by an `Intl.NumberFormat` options bag.
  *
- * Any scaling has already been applied to `value` — a scale is a multiplier on
+ * Any scaling has already been applied to `value`, a scale is a multiplier on
  * the number, not a way of writing it, so it belongs to the caller.
  */
 export function number(
@@ -124,35 +121,32 @@ export function datetime(
 /**
  * `hhhh:mm:ss`, MF1's `duration` argument type.
  *
- * `Intl` has no equivalent — `DurationFormat` writes "1 hr, 2 min", not a clock
- * reading — so this is the one format written out by hand.
+ * `Intl` has no equivalent, since `DurationFormat` writes "1 hr, 2 min" rather
+ * than a clock reading, so this is the one format written out by hand.
  */
 export function duration(seconds: number): string {
   if (!Number.isFinite(seconds)) return String(seconds);
 
   const sign = seconds < 0 ? '-' : '';
 
-  // Round to the millisecond *before* splitting the value up. Rounding a
-  // seconds field that is already 59.9999 gives `60`, which has to carry into
-  // the minutes — rounding it in place would write `0:60.000`.
+  // Round to the millisecond *before* splitting the value up: a seconds field
+  // of 59.9999 rounds to `60`, which has to carry into the minutes
   const total = Math.round(Math.abs(seconds) * 1000) / 1000;
 
   const secs = total % 60;
   const minutes = Math.floor(total / 60);
   const hours = Math.floor(minutes / 60);
 
-  // A fractional second stays a string from here on. Rounding it to three
-  // places is the whole point, and `Number('1.500')` would undo that.
+  // A fractional second stays a string from here on, since `Number('1.500')`
+  // would undo the rounding
   const written = Math.round(secs) === secs ? String(secs) : secs.toFixed(3);
 
-  // One `:` is always written, so a sub-minute duration still reads as a
-  // duration rather than as a bare number of seconds.
+  // One `:` is always written, so a sub-minute duration still reads as one
   const parts: (string | number)[] =
     hours > 0 ? [hours, minutes % 60, written] : [minutes, written];
 
-  // Every part but the first is padded to two digits, and the leading one is
-  // not — a duration reads as `1:01:01`, never `01:01:01`. The width is judged
-  // from the value rather than the text, so `1.500` pads like the 1 it is.
+  // Every part but the first is padded to two digits: `1:01:01`, never
+  // `01:01:01`. Judged from the value, so `1.500` pads like the 1 it is
   const first = parts.shift()!;
   const pad = (n: string | number) => (Number(n) < 10 ? `0${n}` : String(n));
   return sign + [first, ...parts.map(pad)].join(':');

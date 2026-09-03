@@ -1,7 +1,7 @@
-import { activateUiLocale } from './i18n.js';
+import { uiSay } from './i18n.js';
 import { minutesFor, type PageStats } from './reading.js';
 
-const say = activateUiLocale();
+const say = uiSay();
 const root = document.querySelector<HTMLElement>('#popup')!;
 
 function line(text: string, className?: string) {
@@ -81,8 +81,6 @@ async function load() {
     const stats = (await chrome.tabs.sendMessage(tab.id, { type: 'measure' })) as PageStats;
     render(stats);
   } catch {
-    // The content script is not injected on internal pages (chrome://, the Web
-    // Store, and so on). That is expected, not an error worth logging.
     render(null);
   }
 }

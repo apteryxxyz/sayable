@@ -1,11 +1,11 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { Say } from 'saykit';
+import { createCatalogue } from 'saykit';
 import { describe, expect, it, vi } from 'vitest';
 
 // React's `cache` only memoises inside a Server Component render. Under test we
-// replace it with a plain single-value memoiser so the server context ref is
-// shared across `setSay`/`getSay` the way it is at runtime.
+// replace it with a plain single-value memoiser, so the request cell is shared
+// across a scope and the reads below it the way it is at runtime
 vi.mock('react', async (importOriginal) => {
   const actual = await importOriginal<typeof import('react')>();
   return {
@@ -24,47 +24,67 @@ vi.mock('react', async (importOriginal) => {
   };
 });
 
-const { getSay, setSay, unstable_createWithSay } = await import('~/runtime/server.js');
+const { getSay, SayScope } = await import('~/runtime/server.js');
+const { SayProvider } = await import('~/runtime/client.server.js');
 
 const make = () =>
-  new Say({
-    locales: ['en', 'fr'],
-    messages: { en: { greeting: 'Hi' }, fr: { greeting: 'Salut' } },
+  createCatalogue({
+    en: { greeting: 'Hi' },
+    fr: () => Promise.resolve({ default: { greeting: 'Salut' } }),
   });
+
+// Kept for the whole file: the scopes below share one request cell, so the
+// warning a second locale produces belongs to the file rather than to a test
+const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
 describe('server runtime', () => {
-  // Runs first, before any setSay, so the ref is still uninitialised.
-  it('getSay throws before setSay has been called', () => {
-    expect(() => getSay()).toThrow(
-      'Attempt to access the server-only Say instance before initialisation',
-    );
+  // Runs first, before any scope, so the request cell is still empty
+  it('throws before a scope has been established', () => {
+    expect(() => getSay()).toThrow("'getSay' must be called below a 'SayScope'");
   });
 
-  it('setSay stores a frozen clone from a Say instance', () => {
-    const say = make().activate('fr');
-    setSay(say);
+  it('SayScope negotiates the locale, loads it, and returns its children', async () => {
+    const children = createElement('span', null, 'inside');
+    const rendered = await SayScope({ catalogue: make(), locale: 'fr-CA', children });
+
+    expect(rendered).toBe(children);
     expect(getSay().locale).toBe('fr');
-    // Identity compared as a boolean — `expect(...).not.toBe(say)` recurses on
-    // Say instances in vitest's matcher and overflows the stack.
-    expect(getSay() === (say as unknown)).toBe(false);
-    expect(Object.isFrozen(getSay())).toBe(true);
+    expect(getSay().messages.greeting).toBe('Salut');
   });
 
-  it('setSay accepts a factory function', () => {
-    setSay(() => make().activate('en'));
-    expect(getSay().locale).toBe('en');
+  it('takes a view as it is, instead of a catalogue and a locale', async () => {
+    const view = await make().load('fr');
+    await SayScope({ view, children: null });
+
+    expect(getSay() === (view as unknown)).toBe(true);
   });
 
-  it('unstable_createWithSay activates the matched locale and injects props', async () => {
-    const withSay = unstable_createWithSay(make());
-    const Wrapped = withSay(
-      (props: { locale: string; messages: { greeting: string } }) =>
-        createElement('span', null, `${props.locale}:${props.messages.greeting}`),
-      () => 'fr-CA',
+  it('the server build of SayProvider fills its props from the scope', async () => {
+    await SayScope({ catalogue: make(), locale: 'en' });
+
+    const html = renderToStaticMarkup(
+      createElement(SayProvider, null, createElement('span', null, 'child')),
     );
+    expect(html).toBe('<span>child</span>');
 
-    const element = await Wrapped({} as never);
-    expect(renderToStaticMarkup(element)).toBe('<span>fr:Salut</span>');
+    const element = SayProvider({ children: null });
+    const props = element.props as { locale: string; messages: { greeting: string } };
+    expect(props.locale).toBe('en');
+    expect(props.messages.greeting).toBe('Hi');
+  });
+
+  // The cell above is one request for the whole file, and the scopes already
+  // established have changed its locale, so this counts the warnings the file
+  // produced rather than establishing more of its own
+  it('warns once when a second scope establishes another locale in one request', async () => {
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(warn.mock.calls[0]?.[0]).toContain("A 'SayScope' established");
+
+    // The same locale again is not a change, and a change has already been
+    // reported
+    await SayScope({ catalogue: make(), locale: 'en' });
+    await SayScope({ catalogue: make(), locale: 'fr' });
+    expect(warn).toHaveBeenCalledTimes(1);
     expect(getSay().locale).toBe('fr');
   });
 });

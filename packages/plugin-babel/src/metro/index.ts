@@ -13,7 +13,7 @@ interface MetroConfig {
  * Resolve Metro's own transformer from the project rather than from this
  * package, since it is the project that depends on Metro.
  *
- * The base is the config's `projectRoot` — `process.cwd()` is wrong whenever
+ * The base is the config's `projectRoot`, `process.cwd()` is wrong whenever
  * Metro is started from elsewhere, which in a monorepo is the normal case.
  */
 const transformerPath = join(__dirname, 'transformer.cjs');
@@ -24,7 +24,7 @@ function resolveUpstream(specifier: string, projectRoot: string) {
   try {
     return createRequire(join(projectRoot, 'metro.config.js')).resolve(specifier);
   } catch {
-    // A hoisted install can still satisfy it from here.
+    // A hoisted install can still satisfy it from here
     return require.resolve(specifier);
   }
 }
@@ -38,7 +38,7 @@ function resolveUpstream(specifier: string, projectRoot: string) {
  * ```
  *
  * Metro's transform cache is keyed on each file's own bytes, so a catalogue has
- * to stay a module of its own to be invalidated at all — see
+ * to stay a module of its own to be invalidated at all; see
  * `./transformer.ts`.
  *
  * Apply this outermost. Anything wrapped around it that also sets
@@ -46,13 +46,13 @@ function resolveUpstream(specifier: string, projectRoot: string) {
  */
 export function withSayKit<T extends MetroConfig>(metroConfig: T): T {
   // Wrapping our own transformer would make it its own upstream, and every
-  // transform would recurse until the worker died.
+  // transform would recurse until the worker died
   if (metroConfig.transformerPath === transformerPath) return metroConfig;
 
   const config = resolveConfig();
 
   // Metro resolves `.json` itself but knows nothing of catalogue formats like
-  // `.po`, and a file it cannot resolve is not a module it can invalidate.
+  // `.po`, and a file it cannot resolve is not a module it can invalidate
   const extensions = config.buckets
     .map((bucket) => bucket.formatter.extension.slice(1))
     .filter((extension) => extension !== 'json');
@@ -62,7 +62,7 @@ export function withSayKit<T extends MetroConfig>(metroConfig: T): T {
     if (!sourceExts.includes(extension)) sourceExts.push(extension);
 
   // Metro loads a worker standalone, so the wrapped transformer reaches its
-  // upstream through the transformer config rather than a closure.
+  // upstream through the transformer config rather than a closure
   const upstream = metroConfig.transformerPath ?? 'metro-transform-worker';
 
   return {

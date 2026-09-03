@@ -30,7 +30,7 @@ export function Renderer({
       const resolved = components(tag) ?? tag;
       // `parseNode` always passes a tag string, so `resolved` is only nullish
       // in the unreachable case where the resolver returns nothing for a
-      // missing tag.
+      // missing tag
       /* v8 ignore next */
       return resolved ?? Fragment;
     }

@@ -30,7 +30,7 @@ describe('createJsTransformer.extract', () => {
   // caller to supply it under two props and a translator to keep two holes in
   // step, for a sentence that only ever had one thing in it.
   // `#` is how ICU spells the plural's own selector, so interpolating it into a
-  // branch is how a case is written, and a `#` an author typed is text.
+  // branch is how a case is written, and a `#` an author typed is text
   it('writes a selector interpolated into its own branch as a hash', () => {
     const [message] = transformer.extract(
       'const x = say.plural(count, { one: `${count} item`, other: `${count} items` });',
@@ -122,7 +122,7 @@ describe('translator comments', () => {
   const comments = (code: string) => transformer.extract(code, 'file.ts').map((m) => m.comments);
 
   // A comment on its own line is attached to whichever node starts at it, which
-  // is almost never the message itself.
+  // is almost never the message itself
   it.each([
     ['an expression statement', '// TRANSLATORS: hi\nsay`Hello`;'],
     ['a declaration', '// TRANSLATORS: hi\nconst a = say`Hello`;'],
@@ -167,7 +167,7 @@ describe('translator comments', () => {
   });
 
   // A statement is as wide as attribution goes: a comment above a function
-  // describes the function, not every message written inside it.
+  // describes the function, not every message written inside it
   it('does not reach past the statement holding the message', () => {
     expect(comments('// TRANSLATORS: hi\nfunction f() {\n  return say`Hello`;\n}')).toEqual([[]]);
   });
@@ -191,7 +191,7 @@ describe('createJsTransformer.transform', () => {
   it('keeps a value named `id` from displacing the message id', () => {
     const output = transformer.transform('const g = say`Hi ${id}`;', 'file.ts');
     // Both are properties of one object, so without the prefix the value would
-    // win and the descriptor would no longer name a message.
+    // win and the descriptor would no longer name a message
     expect(output).toMatch(/id: "[^"]+"/);
     expect(output).toContain('_id: id');
   });
@@ -202,7 +202,7 @@ describe('createJsTransformer.transform', () => {
       'file.ts',
     );
     expect(output).toContain('_cartTotal: getTotal()');
-    // The single-key object that named it is gone, not nested inside the call.
+    // The single-key object that named it is gone, not nested inside the call
     expect(output).not.toContain('{ cartTotal:');
   });
 
@@ -223,7 +223,7 @@ describe('duplicate placeholder names', () => {
   it('allows the same value interpolated twice', () => {
     const [message] = transformer.extract('const t = say`${name} and ${name}`;', 'file.ts');
     expect(message!.message).toBe('{name} and {name}');
-    // One name is one value, so the repeat compiles to a single property.
+    // One name is one value, so the repeat compiles to a single property
     const output = transformer.transform('const t = say`${name} and ${name}`;', 'file.ts');
     expect(output.match(/_name:/g)).toHaveLength(1);
   });

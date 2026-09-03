@@ -1,124 +1,113 @@
 ---
 title: Runtime
-description: The Say class, locales, messages, activation, matching, freezing
+description: Catalogues, views and stores, locales, messages, loading, matching, switching
 ---
 
-The `Say` class is SayKit's runtime. It holds your locales and message catalogues, tracks the active locale, and formats compiled messages on demand.
+SayKit's runtime is three objects with one job each.
+
+A **catalogue** holds your locales and where each one's messages come from, whether that is the messages themselves or a function that fetches them on demand. It never formats anything and has no notion of a current locale.
+
+A **view** is one locale bound to a set of messages. It is what you call to format a message, it is immutable, and it is the only thing your application code ever holds.
+
+A **store** holds one view at a time and tells you when that changed. It is the only one of the three that mutates, and it is what switching locale in a browser looks like.
 
 ```ts
-import { Say } from 'saykit';
+import { createCatalogue } from 'saykit';
 ```
 
-You usually create one `Say` per app. Framework integrations wrap that instance, `SayProvider` in React, `SayPlugin` in Carbon, but the underlying API is the same everywhere.
+You usually create one catalogue per app. Framework integrations wrap it, `SayProvider` in React and `SayPlugin` in Carbon, but the underlying API is the same everywhere.
 
-## Creating an instance
+## Creating a catalogue
 
 ```ts
-import { Say } from 'saykit';
+import { createCatalogue } from 'saykit';
 import en from './locales/en.po';
 import fr from './locales/fr.po';
 
-const say = new Say({
-  locales: ['en', 'fr'],
-  messages: { en, fr },
+const catalogue = createCatalogue({ en, fr });
+```
+
+The keys are your locales, so there is no separate list to keep in step. Each entry is written either way round:
+
+- the messages themselves, useful when catalogues are bundled at build time
+- a thunk producing them, useful when you want to import on demand
+- a mix, bundle some, lazy-load the rest
+
+```ts
+const catalogue = createCatalogue({
+  en,
+  fr: () => import('./locales/fr.po'),
+  ja: () => import('./locales/ja.po'),
 });
 ```
 
-You can pass:
+A thunk is left alone until its locale is asked for. It usually resolves to a module rather than to the messages themselves, and the catalogue reads them off its default export.
 
-- inline `messages`, useful when catalogues are bundled at build time
-- a `loader` function, useful when you want to fetch or import on demand
-- both, preload some, lazy-load the rest
+The default locale is the first key you write. It is what `match()` falls back to when nothing else fits.
+
+See [dynamic loading](/guides/dynamic-loading) for a deeper look at the thunk pattern.
+
+## Getting a view
+
+`locale()` returns the view bound to that locale:
 
 ```ts
-const say = new Say({
-  locales: ['en', 'fr', 'ja'],
-  messages: { en },
-  loader: async (locale) => {
-    const mod = await import(`./locales/${locale}.po`);
-    return mod.default;
-  },
-});
+const say = catalogue.locale('fr');
+
+say.locale; // 'fr'
+say.messages; // { 'abc123': 'Bonjour !', ... }
+say`Hello!`; // 'Bonjour !'
 ```
 
-See [dynamic loading](/guides/dynamic-loading) for a deeper look at the loader pattern.
-
-## Reading state
-
-A `Say` instance exposes three properties:
+Views are memoised, so asking twice returns the same value:
 
 ```ts
-say.locales; // ['en', 'fr']
-say.locale; // 'en' (currently active)
-say.messages; // { 'abc123': 'Hello!', ... } (for the active locale)
+catalogue.locale('fr') === catalogue.locale('fr'); // true
 ```
 
 <Callout type="warn">
-  `say.locale` throws if no locale is active. `say.messages` throws if no catalogue is loaded for
-  the active locale. Activate a locale before reading either.
+  `locale()` is synchronous, so it throws for a locale whose thunk nobody has called yet. Reach that
+  one through `load()`, or check first with `catalogue.loaded('fr')`.
 </Callout>
+
+A view has no reference back to its catalogue, so it cannot change locale. That is deliberate: switching locale means holding a different view, not mutating the one you have. Nothing downstream has to clone or freeze to protect itself from someone else's locale change. When something does need to swap which view is current, that is a [store](#switching-locale).
+
+## Reading state
+
+A catalogue and a view expose different things, because they know different things:
+
+```ts
+catalogue.locales; // ['en', 'fr'], never empty, first is the fallback
+catalogue.loaded('fr'); // true
+
+say.locale; // 'fr'
+say.messages; // { 'abc123': 'Bonjour !', ... }
+```
 
 ## Loading messages
 
-`load()` runs your configured loader for the given locales:
+`load()` calls a locale's thunk, if it has one and nothing has called it yet, and hands back that locale's view:
 
 ```ts
-await say.load('fr');
-await say.load('fr', 'ja');
+const say = await catalogue.load('fr');
 ```
 
-With no arguments, every configured locale is loaded:
+A locale whose messages are already here does not go near its thunk and comes back synchronously, so `load()` returns a promise only when a thunk does. Pay them all up front by loading them together:
 
 ```ts
-await say.load();
+await Promise.all(catalogue.locales.map((locale) => catalogue.load(locale)));
 ```
 
-Locales that are already loaded are skipped. Calling `load()` without a configured loader throws.
+Two loads that overlap share one call rather than fetching twice, and a locale that fills never calls its thunk again. A thunk that rejects is forgotten instead of cached, so the next load calls it afresh.
 
-If your loader is synchronous, `load()` is synchronous too. If your loader returns a promise, so does `load()`.
-
-## Assigning messages
-
-Use `assign()` when you already have messages in hand and want to attach them directly, no loader required.
-
-```ts
-say.assign('fr', {
-  greeting: 'Bonjour !',
-});
-```
-
-Or for multiple locales at once:
-
-```ts
-say.assign({
-  en: { greeting: 'Hello!' },
-  fr: { greeting: 'Bonjour !' },
-});
-```
-
-This is useful when messages are embedded in the bundle, hydrated from a server, or pulled from another store.
-
-## Activating a locale
-
-A locale must be loaded (or assigned) before you can activate it:
-
-```ts
-await say.load('fr');
-say.activate('fr');
-```
-
-```ts
-say.activate('fr'); // throws if `fr` has not been loaded or assigned
-```
-
-Once a locale is active, compiled `say.call(...)` invocations resolve against its catalogue.
+A locale is filled **once**, and there is no way to replace its messages afterwards. That is what makes a view safe to hold indefinitely: nothing can swap out the messages it was built over, so a view can never quietly start formatting something else.
 
 ## Matching guesses
 
 Use `match()` to pick the best supported locale from a list of guesses, browser locales, an `Accept-Language` header, a URL segment, whatever:
 
 ```ts
-say.match(['fr-CA', 'en-US']);
+catalogue.match(['fr-CA', 'en-US']);
 // → 'fr' if your configured locales include 'fr'
 ```
 
@@ -126,58 +115,92 @@ Matching prefers in order:
 
 1. exact match against `locales`
 2. language-prefix match (`fr-CA` &rarr; `fr`)
-3. the first configured locale as final fallback
+3. the first of `locales`, as a final fallback
 
 `match()` takes any number of strings or arrays of strings; everything is flattened:
 
 ```ts
-say.match('fr-CA', 'en-US');
-say.match(['fr-CA', 'en-US']);
-say.match(headerLocales, [cookieLocale]);
+catalogue.match('fr-CA', 'en-US');
+catalogue.match(['fr-CA', 'en-US']);
+catalogue.match(headerLocales, [cookieLocale]);
 ```
 
 See [locale detection](/guides/locale-detection) for usage patterns.
 
-## Cloning
+## Switching locale
 
-`clone()` returns a fresh `Say` with the same locales, messages, and loader:
-
-```ts
-const requestSay = say.clone();
-requestSay.activate('fr');
-```
-
-Cloning is the right way to handle a per-request, per-interaction, or per-render locale without mutating a shared instance. The Carbon and React server integrations do this for you under the hood.
-
-## Freezing
-
-`freeze()` returns a read-only view:
+A catalogue does not switch and a view cannot, so switching is its own object. A **store** holds the current view, swaps it for another, and tells whoever is listening:
 
 ```ts
-const readonlySay = say.clone().activate('fr').freeze();
+import { createStore } from 'saykit';
+
+const store = createStore(catalogue, 'en');
+
+store.say`Hello, ${name}!`;
+store.say.locale; // 'en'
+
+const unsubscribe = store.subscribe((say) => render(say));
+
+await store.set('fr');
+store.say.locale; // 'fr'
 ```
 
-A frozen `Say` can still:
+The current view is the store's only reading, and it is called `say` because that is the name a message is written against, so a store is formatted through directly rather than through a view pulled off it first.
 
-- read `locale`, `locales`, `messages`
-- call `match()`
-- format messages via `say.call(...)`
+A store has no locale of its own either: the locale belongs to the view, and the store only says which view is current.
 
-But it can no longer:
+`say` is read at the moment of access, which is what keeps it following the switches. Read it per call for that reason: a `const say = store.say` held across a switch is the old view.
 
-- `load()`
-- `assign()`
-- `activate()`
+`set()` loads the locale first if the catalogue does not have it yet, and like `load()` it is synchronous when the thunk is, so a locale that is already loaded switches inside the same tick.
 
-Freezing is how the React integration hands a `Say` to client components, safely scoped to one locale, with no way to mutate it accidentally.
+Only successful switches notify. Setting the locale that is already current does nothing, and a load that throws leaves the current view where it was, so a subscriber only ever sees a view it can format against. If two switches overlap, the last one you asked for wins, whichever load finishes first.
+
+The current view's identity changes with the locale, which is what lets a subscriber compare snapshots, and because views are memoised, switching away and back gives you the same view again:
+
+```ts
+const en = store.say;
+await store.set('fr');
+await store.set('en');
+store.say === en; // true
+```
+
+<Callout type="warn">
+  A store is the one part of the runtime that mutates, so it belongs in a browser: one locale at a
+  time, one user, module scope. On a server, where several locales are in flight at once, look a
+  view up per request instead of sharing a store.
+</Callout>
+
+## Concurrency
+
+There is nothing to clone. A catalogue is shared safely because it has no current locale to leak, and a view is shared safely because it cannot be changed.
+
+```ts
+// Two requests, two locales, one catalogue, no defensive copies.
+const english = catalogue.locale('en');
+const french = catalogue.locale('fr');
+```
+
+This is the whole reason for the split. A per-request, per-interaction, or per-render locale is just a view you looked up, and the Carbon and React server integrations do exactly that under the hood.
+
+## Views without a catalogue
+
+A view needs nothing from a catalogue beyond a record of messages, so `createView` builds one directly:
+
+```ts
+import { createView } from 'saykit';
+
+const say = createView('fr', messages);
+```
+
+This is what `SayProvider` builds on when it is given a locale and its messages rather than a store, which is what a server has already picked and serialised across the boundary. When you do have a catalogue, prefer `catalogue.locale(code)`, so views stay memoised.
 
 ## Iterating locales
 
-A `Say` instance is iterable. It yields `[frozenSay, locale]` for every configured locale, with each `frozenSay` already activated to that locale:
+A catalogue is iterable. It yields `[locale, say]` for every configured locale:
 
 ```ts
-for (const [localised, locale] of say) {
-  console.log(locale, localised`Hello!`);
+for (const [locale, say] of catalogue) {
+  console.log(locale, say`Hello!`);
 }
 ```
 
@@ -197,44 +220,41 @@ say.call({
 
 In application code you rarely write this directly, the build transform generates it from your `` say`...` `` and `<Say>` macros. The descriptor always has an `id`; extra properties become ICU placeholders. The transform emits each value behind one underscore so it cannot collide with the descriptor's own keys, and `call` strips exactly one back off, keys written without one are passed through unchanged.
 
+Each view caches the formats it compiles, so a message is parsed once per locale for the life of the process.
+
 ## Putting it together
 
 A typical client-side bootstrap:
 
 ```ts title="src/i18n.ts"
-import { Say } from 'saykit';
+import { createCatalogue, createStore } from 'saykit';
 import en from './locales/en.po';
 import fr from './locales/fr.po';
 
-const say = new Say({
-  locales: ['en', 'fr'],
-  messages: { en, fr },
-});
+const catalogue = createCatalogue({ en, fr });
 
-const guess = navigator.language ?? 'en';
-say.activate(say.match(guess));
+export default catalogue;
 
-export default say;
+// A store rather than a view, so the app can switch locale later. Read
+// `store.say` at the point you format, not once into a module binding.
+export const store = createStore(catalogue, catalogue.match(navigator.languages as string[]));
 ```
 
 A typical per-request server-side bootstrap:
 
 ```ts title="src/server-i18n.ts"
-import { Say } from 'saykit';
+import { createCatalogue } from 'saykit';
 
-const baseSay = new Say({
-  locales: ['en', 'fr'],
-  loader: (l) => import(`./locales/${l}.po`).then((m) => m.default),
+const catalogue = createCatalogue({
+  en: () => import('./locales/en.po'),
+  fr: () => import('./locales/fr.po'),
 });
 
-export async function getSayFor(headers: Headers) {
+export function getSayFor(headers: Headers) {
   const acceptLang = headers.get('accept-language') ?? '';
   const guesses = acceptLang.split(',').map((s) => s.split(';')[0]!.trim());
 
-  const requestSay = baseSay.clone();
-  const locale = requestSay.match(guesses);
-  await requestSay.load(locale);
-  return requestSay.activate(locale).freeze();
+  return catalogue.load(catalogue.match(guesses));
 }
 ```
 
@@ -242,4 +262,4 @@ export async function getSayFor(headers: Headers) {
 
 - [Locale detection](/guides/locale-detection), matching browser, header, cookie, and URL inputs
 - [Dynamic loading](/guides/dynamic-loading), lazy locale loading patterns
-- [React integration](/integrations/react), `SayProvider`, `useSay`, server runtime
+- [React integration](/integrations/react), `SayProvider`, `useSay`, `<SayScope>`

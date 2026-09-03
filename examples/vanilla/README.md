@@ -1,6 +1,6 @@
 # Vanilla example
 
-A library "My loans" page written in plain TypeScript against the DOM — no framework,
+A library "My loans" page written in plain TypeScript against the DOM: no framework,
 no runtime i18n library. Just the [`saykit`](../../packages/integration) core runtime and
 [`unplugin-saykit`](../../packages/plugin-unplugin) wired into Vite.
 
@@ -10,9 +10,9 @@ This is the smallest complete picture of how SayKit works, and the best example 
 
 | API                                                           | Where                                 |
 | ------------------------------------------------------------- | ------------------------------------- |
-| `new Say({ locales, messages })`                              | `src/i18n.ts`                         |
-| `say.match(navigator.languages)` — locale detection           | `src/main.ts`                         |
-| `say.activate(locale)` — runtime locale switching             | `src/main.ts` (the language picker)   |
+| `createCatalogue({ ...messages })`                            | `src/i18n.ts`                         |
+| `catalogue.match(navigator.languages)`, locale detection      | `src/main.ts`                         |
+| `catalogue.locale(code)`, runtime locale switching            | `src/main.ts` (the language picker)   |
 | `` say`…` `` with interpolation                               | `src/main.ts`                         |
 | `say({ context })` to disambiguate identical source text      | `src/main.ts` (`My loans`)            |
 | `say.plural` with CLDR categories **and** an exact `0` case   | `renderSummary`                       |
@@ -49,10 +49,10 @@ longer exist in the source.
 
 `unplugin-saykit/vite` does two things (see `vite.config.ts`):
 
-1. **transform** — rewrites `` say`Due in ${n} days` `` into a `say.call({ id, … })` with a stable
+1. **transform** rewrites `` say`Due in ${n} days` `` into a `say.call({ id, … })` with a stable
    hashed id. The macro bodies in the runtime throw if this step is missing, so a misconfigured
    build fails loudly rather than silently shipping English.
-2. **load** — turns `import en from './locales/en.po'` into a plain JS object. No PO parser reaches
+2. **load** turns `import en from './locales/en.po'` into a plain JS object. No PO parser reaches
    the browser bundle.
 
 Further reading: [core concepts](../../website/content/core-concepts) and the

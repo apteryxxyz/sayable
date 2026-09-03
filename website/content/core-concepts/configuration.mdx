@@ -37,7 +37,7 @@ The CLI and the build-tool plugins both load your config via `resolveConfig()` f
 `@saykit/config/features/loader`. It searches up from the current working directory for
 `saykit.config.{ts,mts,cts,js,mjs,cjs}` and loads the first match.
 
-The file is handed to the runtime as it sits on disk — nothing is copied, transpiled or cached — so
+The file is handed to the runtime as it sits on disk, with nothing copied, transpiled or cached, so
 relative imports, `import.meta.dirname` and `__dirname` all resolve against the config's own
 directory. A config is free to import a formatter or transformer from alongside it:
 
@@ -179,7 +179,7 @@ output: 'translations/{locale}/messages.{extension}';
 
 ### Declared messages
 
-Extraction only sees messages that appear as macros in source files. When a string belongs in the catalogue but has no call site — a browser extension manifest, an app store listing, an email subject, database seed data — declare it on the bucket instead of writing a dummy module for the extractor to find.
+Extraction only sees messages that appear as macros in source files. When a string belongs in the catalogue but has no call site, such as a browser extension manifest, an app store listing, an email subject or database seed data, declare it on the bucket instead of writing a dummy module for the extractor to find.
 
 ```ts
 messages: {
@@ -195,7 +195,7 @@ messages: {
 },
 ```
 
-Each key is the message id, so declared strings always have stable, hand-written keys rather than content hashes — which is exactly what a manifest needs when it names one. They are merged into the catalogue on every `saykit extract`, alongside everything the transformers find. If a source file happens to use the same id, the declaration wins on text and comments, and the call site still contributes its source reference.
+Each key is the message id, so declared strings always have stable, hand-written keys rather than content hashes, which is exactly what a manifest needs when it names one. They are merged into the catalogue on every `saykit extract`, alongside everything the transformers find. If a source file happens to use the same id, the declaration wins on text and comments, and the call site still contributes its source reference.
 
 <Callout type="info">
   Declared messages have no call site, so they are written without source references. Use `comments`

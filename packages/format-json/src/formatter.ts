@@ -18,11 +18,11 @@ interface FormatterOptions {
   /**
    * The JSON dialect to write. A dialect other than the default plain
    * `{ key: value }` map carries message metadata (comments, context, source
-   * references) using a richer — but still standard — layout.
+   * references) using a richer, but still standard, layout.
    *
-   * - `'arb'` — Application Resource Bundle (Flutter/Dart `intl`). Strings stay
+   * - `'arb'`: Application Resource Bundle (Flutter/Dart `intl`). Strings stay
    *   flat and each key's metadata lives in a sibling `@key` object.
-   * - `'webextension'` — the Chrome/WebExtension `messages.json` shape, where
+   * - `'webextension'`: the Chrome/WebExtension `messages.json` shape, where
    *   each key maps to a `{ message, description }` object.
    *
    * Both carry translator comments in their native `description` field. Context

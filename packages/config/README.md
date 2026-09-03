@@ -51,7 +51,7 @@ have a file yet are bootstrapped with an empty, header-only catalogue so a TMS c
 existing translation files are left untouched. Translated content is owned by your TMS.
 
 At load time (via the unplugin or Babel plugin), each locale module is filled from its fallback
-chain, so an untranslated key resolves to a fallback locale and ultimately the source string — the
+chain, so an untranslated key resolves to a fallback locale and ultimately the source string, the
 runtime still loads a single locale.
 
 `saykit clean` only ever subtracts from non-source locales: it drops entries that no longer exist in

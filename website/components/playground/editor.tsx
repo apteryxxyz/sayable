@@ -42,7 +42,7 @@ const theme = EditorView.theme({
     fontFamily: 'var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace)',
     lineHeight: '1.5rem',
     // Thin, themed scrollbars flush to the pane edge. The padding that used to sit
-    // on the wrapper lives here instead, so the track isn't inset from the border.
+    // on the wrapper lives here instead, so the track isn't inset from the border
     scrollbarWidth: 'thin',
     scrollbarColor: 'var(--color-fd-border) transparent',
   },
@@ -51,7 +51,7 @@ const theme = EditorView.theme({
   '.cm-scroller::-webkit-scrollbar-thumb': {
     backgroundColor: 'var(--color-fd-border)',
     borderRadius: '9999px',
-    // Inset the thumb without insetting the track.
+    // Inset the thumb without insetting the track
     border: '3px solid transparent',
     backgroundClip: 'content-box',
   },
@@ -61,8 +61,8 @@ const theme = EditorView.theme({
   },
   '.cm-scroller::-webkit-scrollbar-corner': { background: 'transparent' },
   // Only vertical padding out here. The horizontal padding goes on the line and
-  // gutter elements themselves, so the active-line highlight — which paints those
-  // elements' backgrounds — runs edge to edge instead of stopping short.
+  // gutter elements themselves, so the active-line highlight, which paints those
+  // elements' backgrounds, runs edge to edge instead of stopping short
   '.cm-content': { padding: '0.75rem 0' },
   '.cm-line': { padding: '0 0.75rem 0 0.5rem' },
   '.cm-gutters': {
@@ -77,10 +77,10 @@ const theme = EditorView.theme({
     color: 'var(--color-fd-foreground)',
   },
   // The drawn selection is a layer *behind* the content, so an opaque active-line
-  // background hides it — which is why selecting within one line used to show no
+  // background hides it, which is why selecting within one line used to show no
   // colour at all while a multi-line selection appeared everywhere but the line
   // the cursor was on. Drop the highlight while a selection exists (the layer only
-  // has children then), the way editors like VS Code do.
+  // has children then), the way editors like VS Code do
   '&:has(.cm-selectionLayer > *) .cm-activeLine': { backgroundColor: 'transparent' },
   '&:has(.cm-selectionLayer > *) .cm-activeLineGutter': {
     backgroundColor: 'transparent',
@@ -88,17 +88,17 @@ const theme = EditorView.theme({
   },
   // Spelled out to the base theme's full depth, which is more specific than a bare
   // `.cm-selectionBackground` and would otherwise win. Focused and unfocused match,
-  // so reaching for Format or Copy doesn't dim what you just selected.
+  // so reaching for Format or Copy doesn't dim what you just selected
   '& > .cm-scroller > .cm-selectionLayer .cm-selectionBackground': {
     backgroundColor: SELECTION,
   },
   '&.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground': {
     backgroundColor: SELECTION,
   },
-  // The read-only pane keeps the browser's own selection, so it is styled here too.
+  // The read-only pane keeps the browser's own selection, so it is styled here too
   '.cm-content ::selection': { backgroundColor: SELECTION },
   // Both of these have a three-class base rule behind them, hence the `.cm-scroller`
-  // step — without it the search plugin's green and the bracket default stay put.
+  // step; without it the search plugin's green and the bracket default stay put
   '& .cm-scroller .cm-selectionMatch': {
     backgroundColor: 'color-mix(in oklab, var(--color-fd-foreground) 12%, transparent)',
   },
@@ -119,13 +119,13 @@ const fillHeight = EditorView.theme({ '&': { height: '100%' } });
 
 /**
  * The read-only pane sizes to its content instead, since it sits under the message
- * list rather than in a pane of its own — but caps out so a long transform can't
+ * list rather than in a pane of its own, but caps out so a long transform can't
  * push the page down forever.
  */
 const capHeight = EditorView.theme({ '&': { maxHeight: '600px' } });
 
 /**
- * `basicSetup` is all editing affordances — history, autocompletion, bracket
+ * `basicSetup` is all editing affordances: history, autocompletion, bracket
  * matching, the search panel. A pane you can only read needs none of it; line
  * numbers and the special-character replacement are what carry the shared look.
  */
@@ -150,7 +150,7 @@ export default function CodeEditor({
 }) {
   const container = useRef<HTMLDivElement>(null);
   const view = useRef<EditorView>(null);
-  // Kept in a ref so swapping the handler never tears down the editor.
+  // Kept in a ref so swapping the handler never tears down the editor
   const handler = useRef(onChange);
   handler.current = onChange;
 
@@ -184,14 +184,14 @@ export default function CodeEditor({
       editor.destroy();
       view.current = null;
     };
-    // Mount once — `value` is the initial document, later updates flow in below,
-    // and `readOnly` is fixed by the call site.
+    // Mount once, `value` is the initial document, later updates flow in below,
+    // and `readOnly` is fixed by the call site
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Accept programmatic changes (e.g. loading an example, or a fresh transform)
   // without fighting typing. `EditorState.readOnly` only refuses user edits, so a
-  // dispatched change still lands in the read-only pane.
+  // dispatched change still lands in the read-only pane
   useEffect(() => {
     const editor = view.current;
     if (!editor || editor.state.doc.toString() === value) return;

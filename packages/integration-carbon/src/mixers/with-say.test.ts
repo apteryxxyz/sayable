@@ -1,9 +1,9 @@
 import { BaseCommand, BaseComponent, Modal } from '@buape/carbon';
-import { Say } from 'saykit';
+import { type Catalogue, createCatalogue, type View } from 'saykit';
 import { describe, expect, it } from 'vitest';
 import { withSay } from './with-say.js';
 
-const say = () => new Say({ locales: ['en', 'fr'], messages: { en: {}, fr: {} } }).activate('en');
+const catalogue = () => createCatalogue({ en: {}, fr: {} });
 
 describe('withSay', () => {
   it('throws for a base class that is neither a command nor a component', () => {
@@ -37,11 +37,11 @@ describe('withSay', () => {
       async run() {}
     }
     const SayCommand = withSay(Cmd) as unknown as new (
-      say: Say,
-      props: (s: Say) => { name: string; description: string },
+      catalogue: Catalogue,
+      props: (s: View) => { name: string; description: string },
     ) => { name: string; description: string } & Record<string, unknown>;
 
-    const command = new SayCommand(say(), (s) => ({
+    const command = new SayCommand(catalogue(), (s) => ({
       name: `name-${s.locale}`,
       description: `desc-${s.locale}`,
     }));
@@ -62,7 +62,7 @@ describe('withSay', () => {
     }) => Record<string, unknown>;
 
     expect(new SayButton({ label: 'Click' }).label).toBe('Click');
-    // Constructed without properties — nothing is assigned.
+    // Constructed without properties, nothing is assigned
     expect(new SayButton().label).toBeUndefined();
   });
 

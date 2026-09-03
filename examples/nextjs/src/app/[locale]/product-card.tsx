@@ -34,11 +34,6 @@ function Availability({ product }: { product: Product }) {
   );
 }
 
-/**
- * A server component. It never imports `@saykit/react/client`, and it does not
- * need a provider above it — `@saykit/react` resolves through the `react-server`
- * export condition here, which binds `<Say>` to `getSay()` instead of `useSay()`.
- */
 export function ProductCard({ product }: { product: Product }) {
   const say = getSay();
 
@@ -80,7 +75,6 @@ export function ProductCard({ product }: { product: Product }) {
         )}
       </p>
 
-      {/* The button below is a client component; the label crosses the boundary as a string. */}
       <AddToCart slug={product.slug} disabled={product.availability === 'discontinued'} />
     </article>
   );

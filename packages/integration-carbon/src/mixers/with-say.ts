@@ -1,5 +1,5 @@
 import { BaseCommand, BaseComponent, Modal } from '@buape/carbon';
-import type { Say } from 'saykit';
+import type { Catalogue, View } from 'saykit';
 import { combineCommandOptions } from '~/utils/combine-command-options.js';
 
 type Keys =
@@ -27,13 +27,13 @@ type SayProps<T> = Pick<T, Extract<keyof T, Keys>>;
  * Enhances a {@link BaseCommand} subclass with support for localisation.
  *
  * @param Base Abstract command constructor to extend.
- * @returns A new constructor that accepts a {@link Say} instance, a
+ * @returns A new constructor that accepts a {@link Catalogue}, a
  * properties-mapping function, and the original constructor arguments.
  */
 export function withSay<Args extends unknown[], Instance extends BaseCommand>(
   Base: AbstractConstructor<Args, Instance>,
 ): AbstractConstructor<
-  [say: Say, properties: (say: Say) => SayProps<Instance>, ...args: Args],
+  [catalogue: Catalogue, properties: (say: View) => SayProps<Instance>, ...args: Args],
   Instance & Partial<Record<Keys, unknown>>
 >;
 
@@ -85,18 +85,20 @@ function createSayCommand<Args extends unknown[], Instance extends BaseCommand>(
   // @ts-expect-error - abstract
   abstract class SayCommand extends Base {
     constructor(
-      say: Say,
-      properties: (say: Say) => Pick<Instance, Extract<keyof Instance, Keys>>,
+      catalogue: Catalogue,
+      properties: (say: View) => Pick<Instance, Extract<keyof Instance, Keys>>,
       ...args: Args
     ) {
       super(...args);
 
-      const records = Array.from(say).reduce<Record<string, any>>((acc, [s, l]) => {
-        acc[l] = properties(s);
+      const records = Array.from(catalogue).reduce<Record<string, any>>((acc, [locale, say]) => {
+        acc[locale] = properties(say);
         return acc;
       }, {});
 
-      const options = combineCommandOptions(records, say.locale);
+      // Discord takes one set of names and localisations for the rest, so the
+      // catalogue's first locale is the one the command is registered under
+      const options = combineCommandOptions(records, catalogue.locales[0]);
       Object.assign(this, options);
     }
   }

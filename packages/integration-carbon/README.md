@@ -4,7 +4,7 @@
 
 [![Coverage](https://codecov.io/gh/k0d13/saykit/graph/badge.svg?flag=integration-carbon)](https://codecov.io/gh/k0d13/saykit?flags%5B0%5D=integration-carbon)
 
-Registers a shared `Say` with your Carbon client, helps command and component classes expose translated metadata, and adds locale-aware `interaction.say` and `guild.say` properties.
+Registers a shared catalogue with your Carbon client, helps command and component classes expose translated metadata, and adds locale-aware `interaction.say` and `guild.say` properties.
 
 ## Install
 
@@ -17,12 +17,12 @@ pnpm add @saykit/carbon saykit @buape/carbon
 ```ts
 import { Client, Command, type CommandInteraction } from '@buape/carbon';
 import { SayPlugin, withSay } from '@saykit/carbon';
-import { type Say } from 'saykit';
-import say from './i18n.js';
+import { type Catalogue } from 'saykit';
+import catalogue from './i18n.js';
 
 class PingCommand extends withSay(Command) {
-  constructor(say: Say) {
-    super(say, (say) => ({
+  constructor(catalogue: Catalogue) {
+    super(catalogue, (say) => ({
       name: say`ping`,
       description: say`Ping the bot!`,
     }));
@@ -33,8 +33,8 @@ class PingCommand extends withSay(Command) {
   }
 }
 
-const client = new Client({/* options */}, { commands: [new PingCommand(say)] }, [
-  new SayPlugin(say),
+const client = new Client({/* options */}, { commands: [new PingCommand(catalogue)] }, [
+  new SayPlugin(catalogue),
 ]);
 ```
 

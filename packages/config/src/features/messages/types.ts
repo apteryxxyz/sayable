@@ -22,7 +22,7 @@ export class LiteralMessage extends Base {
 
 /**
  * An ICU argument type and style, e.g. `{n, number, percent}`. A style is
- * optional — `{n, number}` is the type's default formatting.
+ * optional: `{n, number}` is the type's default formatting.
  *
  * Both are kept as the ICU strings they are written as, rather than as `Intl`
  * options, because the catalogue is the source of truth and only the ICU

@@ -88,7 +88,7 @@ describe('generateSayJSXElement', () => {
       t.identifier('say'),
     );
 
-    // Values live behind an underscore, `Say`'s own props in front of it.
+    // Values live behind an underscore, `Say`'s own props in front of it
     expect(attrNames(generateSayJSXElement(message))).toEqual([
       'id',
       '_name',

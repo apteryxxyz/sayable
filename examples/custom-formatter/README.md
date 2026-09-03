@@ -9,15 +9,15 @@ never heard of, this is the example.
 
 ## What it demonstrates
 
-| Concern                                                      | Where                  |
-| ------------------------------------------------------------ | ---------------------- |
-| A custom `Formatter` (`extension` / `parse` / `stringify`)   | `yaml-formatter.ts`    |
-| `existingContent` — not clobbering human edits               | `yaml-formatter.ts`    |
-| `generateHash` — keying messages the way the runtime expects | both files             |
-| A custom `Transformer` (`match` / `extract` / `transform`)   | `email-transformer.ts` |
-| Compiling a **non-JS** file into a module                    | `email-transformer.ts` |
-| Ambient types for the generated module                       | `src/templates.d.ts`   |
-| Locale from `LC_ALL` / `LC_MESSAGES` / `LANG`                | `src/i18n.ts`          |
+| Concern                                                     | Where                  |
+| ----------------------------------------------------------- | ---------------------- |
+| A custom `Formatter` (`extension` / `parse` / `stringify`)  | `yaml-formatter.ts`    |
+| `existingContent`: not clobbering human edits               | `yaml-formatter.ts`    |
+| `generateHash`: keying messages the way the runtime expects | both files             |
+| A custom `Transformer` (`match` / `extract` / `transform`)  | `email-transformer.ts` |
+| Compiling a **non-JS** file into a module                   | `email-transformer.ts` |
+| Ambient types for the generated module                      | `src/templates.d.ts`   |
+| Locale from `LC_ALL` / `LC_MESSAGES` / `LANG`               | `src/i18n.ts`          |
 
 ## Writing a formatter
 
@@ -37,7 +37,7 @@ Two details are easy to get wrong, and this example is written to show both:
 
 **Key messages with `generateHash`, not with the source text.** The transformer compiles the same
 id into `say.call({ id })` at the call site, and that is what the runtime looks up. Keying on the
-raw text instead produces a catalogue the runtime silently cannot read — and collides for two
+raw text instead produces a catalogue the runtime silently cannot read, and collides for two
 messages with the same text but different `context`.
 
 **Respect `existingContent`.** `stringify` is handed whatever is already on disk. Merge into it.
@@ -71,13 +71,13 @@ export default function render(say, values = {}) {
 }
 ```
 
-By the time the bundler looks at the file, it _is_ a module — so `import summary from
+By the time the bundler looks at the file, it _is_ a module, so `import summary from
 './templates/summary.email'` just works. TypeScript needs telling separately, which is what
 `src/templates.d.ts` is for; the transformer runs in the bundler, long after the type-checker.
 
-Note the generated function takes `say` as a parameter instead of importing one. A template should
-not decide which catalogue it belongs to — that keeps it compatible with the per-request `clone()`
-pattern the server examples use.
+Note the generated function takes a view as a parameter instead of importing one. A template should
+not decide which catalogue it belongs to, which keeps it compatible with the per-request
+`catalogue.locale(locale)` the server examples use.
 
 ## Transformers compose
 
@@ -86,7 +86,7 @@ transformer: [js(), email()],
 ```
 
 A bucket accepts an array. Each transformer declares what it owns via `match`, and a file is only
-handed to the ones that claim it — `js()` takes `.ts`, `email()` takes `.email`. Extraction unions
+handed to the ones that claim it: `js()` takes `.ts`, `email()` takes `.email`. Extraction unions
 their results; transformation pipes the file through each matching one in order.
 
 ## Importing them
@@ -98,7 +98,7 @@ import email from './email-transformer.ts';
 import yaml from './yaml-formatter.ts';
 ```
 
-Note the `.ts` — the config is handed to the runtime as it sits, so specifiers are resolved by Node
+Note the `.ts`: the config is handed to the runtime as it sits, so specifiers are resolved by Node
 and nothing rewrites the extension for you. That needs Node 22.18+ (or Bun, Deno, or `tsx`) to read
 TypeScript. Bare specifiers work too, so a formatter you intend to reuse across projects can just as
 well be a published package.

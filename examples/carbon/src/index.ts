@@ -6,7 +6,9 @@ import { AnnounceCommand } from './commands/announce.js';
 import { JoinCommand, JoinModal } from './commands/join.js';
 import { LeaderboardCommand } from './commands/leaderboard.js';
 import { PickCommand, RemindMeButton } from './commands/pick.js';
-import say from './i18n.js';
+import catalogue from './i18n.js';
+
+const say = catalogue.locale(catalogue.locales[0]);
 
 const client = new Client(
   {
@@ -18,17 +20,14 @@ const client = new Client(
   },
   {
     commands: [
-      new PickCommand(say),
-      new JoinCommand(say),
-      new LeaderboardCommand(say),
-      new AnnounceCommand(say),
+      new PickCommand(catalogue),
+      new JoinCommand(catalogue),
+      new LeaderboardCommand(catalogue),
+      new AnnounceCommand(catalogue),
     ],
     components: [new RemindMeButton(say)],
   },
-  // `SayPlugin` publishes the instance globally and installs the
-  // `interaction.say` / `guild.say` accessors. Without it, those getters do not
-  // exist and every command in this bot throws.
-  [new SayPlugin(say), new CommandDataPlugin()],
+  [new SayPlugin(catalogue), new CommandDataPlugin()],
 );
 
 for (const modal of [new JoinModal(say)]) client.modalHandler.registerModal(modal);

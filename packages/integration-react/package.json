@@ -31,6 +31,7 @@
     },
     "./client": {
       "types": "./dist/client.d.mts",
+      "react-server": "./dist/client.server.mjs",
       "default": "./dist/client.mjs"
     },
     "./server": {

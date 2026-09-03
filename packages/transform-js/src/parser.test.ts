@@ -15,7 +15,7 @@ import * as parser from './parser.js';
 const traverse = ((traverse_ as any).default || traverse_) as typeof traverse_;
 
 // Parse a snippet of real source into its expression node, the way the
-// transformer does (see index.ts). `test.js` becomes the reference filename.
+// transformer does (see index.ts). `test.js` becomes the reference filename
 function expr<T extends t.Expression = t.Expression>(code: string): T {
   return parseExpression(code, {
     sourceFilename: 'test.js',
@@ -94,7 +94,7 @@ describe('parseTaggedTemplateExpression', () => {
   });
 
   // A formatted argument is a fragment, not a whole message, so the shape that
-  // matters most is the nested one.
+  // matters most is the nested one
   it('parses a nested formatted argument inside a template', () => {
     const result = parser.parseTaggedTemplateExpression(
       expr('say`You have ${say.number(items.length)} items`'),
@@ -150,7 +150,7 @@ describe('parseTaggedTemplateExpression', () => {
   });
 
   it('falls back to the raw quasi value when cooked is undefined', () => {
-    // An invalid escape leaves `cooked` null, so the raw text is used instead.
+    // An invalid escape leaves `cooked` null, so the raw text is used instead
     const result = parser.parseTaggedTemplateExpression(expr('say`\\unicode`'));
     expect(result!.children[0]).toEqual({ text: '\\unicode' });
   });
@@ -163,7 +163,7 @@ describe('parseTaggedTemplateExpression', () => {
 
 describe('parseCallExpression', () => {
   // Every choice kind parses through one code path, so they are asserted as a
-  // table: the kind, the selector, and the branch list read off it.
+  // table: the kind, the selector, and the branch list read off it
   it.each([
     [
       "say.plural(count, { one: 'item', other: 'items' })",
@@ -195,7 +195,7 @@ describe('parseCallExpression', () => {
       ],
     ],
     [
-      // Numeric keys stay exact matches rather than becoming plural categories.
+      // Numeric keys stay exact matches rather than becoming plural categories
       "say.plural(count, { 0: 'none', 1: 'one', other: 'many' })",
       'plural',
       'count',
@@ -309,7 +309,7 @@ describe('parseCallExpression', () => {
   });
 
   // `select` has no number to offset, so `offset` there is an ordinary key that
-  // happens to be spelled that way.
+  // happens to be spelled that way
   it('treats offset as a branch key on select', () => {
     const result = parser.parseCallExpression(
       expr("say.select(kind, { offset: 'Offset', other: 'Other' })"),
@@ -320,7 +320,7 @@ describe('parseCallExpression', () => {
   });
 
   // The offset is baked into the extracted message, so it has to be known at
-  // build time. Anything else stays a branch and fails branch validation.
+  // build time. Anything else stays a branch and fails branch validation
   it.each(['offset: n', 'offset: 1.5', 'offset: -1'])('ignores a non-literal %s', (offset) => {
     expect(() =>
       parser.parseCallExpression(expr(`say.plural(count, { ${offset}, other: '#' })`)),
@@ -354,7 +354,7 @@ describe('parseCallExpression', () => {
     const result = parser.parseCallExpression(expr('say.number({ cartTotal: getTotal() })'));
     const argument = result!.children[0] as ArgumentMessage;
     expect(argument.identifier).toBe('cartTotal');
-    // The wrapper is gone: what compiles is the value alone.
+    // The wrapper is gone: what compiles is the value alone
     expect(t.isCallExpression(argument.expression)).toBe(true);
     expect((argument.expression as t.CallExpression).callee).toMatchObject({ name: 'getTotal' });
   });
@@ -391,7 +391,7 @@ describe('parseCallExpression', () => {
   });
 
   // The style is baked into the extracted message, so a value only known at
-  // runtime cannot name one. It is dropped rather than guessed at.
+  // runtime cannot name one. It is dropped rather than guessed at
   it('ignores a style that is not a string literal', () => {
     const result = parser.parseCallExpression(expr('say.number(n, { style: dynamic })'));
     expect((result!.children[0] as ArgumentMessage).format).toEqual({
@@ -453,7 +453,7 @@ describe('parseCallExpression', () => {
   });
 
   // ICU `select` matches its cases as literal strings, so a numeric key is an
-  // ordinary key there and stays bare — `=0` would fail to parse.
+  // ordinary key there and stays bare, since `=0` would fail to parse
   it('keeps a numeric key bare on a select', () => {
     const result = parser.parseCallExpression(
       expr("say.select(tier, { 0: 'Free', other: 'Paid' })"),
@@ -540,7 +540,7 @@ describe('unwrapPlaceholder', () => {
     const result = parser.parseExpression(expr('say`Total: ${{ cartTotal: getTotal() }}`'));
     const argument = result!.children[1] as ArgumentMessage;
     expect(argument.identifier).toBe('cartTotal');
-    // The wrapper is gone, only the value it held is compiled.
+    // The wrapper is gone, only the value it held is compiled
     expect(t.isCallExpression(argument.expression)).toBe(true);
     expect(((argument.expression as t.CallExpression).callee as t.Identifier).name).toBe(
       'getTotal',
@@ -566,7 +566,7 @@ describe('unwrapPlaceholder', () => {
     ['a spread', '({ ...rest })'],
     ['a method', '({ a() {} })'],
   ])('leaves an object with %s untouched', (_, code) => {
-    // Only the one shape that could not already mean something is claimed.
+    // Only the one shape that could not already mean something is claimed
     const object = expr<t.ObjectExpression>(code);
     expect(parser.unwrapPlaceholder(object)).toEqual([AUTO_INCREMENT_IDENTIFIER, object]);
   });
@@ -590,7 +590,7 @@ describe('unwrapPlaceholder', () => {
   it('keeps a named `say` macro a message of its own', () => {
     const result = parser.parseExpression(expr('say`Hi ${{ nested: say`there` }}`'));
     // The name is dropped rather than applied to a nested message, but no macro
-    // survives into the output.
+    // survives into the output
     expect(result!.children[1]).toBeInstanceOf(CompositeMessage);
   });
 });
@@ -605,7 +605,7 @@ describe('isEquivalentPlaceholder, on values', () => {
   });
 
   it('treats a variable and a member chain as distinguishable', () => {
-    // The shape `${name}` beside `${{ name: author.name }}` reduces to.
+    // The shape `${name}` beside `${{ name: author.name }}` reduces to
     expect(parser.isEquivalentPlaceholder(expr('name'), expr('author.name'))).toBe(false);
   });
 
@@ -615,7 +615,7 @@ describe('isEquivalentPlaceholder, on values', () => {
 
   it('ignores where in the source each one was written', () => {
     // The same expression written at two points in a message parses to nodes
-    // that differ in position, which must not make them two placeholders.
+    // that differ in position, which must not make them two placeholders
     const a = expr('cart.total');
     const b = expr('  cart.total');
     expect(a.start).not.toBe(b.start);
@@ -630,7 +630,7 @@ describe('isEquivalentPlaceholder, on values', () => {
 
 describe('collectLeadingComments', () => {
   // The JSX parser reaches these paths through this package, so they are
-  // exercised here against the source rather than the built dependency.
+  // exercised here against the source rather than the built dependency
   function collect(code: string, find: (node: t.Node) => boolean) {
     const ast = parse(code, {
       sourceType: 'module',
@@ -702,7 +702,7 @@ describe('collectLeadingComments', () => {
 
   it('reports a comment once when an ancestor already carries it', () => {
     // The transformer assigns what this collects back on to the node, so a
-    // second pass over the same tree must not double the comment up.
+    // second pass over the same tree must not double the comment up
     const ast = parse('// a note\nconst a = say`Hi`;', {
       sourceType: 'module',
       attachComment: true,

@@ -2,7 +2,7 @@ import type { VersionOption } from '@/app/(home)/playground/versions';
 
 /**
  * Loading the SayKit release the playground runs on. Every published version is a
- * module on a CDN, so switching versions is switching a URL — and because every
+ * module on a CDN, so switching versions is switching a URL, and because every
  * approving review on a pull request publishes the workspace to pkg.pr.new, which
  * esm.sh serves under `/pr/`, a pull request loads exactly the way a release does.
  * That symmetry is why the preview helpers live here rather than off on their own:
@@ -36,7 +36,7 @@ export const FILE_ID = 'playground.tsx';
 
 /**
  * Prefixed rather than carried as a bare commit, so a single `version` string can
- * name either a release or a preview — the select, the share fragment and the
+ * name either a release or a preview, the select, the share fragment and the
  * runtime cache all keep working unchanged.
  */
 const PREFIX = 'pr-';
@@ -78,7 +78,7 @@ function moduleUrl(name: string, version: string, path = '') {
 
 /**
  * The workspace packages depend on each other by caret range, and esm.sh cannot
- * resolve `^0.0.0-beta-<timestamp>` — the entry loads but its imports 404. Pinning
+ * resolve `^0.0.0-beta-<timestamp>`: the entry loads but its imports 404. Pinning
  * the siblings to the exact version being loaded sidesteps that, and is a no-op
  * for stable releases. A preview needs none of it: pkg.pr.new rewrites those ranges
  * to the sibling builds from the same commit before publishing.
@@ -100,7 +100,7 @@ export function loadRuntime(version: string): Promise<Runtime> {
         default: () => Transformer;
       }>,
       // Same version as the transformer, so a displayed id always matches what
-      // that release would actually write into the catalogue.
+      // that release would actually write into the catalogue
       import(
         /* webpackIgnore: true */ moduleUrl('@saykit/config', version, '/features/messages')
       ) as Promise<{ generateHash: Runtime['generateHash'] }>,
@@ -111,8 +111,9 @@ export function loadRuntime(version: string): Promise<Runtime> {
       return { transformer, generateHash: messages.generateHash };
     });
 
-    // Don't cache a rejection — a transient network failure should be retryable.
-    // The identity check avoids evicting a newer attempt that already succeeded.
+    // Don't cache a rejection, since a transient network failure should be
+    // retryable
+    // The identity check avoids evicting a newer attempt that already succeeded
     pending.catch(() => {
       if (runtimes.get(version) === pending) runtimes.delete(version);
     });

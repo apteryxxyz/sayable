@@ -3,7 +3,7 @@ import type { Named } from 'saykit';
 
 /**
  * What a message is allowed to contain. On top of everything React renders, a
- * named placeholder — `{{ name: value }}` — reaches the type checker as a plain
+ * named placeholder, `{{ name: value }}`, reaches the type checker as a plain
  * object child, so the object form has to be part of the contract even though
  * nothing ever renders it: the transform reads the name off it and compiles the
  * child away before React sees the tree.
@@ -25,7 +25,7 @@ export type PropsWithJSXSafeKeys<T> = {
  * identifiers they carry. Every value is emitted with one underscore in front,
  * which is what keeps a numbered identifier a valid prop name and what keeps
  * any name a message chooses out of `Say`'s own namespace, so stripping exactly
- * one is the whole inverse — `_0` is `0`, and `__link` is a tag named `_link`.
+ * one is the whole inverse: `_0` is `0`, and `__link` is a tag named `_link`.
  *
  * The result is deliberately not typed as the props that went in: renaming the
  * keys is the point, so claiming they survived would be a lie the only caller

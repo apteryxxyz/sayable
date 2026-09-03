@@ -48,7 +48,7 @@ export async function getVersions(): Promise<VersionOption[]> {
       next: { revalidate: 3600 },
       // `fetch` has no deadline of its own, so a stalled registry connection would
       // hold up static generation and every revalidation after it. A timeout
-      // rejects into the catch below, which serves FALLBACK.
+      // rejects into the catch below, which serves FALLBACK
       signal: AbortSignal.timeout(REGISTRY_TIMEOUT_MS),
     });
     if (!response.ok) return FALLBACK;
@@ -70,10 +70,10 @@ export async function getVersions(): Promise<VersionOption[]> {
     }));
 
   // Beta releases are published as `0.0.0-beta-<timestamp>`, which sorts
-  // meaninglessly — surface only the one the beta tag currently points at.
+  // meaninglessly, so surface only the one the beta tag currently points at.
   // A dist-tag is just a pointer: it can name an unpublished version, or one
   // already listed above (`npm dist-tag add pkg@0.5.0 beta`), which would offer a
-  // version that fails to load or a duplicate entry with a duplicate React key.
+  // version that fails to load or a duplicate entry with a duplicate React key
   const listed = new Set(stable.map((option) => option.value));
   const beta =
     tags.beta && published.has(tags.beta) && !listed.has(tags.beta)

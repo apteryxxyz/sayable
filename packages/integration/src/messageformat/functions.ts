@@ -6,10 +6,9 @@ import { duration, datetime, number, numeric, temporal } from './values.js';
  * The handlers a compiled message resolves against.
  *
  * Every placeholder the conversion emits names one of these, and each takes its
- * whole configuration as a single already-resolved bag. A handler is therefore
- * only ever the last step — coerce the operand, apply the scale, call `Intl` —
- * and the work of reading a style stays in `styles.ts`, where it happens once
- * per message rather than once per format.
+ * configuration as a single already-resolved bag. A handler is only ever the
+ * last step: coerce the operand, apply the scale, call `Intl`. Reading a style
+ * stays in `styles.ts`, once per message rather than once per format.
  */
 export const functions = {
   'say:number': (ctx, opt, operand) => {
@@ -37,8 +36,8 @@ export const functions = {
    *
    * An exact `=n` case is matched against the number as written, before the
    * offset, so `=1` still means one. The category is chosen from the offset
-   * number instead — which is what lets "You and 2 others" branch on a total of
-   * three — and that same offset number is what a `#` in the branch prints.
+   * number, which lets "You and 2 others" branch on a total of three, and that
+   * same number is what a `#` in the branch prints.
    */
   'say:plural': (ctx, opt, operand) => {
     const { offset = 0, ordinal = false } = options<PluralOptions>(opt.options);
@@ -47,13 +46,11 @@ export const functions = {
 
     const result = number(ctx.locales as string[], shifted, {});
     // The offset number is what `#` prints, but the original is what the value
-    // *is* — so a second selector reading this one offsets from the number the
-    // message was given rather than from an already-shifted one.
+    // *is*, so a second selector offsets from the number the message was given
     result.valueOf = () => value;
 
-    // Built once and kept, like the formatters in `values.ts`: the locale and
-    // the rule type are fixed for the placeholder, and constructing an `Intl`
-    // object is the expensive half of selecting.
+    // Built once and kept, like the formatters in `values.ts`: constructing an
+    // `Intl` object is the expensive half of selecting
     let rules: Intl.PluralRules | undefined;
     result.selectKey = (keys) => {
       const exact = String(value);
@@ -62,7 +59,7 @@ export const functions = {
         localeMatcher: ctx.localeMatcher,
         type: ordinal ? 'ordinal' : 'cardinal',
       });
-      // `Intl.PluralRules` takes a number, never a bigint.
+      // `Intl.PluralRules` takes a number, never a bigint
       const category = rules.select(Number(shifted));
       return keys.has(category) ? category : null;
     };

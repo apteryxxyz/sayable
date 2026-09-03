@@ -22,7 +22,7 @@ export async function globBucket(bucket: Bucket) {
         paths.push(path);
       }
     } catch (error) {
-      // Ignore files removed between glob and stat, rethrow anything else.
+      // Ignore files removed between glob and stat, rethrow anything else
       if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
     }
   }

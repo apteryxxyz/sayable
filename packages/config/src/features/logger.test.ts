@@ -40,7 +40,7 @@ describe('useLogger', () => {
     const spy = vi.spyOn(console, 'log').mockImplementation(() => {});
     const logger = useLogger({ quiet: true });
     expect(logger).toBeInstanceOf(Logger);
-    // The installed logger becomes the ambient one.
+    // The installed logger becomes the ambient one
     expect(useLogger()).toBe(logger);
     logger.info('x');
     expect(spy).not.toHaveBeenCalled();

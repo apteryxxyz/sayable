@@ -114,11 +114,6 @@ function SchedulePage() {
         </h1>
         <p className="masthead__date">{date}</p>
         <p className="masthead__summary">
-          {/*
-            The source locale is US English, so this says "program". en-GB
-            overrides it with "programme" — and en-NZ inherits that override for
-            free through the fallback chain, without restating it.
-          */}
           <Say>
             The full program —{' '}
             <Say.Plural

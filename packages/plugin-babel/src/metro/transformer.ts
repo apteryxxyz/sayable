@@ -30,8 +30,8 @@ const upstream = (transformerConfig: TransformerConfig): Worker =>
   require(transformerConfig.saykitTransformerPath) as Worker;
 
 /**
- * What a catalogue transforms into depends on the SayKit config — the fallback
- * chain it resolves, the formatter that parses it — and on the version of this
+ * What a catalogue transforms into depends on the SayKit config, the fallback
+ * chain it resolves, the formatter that parses it, and on the version of this
  * package doing the assembling. Neither is a byte of the file Metro hashes, so
  * without them in the cache key, editing `saykit.config.*` or upgrading leaves
  * every catalogue serving the record it was cached with.
@@ -45,8 +45,8 @@ const salt = createHash('sha1')
  * Metro reads `.json` straight through `transformJSON` and never runs Babel over
  * it, so a Babel plugin cannot reach a catalogue at all. Wrapping the transform
  * worker is the one place that can: it substitutes the assembled record for the
- * catalogue's own source, leaving the file a real module whose sha1 — and
- * therefore Metro's transform cache entry — moves whenever it is edited.
+ * catalogue's own source, leaving the file a real module whose sha1, and
+ * therefore Metro's transform cache entry, moves whenever it is edited.
  */
 export function transform(
   transformerConfig: TransformerConfig,
@@ -60,7 +60,7 @@ export function transform(
   if (!catalogue) return worker.transform(transformerConfig, projectRoot, filename, data, options);
 
   // Metro reads a `.json` module as its body verbatim and everything else as
-  // JavaScript, so each needs the record in the shape it expects.
+  // JavaScript, so each needs the record in the shape it expects
   const record = JSON.stringify(catalogue.record);
   const code = filename.endsWith('.json') ? record : `module.exports = ${record};`;
 

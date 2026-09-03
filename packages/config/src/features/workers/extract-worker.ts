@@ -19,7 +19,7 @@ export class BucketExtractWorker extends BucketWorker {
   #indexedMessagesByPath = new Map<string, Message[]>();
   get #indexedMessages() {
     // Config-declared messages lead so their hand-written metadata wins the
-    // merge; extracted occurrences of the same id only contribute references.
+    // merge; extracted occurrences of the same id only contribute references
     return [...this.bucket.messages, ...Array.from(this.#indexedMessagesByPath.values()).flat()];
   }
 
@@ -63,15 +63,15 @@ export class BucketExtractWorker extends BucketWorker {
 
     // Extraction only ever writes the source locale's messages. Non-source
     // locales are owned by the TMS, so we never add, change, or remove their
-    // strings here — doing so produces huge diffs and destroys orphaned
-    // translations the TMS is responsible for cleaning up.
+    // strings here, doing so produces huge diffs and destroys orphaned
+    // translations the TMS is responsible for cleaning up
     this.logger.info(`Writing ${mergedMessages.length} messages to ${sourceLocale}`);
     this.logger.step(`Writing locale file for ${sourceLocale} to disk`);
     await writeCatalogueMessages(this.bucket, sourceLocale, mergedMessages);
 
     // Bootstrap any locale that does not have a file yet with a minimal,
     // message-less catalogue (just a header) so a TMS like Weblate can register
-    // the locale. Existing non-source files are left completely untouched.
+    // the locale. Existing non-source files are left completely untouched
     for (const locale of otherLocales) {
       const path = expandBucketOutputPath(this.bucket, locale);
       if (await exists(path)) {

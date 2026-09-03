@@ -9,13 +9,13 @@ import { SayPlugin, withSay } from '@saykit/carbon';
 
 ## `SayPlugin`
 
-A Carbon `Plugin` that registers a shared `Say` instance globally and applies the interaction- and guild-level extensions.
+A Carbon `Plugin` that registers a shared `Catalogue` globally and applies the interaction- and guild-level extensions.
 
 ```ts
 import { Client } from '@buape/carbon';
 import { SayPlugin } from '@saykit/carbon';
 
-const client = new Client({/* ... */}, {/* ... */}, [new SayPlugin(say)]);
+const client = new Client({/* ... */}, {/* ... */}, [new SayPlugin(catalogue)]);
 ```
 
 import { TypeTable } from 'fumadocs-ui/components/type-table';
@@ -24,10 +24,10 @@ import { TypeTable } from 'fumadocs-ui/components/type-table';
 
 <TypeTable
   type={{
-    say: {
+    catalogue: {
       description:
-        'The shared `Say` instance to register. Should be the same instance you use to construct commands and components.',
-      type: 'Say',
+        'The shared `Catalogue` to register. Should be the same one you use to construct commands.',
+      type: 'Catalogue',
       required: true,
     },
   }}
@@ -35,7 +35,7 @@ import { TypeTable } from 'fumadocs-ui/components/type-table';
 
 `SayPlugin` does three things on construction:
 
-1. Stores the `Say` in a global slot keyed by an internal symbol.
+1. Stores the `Catalogue` in a global slot keyed by an internal symbol.
 2. Applies the `BaseInteraction.prototype.say` extension.
 3. Applies the `Guild.prototype.say` extension.
 
@@ -47,12 +47,12 @@ A higher-order class that decorates a Carbon class with SayKit support. The exac
 
 ### For `BaseCommand` subclasses
 
-When the base class extends `BaseCommand` (`Command`, `CommandWithSubcommands`, &hellip;), the resulting constructor accepts a `Say` and a mapping function:
+When the base class extends `BaseCommand` (`Command`, `CommandWithSubcommands`, &hellip;), the resulting constructor accepts a `Catalogue` and a mapping function:
 
 ```ts
 class PingCommand extends withSay(Command) {
-  constructor(say: Say) {
-    super(say, (say) => ({
+  constructor(catalogue: Catalogue) {
+    super(catalogue, (say) => ({
       name: say`ping`,
       description: say`Ping the bot!`,
     }));
@@ -60,7 +60,7 @@ class PingCommand extends withSay(Command) {
 }
 ```
 
-The mapping function runs once per locale. SayKit then combines those results into Carbon's per-locale command metadata so Discord can render the command in each user's locale.
+The mapping function runs once per locale, receiving that locale's view. SayKit then combines those results into Carbon's per-locale command metadata so Discord can render the command in each user's locale.
 
 Localisable keys:
 
@@ -82,7 +82,7 @@ For components (`Button`, `StringSelect`, &hellip;) and modals, `withSay` produc
 ```ts
 class RollAgainButton extends withSay(Button) {
   customId = 'roll-again';
-  constructor(say: Say) {
+  constructor(say: View) {
     super({ label: say`Roll Again` });
   }
 }
@@ -100,21 +100,21 @@ When `SayPlugin` is registered, these extensions are applied to Carbon's prototy
 
 ```ts
 interface BaseInteraction<T> {
-  get say(): Say;
+  get say(): View;
 }
 ```
 
-Returns a `Say` clone activated to the interaction's `locale`. Cached on the interaction instance, so subsequent accesses re-use the same clone.
+Returns the view for the interaction's `locale`. Views are memoised on the catalogue, so repeated access costs nothing and no cloning is involved.
 
 ### `Guild.prototype.say`
 
 ```ts
 interface Guild {
-  get say(): Say;
+  get say(): View;
 }
 ```
 
-Returns a `Say` clone activated to the guild's `preferred_locale`. Cached on the guild instance.
+Returns the view for the guild's `preferred_locale`, memoised on the catalogue the same way.
 
 ## Type imports
 
@@ -129,4 +129,4 @@ You don't need this for normal use, it's automatic when you import any value fro
 ## Next
 
 - [Integration guide](/integrations/carbon), full walkthrough
-- [API: saykit](/reference/api/saykit), the `Say` class
+- [API: saykit](/reference/api/saykit), catalogues and views

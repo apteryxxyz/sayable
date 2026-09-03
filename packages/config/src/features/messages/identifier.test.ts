@@ -32,7 +32,7 @@ describe('assignSequenceIdentifiers', () => {
   });
 
   // The rule an explicit name already follows, applied to a name nobody wrote:
-  // a repeat is one placeholder precisely when nothing distinguishes it.
+  // a repeat is one placeholder precisely when nothing distinguishes it
   it('gives equivalent arguments the same number', () => {
     const message = new CompositeMessage(
       {},
@@ -72,8 +72,8 @@ describe('assignSequenceIdentifiers', () => {
   });
 
   // An element and an argument are two different things to a message even when
-  // the expressions behind them match, so they are numbered apart — the same
-  // split `collectAssignedIdentifiers` claims explicit names under.
+  // the expressions behind them match, so they are numbered apart, the same
+  // split `collectAssignedIdentifiers` claims explicit names under
   it('numbers a tag and a value apart', () => {
     const element = new ElementMessage(AUTO_INCREMENT_IDENTIFIER, [], 'x');
     const argument = new ArgumentMessage(AUTO_INCREMENT_IDENTIFIER, 'x');
@@ -87,7 +87,7 @@ describe('assignSequenceIdentifiers', () => {
   });
 
   // One value formatted two ways is one value: the caller supplies it once and
-  // a translator moves one placeholder, with the formatting riding along.
+  // a translator moves one placeholder, with the formatting riding along
   it('gives a choice the number of an equivalent argument', () => {
     const argument = new ArgumentMessage(AUTO_INCREMENT_IDENTIFIER, 'n');
     const choice = new ChoiceMessage(
@@ -127,7 +127,7 @@ describe('assignSequenceIdentifiers', () => {
     const inner = new ArgumentMessage(AUTO_INCREMENT_IDENTIFIER, null);
     const element = new ElementMessage(AUTO_INCREMENT_IDENTIFIER, [inner], null);
     assignSequenceIdentifiers(new CompositeMessage({}, [], [], [element], null));
-    // Element gets 0, its child gets 1.
+    // Element gets 0, its child gets 1
     expect(element.identifier).toBe('0');
     expect(inner.identifier).toBe('1');
   });
@@ -271,14 +271,14 @@ describe('getBranchCase', () => {
   });
 
   // `select` has no exact-value syntax: its cases are literal string matches,
-  // and `=0` there fails to parse. A bare `0` matches both `0` and `'0'`.
+  // and `=0` there fails to parse. A bare `0` matches both `0` and `'0'`
   it('leaves a number bare on a select', () => {
     expect(getBranchCase('select', '0')).toBe('0');
     expect(getBranchCase('select', 'other')).toBe('other');
   });
 
   // Everything JavaScript is willing to call a number is not one, and coercing
-  // these would hand back a case that selects zero.
+  // these would hand back a case that selects zero
   it.each(['', ' ', '+0', '1e3'])('leaves %o a key rather than an exact value', (key) => {
     expect(getBranchCase('plural', key)).toBe(key);
   });
@@ -331,7 +331,7 @@ describe('validateBranchIdentifier', () => {
   });
 
   // ICU `select` matches its cases as literal strings, so a numeric key is an
-  // ordinary key there rather than an exact value.
+  // ordinary key there rather than an exact value
   it('accepts a numeric key on a select', () => {
     expect(() => validateBranchIdentifier('select', '0')).not.toThrow();
     expect(() => validateBranchIdentifier('select', '42')).not.toThrow();
@@ -339,7 +339,7 @@ describe('validateBranchIdentifier', () => {
 
   // A key spelled `=0` by hand reaches ICU untouched under `select`, where it
   // fails to parse. `getBranchCase` cannot normalise it away, since `=0` and
-  // `0` are two different keys to a format that matches literal strings.
+  // `0` are two different keys to a format that matches literal strings
   it('rejects exact-value syntax on a select', () => {
     expect(() => validateBranchIdentifier('select', '=0')).toThrow(
       "Invalid select branch key '=0', an exact value is only meaningful to 'plural' and 'ordinal', write it as '0'",

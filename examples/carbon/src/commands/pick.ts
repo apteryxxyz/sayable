@@ -6,28 +6,18 @@ import {
   Row,
 } from '@buape/carbon';
 import { withSay } from '@saykit/carbon';
-import type { Say } from 'saykit';
+import type { Catalogue, View } from 'saykit';
 import { currentPick } from '../club.js';
 
-/**
- * `/pick` — what the club is reading, and when it meets.
- *
- * The `withSay(Command)` constructor takes `(say, properties)` where
- * `properties` is called **once per locale**. Its return value is merged into
- * Discord's `name_localizations` / `description_localizations`, so the command
- * shows up in a French user's client as `/choix` without a second registration.
- */
 export class PickCommand extends withSay(Command) {
-  constructor(say: Say) {
-    super(say, (say) => ({
+  constructor(catalogue: Catalogue) {
+    super(catalogue, (say) => ({
       name: say`pick`,
       description: say`See what the club is reading right now.`,
     }));
   }
 
   async run(interaction: CommandInteraction) {
-    // `interaction.say` is a per-interaction clone, already activated to the
-    // locale Discord reported for *this user*. It is safe to use concurrently.
     const say = interaction.say;
 
     const meeting =
@@ -52,16 +42,10 @@ export class PickCommand extends withSay(Command) {
   }
 }
 
-/**
- * A component, not a command. The component overload of `withSay` takes just
- * `(properties)` — components are not registered with Discord ahead of time, so
- * there is no set of localisations to build, only the one label for the user
- * who is looking at it.
- */
 export class RemindMeButton extends withSay(Button) {
   customId = 'remind-me';
 
-  constructor(say: Say) {
+  constructor(say: View) {
     super({ label: say`Remind me the day before` });
   }
 

@@ -1,23 +1,23 @@
 # React example
 
 A task board single-page app built on [`@saykit/react`](../../packages/integration-react),
-Vite, and [`unplugin-saykit`](../../packages/plugin-unplugin). Client-side only — no SSR, no
-routing — so the React integration itself stays in focus.
+Vite, and [`unplugin-saykit`](../../packages/plugin-unplugin). Client-side only, with no SSR and no
+routing, so the React integration itself stays in focus.
 
 ## What it demonstrates
 
-| API                                                                | Where                              |
-| ------------------------------------------------------------------ | ---------------------------------- |
-| `new Say({ locales, loader })` — no eager catalogues               | `src/i18n.ts`                      |
-| `say.load(locale)` — async, cached per locale                      | `src/main.tsx`                     |
-| `SayProvider` fed from React state, so switching locale re-renders | `src/main.tsx`                     |
-| `useSay()` for the active locale (not for rendering)               | `src/components/locale-picker.tsx` |
-| `<Say>` with interpolation                                         | throughout                         |
-| `<Say>` with **nested elements** → `<0>` / `<1>` tags              | `board.tsx`, `task-card.tsx`       |
-| `<Say.Plural>` including an exact `_0` branch                      | `board.tsx`, `task-card.tsx`       |
-| `<Say.Ordinal>` nested inside a sentence                           | `board.tsx`                        |
-| `<Say.Select>` over a union type                                   | `task-card.tsx`                    |
-| Two transformers in one bucket (`.ts` + `.tsx`)                    | `saykit.config.ts`                 |
+| API                                                        | Where                              |
+| ---------------------------------------------------------- | ---------------------------------- |
+| `createCatalogue({ ...thunks })`, no eager catalogues      | `src/i18n.ts`                      |
+| `catalogue.load(locale)`, async, cached per locale         | `src/main.tsx`                     |
+| `createStore(catalogue)`, handed straight to `SayProvider` | `src/i18n.ts`, `src/main.tsx`      |
+| `useSay()` to read, `store.set()` to switch                | `src/components/locale-picker.tsx` |
+| `<Say>` with interpolation                                 | throughout                         |
+| `<Say>` with **nested elements** → `<0>` / `<1>` tags      | `board.tsx`, `task-card.tsx`       |
+| `<Say.Plural>` including an exact `_0` branch              | `board.tsx`, `task-card.tsx`       |
+| `<Say.Ordinal>` nested inside a sentence                   | `board.tsx`                        |
+| `<Say.Select>` over a union type                           | `task-card.tsx`                    |
+| Two transformers in one bucket (`.ts` + `.tsx`)            | `saykit.config.ts`                 |
 
 ## Rich text without markup in the catalogue
 
@@ -35,7 +35,7 @@ Nothing here. <0>Add a task</0> or drag one across from <1>To do</1>.
 
 A translator gets one sentence with two numbered placeholders, and can reorder or renest them for
 their language. At render time `@saykit/react` parses those tags back out and substitutes the
-original React elements — the `href` and any event handlers survive, because the elements were never
+original React elements: the `href` and any event handlers survive, because the elements were never
 serialised in the first place.
 
 ## Numeric branches and the `_` prefix
@@ -56,9 +56,9 @@ category. The `_`-prefix is stripped during extraction, so the catalogue holds s
 
 ## Code-split catalogues
 
-`src/i18n.ts` passes a `loader` instead of `messages`, with one `import()` per locale. Vite emits a
+`src/i18n.ts` writes one `import()` thunk per locale straight into the catalogue. Vite emits a
 chunk per catalogue, so a French visitor never downloads the Polish or Japanese strings. The
-trade-off is that `say.load(locale)` must be awaited before `activate` — `src/main.tsx` does it
+trade-off is that `catalogue.load(locale)` must be awaited before the view exists. `src/main.tsx` does it
 once at module scope for the detected locale, and again on each switch.
 
 ## Running it

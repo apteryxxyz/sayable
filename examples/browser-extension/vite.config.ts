@@ -12,9 +12,9 @@ export default defineConfig({
         popup: resolve(import.meta.dirname, 'popup.html'),
         content: resolve(import.meta.dirname, 'src/content.ts'),
       },
+      // MV3 content scripts cannot be code-split, so keep one file each
       output: {
         entryFileNames: '[name].js',
-        // MV3 content scripts cannot be code-split, so keep one file each.
         inlineDynamicImports: false,
         manualChunks: undefined,
       },

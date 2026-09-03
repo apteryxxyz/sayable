@@ -20,7 +20,7 @@ import { getTranslatorComments, unwrapPlaceholder } from '@saykit/transform-js/p
  */
 const TAG_ATTRIBUTE = 'say-tag';
 
-// A tag name is also used as a JSX prop name.
+// A tag name is also used as a JSX prop name
 const TAG_PATTERN = /^[A-Za-z_][A-Za-z0-9_]*$/;
 
 export function parseJSXContainerElement(element: t.JSXElement): CompositeMessage | null {
@@ -88,7 +88,7 @@ export function parseJSXOpeningElement(
 
       let identifier = getAttributeNameAsString(a);
       if (identifier === '_' || identifier === 'id' || identifier === 'context') return b;
-      // `offset` is a modifier on the selector, not a case to select.
+      // `offset` is a modifier on the selector, not a case to select
       if (offset !== undefined && identifier === 'offset') return b;
       if (
         identifier.startsWith('_') &&
@@ -107,8 +107,8 @@ export function parseJSXOpeningElement(
           });
         } else if (t.isJSXFragment(a.value.expression)) {
           // A branch is a sentence rather than an element, so a fragment around
-          // one is how JSX writes a case that interpolates — `one={<>{n} day</>}`
-          // for the `# day` a plain string attribute cannot express.
+          // one is how JSX writes a case that interpolates: `one={<>{n} day</>}`
+          // for the `# day` a plain string attribute cannot express
           const fragment = a.value.expression;
           b.push({
             identifier,
@@ -147,7 +147,7 @@ export function parseJSXOpeningElement(
 
 /**
  * The `offset` a plural subtracts from its selector before `#` is formatted.
- * See the JS parser's counterpart — the constraints are the same, only the
+ * See the JS parser's counterpart: the constraints are the same, only the
  * syntax carrying it differs.
  */
 function findPluralOffset(attributes: t.JSXOpeningElement['attributes']) {
@@ -166,10 +166,9 @@ function findPluralOffset(attributes: t.JSXOpeningElement['attributes']) {
 /**
  * The children the JSX transform itself would compile, so a message extracts as
  * the text that renders. Text children come back with their whitespace
- * collapsed the way JSX collapses it — a line break and the indentation around
- * it are layout and disappear, while two lines that both hold text rejoin with
- * the single space that separated the words — every expression container comes
- * back unwrapped, and a comment child comes back as nothing.
+ * collapsed the way JSX collapses it: a line break and its indentation are
+ * layout and disappear, while two lines that both hold text rejoin with one
+ * space. Expression containers come back unwrapped, and a comment as nothing.
  */
 function buildMessageChildren(element: t.JSXElement | t.JSXFragment, into: Message[] = []) {
   return t.react.buildChildren(element).reduce<Message[]>((p, c) => {
@@ -181,8 +180,8 @@ function buildMessageChildren(element: t.JSXElement | t.JSXFragment, into: Messa
       p.push(parseJSXElement(c, true));
     } else if (t.isJSXFragment(c)) {
       // A fragment renders no element of its own, so it is not a tag a
-      // translator could move — its children belong to the sentence around it,
-      // and folding them in is what the rendered output already looks like.
+      // translator could move: its children belong to the sentence around it,
+      // and folding them in is what the rendered output already looks like
       buildMessageChildren(c, p);
     } else if (t.isExpression(c)) {
       const [identifier, value] = unwrapPlaceholder(c);
@@ -210,21 +209,20 @@ function pushLiteral(messages: Message[], text: string) {
 }
 
 /**
- * The text a child renders as, when that is knowable at build time — a text
- * child, which `buildChildren` has already collapsed into a string, or an
- * expression holding a literal with nothing interpolated into it.
+ * The text a child renders as, when that is knowable at build time: a text
+ * child, already collapsed into a string by `buildChildren`, or an expression
+ * holding a literal with nothing interpolated into it.
  *
  * The second is what makes `{' '}` the way to write whitespace that has to
- * survive a line break: it extracts as the space it renders as, rather than as
- * a placeholder a translator can neither see nor move.
+ * survive a line break, since it extracts as the space it renders as.
  */
 function getExpressionAsLiteralText(expression: t.Node) {
   if (t.isStringLiteral(expression)) return expression.value;
   // A number renders as the text `String()` makes of it, and reads as content
-  // in the sentence rather than as a value anything supplies.
+  // in the sentence rather than as a value anything supplies
   if (t.isNumericLiteral(expression)) return String(expression.value);
   // A signed number is a unary operator applied to a literal rather than a
-  // literal of its own, but `{-1}` is still a number written into a sentence.
+  // literal of its own, but `{-1}` is still a number written into a sentence
   if (
     t.isUnaryExpression(expression) &&
     (expression.operator === '-' || expression.operator === '+') &&
@@ -235,14 +233,14 @@ function getExpressionAsLiteralText(expression: t.Node) {
     );
   }
   // JSX renders no child at all for these, so the sentence has a gap where the
-  // expression is and nothing to put in it.
+  // expression is and nothing to put in it
   if (t.isBooleanLiteral(expression) || t.isNullLiteral(expression)) return '';
   // A template literal with nothing interpolated is a string literal written
-  // with different quotes, and renders as one.
+  // with different quotes, and renders as one
   if (t.isTemplateLiteral(expression) && expression.expressions.length === 0) {
     const [chunk] = expression.quasis;
     // Nothing interpolated means exactly one chunk, and a chunk only fails to
-    // cook for an escape that is a syntax error outside a tagged template.
+    // cook for an escape that is a syntax error outside a tagged template
     /* v8 ignore next */
     return chunk?.value.cooked ?? '';
   }
@@ -289,7 +287,7 @@ export function parseJSXElement(element: t.JSXElement, fallback?: boolean): Mess
     element.children,
   );
   // `parseJSXElement(fake, true)` always resolves (the synthesised element is a
-  // `Say` container), so the wrapped message is never null.
+  // `Say` container), so the wrapped message is never null
   const wrapped = parseJSXElement(fake, true)!;
   return new ElementMessage(identifier, [wrapped], element);
 }
@@ -309,7 +307,7 @@ function takeElementTag(element: t.JSXElement) {
 
   const attribute = attributes[index] as t.JSXAttribute;
   // Both `say-tag="link"` and `say-tag={'link'}` are static; anything else is
-  // only known at runtime, too late to name a tag with.
+  // only known at runtime, too late to name a tag with
   const value = t.isJSXExpressionContainer(attribute.value)
     ? attribute.value.expression
     : attribute.value;
@@ -331,7 +329,7 @@ function getReferences(node: t.Node) {
 }
 
 function getAttributeNameAsString(attribute: t.JSXAttribute) {
-  // A JSX attribute name is always an identifier or a namespaced name.
+  // A JSX attribute name is always an identifier or a namespaced name
   return t.isJSXIdentifier(attribute.name) ? attribute.name.name : attribute.name.name.name;
 }
 
@@ -370,7 +368,7 @@ function findAttributeValueAsBoolean(
   for (const attribute of attributes) {
     if (!t.isJSXAttribute(attribute)) continue;
     if (!t.isJSXIdentifier(attribute.name) || attribute.name.name !== identifier) continue;
-    // Bare attribute (e.g. `whitespace`) implies `true`.
+    // Bare attribute (e.g. `whitespace`) implies `true`
     if (attribute.value == null) return true;
     if (
       t.isJSXExpressionContainer(attribute.value) &&

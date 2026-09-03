@@ -54,7 +54,7 @@ describe('ts loader', () => {
       `,
     });
 
-    // Stands in for tsx/ts-node, which register a handler for '.ts' the same way.
+    // Stands in for tsx/ts-node, which register a handler for '.ts' the same way
     const hooks = nodeModule.createRequire(import.meta.url).extensions;
     const previous = hooks['.ts'];
     hooks['.ts'] = (module, filename) => {

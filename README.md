@@ -33,7 +33,7 @@ This is a pnpm monorepo. The published packages live in [`packages/*`](./package
 
 | Package                                             | Description                                                          |
 | --------------------------------------------------- | -------------------------------------------------------------------- |
-| [`saykit`](./packages/integration)                  | Core runtime: the `Say` class, macros, and ICU formatting            |
+| [`saykit`](./packages/integration)                  | Core runtime: catalogues, views, macros, and ICU formatting          |
 | [`@saykit/config`](./packages/config)               | Config schema (`defineConfig`) and the `saykit` CLI                  |
 | [`@saykit/react`](./packages/integration-react)     | React integration: `<Say>`, `SayProvider`, server helpers            |
 | [`@saykit/carbon`](./packages/integration-carbon)   | Carbon Discord-bot integration                                       |
@@ -51,17 +51,17 @@ a README explaining which parts of SayKit it exercises and why.
 
 | Example                                             | Stack                                    | Read it for                                                      |
 | --------------------------------------------------- | ---------------------------------------- | ---------------------------------------------------------------- |
-| [`vanilla`](./examples/vanilla)                     | TypeScript + Vite                        | The whole picture end to end — start here                        |
-| [`react`](./examples/react)                         | React 19 SPA + Vite                      | `SayProvider`, rich-text messages, code-split catalogues         |
-| [`nextjs`](./examples/nextjs)                       | Next.js App Router + Babel               | Server Components, `getSay`, middleware locale detection         |
+| [`vanilla`](./examples/vanilla)                     | TypeScript + Vite                        | The whole picture end to end, start here                         |
+| [`react`](./examples/react)                         | React 19 SPA + Vite                      | Stores, rich-text messages, code-split catalogues                |
+| [`nextjs`](./examples/nextjs)                       | Next.js App Router + Babel               | Server Components, `<SayScope>`, middleware locale detection     |
 | [`tanstack-start`](./examples/tanstack-start)       | TanStack Start + Vite                    | Fallback chains (`en-NZ → en-GB → en`), SSR locale negotiation   |
 | [`expo`](./examples/expo)                           | Expo / React Native + Metro              | The `whitespace` prop, device locale                             |
 | [`carbon`](./examples/carbon)                       | Carbon Discord bot on Cloudflare Workers | Per-locale command registration, `interaction.say` / `guild.say` |
 | [`browser-extension`](./examples/browser-extension) | Chrome MV3 + Vite                        | The `webextension` JSON dialect, writing into `_locales/`        |
 | [`custom-formatter`](./examples/custom-formatter)   | Node CLI + tsdown                        | Writing your own `Formatter` and `Transformer`                   |
 
-Between them they cover the plural shapes that actually catch people out — English and French
-(`one`/`other`), Polish (`one`/`few`/`many`/`other`), and Japanese (`other` only) — across Gettext
+Between them they cover the plural shapes that actually catch people out: English and French
+(`one`/`other`), Polish (`one`/`few`/`many`/`other`), and Japanese (`other` only), across Gettext
 PO, plain JSON, the WebExtension JSON dialect, and a hand-written YAML format.
 
 ## Quick start
@@ -89,12 +89,12 @@ export default defineConfig({
 ```
 
 ```ts title="src/app.ts"
-import { Say } from 'saykit';
+import { createCatalogue } from 'saykit';
 import en from './locales/en.po';
 import fr from './locales/fr.po';
 
-const say = new Say({ locales: ['en', 'fr'], messages: { en, fr } });
-say.activate('en');
+const catalogue = createCatalogue({ en, fr });
+const say = catalogue.locale('en');
 
 console.log(say`Hello, ${'world'}!`);
 ```

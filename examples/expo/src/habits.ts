@@ -4,13 +4,9 @@ export interface Habit {
   id: string;
   name: string;
   cadence: Cadence;
-  /** Consecutive completions. */
   streak: number;
-  /** Longest streak ever reached. */
   best: number;
-  /** Completions in the last 7 days. */
   thisWeek: number;
-  /** Target completions per week. */
   target: number;
   doneToday: boolean;
 }

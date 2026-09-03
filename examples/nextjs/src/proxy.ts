@@ -1,24 +1,10 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { defaultLocale, isLocale, LOCALE_COOKIE, locales } from './config';
 
-/**
- * Locale detection, done at the edge so the App Router only ever sees a
- * `[locale]` segment it can trust.
- *
- * Precedence: an explicit locale in the path wins, then a previously stored
- * cookie, then the browser's `Accept-Language`, then the source locale. The
- * source locale is served from `/` via a rewrite (so `/en/...` stays a canonical
- * redirect target rather than a second URL for the same page).
- *
- * Note this file deliberately does not import `src/i18n.ts`: middleware runs in
- * the edge runtime, and there is no reason to pull three catalogues into it just
- * to read a list of locale codes.
- */
 export default function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const pathLocale = pathname.split('/')[1];
 
-  // Already on a real locale route: nothing to do but remember the choice.
   if (isLocale(pathLocale)) {
     const response =
       pathLocale === defaultLocale
@@ -41,7 +27,7 @@ export default function proxy(request: NextRequest) {
 
   const response =
     preferred === defaultLocale
-      ? // Serve the source locale at `/` without changing the address bar.
+      ? // Serve the source locale at `/` without changing the address bar
         NextResponse.rewrite(target)
       : NextResponse.redirect(target);
 
@@ -57,7 +43,6 @@ function detect(request: NextRequest) {
   const stored = request.cookies.get(LOCALE_COOKIE)?.value;
   if (isLocale(stored)) return stored;
 
-  // `Accept-Language: fr-CA,fr;q=0.9,en;q=0.8` → ['fr-CA', 'fr', 'en'].
   const accepted = (request.headers.get('accept-language') ?? '')
     .split(',')
     .map((part) => part.split(';')[0]?.trim())

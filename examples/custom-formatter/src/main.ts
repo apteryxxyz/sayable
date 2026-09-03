@@ -1,8 +1,8 @@
 import { lastDeployment } from './deploy.js';
-import say, { environmentLocale } from './i18n.js';
+import catalogue, { environmentLocale } from './i18n.js';
 import summary from './templates/summary.email';
 
-say.activate(environmentLocale());
+const say = catalogue.locale(environmentLocale());
 
 const deployment = lastDeployment();
 
@@ -49,8 +49,6 @@ if (deployment.failures.length > 0) {
 
 console.log();
 
-// The template was a `.email` file until the bundler ran. It is a module now,
-// and it renders against whichever `Say` it is handed.
 console.log(
   summary(say, {
     actor: deployment.actor,

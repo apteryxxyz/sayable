@@ -29,7 +29,7 @@ That's enough to make the import type-check, even before your build plugin has r
 
 ## The `.d.{extension}.ts` name
 
-The name isn't arbitrary. To type an import of `./locales/en.po`, TypeScript strips the extension it's given and looks for `en.d.po.ts` — the sibling-declaration convention for non-TypeScript files. A file named `en.po.d.ts` is _not_ consulted for a specifier TypeScript recognises, so it would silently do nothing.
+The name isn't arbitrary. To type an import of `./locales/en.po`, TypeScript strips the extension it's given and looks for `en.d.po.ts`, the sibling-declaration convention for non-TypeScript files. A file named `en.po.d.ts` is _not_ consulted for a specifier TypeScript recognises, so it would silently do nothing.
 
 For any extension other than `.json`, this also requires a compiler flag:
 
@@ -55,7 +55,7 @@ In short: **you never reference an id from application code**. The build does th
 
 ## Committing translation files
 
-SayKit doesn't manage a `.gitignore` for you — it's up to you which generated files to commit or ignore. A common setup:
+SayKit doesn't manage a `.gitignore` for you: it's up to you which generated files to commit or ignore. A common setup:
 
 - **Commit** the `.po` files. They're the canonical translations.
 - Either commit or ignore the `.d.po.ts` files. SayKit regenerates them on every extraction, so ignoring them keeps diffs quiet; committing them lets CI type-check without an extra extraction step.
@@ -77,9 +77,10 @@ const en = await import('./locales/en.po').then((m) => m.default);
 ```
 
 ```ts
-// Per-locale loader function (recommended for many locales)
-new Say({
-  loader: (l) => import(`./locales/${l}.po`).then((m) => m.default),
+// A thunk per locale (recommended for many locales)
+createCatalogue({
+  en: () => import('./locales/en.po'),
+  fr: () => import('./locales/fr.po'),
 });
 ```
 

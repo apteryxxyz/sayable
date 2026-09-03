@@ -13,12 +13,8 @@ export function LocaleSwitcher({ current }: { current: Locale }) {
         onChange={(event) => {
           const next = event.target.value as Locale;
 
-          // Remember the choice so a later visit to `/` server-renders in the
-          // right language, rather than negotiating from scratch every time.
           document.cookie = `${LOCALE_COOKIE}=${next}; path=/; max-age=${60 * 60 * 24 * 365}; samesite=lax`;
 
-          // The locale lives in the URL, so switching is a navigation. The
-          // route loader re-runs on the server and returns the new catalogue.
           void navigate({ to: '/{-$locale}', params: { locale: next } });
         }}
       >

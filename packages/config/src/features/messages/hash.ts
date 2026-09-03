@@ -3,7 +3,7 @@ import { sha256 } from 'js-sha256';
 /**
  * Hashed in userland rather than with `node:crypto`, because this runs wherever
  * a bundler runs it. `createHash` is one of the entry points `unenv` leaves
- * unimplemented — "[unenv] crypto.createHash is not implemented yet!" — so a
+ * unimplemented, "[unenv] crypto.createHash is not implemented yet!", so a
  * plugin reaching for it throws in a Nitro or workerd build. The Web Crypto
  * equivalent, `subtle.digest`, is async, and an id is resolved from a
  * synchronous extraction pass.
