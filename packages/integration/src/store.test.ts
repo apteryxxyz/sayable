@@ -26,12 +26,12 @@ function make() {
 describe('createStore', () => {
   it('starts on the locale it is given', () => {
     const store = createStore(make(), 'fr');
-    expect(store.locale).toBe('fr');
-    expect(store.current.call({ id: 'greeting' })).toBe('Bonjour');
+    expect(store.say.locale).toBe('fr');
+    expect(store.say.call({ id: 'greeting' })).toBe('Bonjour');
   });
 
   it("starts on the catalogue's default locale", () => {
-    expect(createStore(make()).locale).toBe('en');
+    expect(createStore(make()).say.locale).toBe('en');
   });
 
   it('throws when the starting locale has no messages', () => {
@@ -42,11 +42,21 @@ describe('createStore', () => {
 
   it('hands back the view the catalogue memoised', () => {
     const catalogue = make();
-    expect(createStore(catalogue, 'en').current).toBe(catalogue.locale('en'));
+    expect(createStore(catalogue, 'en').say).toBe(catalogue.locale('en'));
   });
 
   it('is frozen', () => {
     expect(Object.isFrozen(createStore(make()))).toBe(true);
+  });
+
+  it('reads `say` afresh, so a switch is not lost to a binding held over it', () => {
+    const store = createStore(make(), 'en');
+    const before = store.say;
+
+    store.set('fr');
+    expect(store.say).not.toBe(before);
+    expect(before.call({ id: 'greeting' })).toBe('Hello');
+    expect(store.say.call({ id: 'greeting' })).toBe('Bonjour');
   });
 
   it('names the current locale when inspected', () => {
@@ -58,8 +68,8 @@ describe('Store#set', () => {
   it('swaps the current view synchronously when the locale is loaded', () => {
     const store = createStore(make(), 'en');
     expect(store.set('fr')).toBeUndefined();
-    expect(store.locale).toBe('fr');
-    expect(store.current.call({ id: 'greeting' })).toBe('Bonjour');
+    expect(store.say.locale).toBe('fr');
+    expect(store.say.call({ id: 'greeting' })).toBe('Bonjour');
   });
 
   it('loads a locale the catalogue does not have yet', async () => {
@@ -70,10 +80,10 @@ describe('Store#set', () => {
     const result = store.set('de');
     expect(result).toBeInstanceOf(Promise);
     // The swap waits for the load, so the old view is still current until then.
-    expect(store.locale).toBe('en');
+    expect(store.say.locale).toBe('en');
 
     await result;
-    expect(store.locale).toBe('de');
+    expect(store.say.locale).toBe('de');
     expect(thunk).toHaveBeenCalledOnce();
   });
 
@@ -82,7 +92,7 @@ describe('Store#set', () => {
     const store = createStore(catalogue, 'en');
 
     expect(store.set('de')).toBeUndefined();
-    expect(store.locale).toBe('de');
+    expect(store.say.locale).toBe('de');
   });
 
   it('does nothing when the locale is already current', () => {
@@ -106,7 +116,7 @@ describe('Store#set', () => {
     store.subscribe(listener);
 
     await expect(store.set('de')).rejects.toThrow('offline');
-    expect(store.locale).toBe('en');
+    expect(store.say.locale).toBe('en');
     expect(listener).not.toHaveBeenCalled();
   });
 
@@ -123,14 +133,14 @@ describe('Store#set', () => {
 
     await expect(store.set('de')).rejects.toThrow('offline');
     await store.set('de');
-    expect(store.locale).toBe('de');
+    expect(store.say.locale).toBe('de');
   });
 
   it('rethrows when the catalogue has no such locale', () => {
     const store = createStore(createCatalogue(messages), 'en');
 
     expect(() => store.set('zz' as 'en' | 'fr')).toThrow("No messages for locale 'zz'");
-    expect(store.locale).toBe('en');
+    expect(store.say.locale).toBe('en');
   });
 
   it('applies the last switch, not the last to resolve', async () => {
@@ -155,11 +165,11 @@ describe('Store#set', () => {
     // own load resolves, and must not overwrite it.
     resolvers.get('de')?.({ greeting: 'Hallo' });
     await second;
-    expect(store.locale).toBe('de');
+    expect(store.say.locale).toBe('de');
 
     resolvers.get('fr')?.({ greeting: 'Bonjour' });
     await first;
-    expect(store.locale).toBe('de');
+    expect(store.say.locale).toBe('de');
   });
 
   it('cancels a switch that is overtaken by a switch back', async () => {
@@ -182,7 +192,7 @@ describe('Store#set', () => {
 
     resolve({ greeting: 'Hallo' });
     await switching;
-    expect(store.locale).toBe('en');
+    expect(store.say.locale).toBe('en');
     // The switch back landed on the view that was already current, so there
     // was never a change to report.
     expect(listener).not.toHaveBeenCalled();
@@ -203,7 +213,7 @@ describe('Store#set', () => {
     expect(second).toBe(first);
 
     await second;
-    expect(store.locale).toBe('de');
+    expect(store.say.locale).toBe('de');
     expect(thunk).toHaveBeenCalledOnce();
   });
 });
@@ -215,8 +225,8 @@ describe('Store#subscribe', () => {
     store.subscribe(listener);
 
     store.set('fr');
-    expect(listener).toHaveBeenCalledExactlyOnceWith(store.current);
-    expect(store.current.locale).toBe('fr');
+    expect(listener).toHaveBeenCalledExactlyOnceWith(store.say);
+    expect(store.say.locale).toBe('fr');
   });
 
   it('does not notify on subscribe', () => {
@@ -248,11 +258,11 @@ describe('Store#subscribe', () => {
     // with the locale, and a catalogue memoises, so returning to a locale
     // returns to its view.
     const store = createStore(make(), 'en');
-    const en = store.current;
+    const en = store.say;
 
     store.set('fr');
-    expect(store.current).not.toBe(en);
+    expect(store.say).not.toBe(en);
     store.set('en');
-    expect(store.current).toBe(en);
+    expect(store.say).toBe(en);
   });
 });

@@ -26,16 +26,23 @@ export interface Store<Locale extends string = string> {
    * The current view: callable, immutable, and safe to hold onto until the
    * next switch.
    *
+   * It is named for the tag a message is written against, so a store can be
+   * formatted through directly, and read at the moment of access rather than
+   * bound once, which is what keeps it following the switches. Read it per
+   * call for that reason: a `const say = store.say` held across a switch is
+   * the old view.
+   *
    * Its identity changes when the locale does, which is what lets a subscriber
    * compare snapshots. Because a catalogue memoises its views, switching away
    * from a locale and back hands the same view back again.
+   *
+   * @example
+   * ```ts
+   * store.say`Hello, ${name}!`;
+   * store.say.locale; // 'en'
+   * ```
    */
-  readonly current: View<Locale>;
-
-  /**
-   * The locale the {@link current} view is bound to.
-   */
-  readonly locale: Locale;
+  readonly say: View<Locale>;
 
   /**
    * Switch to another locale, loading its messages first if the catalogue does
@@ -58,7 +65,7 @@ export interface Store<Locale extends string = string> {
   /**
    * Listen for switches.
    *
-   * The listener is called after {@link current} has changed, with the new
+   * The listener is called after {@link Store.say} has changed, with the new
    * view. It is not called on subscribe: the current view is already readable.
    *
    * @param listener Called with the view that is now current
@@ -76,7 +83,8 @@ export interface Store<Locale extends string = string> {
  *
  * store.subscribe(render);
  * await store.set('fr');
- * store.current`Hello, ${name}!`;
+ * store.say`Hello, ${name}!`;
+ * store.say.locale; // 'fr'
  * ```
  *
  * @param catalogue The catalogue to take views from
@@ -145,12 +153,8 @@ export function createStore<Locale extends string>(
   }
 
   const store: Store<Locale> = {
-    get current() {
+    get say() {
       return current;
-    },
-
-    get locale() {
-      return current.locale;
     },
 
     set(target) {

@@ -136,14 +136,20 @@ import { createStore } from 'saykit';
 
 const store = createStore(catalogue, 'en');
 
-store.current; // the view for 'en'
-store.locale; // 'en'
+store.say`Hello, ${name}!`;
+store.say.locale; // 'en'
 
 const unsubscribe = store.subscribe((say) => render(say));
 
 await store.set('fr');
-store.current; // the view for 'fr'
+store.say.locale; // 'fr'
 ```
+
+The current view is the store's only reading, and it is called `say` because that is the name a message is written against, so a store is formatted through directly rather than through a view pulled off it first.
+
+A store has no locale of its own either: the locale belongs to the view, and the store only says which view is current.
+
+`say` is read at the moment of access, which is what keeps it following the switches. Read it per call for that reason: a `const say = store.say` held across a switch is the old view.
 
 `set()` loads the locale first if the catalogue does not have it yet, and like `load()` it is synchronous when the thunk is, so a locale that is already loaded switches inside the same tick.
 
@@ -152,10 +158,10 @@ Only successful switches notify. Setting the locale that is already current does
 The current view's identity changes with the locale, which is what lets a subscriber compare snapshots, and because views are memoised, switching away and back gives you the same view again:
 
 ```ts
-const en = store.current;
+const en = store.say;
 await store.set('fr');
 await store.set('en');
-store.current === en; // true
+store.say === en; // true
 ```
 
 <Callout type="warn">
@@ -230,7 +236,7 @@ const catalogue = createCatalogue({ en, fr });
 export default catalogue;
 
 // A store rather than a view, so the app can switch locale later. Read
-// `store.current` at the point you format, not once into a module binding.
+// `store.say` at the point you format, not once into a module binding.
 export const store = createStore(catalogue, catalogue.match(navigator.languages as string[]));
 ```
 

@@ -221,20 +221,25 @@ does not.
 
 <TypeTable
   type={{
-    current: {
+    say: {
       description:
-        'The current view. Its identity changes when the locale does, which is what lets a subscriber compare snapshots.',
+        'The current view, named for the tag a message is written against so a store can be formatted through directly. Its identity changes when the locale does, which is what lets a subscriber compare snapshots.',
       type: 'View<Locale>',
-    },
-    locale: {
-      description: 'The locale the current view is bound to.',
-      type: 'Locale',
     },
   }}
 />
 
 Because a catalogue memoises its views, switching away from a locale and back hands the same view
 back again.
+
+It is read at the moment of access rather than bound once, which is what keeps `` store.say`...` ``
+following the switches. Read it per call for that reason: a `const say = store.say` held across a
+switch is the old view. The locale comes off the view, as it does anywhere else:
+
+```ts
+store.say`Hello, ${name}!`;
+store.say.locale; // 'en'
+```
 
 ### `set(code)`
 
