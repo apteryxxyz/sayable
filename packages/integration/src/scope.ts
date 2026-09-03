@@ -72,16 +72,6 @@ export interface Scope {
   readonly say: View;
 
   /**
-   * The view in scope, or `undefined` if there is none.
-   *
-   * {@link say} is what application code says things with. This is for code
-   * deciding what to do about a scope rather than reading from it, such as a
-   * React provider taking its initial value from the server scope it renders
-   * inside, if it renders inside one.
-   */
-  readonly view: View | undefined;
-
-  /**
    * Run a callback with a view in scope. Everything it calls, at any depth,
    * reads that view from {@link say}.
    *
@@ -178,7 +168,7 @@ function createVariableStorage(): Scope.Storage {
  */
 export function createScope(storage: Scope.Storage = createVariableStorage()): Scope {
   /**
-   * Where {@link Scope.view} looks when no `run` encloses the call. Held as a
+   * Where {@link Scope.say} falls back to when no `run` encloses the call. Held as a
    * source rather than as a view, so a store established here is read on every
    * access and a switch is seen without subscribing to it.
    */
@@ -227,10 +217,6 @@ export function createScope(storage: Scope.Storage = createVariableStorage()): S
 
   const scope: Scope = {
     say,
-
-    get view() {
-      return peek();
-    },
 
     run(view, callback, ...args) {
       return storage.run(view, callback, ...args);

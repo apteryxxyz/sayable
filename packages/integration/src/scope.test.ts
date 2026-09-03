@@ -26,8 +26,8 @@ const storages: Record<string, () => Scope> = {
 
 describe.each(Object.entries(storages))('createScope over %s', (_name, build) => {
   it('has no view until one is established', () => {
-    const { say, view } = build();
-    expect(view).toBeUndefined();
+    const { say } = build();
+
     expect(() => say.locale).toThrow(/No view is in scope/);
   });
 
@@ -36,7 +36,7 @@ describe.each(Object.entries(storages))('createScope over %s', (_name, build) =>
     scope.run(en, () => {
       expect(scope.say.locale).toBe('en');
       expect(scope.say.call({ id: 'greeting' })).toBe('Hello');
-      expect(scope.view).toBe(en);
+      expect(scope.say.messages).toBe(en.messages);
     });
   });
 
@@ -62,7 +62,7 @@ describe.each(Object.entries(storages))('createScope over %s', (_name, build) =>
         throw new Error('boom');
       }),
     ).toThrow('boom');
-    expect(scope.view).toBeUndefined();
+    expect(() => scope.say.locale).toThrow(/No view is in scope/);
   });
 
   it('reads a view established outside any run', () => {
@@ -70,7 +70,7 @@ describe.each(Object.entries(storages))('createScope over %s', (_name, build) =>
     const restore = scope.use(en);
     expect(scope.say.locale).toBe('en');
     restore();
-    expect(scope.view).toBeUndefined();
+    expect(() => scope.say.locale).toThrow(/No view is in scope/);
   });
 
   it('follows a store it was given', () => {
@@ -158,7 +158,7 @@ describe('createScope over an AsyncLocalStorage', () => {
 
     expect(first).toBe('en');
     expect(second).toBe('fr');
-    expect(scope.view).toBeUndefined();
+    expect(() => scope.say.locale).toThrow(/No view is in scope/);
   });
 });
 
@@ -169,9 +169,9 @@ describe('createScope over a variable', () => {
     const done = scope.run(en, async () => {
       expect(scope.say.locale).toBe('en');
       await Promise.resolve();
-      return scope.view;
+      return () => scope.say.locale;
     });
 
-    expect(await done).toBeUndefined();
+    expect(await done).toThrow(/No view is in scope/);
   });
 });
