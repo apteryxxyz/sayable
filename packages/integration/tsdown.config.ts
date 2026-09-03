@@ -1,7 +1,7 @@
 import { defineConfig } from 'tsdown';
 
 export default defineConfig({
-  entry: ['src/runtime.ts'],
+  entry: ['src/index.ts'],
   target: 'es2022',
   outputOptions: { comments: { jsdoc: false } },
 });
