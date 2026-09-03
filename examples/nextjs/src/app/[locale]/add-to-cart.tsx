@@ -3,11 +3,6 @@
 import { Say } from '@saykit/react';
 import { useState } from 'react';
 
-/**
- * A client component below the root `SayProvider`. `<Say>` here compiles against
- * the `"use client"` build of `@saykit/react`, which resolves messages through
- * `useSay()` — the same catalogue the server rendered with, no second fetch.
- */
 export function AddToCart({ slug, disabled }: { slug: string; disabled: boolean }) {
   const [quantity, setQuantity] = useState(0);
 

@@ -79,7 +79,7 @@ describe('Store#set', () => {
 
     const result = store.set('de');
     expect(result).toBeInstanceOf(Promise);
-    // The swap waits for the load, so the old view is still current until then.
+    // The swap waits for the load, so the old view is still current until then
     expect(store.say.locale).toBe('en');
 
     await result;
@@ -162,7 +162,7 @@ describe('Store#set', () => {
     const second = store.set('de');
 
     // The later switch lands first; the earlier one is stale by the time its
-    // own load resolves, and must not overwrite it.
+    // own load resolves, and must not overwrite it
     resolvers.get('de')?.({ greeting: 'Hallo' });
     await second;
     expect(store.say.locale).toBe('de');
@@ -187,14 +187,14 @@ describe('Store#set', () => {
 
     const switching = store.set('de');
     // Asked for while the load is still in flight: the store is on 'en' and
-    // staying there, so the pending switch has been called off.
+    // staying there, so the pending switch has been called off
     expect(store.set('en')).toBeUndefined();
 
     resolve({ greeting: 'Hallo' });
     await switching;
     expect(store.say.locale).toBe('en');
     // The switch back landed on the view that was already current, so there
-    // was never a change to report.
+    // was never a change to report
     expect(listener).not.toHaveBeenCalled();
   });
 
@@ -208,7 +208,7 @@ describe('Store#set', () => {
     const first = store.set('de');
     // Same locale, still loading: the same switch comes back rather than
     // `undefined`, so awaiting it waits for the switch instead of resuming
-    // while the store is still on 'en'.
+    // while the store is still on 'en'
     const second = store.set('de');
     expect(second).toBe(first);
 
@@ -256,7 +256,7 @@ describe('Store#subscribe', () => {
   it('gives a new view identity per locale, and the same one on the way back', () => {
     // What a `useSyncExternalStore` snapshot compares: the identity changes
     // with the locale, and a catalogue memoises, so returning to a locale
-    // returns to its view.
+    // returns to its view
     const store = createStore(make(), 'en');
     const en = store.say;
 

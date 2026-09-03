@@ -17,7 +17,7 @@ export function applyBaseInteractionExtension() {
         throw new Error('No catalogue registered, add SayPlugin to your Carbon client');
 
       // Views are immutable and memoised, so an interaction reads one rather
-      // than cloning the catalogue to keep its locale to itself.
+      // than cloning the catalogue to keep its locale to itself
       return catalogue.locale(catalogue.match([this.rawData.locale]));
     },
   });

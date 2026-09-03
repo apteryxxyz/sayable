@@ -18,7 +18,7 @@ This is the example for **making SayKit write files in a layout something else a
 ## Writing straight into `_locales/`
 
 Chrome requires `_locales/<locale>/messages.json`. A bucket's `output` is a template, and `{locale}`
-can sit anywhere in the path — including in a directory segment:
+can sit anywhere in the path, including in a directory segment:
 
 ```ts
 output: '_locales/{locale}/messages.{extension}',
@@ -38,13 +38,13 @@ formatter: json({ dialect: 'webextension' }),
 
 Translator comments land in `description`, which is the field the Chrome Web Store's translation
 tooling shows to translators. Context and source references have no standard slot in that format, so
-they round-trip through `x-saykit-context` and `x-saykit-references` — extension fields Chrome
+they round-trip through `x-saykit-context` and `x-saykit-references`, extension fields Chrome
 ignores.
 
 ## Hashed keys vs. manifest keys
 
 By default SayKit keys a message by a hash of its text and context. That is fine for the runtime,
-which looks messages up by the same hash — but it is no good for `manifest.json`, where you must
+which looks messages up by the same hash, but it is no good for `manifest.json`, where you must
 write the key by hand:
 
 ```json
@@ -64,14 +64,14 @@ messages: {
 },
 ```
 
-Declare any string that a non-JavaScript artefact owns — a manifest, a store listing, an email
-subject — and let everything with a real call site stay hashed.
+Declare any string that a non-JavaScript artefact owns, such as a manifest, a store listing or an
+email subject, and let everything with a real call site stay hashed.
 
 ## Two i18n systems, one catalogue
 
 Chrome's own `chrome.i18n.getMessage()` and SayKit's runtime both read these files, but they are
 not interchangeable: `chrome.i18n` has no ICU support, so it cannot render the plural forms this
-popup relies on. The split used here is the practical one — Chrome reads the catalogue for
+popup relies on. The split used here is the practical one: Chrome reads the catalogue for
 _manifest_ strings, SayKit reads it for everything at runtime.
 
 ## Running it

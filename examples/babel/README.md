@@ -1,6 +1,6 @@
 # Babel example
 
-SayKit compiled by **Babel and nothing else** — no bundler, no dev server, no loader.
+SayKit compiled by **Babel and nothing else**: no bundler, no dev server, no loader.
 `pnpm build`, then `node dist/main.js`.
 
 This exists to pin down the `catalogues: 'inline'` default: `babel-plugin-saykit` on its
@@ -27,13 +27,13 @@ Your card expires soon
 ```
 
 The last line is untranslated in `fr.po`, so it resolves through the fallback chain to the
-English source string — merged in at compile time, not looked up at runtime.
+English source string, merged in at compile time rather than looked up at runtime.
 
 ## What to look at
 
 | Thing                                                             | Where             |
 | ----------------------------------------------------------------- | ----------------- |
-| `plugins: ['saykit']`, no options — the inlining default          | `babel.config.js` |
+| `plugins: ['saykit']`, no options: the inlining default           | `babel.config.js` |
 | `import en from './locales/en.po'`, gone by the time Node sees it | `src/main.ts`     |
 | The compiled record, one object literal per locale                | `dist/main.js`    |
 
@@ -43,6 +43,6 @@ extractor in the output, just `const en = { … }` and `say.call()` invocations.
 ## Hot reload
 
 There is none, by design. The record lands inside `dist/main.js`, whose own bytes only
-change when you rebuild — which is exactly why a dev server wants `catalogues: 'module'`
+change when you rebuild, which is exactly why a dev server wants `catalogues: 'module'`
 and a bundler integration instead. See the
 [Babel integration docs](../../website/content/integrations/babel.mdx).

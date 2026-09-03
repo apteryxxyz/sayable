@@ -21,7 +21,7 @@ describe('resolveConfig', () => {
   });
 
   // Its own name: the runtime keys a loaded module by path, so reusing
-  // `saykit.config.ts` here would hand back the module the test above loaded.
+  // `saykit.config.ts` here would hand back the module the test above loaded
   it('returns the same config across calls', () => {
     writeFileSync(join(dir, 'repeat.config.ts'), `export default { locales: ['de'] };\n`);
     const first = resolveConfig('repeat') as { locales: string[] };

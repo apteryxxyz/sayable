@@ -38,14 +38,14 @@ export function resolveCatalogueSources(config: Config, bucket: Bucket, path: st
 export function assembleCatalogueRecord(bucket: Bucket, contents: string[]) {
   const record: Record<string, string> = {};
 
-  // Apply least specific first so the most specific locale wins each key.
+  // Apply least specific first so the most specific locale wins each key
   for (const content of [...contents].reverse()) {
     if (!content) continue;
     for (const message of bucket.formatter.parse(content)) {
       const key = message.id || generateHash(message.message, message.context);
 
       // A real translation always wins, so the most specific locale that has
-      // one decides the key.
+      // one decides the key
       if (message.translation) {
         record[key] = message.translation;
         continue;
@@ -54,7 +54,7 @@ export function assembleCatalogueRecord(bucket: Bucket, contents: string[]) {
       // Otherwise this locale is untranslated for the key. PO still carries the
       // source text in `msgid`, and JSON reports the key as empty entirely, but
       // neither may displace a translation already applied from a less specific
-      // locale — only fill a key nothing has answered yet.
+      // locale, only fill a key nothing has answered yet
       if (!record[key] && message.message) record[key] = message.message;
     }
   }

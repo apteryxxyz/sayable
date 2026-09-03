@@ -32,7 +32,7 @@ function diagnose(error: unknown, path: string) {
   // A runtime with no TypeScript support parses the annotations as JavaScript
   // and chokes on the first one, leaving a plain `SyntaxError` to say so. One
   // that does support it reports its own syntax errors with a code, so an
-  // uncoded `SyntaxError` here is never the config's fault.
+  // uncoded `SyntaxError` here is never the config's fault
   const unreadable =
     code === 'ERR_UNKNOWN_FILE_EXTENSION' || (!code && error instanceof SyntaxError);
   if (unreadable && TYPESCRIPT.has(extname(path).toLowerCase())) {

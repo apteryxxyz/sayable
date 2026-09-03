@@ -27,11 +27,6 @@ function BoardColumn({ column }: { column: Column }) {
 
       {items.length === 0 ? (
         <p className="column__empty">
-          {/*
-            Two elements in one message. They extract as `<0>` and `<1>`, and a
-            translator may reorder or renest them freely — the rendered output
-            still uses these exact React elements, with their handlers intact.
-          */}
           <Say>
             Nothing here. <a href="#new">Add a task</a> or drag one across from{' '}
             <strong>To do</strong>.
@@ -55,12 +50,6 @@ export function Board() {
         </h1>
 
         <p className="masthead__greeting">
-          {/*
-            An ordinal nested inside a sentence. `Say.Ordinal` uses CLDR ordinal
-            categories, which is why English needs `one`/`two`/`few`/`other`
-            rather than a hand-rolled suffix table — and why French only needs
-            `one` and `other`.
-          */}
           <Say>
             Welcome back, {currentMember}. This is your{' '}
             <Say.Ordinal
@@ -84,14 +73,6 @@ export function Board() {
         </p>
 
         <p className="masthead__summary">
-          {/*
-            `Say.Number`, `Say.Date`, and `Say.Time` are fragments rather than
-            whole messages, so they are written inside a `<Say>` the way any
-            other child is. This one extracts as `{complete, number, percent}`,
-            `{sprintEndsAt, date, medium}`, and `{sprintEndsAt, time, short}` —
-            one value formatted two ways — which keeps the formatting in the
-            catalogue where a translator can move it around the sentence.
-          */}
           <Say>
             <Say.Number _={{ complete: completionRatio() }} style="percent" /> complete. This sprint
             ends on <Say.Date _={{ sprintEndsAt }} style="medium" />, at{' '}
@@ -100,15 +81,6 @@ export function Board() {
         </p>
 
         <p className="masthead__summary">
-          {/*
-            `offset` subtracts from the selector before `#` is formatted, so a
-            total of five reads as "you and 4 others". It never names a branch.
-
-            The exact branch is `_1`, not `_0`: ICU tests an exact value against
-            the original number, before the offset, so a total of one means the
-            current member and nobody else. Writing `_0` here would leave that
-            case to `other` and render "You and 0 others".
-          */}
           <Say.Plural
             _={watchers}
             offset={1}

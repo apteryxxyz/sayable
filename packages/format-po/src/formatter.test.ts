@@ -59,7 +59,7 @@ describe('createPoFormatter', () => {
       expect(out).toContain('msgstr "Bonjour"');
       expect(out).toContain('#. id:greeting');
       expect(out).toContain('#. A friendly hello');
-      // Duplicate reference is collapsed.
+      // Duplicate reference is collapsed
       expect(out.match(/src\/app\.ts:10/g)).toHaveLength(1);
     });
 
@@ -106,7 +106,7 @@ describe('createPoFormatter', () => {
 
     it('handles messages with no references array', () => {
       // `references` is required by the type, but the formatter guards against
-      // a missing array at runtime — exercise that guard.
+      // a missing array at runtime, exercise that guard
       const out = createPoFormatter().stringify([{ message: 'Hi', comments: [] } as never], {
         locale: 'de',
       });

@@ -31,10 +31,10 @@ export default function saykitLoader(this: LoaderContext, source: string) {
   const catalogue = loadCatalogue(config, this.resourcePath);
   if (!catalogue) return source;
 
-  // Fallback files feed this module, so editing them must invalidate it too.
+  // Fallback files feed this module, so editing them must invalidate it too
   for (const file of catalogue.sources) this.addDependency(file);
 
-  // Always JavaScript, whatever the catalogue's extension — which is why the
-  // generated rules carry `type: 'javascript/auto'` and `as: '*.js'`.
+  // Always JavaScript, whatever the catalogue's extension, which is why the
+  // generated rules carry `type: 'javascript/auto'` and `as: '*.js'`
   return `export default ${JSON.stringify(catalogue.record)}`;
 }

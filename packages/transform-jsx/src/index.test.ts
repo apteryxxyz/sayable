@@ -124,8 +124,8 @@ describe('createJsxTransformer.extract', () => {
   });
 
   // The same value written twice is one value, and the same element written
-  // twice is one tag — the rule an explicit name and an explicit `say-tag`
-  // already follow, applied to the ones nobody wrote.
+  // twice is one tag: the rule an explicit name and an explicit `say-tag`
+  // already follow, applied to the ones nobody wrote
   it('numbers a repeated expression once', () => {
     const [message] = transformer.extract(
       'const x = <Say>{items.length} of {items.length}</Say>;',
@@ -143,7 +143,7 @@ describe('createJsxTransformer.extract', () => {
   });
 
   // Two elements a translator has to be able to tell apart stay apart, and the
-  // props they compile to keep their own handlers and hrefs.
+  // props they compile to keep their own handlers and hrefs
   it('tags elements that differ apart', () => {
     const [message] = transformer.extract(
       'const x = <Say><a href="/x">one</a> and <a href="/y">two</a></Say>;',
@@ -153,7 +153,7 @@ describe('createJsxTransformer.extract', () => {
   });
 
   // One value formatted two ways, which is the whole reason to write the two
-  // fragments rather than format ahead of the message.
+  // fragments rather than format ahead of the message
   it('numbers one value formatted two ways once', () => {
     const [message] = transformer.extract(
       'const x = <Say><Say.Date _={sprint.endsAt} style="medium" /> at <Say.Time _={sprint.endsAt} style="short" /></Say>;',
@@ -186,7 +186,7 @@ describe('translator comments', () => {
   });
 
   // Among children there is no node in front of the element for a comment to
-  // attach to, so JSX writes one as a child of its own.
+  // attach to, so JSX writes one as a child of its own
   it('reads a comment child standing in front of the message', () => {
     expect(
       comments(
@@ -220,7 +220,7 @@ describe('translator comments', () => {
   });
 
   // The comment above the statement describes the markup, and there is no
-  // saying which of the messages inside it was meant.
+  // saying which of the messages inside it was meant
   it('does not reach out of a child list to the statement around it', () => {
     expect(
       comments('// TRANSLATORS: hi\nconst x = (\n  <div>\n    <Say>Hello</Say>\n  </div>\n);'),
@@ -266,7 +266,7 @@ describe('createJsxTransformer.transform', () => {
       'file.tsx',
     );
     expect(output).toContain('_who={user.name}');
-    // The single-key object that named it is gone, not passed as a prop value.
+    // The single-key object that named it is gone, not passed as a prop value
     expect(output).not.toContain('{ who:');
   });
 
@@ -292,7 +292,7 @@ describe('duplicate placeholder names', () => {
 
   it('rejects a value name that collides with an element tag', () => {
     // Tags and values share one namespace in the compiled props, so this stays
-    // the harder error it always was.
+    // the harder error it always was
     expect(() =>
       transformer.extract('<Say>{link} <a say-tag="link">here</a></Say>', 'file.tsx'),
     ).toThrow("Element tag 'link' collides with an argument of the same name");

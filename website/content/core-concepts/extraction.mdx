@@ -32,8 +32,8 @@ src/locales/
 <Callout type="info">
   The `.d.po.ts` files are emitted next to each catalogue so that `import en from './locales/en.po'`
   type-checks even without a build plugin running. The `.d.{extension}.ts` name is the one
-  TypeScript actually looks for, and non-JSON extensions need `allowArbitraryExtensions` — see
-  [typed messages](/guides/typed-messages).
+  TypeScript actually looks for, and non-JSON extensions need `allowArbitraryExtensions`; see [typed
+  messages](/guides/typed-messages).
 </Callout>
 
 ## Source-only writes
@@ -139,7 +139,7 @@ For each bucket output:
 | `{locale}.po`      | The catalogue, in whatever format the bucket's formatter produces  |
 | `{locale}.d.po.ts` | Generic TS declaration so `import en from './locales/en.po'` types |
 
-SayKit doesn't write a `.gitignore` — it's up to you which generated files to commit or ignore. The `.po` catalogues are canonical and should be committed; the `.d.po.ts` declarations are regenerated on every extraction, so you can either commit them (handy for CI type-checking) or ignore them via your project's `.gitignore`.
+SayKit doesn't write a `.gitignore`: it's up to you which generated files to commit or ignore. The `.po` catalogues are canonical and should be committed; the `.d.po.ts` declarations are regenerated on every extraction, so you can either commit them (handy for CI type-checking) or ignore them via your project's `.gitignore`.
 
 ## Next
 

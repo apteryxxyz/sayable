@@ -61,7 +61,7 @@ say`Signed in as ${user.profile.name ?? 'Anonymous'}`; // → "Signed in as {0}"
 
 Pull values into local variables before interpolating them, translators get readable placeholders, and the message stays stable across refactors.
 
-The same value written twice is one placeholder, so it is numbered once — the rule a name you write
+The same value written twice is one placeholder, so it is numbered once, the rule a name you write
 yourself already follows, where a repeat is allowed precisely when nothing distinguishes it. Identical
 elements share a tag the same way, while two that differ in any prop stay apart.
 
@@ -300,7 +300,7 @@ grouping separators and decimal mark. An unrecognised style fails the build.
 
 ### Skeletons
 
-A named style asks for a whole format. A **skeleton** — written with a `::` prefix — asks for the
+A named style asks for a whole format. A **skeleton**, written with a `::` prefix, asks for the
 parts instead, and leaves their arrangement to the locale. It is how you reach the formats the four
 names have no word for:
 
@@ -313,13 +313,13 @@ say`Doors at ${say.time(opensAt, { style: '::Hm' })}`; // → "Doors at 19:30"
 
 A skeleton is checked at build time by being resolved, not by being matched against a list, so it
 fails with a file and a line rather than reaching a reader. That covers more than typos: `::qqqq` is
-perfectly good ICU — a stand-alone quarter — but `Intl` has no way to show one, so it is rejected
+perfectly good ICU, a stand-alone quarter, but `Intl` has no way to show one, so it is rejected
 too. A skeleton is rejected whole, so `::yMMMdqqqq` fails rather than quietly dropping the quarter
 and formatting the rest.
 
 <Callout>
   There is no `currency` **style**, because ICU MessageFormat 1 has nowhere to write the code. A
-  currency skeleton names it — `::currency/EUR` — which is the way to ask for one.
+  currency skeleton names it, `::currency/EUR`, which is the way to ask for one.
 </Callout>
 
 A skeleton's `::percent` writes the sign but does not scale, so `0.25` formats as `0.25%`. The named
@@ -385,7 +385,7 @@ The comment belongs to the statement the message is written in, so it can sit ab
 const label = say`One moment…`;
 ```
 
-It doesn't reach any further than that statement — a comment above a function describes the function, not every message inside it.
+It doesn't reach any further than that statement: a comment above a function describes the function, not every message inside it.
 
 Inside JSX there is nothing in front of an element for a comment to attach to, so write one as a child instead:
 
@@ -455,7 +455,7 @@ string attribute has nowhere to put a value:
 <Callout type="info">
   A message extracts as the text JSX renders, so a line break and the indentation around it are
   layout and never reach a catalogue. Whitespace that has to survive a break is written as{' '}
-  <code>{"{' '}"}</code> — the same escape Prettier inserts when it wraps a line ending in a space —
+  <code>{"{' '}"}</code>, the same escape Prettier inserts when it wraps a line ending in a space,
   and it extracts as the space it renders as, not as a placeholder. A literal expression child such
   as `{'—'}` or `{10}` is read the same way, as the text it renders as.
 </Callout>

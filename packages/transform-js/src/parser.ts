@@ -12,7 +12,7 @@ import {
   type Message,
 } from '@saykit/config/features/messages';
 
-// A placeholder name is also used as a property name in the compiled call.
+// A placeholder name is also used as a property name in the compiled call
 const PLACEHOLDER_PATTERN = /^[A-Za-z_][A-Za-z0-9_]*$/;
 
 export function parseTaggedTemplateExpression(
@@ -42,7 +42,7 @@ export function parseTaggedTemplateExpression(
 
 /**
  * The text and the values of a template literal, in the order they were
- * written — the message the template spells out.
+ * written: the message the template spells out.
  */
 function buildTemplateChildren(template: t.TemplateLiteral) {
   return template.quasis.reduce<Message[]>((c, q, i) => {
@@ -84,14 +84,14 @@ export function parseCallExpression(call: t.CallExpression): CompositeMessage | 
 
     const branches = object.properties.reduce<ChoiceMessage['branches']>((c, p) => {
       if (!t.isObjectProperty(p) || !t.isExpression(p.value)) return c;
-      // `offset` is a modifier on the selector, not a case to select.
+      // `offset` is a modifier on the selector, not a case to select
       if (offset !== undefined && getPropertyNameAsString(p.key) === 'offset') return c;
 
       let message: Message | null = null;
       if (!message && t.isStringLiteral(p.value)) message = new LiteralMessage(p.value.value);
       // A branch is a sentence rather than a value, so an untagged template
-      // spells one out — `one: \`${n} day\`` for the `# day` a plain string
-      // cannot express. The `say` tag would be redundant inside a message.
+      // spells one out: `one: \`${n} day\`` for the `# day` a plain string
+      // cannot express
       if (!message && t.isTemplateLiteral(p.value))
         message = new CompositeMessage({}, [], [], buildTemplateChildren(p.value), p.value);
       if (!message) message = parseExpression(p.value, true);
@@ -110,8 +110,8 @@ export function parseCallExpression(call: t.CallExpression): CompositeMessage | 
   }
 
   if (typeof kind === 'string' && isArgumentType(kind)) {
-    // The options object is optional — `{n, number}` is the type's own default
-    // formatting, and is the common case.
+    // The options object is optional: `{n, number}` is the type's own default
+    // formatting, and is the common case
     if (call.arguments.length < 1 || call.arguments.length > 2) return null;
     if (!t.isExpression(call.arguments[0])) return null;
 
@@ -134,9 +134,8 @@ export function parseCallExpression(call: t.CallExpression): CompositeMessage | 
  * "You and 2 others" can select on a total of three.
  *
  * Read only from an integer literal: the offset is baked into the extracted
- * message, so it has to be known at build time, and a fractional or negative
- * one is not something ICU accepts. Anything else stays an ordinary branch and
- * is validated as the key it looks like.
+ * message, and ICU accepts neither a fractional nor a negative one. Anything
+ * else stays an ordinary branch.
  */
 function findPluralOffset(object: t.ObjectExpression) {
   for (const property of object.properties) {
@@ -185,9 +184,8 @@ export function processExpression(
 
 function getExpressionAsKey(node: t.Node) {
   if (t.isIdentifier(node)) return node.name;
-  // JSX identifiers never reach this JS-only parser (they are rejected as
-  // non-expression call arguments upstream), but the guard mirrors the JSX
-  // parser for parity.
+  // JSX identifiers never reach this JS-only parser, being rejected upstream as
+  // non-expression call arguments, but the guard mirrors the JSX parser
   /* v8 ignore next */
   if (t.isJSXIdentifier(node)) return node.name;
   return AUTO_INCREMENT_IDENTIFIER;
@@ -198,10 +196,9 @@ function getExpressionAsKey(node: t.Node) {
  * value alone, so the wrapper never reaches the output: `${{ total: sum() }}`
  * is `{total}` rather than `{0}`.
  *
- * An inline one-key object is the only shape this claims, and it is a shape
- * that could not mean anything else — interpolating an object stringifies it
- * to `[object Object]`, and rendering one in JSX throws. Anything else is
- * returned untouched and named the way it always was.
+ * An inline one-key object is the only shape this claims, and it could not mean
+ * anything else: interpolating an object stringifies it to `[object Object]`.
+ * Anything else is returned untouched.
  */
 export function unwrapPlaceholder(
   expression: t.Expression,
@@ -211,13 +208,13 @@ export function unwrapPlaceholder(
 
   const [property] = expression.properties;
   // A computed key is only known at runtime, too late to name a placeholder
-  // with, and a method has no value to interpolate.
+  // with, and a method has no value to interpolate
   if (!t.isObjectProperty(property) || property.computed || !t.isExpression(property.value))
     return [getExpressionAsKey(expression), expression];
 
   const name = getPropertyNameAsString(property.key);
   // A key that is not computed is always an identifier or a literal, so it
-  // always reads back as a string.
+  // always reads back as a string
   /* v8 ignore next */
   if (typeof name !== 'string') return [getExpressionAsKey(expression), expression];
 
@@ -235,9 +232,8 @@ export function unwrapPlaceholder(
  *
  * A value is compared whole: the same variable interpolated twice is one value,
  * while `${name}` beside `${{ name: author.name }}` is two things claiming one
- * name. An element is compared on its opening element alone — `say-tag` has
- * been stripped by the time this runs, and its children come from the
- * translation rather than the source.
+ * name. An element is compared on its opening element alone, since its children
+ * come from the translation rather than the source.
  */
 export function isEquivalentPlaceholder(a: any, b: any) {
   if (t.isJSXElement(a) || t.isJSXElement(b)) {
@@ -272,7 +268,7 @@ export function parseExpression(expression: t.Expression, fallback?: boolean) {
   } else if (fallback) {
     const [key, value] = unwrapPlaceholder(expression);
     // A named `say` macro is still a message of its own, and emitting it as a
-    // value would ship a macro the transform never replaced.
+    // value would ship a macro the transform never replaced
     if (value !== expression) {
       const nested = parseExpression(value);
       if (nested) return nested;
@@ -309,10 +305,9 @@ function findPropertyValueIfStringLiteralAsString(object: t.ObjectExpression, ke
 const TRANSLATOR_COMMENT_PREFIX = 'translators:';
 
 /**
- * The notes a translator is meant to read, taken from the comments written
- * above a message — `// TRANSLATORS: keep this under 20 characters`. A comment
- * that does not open with the marker is a note to whoever is reading the code,
- * and stays there.
+ * The notes a translator is meant to read, taken from the comments above a
+ * message: `// TRANSLATORS: keep this under 20 characters`. A comment without
+ * the marker is a note to whoever is reading the code, and stays there.
  */
 export function getTranslatorComments(comments: readonly t.Comment[] | null | undefined) {
   return (comments ?? []).reduce<string[]>((a, c) => {
@@ -326,10 +321,9 @@ export function getTranslatorComments(comments: readonly t.Comment[] | null | un
 /**
  * The comments written in front of a message, in the order they were written.
  *
- * A comment on its own line is attached by Babel to whatever node happens to
- * begin at it — `const a = say\`Hi\`` puts it on the declaration, not on the
- * template — so a message is rarely the node holding its own notes. Walking out
- * to the statement gathers them from wherever they landed.
+ * Babel attaches a comment on its own line to whatever node begins at it, so a
+ * message is rarely the node holding its own notes. Walking out to the
+ * statement gathers them from wherever they landed.
  */
 export function collectLeadingComments(path: NodePath<t.Node>) {
   const levels: (readonly t.Comment[])[] = [];
@@ -339,20 +333,20 @@ export function collectLeadingComments(path: NodePath<t.Node>) {
     levels.push(current.node.leadingComments ?? []);
 
     const parent: NodePath<t.Node> | null = current.parentPath;
-    // Only a program has nothing around it, and a program is not a message.
+    // Only a program has nothing around it, and a program is not a message
     /* v8 ignore next */
     if (!parent) break;
 
     // Among JSX children a comment is written as `{/* … */}`, an element of the
-    // list rather than something attached to the element it describes.
+    // list rather than something attached to the element it describes
     if (t.isJSXElement(parent.node) || t.isJSXFragment(parent.node)) {
       levels.push(getPrecedingJSXComments(parent.node, current.node));
       break;
     }
 
-    // A statement is the widest thing a comment above a message can belong to —
-    // anything further out wraps code the message is only one part of. An
-    // export is the exception, being a wrapper around the statement itself.
+    // A statement is the widest thing a comment above a message can belong to,
+    // since anything further out wraps code the message is only one part of. An
+    // export is the exception, being a wrapper around the statement itself
     if (t.isStatement(current.node) && !t.isExportDeclaration(parent.node)) break;
 
     current = parent;
@@ -360,7 +354,7 @@ export function collectLeadingComments(path: NodePath<t.Node>) {
 
   // Innermost first on the way up, and outermost first in the source. A comment
   // that landed on an ancestor is also reachable through a descendant whose own
-  // list this traversal already filled in, so identity dedupes the overlap.
+  // list this traversal already filled in, so identity dedupes the overlap
   return [...new Set(levels.reverse().flat())];
 }
 

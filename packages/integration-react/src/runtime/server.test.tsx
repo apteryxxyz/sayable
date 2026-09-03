@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 // React's `cache` only memoises inside a Server Component render. Under test we
 // replace it with a plain single-value memoiser, so the request cell is shared
-// across a scope and the reads below it the way it is at runtime.
+// across a scope and the reads below it the way it is at runtime
 vi.mock('react', async (importOriginal) => {
   const actual = await importOriginal<typeof import('react')>();
   return {
@@ -34,11 +34,11 @@ const make = () =>
   });
 
 // Kept for the whole file: the scopes below share one request cell, so the
-// warning a second locale produces belongs to the file rather than to a test.
+// warning a second locale produces belongs to the file rather than to a test
 const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
 describe('server runtime', () => {
-  // Runs first, before any scope, so the request cell is still empty.
+  // Runs first, before any scope, so the request cell is still empty
   it('throws before a scope has been established', () => {
     expect(() => getSay()).toThrow("'getSay' must be called below a 'SayScope'");
   });
@@ -75,13 +75,13 @@ describe('server runtime', () => {
 
   // The cell above is one request for the whole file, and the scopes already
   // established have changed its locale, so this counts the warnings the file
-  // produced rather than establishing more of its own.
+  // produced rather than establishing more of its own
   it('warns once when a second scope establishes another locale in one request', async () => {
     expect(warn).toHaveBeenCalledTimes(1);
     expect(warn.mock.calls[0]?.[0]).toContain("A 'SayScope' established");
 
     // The same locale again is not a change, and a change has already been
-    // reported.
+    // reported
     await SayScope({ catalogue: make(), locale: 'en' });
     await SayScope({ catalogue: make(), locale: 'fr' });
     expect(warn).toHaveBeenCalledTimes(1);

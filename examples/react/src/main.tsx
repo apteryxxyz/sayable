@@ -12,9 +12,6 @@ store.subscribe((say) => {
 
 function App() {
   return (
-    // Handing the store itself, rather than a locale and its messages, is what
-    // makes the switch reactive: `useSay` subscribes, so every consumer
-    // re-renders when the store swaps its view.
     <SayProvider store={store}>
       <LocalePicker />
       <Board />

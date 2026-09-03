@@ -1,8 +1,8 @@
 # React example
 
 A task board single-page app built on [`@saykit/react`](../../packages/integration-react),
-Vite, and [`unplugin-saykit`](../../packages/plugin-unplugin). Client-side only — no SSR, no
-routing — so the React integration itself stays in focus.
+Vite, and [`unplugin-saykit`](../../packages/plugin-unplugin). Client-side only, with no SSR and no
+routing, so the React integration itself stays in focus.
 
 ## What it demonstrates
 
@@ -35,7 +35,7 @@ Nothing here. <0>Add a task</0> or drag one across from <1>To do</1>.
 
 A translator gets one sentence with two numbered placeholders, and can reorder or renest them for
 their language. At render time `@saykit/react` parses those tags back out and substitutes the
-original React elements — the `href` and any event handlers survive, because the elements were never
+original React elements: the `href` and any event handlers survive, because the elements were never
 serialised in the first place.
 
 ## Numeric branches and the `_` prefix

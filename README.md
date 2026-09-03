@@ -51,7 +51,7 @@ a README explaining which parts of SayKit it exercises and why.
 
 | Example                                             | Stack                                    | Read it for                                                      |
 | --------------------------------------------------- | ---------------------------------------- | ---------------------------------------------------------------- |
-| [`vanilla`](./examples/vanilla)                     | TypeScript + Vite                        | The whole picture end to end — start here                        |
+| [`vanilla`](./examples/vanilla)                     | TypeScript + Vite                        | The whole picture end to end, start here                         |
 | [`react`](./examples/react)                         | React 19 SPA + Vite                      | Stores, rich-text messages, code-split catalogues                |
 | [`nextjs`](./examples/nextjs)                       | Next.js App Router + Babel               | Server Components, `<SayScope>`, middleware locale detection     |
 | [`tanstack-start`](./examples/tanstack-start)       | TanStack Start + Vite                    | Fallback chains (`en-NZ → en-GB → en`), SSR locale negotiation   |
@@ -60,8 +60,8 @@ a README explaining which parts of SayKit it exercises and why.
 | [`browser-extension`](./examples/browser-extension) | Chrome MV3 + Vite                        | The `webextension` JSON dialect, writing into `_locales/`        |
 | [`custom-formatter`](./examples/custom-formatter)   | Node CLI + tsdown                        | Writing your own `Formatter` and `Transformer`                   |
 
-Between them they cover the plural shapes that actually catch people out — English and French
-(`one`/`other`), Polish (`one`/`few`/`many`/`other`), and Japanese (`other` only) — across Gettext
+Between them they cover the plural shapes that actually catch people out: English and French
+(`one`/`other`), Polish (`one`/`few`/`many`/`other`), and Japanese (`other` only), across Gettext
 PO, plain JSON, the WebExtension JSON dialect, and a hand-written YAML format.
 
 ## Quick start

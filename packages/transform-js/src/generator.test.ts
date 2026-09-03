@@ -87,7 +87,7 @@ describe('generateSayCallExpression', () => {
     const result = generateSayCallExpression(message);
 
     // id, then one key per non-literal child (elements/choices also emit their
-    // own children), every value behind an underscore.
+    // own children), every value behind an underscore
     expect(callKeys(result)).toEqual([
       'id',
       '_name',
@@ -109,7 +109,7 @@ describe('generateSayCallExpression', () => {
     );
 
     // Without the prefix both would be `id` and the later one would win,
-    // leaving the descriptor pointing at a value rather than at a message.
+    // leaving the descriptor pointing at a value rather than at a message
     expect(callKeys(generateSayCallExpression(message))).toEqual(['id', '_id']);
   });
 

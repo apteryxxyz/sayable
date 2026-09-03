@@ -69,9 +69,9 @@ describe('plugin-babel catalogue imports', () => {
   });
 
   // With a bundler integration wired up (see `next/loader.ts` and
-  // `metro/transformer.ts`) the import has to survive — inlining it strips the
+  // `metro/transformer.ts`) the import has to survive, inlining it strips the
   // dependency edge the bundler invalidates on, which is what broke hot reload
-  // in https://github.com/k0d13/saykit/issues/71.
+  // in https://github.com/k0d13/saykit/issues/71
   it('leaves the import intact under `catalogues: "module"`', () => {
     writeFileSync(join(dir, 'messages.json'), JSON.stringify([{ message: 'Hello' }]));
     const out = run(source, join(dir, 'app.ts'), { catalogues: 'module' });
@@ -86,7 +86,7 @@ describe('plugin-babel catalogue imports', () => {
   });
 
   // Inlining replaces the whole declaration with one binding, so a named
-  // specifier alongside the default has to be rejected rather than dropped.
+  // specifier alongside the default has to be rejected rather than dropped
   it('rejects a default import mixed with named specifiers', () => {
     writeFileSync(join(dir, 'messages.json'), JSON.stringify([{ message: 'Hello' }]));
     expect(() => run(`import m, { extra } from './messages.json';`, join(dir, 'app.ts'))).toThrow(
@@ -118,7 +118,7 @@ describe('loadCatalogue', () => {
     const catalogue = loadCatalogue(config as never, join(dir, 'fr.json'));
     expect(catalogue?.record).toMatchObject({ greeting: 'Bonjour', farewell: 'Bye' });
     // Every file in the chain is reported so callers can register it for
-    // invalidation, not just the locale's own file.
+    // invalidation, not just the locale's own file
     expect(catalogue?.sources).toHaveLength(2);
   });
 
@@ -139,7 +139,7 @@ describe('next withSayKit', () => {
     const [glob, rule] = Object.entries(out.turbopack.rules!)[0]!;
 
     // The glob is the bucket's own output template, so nothing else sharing the
-    // extension is routed through the loader.
+    // extension is routed through the loader
     expect(glob.endsWith('/*.json')).toBe(true);
     expect(rule).toMatchObject({ loaders: ['babel-plugin-saykit/next/loader'], as: '*.js' });
   });
@@ -155,7 +155,7 @@ describe('next withSayKit', () => {
     expect(rule.test(join(dir, 'fr.json'))).toBe(true);
     expect(rule.test(join(dir, 'helper.ts'))).toBe(false);
     // The loader emits JavaScript, so a `.json` catalogue must not be handed to
-    // webpack's JSON parser.
+    // webpack's JSON parser
     expect(rule.type).toBe('javascript/auto');
   });
 

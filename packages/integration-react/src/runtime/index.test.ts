@@ -4,7 +4,7 @@ import { Renderer } from '~/components/renderer.js';
 import { Say } from '~/runtime/index.js';
 
 // `GET_SAY` is injected by the saykit plugin at build time. In tests we stand
-// in a fake global so the component's happy path can run.
+// in a fake global so the component's happy path can run
 declare global {
   // eslint-disable-next-line no-var
   var GET_SAY: (() => { call: (descriptor: Record<string, unknown>) => string }) | undefined;
@@ -40,20 +40,20 @@ describe('Say', () => {
     };
     expect(props.html).toBe('<name/> world');
     expect(props.whitespace).toBe(false);
-    // The value props reach `say.call` still prefixed — the runtime does the
-    // single strip — with the id merged in and `whitespace` removed. Asserted
+    // The value props reach `say.call` still prefixed, the runtime does the
+    // single strip, with the id merged in and `whitespace` removed. Asserted
     // exactly, so a renderer prop leaking into the descriptor fails here
-    // rather than reaching the runtime.
+    // rather than reaching the runtime
     expect(call).toHaveBeenCalledWith({ id: 'greet', _name: bold });
 
-    // A slot that maps to a valid element clones it; other slots pass the tag through.
+    // A slot that maps to a valid element clones it; other slots pass the tag through
     const resolved = props.components('name') as (p: object) => ReactElement;
     expect(typeof resolved).toBe('function');
     expect(isValidElement(resolved({}))).toBe(true);
     expect(props.components('missing')).toBe('missing');
-    // The message id is not a value, so nothing resolves for it as a tag.
+    // The message id is not a value, so nothing resolves for it as a tag
     expect(props.components('id')).toBe('id');
-    // Called with no tag, it returns the (undefined) tag.
+    // Called with no tag, it returns the (undefined) tag
     expect(props.components()).toBeUndefined();
   });
 
@@ -76,7 +76,7 @@ describe('Say', () => {
     // The real id still reaches `say.call` and the value named after it does
     // not displace it, since the two live in different namespaces until the
     // runtime strips one underscore. The `whitespace` flag is destructured out
-    // for the renderer, while a value of that name rides along untouched.
+    // for the renderer, while a value of that name rides along untouched
     expect(call).toHaveBeenCalledWith({ id: 'greet', _id: bold, _whitespace: bold });
     expect(props.whitespace).toBe(false);
     expect(typeof props.components('id')).toBe('function');
@@ -92,7 +92,7 @@ describe('Say', () => {
 
     const props = element.props as { components: (tag?: string) => unknown };
     // One strip in the runtime and one in the resolver, each on its own copy:
-    // `__link` reaches `say.call` untouched and resolves as `_link` for the tag.
+    // `__link` reaches `say.call` untouched and resolves as `_link` for the tag
     expect(call).toHaveBeenCalledWith({ id: 'greet', __link: link });
     expect(typeof props.components('_link')).toBe('function');
   });

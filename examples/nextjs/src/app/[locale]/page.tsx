@@ -6,9 +6,6 @@ import { ProductCard } from './product-card';
 type StorefrontPageProps = { params: Promise<{ locale: string }> };
 
 function StorefrontPage(_: StorefrontPageProps) {
-  // The server counterpart of `useSay`: the view the enclosing `SayScope` established.
-  // Useful when you need the locale as *data* — here, to format a price — rather
-  // than a rendered message.
   const say = getSay();
 
   const threshold = new Intl.NumberFormat(say.locale, { style: 'currency', currency }).format(

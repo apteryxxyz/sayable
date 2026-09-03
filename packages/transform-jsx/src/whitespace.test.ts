@@ -6,19 +6,17 @@ const transformer = createJsxTransformer();
 // Extraction is the level these regressions are actually observed at: the
 // strings asserted below are byte-for-byte the msgids and catalogue values that
 // land in `examples/*/src/locales/*`. A whitespace change that survives the
-// parser but corrupts a catalogue has to fail here.
+// parser but corrupts a catalogue has to fail here
 function extract(jsx: string) {
   return transformer.extract(`const x = ${jsx};`, 'file.tsx')[0]?.message;
 }
 
 /**
- * The whole rule, and the only one worth remembering: a message extracts as the
- * text JSX renders. A line break and the indentation around it are how the
- * source is laid out, not part of the sentence, so they never reach a
- * catalogue — whitespace that has to survive a break is written as `{' '}`.
+ * The whole rule: a message extracts as the text JSX renders. A line break and
+ * its indentation are layout rather than sentence, so they never reach a
+ * catalogue; whitespace that has to survive a break is written as `{' '}`.
  *
  * Every case below is what React itself would put on the page for the same JSX.
- * Where the two could differ, this file is wrong.
  */
 describe('a line break between two children', () => {
   it('leaves nothing between text and an element on the next line', () => {
@@ -131,9 +129,7 @@ describe('whitespace written inside a line', () => {
 
 /**
  * How a space survives a break. Prettier writes `{' '}` itself when it wraps a
- * line that ends in one, so this is the shape the formatter already produces —
- * it extracts as the space it renders as, rather than as a placeholder no
- * translator can see or move.
+ * line that ends in one, and it extracts as the space it renders as.
  */
 describe('whitespace written as an expression', () => {
   it("extracts {' '} as a space", () => {
@@ -158,7 +154,7 @@ describe('whitespace written as an expression', () => {
   });
 
   // A number written into a sentence is content a translator should be able to
-  // read and move, not a value the catalogue asks the caller for.
+  // read and move, not a value the catalogue asks the caller for
   it('extracts a literal number as the text it renders as', () => {
     expect(extract('<Say>Top {10} results</Say>')).toBe('Top 10 results');
   });
@@ -188,7 +184,7 @@ describe('whitespace written as an expression', () => {
   });
 
   // JSX renders no child for these, which is what makes them the idiom for a
-  // conditional that has nothing to show.
+  // conditional that has nothing to show
   it.each([['true'], ['false'], ['null']])('leaves nothing behind for {%s}', (value) => {
     expect(extract(`<Say>Hello,{${value}} world!</Say>`)).toBe('Hello, world!');
   });

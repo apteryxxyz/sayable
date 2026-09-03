@@ -37,7 +37,7 @@ describe('assembleCatalogueRecord', () => {
   } as unknown as Bucket;
 
   it('lets more specific locales win, skips empty files, and falls back to source text', () => {
-    // Contents are most-specific first, matching `resolveCatalogueSources`.
+    // Contents are most-specific first, matching `resolveCatalogueSources`
     const record = assembleCatalogueRecord(bucket, [
       JSON.stringify([{ message: 'C', translation: 'C-NZ', id: 'c' }]),
       '', // a fallback locale with no file yet
@@ -52,7 +52,7 @@ describe('assembleCatalogueRecord', () => {
 
   it('keeps a fallback translation when the more specific locale is untranslated', () => {
     // PO carries the source text in `msgid` even when `msgstr` is empty, so an
-    // untranslated en-NZ entry must not displace the en-GB translation.
+    // untranslated en-NZ entry must not displace the en-GB translation
     const record = assembleCatalogueRecord(bucket, [
       JSON.stringify([{ message: 'Hello', translation: '', id: 'greeting' }]),
       JSON.stringify([{ message: 'Hello', translation: 'Hi mate', id: 'greeting' }]),
@@ -64,7 +64,7 @@ describe('assembleCatalogueRecord', () => {
 
   it('keeps the fallback when a locale reports a key as entirely empty', () => {
     // Single-value formats (JSON) surface an untranslated key as an empty
-    // message and translation, which must not blank out the source string.
+    // message and translation, which must not blank out the source string
     const record = assembleCatalogueRecord(bucket, [
       JSON.stringify([{ message: '', translation: '', id: 'greeting' }]),
       JSON.stringify([{ message: 'Hello', translation: 'Hello', id: 'greeting' }]),

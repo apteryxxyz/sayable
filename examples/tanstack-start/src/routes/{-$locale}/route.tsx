@@ -6,13 +6,6 @@ import { LocaleSwitcher } from '../../components/locale-switcher';
 import { defaultLocale, isLocale, LOCALE_COOKIE, type Locale } from '../../config';
 import catalogue from '../../i18n';
 
-/**
- * Runs on the server only. Reads the locale a returning visitor previously
- * chose, falling back to what their browser asks for. `catalogue.match` does the
- * negotiation: it accepts an exact hit, then a language-prefix hit (`en-AU` →
- * `en-GB`, since that is the first `en-*` in the configured list), and finally
- * returns the source locale.
- */
 const detectLocale = createServerFn({ method: 'GET' }).handler(() => {
   const stored = getCookie(LOCALE_COOKIE);
   if (isLocale(stored)) return stored;
@@ -26,10 +19,6 @@ const detectLocale = createServerFn({ method: 'GET' }).handler(() => {
 });
 
 export const Route = createFileRoute('/{-$locale}')({
-  /**
-   * The loader is what makes this server-rendered rather than a client-side
-   * flash: by the time the component runs, `messages` is already in the payload.
-   */
   async loader({ params }) {
     const locale = isLocale(params.locale) ? params.locale : await detectLocale();
     const say = catalogue.locale(isLocale(locale) ? locale : defaultLocale);

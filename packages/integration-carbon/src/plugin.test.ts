@@ -6,18 +6,18 @@ import { SayPlugin } from '~/plugin.js';
 
 const makeCatalogue = () => createCatalogue({ en: {}, fr: {} });
 
-// Constructing the plugin installs the `say` getters on the Carbon prototypes.
+// Constructing the plugin installs the `say` getters on the Carbon prototypes
 const catalogue = makeCatalogue();
 const plugin = new SayPlugin(catalogue);
 
-// Keep the global registered by default; individual tests may clear it.
+// Keep the global registered by default; individual tests may clear it
 afterEach(() => Reflect.set(globalThis, kSay, catalogue));
 
 /** Minimal object backed by a Carbon prototype, carrying the raw data the getter reads. */
 const proto = <T>(prototype: object, rawData: unknown) => {
   const object = Object.create(prototype);
   // `rawData` is a getter on some Carbon prototypes; define an own data property
-  // to shadow it.
+  // to shadow it
   Object.defineProperty(object, 'rawData', { value: rawData, configurable: true });
   return object as T;
 };
@@ -34,7 +34,7 @@ describe('guild `say` extension', () => {
     const guild = proto<Guild>(Guild.prototype, { preferred_locale: 'fr' });
     const view = guild.say;
     expect(view.locale).toBe('fr');
-    // Second access reuses the catalogue's memoised view.
+    // Second access reuses the catalogue's memoised view
     expect(guild.say).toBe(view);
   });
 

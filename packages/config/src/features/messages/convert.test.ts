@@ -150,7 +150,7 @@ describe('convertMessageToIcu', () => {
   });
 
   // `#` is the plural's own selector spelled the way ICU spells it, so the two
-  // are one placeholder and one prop rather than a number written twice.
+  // are one placeholder and one prop rather than a number written twice
   it('should write a plural selector inside its own branch as a hash', () => {
     const message = new ChoiceMessage(
       'plural',
@@ -180,7 +180,7 @@ describe('convertMessageToIcu', () => {
   });
 
   // A formatted argument is not interchangeable with `#`, which formats itself
-  // the way the plural does.
+  // the way the plural does
   it('should leave a formatted selector named', () => {
     const message = new ChoiceMessage(
       'plural',
@@ -220,7 +220,7 @@ describe('convertMessageToIcu', () => {
   });
 
   // `#` reaches through a nested select to the plural enclosing it, so text in
-  // there still needs quoting.
+  // there still needs quoting
   it('should keep a hash live inside a select nested in a plural', () => {
     const message = new ChoiceMessage(
       'plural',
@@ -242,7 +242,7 @@ describe('convertMessageToIcu', () => {
   });
 
   // `select` matches literal strings and has no number to offset, so emitting
-  // one would be invalid ICU rather than a harmless no-op.
+  // one would be invalid ICU rather than a harmless no-op
   it('should drop an offset on a select', () => {
     const message = new ChoiceMessage(
       'select',
@@ -281,7 +281,7 @@ describe('convertMessageToIcu', () => {
   });
 
   // A numeric key stays bare under `select`, which matches its cases as literal
-  // strings — `=0` there is a parse error, not an exact value.
+  // strings, `=0` there is a parse error, not an exact value
   it('should generate select messages with numeric identifiers bare', () => {
     const message = new ChoiceMessage(
       'select',

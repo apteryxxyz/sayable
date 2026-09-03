@@ -10,19 +10,16 @@ import type {
 
 /**
  * Map a descriptor's keys back to the placeholders the message names. The
- * transform emits every value with one underscore in front, which keeps a
- * message's values out of the descriptor's own namespace, so stripping exactly
- * one is the whole inverse — `_0` is `0`, and `__total` is a placeholder named
- * `_total`. Keys without one are passed through, so a hand-written
- * `call({ id, name })` still formats `{name}`.
+ * transform prefixes every value with one underscore, so stripping exactly one
+ * is the inverse: `_0` is `0`, `__total` is `_total`. Keys without one pass
+ * through, so a hand-written `call({ id, name })` still formats `{name}`.
  *
- * Built from the descriptor's own entries so a value named `__proto__` stays a
- * placeholder rather than reaching through to the prototype.
+ * Built from own entries, so a value named `__proto__` stays a placeholder.
  */
 function resolveDescriptorValues(descriptor: { id: string; [match: string | number]: unknown }) {
   return Object.fromEntries(
     Object.entries(descriptor)
-      // The id names the message, it is not one of its values.
+      // The id names the message, it is not one of its values
       .filter(([key]) => key !== 'id')
       .map(([key, value]) => [key.startsWith('_') ? key.slice(1) : key, value]),
   );
@@ -39,13 +36,9 @@ export namespace View {
 /**
  * One locale, bound to the messages it formats against.
  *
- * A view is callable, immutable and memoised: `catalogue.locale('en')` hands
- * back the same value every time, and nothing on it mutates. It is the only
- * thing application code holds, which is why nothing downstream has to clone or
- * freeze to defend itself.
- *
- * A view has no public reference back to its catalogue and so cannot switch
- * locale. Switching belongs to whoever owns the catalogue.
+ * Callable, immutable and memoised: `catalogue.locale('en')` hands back the
+ * same value every time. A view has no reference back to its catalogue and so
+ * cannot switch locale; switching belongs to whoever owns the catalogue.
  */
 export interface View<Locale extends string = string> {
   // ===== Macros ===== //
@@ -54,7 +47,7 @@ export interface View<Locale extends string = string> {
    * Define a message.
    *
    * An interpolated variable is named after itself. Anything else is numbered,
-   * unless it is written as a single-key object, which names it.
+   * unless written as a single-key object, which names it.
    *
    * @example
    * ```ts
@@ -67,8 +60,8 @@ export interface View<Locale extends string = string> {
   (strings: TemplateStringsArray, ...placeholders: unknown[]): string;
 
   /**
-   * Provide a custom id or context for the message, the latter used to disambiguate
-   * identical strings that have different meanings depending on usage.
+   * Give the message a custom id, or a context to disambiguate identical
+   * strings that mean different things.
    *
    * @example
    * ```ts
@@ -81,27 +74,26 @@ export interface View<Locale extends string = string> {
    */
   (descriptor: { id?: string; context?: string }): View<Locale>;
 
-  /**
-   * The locale this view is bound to.
-   */
+  /** The locale this view is bound to. */
   readonly locale: Locale;
 
-  /**
-   * The messages this view formats against.
-   */
+  /** The messages this view formats against. */
   readonly messages: Readonly<View.Messages>;
 
   /**
-   * Get the translation for a descriptor.
+   * Format the message a descriptor names.
    *
-   * @param descriptor Descriptor to get the translation for
-   * @returns The translation string for the descriptor
-   * @throws If descriptor id is not found
+   * @param descriptor Descriptor to format
+   * @returns The formatted message
+   * @throws If the id has no message
    */
   call(descriptor: { id: string; [match: string | number]: unknown }): string;
 
   /**
    * Define a pluralised message.
+   *
+   * Interpolating the selector into a branch extracts as ICU's `#`. A `#` you
+   * write yourself is text.
    *
    * @example
    * ```ts
@@ -111,9 +103,6 @@ export interface View<Locale extends string = string> {
    * })
    * ```
    *
-   * Interpolating the selector into a branch extracts as ICU's `#`, the number
-   * the message branched on. A `#` you write yourself is text.
-   *
    * @param _ Number to determine the plural form of
    * @param options Pluralisation rules keyed by CLDR categories or specific numbers
    * @returns The plural form of the number
@@ -122,10 +111,10 @@ export interface View<Locale extends string = string> {
   plural(_: number | Named<number>, options: Disallow<NumeralOptions, 'id' | 'context'>): string;
 
   /**
-   * Define an ordinal message (e.g. "1st", "2nd", "3rd").
+   * Define an ordinal message ("1st", "2nd", "3rd").
    *
-   * Interpolating the selector into a branch extracts as ICU's `#`, the number
-   * the message branched on. A `#` you write yourself is text.
+   * Interpolating the selector into a branch extracts as ICU's `#`. A `#` you
+   * write yourself is text.
    *
    * @example
    * ```ts
@@ -145,7 +134,7 @@ export interface View<Locale extends string = string> {
   ordinal(_: number | Named<number>, options: Disallow<NumeralOptions, 'id' | 'context'>): string;
 
   /**
-   * Define a select message, useful for handling gender, status, or other categories.
+   * Define a select message, for gender, status, or other categories.
    *
    * @example
    * ```ts
@@ -170,7 +159,7 @@ export interface View<Locale extends string = string> {
    * Format a number the way this view's locale writes one, with its own
    * grouping separators and decimal mark.
    *
-   * Unlike `plural`, `ordinal`, and `select`, this is a fragment rather than a
+   * Unlike `plural`, `ordinal` and `select`, this is a fragment rather than a
    * whole message, and is normally written inside one.
    *
    * @example
@@ -183,7 +172,7 @@ export interface View<Locale extends string = string> {
    *
    * @param _ Number to format
    * @param options Formatting style: a named style, an ICU skeleton such as
-   *   `::currency/EUR`, or a literal number pattern such as `#,##0.00`
+   *   `::currency/EUR`, or a pattern such as `#,##0.00`
    * @returns The formatted number
    * @remark This is a macro and must be used with the relevant saykit plugin
    */
@@ -200,8 +189,7 @@ export interface View<Locale extends string = string> {
    * ```
    *
    * @param _ Date to format
-   * @param options Formatting style, either a named style or an ICU skeleton
-   *   such as `::yyyyMMdd`
+   * @param options A named style or an ICU skeleton such as `::yyyyMMdd`
    * @returns The formatted date
    * @remark This is a macro and must be used with the relevant saykit plugin
    */
@@ -221,8 +209,7 @@ export interface View<Locale extends string = string> {
    * ```
    *
    * @param _ Date to format
-   * @param options Formatting style, either a named style or an ICU skeleton
-   *   such as `::Hm`
+   * @param options A named style or an ICU skeleton such as `::Hm`
    * @returns The formatted time
    * @remark This is a macro and must be used with the relevant saykit plugin
    */
@@ -235,14 +222,10 @@ export interface View<Locale extends string = string> {
 /**
  * Create a view over one locale and the messages it formats against.
  *
- * A catalogue memoises one of these per locale, which is how application code
- * usually reaches one. A view needs nothing from a catalogue beyond a
- * record of messages, so a single-locale app can build one directly.
- *
- * The format cache belongs to the view. Because a catalogue memoises, that is
- * also once per locale per process; and because the cache is not shared with
- * the catalogue, a view built over one set of messages can never be served a
- * format compiled from another.
+ * A catalogue memoises one per locale, which is how application code usually
+ * reaches one; a single-locale app can build one directly. The format cache
+ * belongs to the view, so a view built over one set of messages can never be
+ * served a format compiled from another.
  *
  * @param locale The locale to bind to
  * @param messages The messages this view formats against
@@ -252,10 +235,9 @@ export function createView<Locale extends string>(
   locale: Locale,
   messages: View.Messages,
 ): View<Locale> {
-  // Copied and frozen. A format is compiled from a message the first time it
-  // is used and kept, so a messages record that could change afterwards would
-  // leave `call` formatting from the old string while `view.messages` shows the
-  // new one. Freezing a copy means the two can never disagree.
+  // Copied and frozen: formats are compiled once and kept, so a record that
+  // could change afterwards would leave `call` formatting from the old string
+  // while `view.messages` shows the new one
   const own: View.Messages = Object.freeze({ ...messages });
 
   const formats = new Map<string, ReturnType<typeof compile>>();
@@ -280,7 +262,7 @@ export function createView<Locale extends string>(
       locale: { value: locale, enumerable: true },
       messages: { value: own, enumerable: true },
       // Own, so it shadows `Function.prototype.call`: the transform compiles
-      // every message down to `say.call({ id, ... })`.
+      // every message down to `say.call({ id, ... })`
       call: { value: call },
       plural: { value: () => macro('plural') },
       ordinal: { value: () => macro('ordinal') },

@@ -43,9 +43,9 @@ function createJsTransformer(): Transformer {
 
       traverse(program, {
         Expression(path) {
-          // Only extraction cares where a comment was written — the transform
+          // Only extraction cares where a comment was written: the transform
           // leaves comments where they are, and moving them would duplicate
-          // them into the generated call.
+          // them into the generated call
           path.node.leadingComments = collectLeadingComments(path);
           const message = parseExpression(path.node);
           if (message) {

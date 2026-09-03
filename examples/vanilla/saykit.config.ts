@@ -3,9 +3,6 @@ import po from '@saykit/format-po';
 import js from '@saykit/transform-js';
 
 export default defineConfig({
-  // The first locale is the *source* locale: it is the only one `saykit extract`
-  // writes translations into. The rest are created as empty placeholders and
-  // then filled in by translators (or a TMS).
   locales: ['en', 'fr', 'pl', 'ja'],
   buckets: [
     {

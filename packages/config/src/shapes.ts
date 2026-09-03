@@ -48,7 +48,7 @@ export const Bucket = z
     output: z.templateLiteral([z.string(), '{locale}', z.string(), '.{extension}']),
     /**
      * Messages that belong in the catalogue but have no call site to extract
-     * them from — strings owned by a non-JavaScript artefact such as a manifest,
+     * them from, strings owned by a non-JavaScript artefact such as a manifest,
      * a store listing, or an email subject. Keyed by id, so the id is stable and
      * hand-written by definition, and merged into every extraction alongside
      * whatever the transformers find.
@@ -76,12 +76,12 @@ export const Bucket = z
         id,
         message: entry.message,
         // Declaring a message declares the source string, so it is its own
-        // translation in the source locale, exactly as an extracted one is.
+        // translation in the source locale, exactly as an extracted one is
         translation: entry.message,
         context: 'context' in entry ? entry.context : undefined,
         comments: ('comments' in entry ? entry.comments : undefined) ?? [],
-        // There is no call site to point a translator at — that is the whole
-        // reason the message is declared here.
+        // There is no call site to point a translator at, which is the whole
+        // reason the message is declared here
         references: [],
       };
     }),

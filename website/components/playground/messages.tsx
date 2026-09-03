@@ -5,11 +5,11 @@ function Empty({ children }: { children: React.ReactNode }) {
 }
 
 /**
- * A list rather than a table. In a half-width pane five columns leave the message
- * — the thing you actually came to read — fighting its own metadata for space, and
- * every id, context or comment added makes it narrower. Giving the message its own
- * full-width line and demoting the metadata to a line beneath keeps the message at
- * 100% no matter how much metadata a message carries.
+ * A list rather than a table. In a half-width pane five columns leave the
+ * message, the thing you actually came to read, fighting its own metadata for
+ * space, and every id, context or comment added makes it narrower. Giving it a
+ * full-width line and demoting the metadata to a line beneath keeps the message
+ * at 100% no matter how much metadata a message carries.
  */
 export function MessageList({
   messages,
@@ -31,7 +31,7 @@ export function MessageList({
   return (
     <ul>
       {messages.map((message, index) => {
-        // An explicit id wins; otherwise show the hash the catalogue would key on.
+        // An explicit id wins; otherwise show the hash the catalogue would key on
         const id = message.id ?? hashOf?.(message.message, message.context);
 
         return (

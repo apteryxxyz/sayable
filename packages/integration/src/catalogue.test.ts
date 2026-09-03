@@ -82,7 +82,7 @@ describe('Catalogue#locale', () => {
 
   it('keeps handing back the same view once a locale is filled', () => {
     // A locale is written once, so there is no second set of messages for a
-    // view to fall out of step with.
+    // view to fall out of step with
     const catalogue = createCatalogue({ de: () => ({ greeting: 'Hallo' }) });
     const view = catalogue.load('de');
     catalogue.load('de');
@@ -131,7 +131,7 @@ describe('Catalogue#load', () => {
     const catalogue = createCatalogue({ de: async () => ({ greeting: `load-${++call}` }) });
 
     // Two loads in flight at once: the second finds the first still running
-    // and waits on it rather than starting the thunk again.
+    // and waits on it rather than starting the thunk again
     const [first, second] = await Promise.all([catalogue.load('de'), catalogue.load('de')]);
     expect(first).toBe(second);
     expect(call).toBe(1);
@@ -183,7 +183,7 @@ describe('Catalogue iteration', () => {
 });
 
 describe('Catalogue#match', () => {
-  // Locales are ['en', 'fr', 'de'], so 'en' is the default-locale fallback.
+  // Locales are ['en', 'fr', 'de'], so 'en' is the default-locale fallback
   it.each([
     ['no guesses are given', [], 'en'],
     ['guesses are empty arrays', [[]], 'en'],

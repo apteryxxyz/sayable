@@ -8,7 +8,7 @@ import { readCatalogueMessages, writeCatalogueMessages } from './storage.js';
 const dir = mkdtempSync(join(tmpdir(), 'saykit-storage-'));
 afterAll(() => rmSync(dir, { recursive: true, force: true }));
 
-// A bucket with a JSON formatter; every test passes an explicit path.
+// A bucket with a JSON formatter; every test passes an explicit path
 const bucket = {
   formatter: {
     parse: (content: string) => (content ? JSON.parse(content) : []),
@@ -45,7 +45,7 @@ describe('writeCatalogueMessages / readCatalogueMessages', () => {
   it('passes existing content to the formatter when the file already exists', async () => {
     const path = join(dir, 'existing.json');
     await writeCatalogueMessages(bucket, 'en', [message], path);
-    // Second write should read the existing file first (no throw).
+    // Second write should read the existing file first (no throw)
     await expect(writeCatalogueMessages(bucket, 'en', [message], path)).resolves.toBeUndefined();
   });
 

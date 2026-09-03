@@ -9,15 +9,15 @@ This example shows both halves.
 
 ## What it demonstrates
 
-| Concern                                                       | Where                         |
-| ------------------------------------------------------------- | ----------------------------- |
-| `SayPlugin`, installs `interaction.say` / `guild.say`         | `src/index.ts`                |
-| `withSay(Command)` — `(say, properties)`, run once per locale | `src/commands/pick.ts`        |
-| `withSay(CommandWithSubcommands)` + localised options         | `src/commands/leaderboard.ts` |
-| `withSay(Button)` / `withSay(Modal)` — `(properties)` only    | `pick.ts`, `join.ts`          |
-| `interaction.say` — the invoking user's locale                | everywhere                    |
-| `guild.say` — the **server's** `preferred_locale`             | `src/commands/announce.ts`    |
-| `say.plural` / `say.ordinal` / `say.select` outside React     | `leaderboard.ts`              |
+| Concern                                                      | Where                         |
+| ------------------------------------------------------------ | ----------------------------- |
+| `SayPlugin`, installs `interaction.say` / `guild.say`        | `src/index.ts`                |
+| `withSay(Command)`: `(say, properties)`, run once per locale | `src/commands/pick.ts`        |
+| `withSay(CommandWithSubcommands)` + localised options        | `src/commands/leaderboard.ts` |
+| `withSay(Button)` / `withSay(Modal)`: `(properties)` only    | `pick.ts`, `join.ts`          |
+| `interaction.say`: the invoking user's locale                | everywhere                    |
+| `guild.say`: the **server's** `preferred_locale`             | `src/commands/announce.ts`    |
+| `say.plural` / `say.ordinal` / `say.select` outside React    | `leaderboard.ts`              |
 
 ## Two overloads, because there are two kinds of object
 
@@ -38,7 +38,7 @@ class RemindMeButton extends withSay(Button) {
 For a **command**, `properties` is a function and it is called once for every configured locale,
 receiving that locale's view.
 The results are folded into Discord's `name_localizations` and `description_localizations`, so a
-French user sees `/choix` and a German user sees `/auswahl` — one registration, every language.
+French user sees `/choix` and a German user sees `/auswahl`: one registration, every language.
 
 For a **component or modal**, there is nothing pre-registered with Discord: the object is built at
 the moment someone is looking at it. So the overload takes plain properties, already resolved
@@ -75,7 +75,7 @@ pnpm --filter carbon-example dev       # wrangler dev
 pnpm --filter carbon-example extract   # after editing any message
 ```
 
-The build goes through `tsdown` with `unplugin-saykit/rolldown` (see `tsdown.config.ts`) — the same
+The build goes through `tsdown` with `unplugin-saykit/rolldown` (see `tsdown.config.ts`), the same
 plugin as the Vite examples, just a different adapter entry.
 
 > Only typechecking and the build are verified in this repo; actually talking to Discord needs a

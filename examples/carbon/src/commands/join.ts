@@ -11,7 +11,6 @@ import { withSay } from '@saykit/carbon';
 import type { Catalogue, View } from 'saykit';
 import { currentPick } from '../club.js';
 
-/** `/join` — sign up for the current book, via a modal. */
 export class JoinCommand extends withSay(Command) {
   constructor(catalogue: Catalogue) {
     super(catalogue, (say) => ({
@@ -21,8 +20,6 @@ export class JoinCommand extends withSay(Command) {
   }
 
   async run(interaction: CommandInteraction) {
-    // The modal is built from `interaction.say`, so its title, field labels and
-    // placeholders all arrive in the language this particular user reads.
     await interaction.showModal(new JoinModal(interaction.say));
   }
 }

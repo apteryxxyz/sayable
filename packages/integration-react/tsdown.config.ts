@@ -14,7 +14,7 @@ export default defineConfig({
   target: 'es2022',
   // Kept out of the bundle so the server build of the client entry *imports*
   // the `"use client"` module rather than inlining it, which is what keeps the
-  // boundary a boundary. The specifiers are rewritten to the built names below.
+  // boundary a boundary. The specifiers are rewritten to the built names below
   deps: { neverBundle: ['./client.js', './server.js'] },
   outputOptions: { comments: { jsdoc: false } },
   async onSuccess() {
@@ -29,7 +29,7 @@ export default defineConfig({
     // The `"use client"` build stays at `dist/index.mjs`. Naming it
     // `index.client.mjs` made framework import guards that deny `**/*.client.*`
     // in a server environment (TanStack Start) reject it, even though a
-    // `"use client"` module is meant to be server-rendered.
+    // `"use client"` module is meant to be server-rendered
     await writeFile('dist/index.mjs', CLIENT_IMPORT + index);
   },
 });

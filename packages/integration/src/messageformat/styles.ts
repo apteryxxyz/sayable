@@ -9,12 +9,10 @@ import type { NumberOptions } from './options.js';
 /**
  * An argument style, resolved to the `Intl` options it asks for.
  *
- * This is the half of the conversion that MF2's own option vocabulary cannot
- * do. That vocabulary tops out at `{ length, fields }` for a date — a coarse
- * `short`/`medium`/`long`/`full` and nothing else — so a skeleton has nowhere
- * to land. Both skeleton parsers already emit `Intl` option bags, which is the
- * form the formatter wants anyway, so a style resolves straight to one and
- * skips the vocabulary entirely.
+ * This is the half of the conversion MF2's own option vocabulary cannot do: it
+ * tops out at `{ length, fields }` for a date, so a skeleton has nowhere to
+ * land. Both skeleton parsers emit `Intl` option bags, which is what the
+ * formatter wants anyway, so a style resolves straight to one.
  */
 
 /** A style the conversion could not read. */
@@ -24,8 +22,8 @@ export class StyleError extends Error {}
  * ICU's named date lengths, as the fields each one shows.
  *
  * MF1 names a length and leaves the fields to the locale; `Intl` wants both, so
- * the names expand here. `full` and `long` differ only in the weekday, which is
- * what distinguishes them in CLDR's own patterns.
+ * the names expand here. `full` and `long` differ only in the weekday, as in
+ * CLDR's own patterns.
  */
 const DATE_STYLES = {
   short: { year: 'numeric', month: 'numeric', day: 'numeric' },
@@ -44,8 +42,8 @@ const TIME_STYLES = {
 /**
  * Turn a `date` or `time` argument style into `Intl.DateTimeFormat` options.
  *
- * A `::`-prefixed style is an ICU skeleton — `::yyyyMMdd`, `::HHmm` — naming
- * the fields to show and leaving their arrangement to the locale. The named
+ * A `::`-prefixed style is an ICU skeleton such as `::yyyyMMdd` or `::HHmm`,
+ * naming the fields to show and leaving their arrangement to the locale. The named
  * styles are looked up instead, and an empty style takes MF1's own default.
  *
  * @throws {StyleError} If the style names no fields
@@ -57,20 +55,19 @@ export function dateTimeStyle(kind: 'date' | 'time', style: string): Intl.DateTi
     const errors: string[] = [];
     const tokens = parseDateTokens(style.slice(2));
     const opt = getDateTimeFormatOptions(tokens, (_type, message) => errors.push(message));
-    // Any field `Intl` could not show fails the whole skeleton. Keeping the
-    // fields that did resolve would answer a question nobody asked — a
-    // `::yMMMdqqqq` that quietly drops its quarter is the silent misformat this
-    // module exists to prevent, and it is what the build-time check rejects.
+    // Any field `Intl` could not show fails the whole skeleton: a `::yMMMdqqqq`
+    // that quietly drops its quarter is the silent misformat this module
+    // exists to prevent
     if (errors.length > 0) throw new StyleError(errors[0]!);
-    // Every token resolved and none of them named a field.
+    // Every token resolved and none of them named a field
     if (Object.keys(opt).length === 0) throw new StyleError(`Empty skeleton ${style}`);
     return opt;
   }
 
-  // MF1's own default, for both `date` and `time`, is `medium`.
+  // MF1's own default, for both `date` and `time`, is `medium`
   if (style === '') return named.medium;
   // `hasOwn` rather than `in`: the styles come from a plain object, so a key
-  // every object inherits must not pass for one an author asked for.
+  // every object inherits must not pass for one an author asked for
   if (Object.hasOwn(named, style)) return named[style as keyof typeof named];
   throw new StyleError(`Unsupported ${kind} style ${style}`);
 }
@@ -81,11 +78,10 @@ export function dateTimeStyle(kind: 'date' | 'time', style: string): Intl.DateTi
  * Three forms reach here: MF1's named styles, a `::`-prefixed skeleton, and a
  * literal pattern such as `#,##0.00`.
  *
- * The named styles are expanded here rather than handed to a parser, because
- * neither parser recognises them — they are MF1 vocabulary, and the pattern
- * parser reads `percent` as seven literal characters. `currency` is not among
- * them: MF1 has nowhere to write the code, so it is left to fall back to a
- * plain number, and `::currency/EUR` is how a currency is asked for.
+ * The named styles are expanded here rather than handed to a parser, since
+ * neither recognises them: they are MF1 vocabulary, and the pattern parser
+ * reads `percent` as seven literal characters. `currency` is not among them,
+ * because MF1 has nowhere to write the code, `::currency/EUR` asks for one.
  *
  * `scale` comes back out alongside the bag rather than inside it, because it
  * multiplies the value and `Intl` has no option for that.
@@ -97,15 +93,14 @@ export function numberStyle(style: string): NumberOptions {
   if (style === '') return {};
   if (style === 'integer') return { maximumFractionDigits: 0 };
   // `Intl` scales a percent itself, so this is the whole of ICU's
-  // `scale/100 percent`.
+  // `scale/100 percent`
   if (style === 'percent') return { style: 'percent' };
 
   const errors: string[] = [];
   const onError = (error: unknown) => errors.push(String(error));
 
-  // `parseNumberPattern` wants a currency code for the `¤` token, and a pattern
-  // without one never uses it. `XXX` is ISO 4217's "no currency" code, which is
-  // what an unadorned pattern should format as if one slips through.
+  // `parseNumberPattern` wants a currency code for the `¤` token, which a
+  // pattern without one never uses. `XXX` is ISO 4217's "no currency"
   const skeleton = style.startsWith('::')
     ? parseNumberSkeleton(style.slice(2), onError)
     : parseNumberPattern(style, 'XXX', onError);
@@ -118,8 +113,7 @@ export function numberStyle(style: string): NumberOptions {
 
   if (errors.length > 0) throw new StyleError(errors[0]!);
 
-  // Double-scaling is not a risk here: `percent scale/100` is the one scale
-  // `Intl` can express, and the parser folds it into `style: 'percent'` rather
-  // than reporting it. Anything still reported — `::scale/1000` — is ours.
+  // No double-scaling: `percent scale/100` is the one scale `Intl` expresses,
+  // and the parser folds it into `style: 'percent'` rather than reporting it
   return scale === undefined ? opt : { ...opt, scale };
 }

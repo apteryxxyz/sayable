@@ -49,7 +49,7 @@ afterEach(() => rmSync(dir, { recursive: true, force: true }));
 async function extract(messages: Message[]) {
   vi.mocked(extractMessagesFromFile).mockResolvedValue(messages);
   const worker = new BucketExtractWorker(config, bucket, logger);
-  // `update` indexes the (mocked) file then triggers `write`.
+  // `update` indexes the (mocked) file then triggers `write`
   await worker.update(join(dir, 'src', 'app.ts'));
 }
 
@@ -88,7 +88,7 @@ describe('BucketExtractWorker.write', () => {
     expect(entries).toHaveLength(1);
     expect(entries[0]?.message).toBe('Reading Time');
     expect(entries[0]?.comments).toEqual(['The name']);
-    // The call site still contributes its reference.
+    // The call site still contributes its reference
     expect(entries[0]?.references).toEqual(['src/app.ts:1']);
   });
 
@@ -109,7 +109,7 @@ describe('BucketExtractWorker.write', () => {
 
     await extract([msg({ message: 'Hello', id: 'greeting' })]);
 
-    // No additions, and the orphaned string is not stripped.
+    // No additions, and the orphaned string is not stripped
     expect(readFileSync(frPath, 'utf8')).toBe(original);
   });
 });

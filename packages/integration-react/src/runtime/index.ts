@@ -44,10 +44,9 @@ export function Say(props: { id: string; whitespace?: boolean; [match: string]: 
   const values = resolveValuePropKeys(rest);
 
   return createElement(Renderer, {
-    // The props go through still prefixed: `Say#call``View#call` does the single strip for
-    // every caller, so there is nowhere for it to happen twice. The id is
-    // merged in last, so a message free to name a value `id` still cannot
-    // displace the message being looked up.
+    // The props go through still prefixed, since `View#call` does the single
+    // strip for every caller. The id is merged in last, so a message free to
+    // name a value `id` cannot displace the message being looked up
     html: say.call({ ...rest, id }),
     whitespace,
     components(tag?: string) {
@@ -91,7 +90,7 @@ export namespace Say {
   }
 
   /**
-   * Define an ordinal message (e.g. "1st", "2nd", "3rd").
+   * Define an ordinal message ("1st", "2nd", "3rd").
    *
    * @example
    * ```tsx
@@ -119,7 +118,7 @@ export namespace Say {
   }
 
   /**
-   * Define a select message, useful for handling gender, status, or other categories.
+   * Define a select message, for gender, status, or other categories.
    *
    * @example
    * ```tsx
@@ -148,7 +147,7 @@ export namespace Say {
   /**
    * Format a number the way the active locale writes one.
    *
-   * Unlike `Say.Plural`, `Say.Ordinal`, and `Say.Select`, this is a fragment
+   * Unlike `Say.Plural`, `Say.Ordinal` and `Say.Select`, this is a fragment
    * rather than a whole message, and is normally written inside one.
    *
    * @example
@@ -159,8 +158,8 @@ export namespace Say {
    * ```
    *
    * @param props._ Number to format
-   * @param props.style Formatting style: a named style, an ICU skeleton such as
-   *   `::currency/EUR`, or a literal number pattern such as `#,##0.00`
+   * @param props.style A named style, an ICU skeleton such as
+   *   `::currency/EUR`, or a pattern such as `#,##0.00`
    * @returns The formatted number, as a React node
    * @remark This is a macro and must be used with the relevant saykit plugin
    */
@@ -181,8 +180,7 @@ export namespace Say {
    * ```
    *
    * @param props._ Date to format
-   * @param props.style Formatting style, either a named style or an ICU
-   *   skeleton such as `::yyyyMMdd`
+   * @param props.style A named style or an ICU skeleton such as `::yyyyMMdd`
    * @returns The formatted date, as a React node
    * @remark This is a macro and must be used with the relevant saykit plugin
    */
@@ -206,8 +204,7 @@ export namespace Say {
    * ```
    *
    * @param props._ Date to format
-   * @param props.style Formatting style, either a named style or an ICU
-   *   skeleton such as `::Hm`
+   * @param props.style A named style or an ICU skeleton such as `::Hm`
    * @returns The formatted time, as a React node
    * @remark This is a macro and must be used with the relevant saykit plugin
    */

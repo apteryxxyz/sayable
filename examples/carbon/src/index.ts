@@ -8,8 +8,6 @@ import { LeaderboardCommand } from './commands/leaderboard.js';
 import { PickCommand, RemindMeButton } from './commands/pick.js';
 import catalogue from './i18n.js';
 
-// Components and modals are built from one locale's view rather than from the
-// whole catalogue: only a command definition carries Discord localisations.
 const say = catalogue.locale(catalogue.locales[0]);
 
 const client = new Client(
@@ -29,9 +27,6 @@ const client = new Client(
     ],
     components: [new RemindMeButton(say)],
   },
-  // `SayPlugin` publishes the instance globally and installs the
-  // `interaction.say` / `guild.say` accessors. Without it, those getters do not
-  // exist and every command in this bot throws.
   [new SayPlugin(catalogue), new CommandDataPlugin()],
 );
 

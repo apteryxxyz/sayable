@@ -7,12 +7,9 @@ export interface Session {
   speaker: string | null;
   track: Track;
   kind: SessionKind;
-  /** Minutes past 09:00 on the conference day. */
   startsAtMinute: number;
   durationMinutes: number;
-  /** Remaining workshop seats; `null` when unlimited. */
   seatsLeft: number | null;
-  /** How many previous editions this speaker has presented at. */
   previousTalks: number;
 }
 
@@ -74,7 +71,6 @@ export const sessions: Session[] = [
   },
 ];
 
-/** The conference day, in UTC. Rendered per-locale with `Intl.DateTimeFormat`. */
 export const conferenceDay = new Date(Date.UTC(2026, 8, 17, 9, 0));
 
 export function startsAt(session: Session) {

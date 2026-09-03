@@ -11,7 +11,7 @@ Read this one for two things the other examples do not cover: **fallback chains*
 
 | Concern                                                  | Where                             |
 | -------------------------------------------------------- | --------------------------------- |
-| `fallbackLocales` — `en-NZ → en-GB → en`                 | `saykit.config.ts`                |
+| `fallbackLocales`: `en-NZ` to `en-GB` to `en`            | `saykit.config.ts`                |
 | `@saykit/format-json` (plain flat catalogues)            | `saykit.config.ts`                |
 | Cookie + `Accept-Language` negotiation on the server     | `src/routes/{-$locale}/route.tsx` |
 | `catalogue.match(accepted)` for prefix matching          | same                              |

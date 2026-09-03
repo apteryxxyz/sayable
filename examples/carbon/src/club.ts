@@ -1,9 +1,7 @@
 export interface Member {
   id: string;
   name: string;
-  /** Books finished this year. */
   finished: number;
-  /** Pages read this week. */
   pagesThisWeek: number;
   role: 'host' | 'member' | 'guest';
 }
@@ -19,7 +17,6 @@ export interface Pick {
   title: string;
   author: string;
   pages: number;
-  /** Days until the discussion meets. */
   meetsInDays: number;
 }
 

@@ -16,7 +16,7 @@ export function applyGuildExtension() {
         throw new Error('No catalogue registered, add SayPlugin to your Carbon client');
 
       // Views are immutable and memoised, so a guild reads one rather than
-      // cloning the catalogue to keep its locale to itself.
+      // cloning the catalogue to keep its locale to itself
       return catalogue.locale(catalogue.match([this.rawData.preferred_locale]));
     },
   });

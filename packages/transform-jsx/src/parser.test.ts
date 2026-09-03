@@ -14,7 +14,7 @@ import { describe, expect, it } from 'vitest';
 import * as parser from './parser.js';
 
 // Parse a snippet of real JSX into its element node, the way the transformer
-// does (see index.ts) — the `jsx` plugin is what makes `<Say />` an expression.
+// does (see index.ts): the `jsx` plugin is what makes `<Say />` an expression
 function jsx(strings: TemplateStringsArray): t.JSXElement {
   return parseExpression(strings.join(''), {
     plugins: ['jsx', 'typescript'],
@@ -37,7 +37,7 @@ describe('parseJSXContainerElement', () => {
   });
 
   // Whitespace normalisation is covered end-to-end in `whitespace.test.ts`,
-  // where the assertions read as the catalogue strings it produces.
+  // where the assertions read as the catalogue strings it produces
 
   it('parses expression children as ArgumentMessage', () => {
     const result = parser.parseJSXContainerElement(jsx`<Say>{name}</Say>`);
@@ -45,7 +45,7 @@ describe('parseJSXContainerElement', () => {
     expect((result!.children[0] as ArgumentMessage).identifier).toBe('name');
   });
 
-  // A fragment renders no element, so an empty one leaves nothing behind.
+  // A fragment renders no element, so an empty one leaves nothing behind
   it('parses an empty fragment child as no child at all', () => {
     const result = parser.parseJSXContainerElement(jsx`<Say><></></Say>`);
     expect(result!.children).toEqual([]);
@@ -81,7 +81,7 @@ describe('parseJSXContainerElement', () => {
   });
 
   // A spread child renders an unknown number of unknown things, so there is
-  // nothing to name it or to translate around it.
+  // nothing to name it or to translate around it
   it('ignores spread children', () => {
     const result = parser.parseJSXContainerElement(jsx`<Say>{...items}</Say>`);
     expect(result!.children).toHaveLength(0);
@@ -98,7 +98,7 @@ describe('parseJSXContainerElement', () => {
   });
 
   // A formatted argument is a fragment, not a whole message, so the shape that
-  // matters most is the nested one.
+  // matters most is the nested one
   it('parses a nested formatted argument inside a container', () => {
     const result = parser.parseJSXContainerElement(
       jsx`<Say>You have <Say.number _={items.length} /> items</Say>`,
@@ -120,7 +120,7 @@ describe('parseJSXContainerElement', () => {
   });
 
   // Only a boolean literal (or the bare attribute) sets it; anything else is
-  // only known at runtime, too late to change what is extracted.
+  // only known at runtime, too late to change what is extracted
   it.each([
     ['whitespace', true],
     ['whitespace={true}', true],
@@ -194,7 +194,7 @@ describe('parseJSXOpeningElement', () => {
     expect((result!.children[0] as ChoiceMessage).offset).toBeUndefined();
   });
 
-  // `select` has no number to offset, so `offset` there is an ordinary branch.
+  // `select` has no number to offset, so `offset` there is an ordinary branch
   it('treats offset as a branch key on select', () => {
     const result = parser.parseJSXOpeningElement(
       jsx`<Say.select _={kind} offset="Offset" other="Other" />`.openingElement,
@@ -292,7 +292,7 @@ describe('parseJSXOpeningElement', () => {
   });
 
   // A fragment is the sentence itself rather than an element in it, so its
-  // children are the branch — which is how a case interpolates its selector.
+  // children are the branch, which is how a case interpolates its selector
   it('reads a JSX fragment branch value as the branch content', () => {
     const result = parser.parseJSXOpeningElement(
       jsx`
@@ -307,7 +307,7 @@ describe('parseJSXOpeningElement', () => {
   });
 
   // A fragment renders no element, so it is content rather than a tag, and its
-  // children belong to the sentence that encloses it.
+  // children belong to the sentence that encloses it
   it('folds a nested fragment into the children around it', () => {
     const result = parser.parseJSXContainerElement(jsx`<Say>Hello <>brave {name}</>!</Say>`);
     const message = result!;
@@ -329,7 +329,7 @@ describe('parseJSXOpeningElement', () => {
 
   it('skips branch attributes whose container holds no expression', () => {
     // Real JSX forbids an empty attribute expression (`one={}`), so the empty
-    // container is injected directly onto an otherwise-parsed element.
+    // container is injected directly onto an otherwise-parsed element
     const opening = jsx`<Say.plural _={count} other="items" />`.openingElement;
     opening.attributes.push(
       t.jsxAttribute(t.jsxIdentifier('one'), t.jsxExpressionContainer(t.jsxEmptyExpression())),
@@ -443,7 +443,7 @@ describe('parseJSXElement', () => {
       const element = jsx`<a href="/x" say-tag={'link'}>here</a>`;
       const result = parser.parseJSXElement(element, true) as ElementMessage;
       expect(result.identifier).toBe('link');
-      // The attribute is consumed just as the bare-literal form is.
+      // The attribute is consumed just as the bare-literal form is
       const attributes = (result.expression as t.JSXElement).openingElement.attributes;
       expect(attributes.map((a) => ((a as t.JSXAttribute).name as t.JSXIdentifier).name)).toEqual([
         'href',
@@ -454,7 +454,7 @@ describe('parseJSXElement', () => {
       const element = jsx`<a say-tag={name}>here</a>`;
       const result = parser.parseJSXElement(element, true) as ElementMessage;
       expect(result.identifier).toBe(AUTO_INCREMENT_IDENTIFIER);
-      // A dynamic value is left alone rather than silently dropped.
+      // A dynamic value is left alone rather than silently dropped
       expect((result.expression as t.JSXElement).openingElement.attributes).toHaveLength(1);
     });
 
@@ -479,10 +479,10 @@ describe('parseJSXElement', () => {
 });
 
 // The comparison itself lives in `@saykit/transform-js` so both transformers
-// share one rule; the element half of it is exercised here, where the JSX is.
+// share one rule; the element half of it is exercised here, where the JSX is
 describe('isEquivalentPlaceholder, on elements', () => {
   // The children differ throughout: they come from the translation, so they
-  // never make two elements distinguishable.
+  // never make two elements distinguishable
   it('treats elements with the same name and props as equivalent', () => {
     expect(isEquivalentPlaceholder(jsx`<b className="x">a</b>`, jsx`<b className="x">c</b>`)).toBe(
       true,

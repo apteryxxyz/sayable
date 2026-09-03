@@ -11,7 +11,7 @@ import type { VersionOption } from '@/app/(home)/playground/versions';
 
 /**
  * Fixed height so a pane carrying an action button still lines up with the panes
- * beside it — the button is taller than the heading text on its own. The height
+ * beside it, since the button is taller than the heading text alone. The height
  * also means the `status` slot can come and go without moving anything.
  */
 export function PaneHeader({
@@ -46,7 +46,7 @@ export function VersionSelect({
   return (
     // A select is as wide as its longest option, which on a phone overflows the
     // toolbar. `min-w-0` lets it shrink below that and truncate instead; it only
-    // hugs its content once there's room (`sm:flex-none`).
+    // hugs its content once there's room (`sm:flex-none`)
     <div className="flex min-w-0 flex-1 items-center gap-2 sm:flex-none sm:gap-3">
       <label htmlFor="saykit-version" className="shrink-0 text-sm font-medium text-fd-foreground">
         <span className="hidden sm:inline">SayKit </span>Version
@@ -161,7 +161,7 @@ export function ShareButton({ url }: { url: () => string }) {
       onClick={() => {
         const link = url();
         // Sync the address bar first, so even a failed clipboard write leaves the
-        // link somewhere the user can copy it from by hand.
+        // link somewhere the user can copy it from by hand
         window.history.replaceState(null, '', link);
         void copy(link);
       }}

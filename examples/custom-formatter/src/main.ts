@@ -49,8 +49,6 @@ if (deployment.failures.length > 0) {
 
 console.log();
 
-// The template was a `.email` file until the bundler ran. It is a module now,
-// and it renders against whichever view it is handed.
 console.log(
   summary(say, {
     actor: deployment.actor,

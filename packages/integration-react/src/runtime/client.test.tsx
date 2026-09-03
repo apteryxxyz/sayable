@@ -82,7 +82,7 @@ describe('SayProvider / useSay', () => {
   it('follows a store whose subscribe reads its receiver', async () => {
     // A `Store` is an interface, so an application may hand over a class
     // instance rather than the object saykit builds. `subscribe` is called on
-    // the store, so one that reads `this` still works.
+    // the store, so one that reads `this` still works
     class ClassStore {
       #view = catalogue().locale('en');
       #listeners = new Set<(view: View) => void>();

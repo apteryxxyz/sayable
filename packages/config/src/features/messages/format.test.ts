@@ -13,7 +13,7 @@ describe('isArgumentType', () => {
   });
 
   // The types come from a plain object, so a key every object inherits must not
-  // pass for one an author asked for.
+  // pass for one an author asked for
   it('rejects an inherited property name', () => {
     expect(isArgumentType('toString')).toBe(false);
     expect(isArgumentType('constructor')).toBe(false);
@@ -38,7 +38,7 @@ describe('validateArgumentStyle', () => {
   });
 
   // A brace would close the argument early and take the rest of the message
-  // with it, so it is rejected even though a number style is otherwise open.
+  // with it, so it is rejected even though a number style is otherwise open
   it('rejects a number pattern containing ICU pattern syntax', () => {
     expect(() => validateArgumentStyle('number', '#,##0{}')).toThrow('Invalid number style');
     expect(() => validateArgumentStyle('number', '#\n0')).toThrow('Invalid number style');
@@ -53,14 +53,14 @@ describe('validateArgumentStyle', () => {
   });
 
   // MF1 has nowhere to write the currency code, so this formats as a bare
-  // number. The literal-pattern escape must not readmit it as a "pattern".
+  // number. The literal-pattern escape must not readmit it as a "pattern"
   it('rejects the currency style, which the formatter cannot honour', () => {
     expect(() => validateArgumentStyle('number', 'currency')).toThrow('Invalid number style');
     expect(() => validateArgumentStyle('date', 'currency')).toThrow('Invalid date style');
   });
 
   // A pattern is what has a digit placeholder in it; a bare word is a style
-  // name, and every style name we do not support has to stay rejected.
+  // name, and every style name we do not support has to stay rejected
   it.each(['spellout', 'duration', 'compact', 'meduim'])(
     'rejects the bare word %o as a number pattern',
     (style) => {
@@ -69,7 +69,7 @@ describe('validateArgumentStyle', () => {
   );
 
   // A skeleton is the open-ended half of a style, so it is checked by being
-  // resolved rather than by being looked up.
+  // resolved rather than by being looked up
   it.each([
     ['number', '::currency/EUR'],
     ['number', '::compact-short'],
@@ -87,7 +87,7 @@ describe('validateArgumentStyle', () => {
     expect(() => validateArgumentStyle('date', '::')).toThrow(
       "Invalid date skeleton '::': it names no fields",
     );
-    // Every token is understood, but a literal shows nothing on its own.
+    // Every token is understood, but a literal shows nothing on its own
     expect(() => validateArgumentStyle('date', "::'x'")).toThrow('Invalid date skeleton');
   });
 
@@ -98,9 +98,9 @@ describe('validateArgumentStyle', () => {
     expect(() => validateArgumentStyle('date', '::qqqq')).toThrow("Invalid date skeleton '::qqqq'");
   });
 
-  // `qqqq` is valid ICU — a stand-alone quarter — that `Intl` cannot show. A
+  // `qqqq` is valid ICU, a stand-alone quarter, that `Intl` cannot show. A
   // skeleton naming it alongside fields that do resolve is still rejected, so
-  // this agrees with the runtime rather than letting a field be dropped.
+  // this agrees with the runtime rather than letting a field be dropped
   it('rejects a skeleton that only partly resolves', () => {
     expect(() => validateArgumentStyle('date', '::yMMMdqqqq')).toThrow(
       "Invalid date skeleton '::yMMMdqqqq'",
@@ -109,7 +109,7 @@ describe('validateArgumentStyle', () => {
   });
 
   // The named styles are a closed list, so the error names the skeleton escape
-  // too — otherwise an author reading it would think the list was all there is.
+  // too, otherwise an author reading it would think the list was all there is
   it('names the skeleton escape for every type', () => {
     expect(() => validateArgumentStyle('date', 'nope')).toThrow('a skeleton such as ::yyyyMMdd');
     expect(() => validateArgumentStyle('number', 'nope')).toThrow(

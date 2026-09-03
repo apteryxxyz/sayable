@@ -139,7 +139,7 @@ describe.each(Object.entries(storages))('createScope over %s', (_name, build) =>
     scope.run(en, () => {
       expect(() => {
         // @ts-expect-error locale is readonly, and a scope is not somewhere to
-        // put a view anyway.
+        // put a view anyway
         scope.say.locale = 'fr';
       }).toThrow(TypeError);
     });

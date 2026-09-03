@@ -25,9 +25,9 @@ once.
 `@saykit/react` publishes its `.` entry twice and lets the bundler pick:
 
 - In a **server** environment the `react-server` export condition resolves to a build where `<Say>`
-  reads from `getSay()` — the view the enclosing `<SayScope>` put in React's request cache.
+  reads from `getSay()`, the view the enclosing `<SayScope>` put in React's request cache.
 - In a **client** environment it resolves to the `"use client"` build, where `<Say>` reads from
-  `useSay()` — the nearest `SayProvider`.
+  `useSay()`, the nearest `SayProvider`.
 
 The component you write is identical in both cases:
 
@@ -37,8 +37,8 @@ The component you write is identical in both cases:
 </Say>
 ```
 
-Because both halves are fed from the same `<SayScope>` in the root layout — the client provider
-reads its locale and messages straight off it — server output and client hydration cannot disagree
+Because both halves are fed from the same `<SayScope>` in the root layout, with the client provider
+reading its locale and messages straight off it, server output and client hydration cannot disagree
 about which locale is active.
 
 ## Why `src/config.ts` exists separately
@@ -57,11 +57,11 @@ Next.js compiles with its own toolchain, so the macros are rewritten by `babel-p
 ```
 
 The plugin also rewrites `import en from './locales/en.po'` into an inline object. It requires a
-**default** import for catalogue files and throws on a named one — that is the intended failure
+**default** import for catalogue files and throws on a named one, which is the intended failure
 mode, not a bug.
 
 > Adding `.babelrc` opts the whole app out of Next.js's default SWC pipeline, which is slower to
-> compile. Projects on a Vite-based framework should prefer `unplugin-saykit` — see the
+> compile. Projects on a Vite-based framework should prefer `unplugin-saykit`; see the
 > [TanStack Start example](../tanstack-start).
 
 ## Running it

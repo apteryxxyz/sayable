@@ -5,7 +5,7 @@ import { configLoaders } from './module.js';
 
 /**
  * The config file {@link resolveConfig} would load, for callers that need the
- * path itself rather than its contents — salting a bundler's cache key with it,
+ * path itself rather than its contents, salting a bundler's cache key with it,
  * for one, since what a catalogue assembles into depends on the config.
  */
 export function resolveConfigFile(name = 'saykit') {

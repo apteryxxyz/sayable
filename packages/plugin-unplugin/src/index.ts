@@ -33,20 +33,20 @@ export default createUnplugin((_options?: never) => {
 
         // The fallback chain (configured fallbacks + the source locale) is
         // merged in here at load time so an untranslated key resolves to a
-        // fallback string while the runtime still loads a single locale module.
+        // fallback string while the runtime still loads a single locale module
         const { sources } = resolveCatalogueSources(config, bucket, id);
         const contents = await Promise.all(
           sources.map((source) => readFile(source, 'utf8').catch(() => '')),
         );
 
-        // Fallback files feed this module, so editing them should invalidate it.
+        // Fallback files feed this module, so editing them should invalidate it
         for (const source of sources) this.addWatchFile?.(source);
 
         const record = assembleCatalogueRecord(bucket, contents);
 
         // A `.json` id is interpreted as JSON by whatever runs next (Rollup's
         // json plugin, webpack's `json` module type, esbuild's extension-picked
-        // loader), so the ESM wrapper would be a syntax error there.
+        // loader), so the ESM wrapper would be a syntax error there
         if (id.endsWith('.json')) return JSON.stringify(record);
         return `export default ${JSON.stringify(record)}`;
       },

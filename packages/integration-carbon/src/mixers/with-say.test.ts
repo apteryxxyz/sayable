@@ -62,7 +62,7 @@ describe('withSay', () => {
     }) => Record<string, unknown>;
 
     expect(new SayButton({ label: 'Click' }).label).toBe('Click');
-    // Constructed without properties — nothing is assigned.
+    // Constructed without properties, nothing is assigned
     expect(new SayButton().label).toBeUndefined();
   });
 

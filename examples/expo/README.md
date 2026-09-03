@@ -13,7 +13,7 @@ React Native is the reason the `whitespace` prop exists. This example is where t
 | `<Say whitespace={false}>` for React Native               | `src/habit-card.tsx`            |
 | Device locale via `expo-localization` + `catalogue.match` | `src/i18n.ts`                   |
 | Metro/Babel wiring (no bundler plugin)                    | `babel.config.js`               |
-| `@saykit/format-json` — plain flat catalogues             | `saykit.config.ts`              |
+| `@saykit/format-json`: plain flat catalogues              | `saykit.config.ts`              |
 | `<Say.Plural>` with a `_0` branch, `<Say.Select>`         | `App.tsx`, `src/habit-card.tsx` |
 | Multi-line JSX copy collapsing to one catalogue entry     | `App.tsx`                       |
 
@@ -41,7 +41,7 @@ would otherwise produce loose strings between elements.
 ## Why Babel
 
 Metro is not a Vite/Rollup-family bundler, so `unplugin-saykit` does not apply. Metro compiles every
-module through Babel, and `babel-plugin-saykit` hooks in there instead — doing the same two jobs:
+module through Babel, and `babel-plugin-saykit` hooks in there instead, doing the same two jobs:
 rewriting the macros, and inlining `import en from './locales/en.json'` as a plain object.
 
 ```js

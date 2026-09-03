@@ -16,9 +16,9 @@ export interface Options {
    * `'inline'` (the default) replaces the import with the assembled record, so
    * the Babel plugin is enough on its own. The cost is that the record lands in
    * the importing module, which a bundler only re-reads when that module's own
-   * bytes change — editing a catalogue will not hot-reload.
+   * bytes change, editing a catalogue will not hot-reload.
    *
-   * `'module'` leaves the import for a bundler integration to serve —
+   * `'module'` leaves the import for a bundler integration to serve, either
    * `babel-plugin-saykit/next` or `babel-plugin-saykit/metro`. Set this
    * whenever one of those is wired up, or the import gets inlined before the
    * integration is ever asked for the module.
@@ -50,7 +50,7 @@ export default (
               if (!catalogue) return;
 
               // The whole declaration is replaced by one binding, so anything
-              // bound alongside the default would be dropped silently.
+              // bound alongside the default would be dropped silently
               const [specifier, ...rest] = path.node.specifiers;
               if (specifier?.type !== 'ImportDefaultSpecifier' || rest.length > 0)
                 throw path.buildCodeFrameError(

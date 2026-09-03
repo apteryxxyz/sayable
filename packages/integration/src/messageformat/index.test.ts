@@ -6,8 +6,8 @@ import { compile } from './index.js';
 
 /**
  * `Say.call` only ever asks a message for a string, so the parts side of every
- * value — and the operand coercions a hand-written catalogue can reach that the
- * macros cannot author — are exercised here against `compile` directly.
+ * value, and the operand coercions a hand-written catalogue can reach that the
+ * macros cannot author, are exercised here against `compile` directly.
  */
 
 const when = new Date(2020, 0, 2, 12, 4, 5);
@@ -33,7 +33,7 @@ describe('operands', () => {
   });
 
   // A bigint is passed through rather than narrowed, since the precision is the
-  // whole point of writing one.
+  // whole point of writing one
   it('keeps a bigint a bigint', () => {
     expect(numeric(10n ** 25n)).toBe(10n ** 25n);
     expect(format('{n, number}', { n: 10n ** 25n })).toBe('10,000,000,000,000,000,000,000,000');
@@ -45,7 +45,7 @@ describe('operands', () => {
   });
 
   // `undefined` is a missing value rather than a bad one, and MF2 reports the
-  // missing variable itself.
+  // missing variable itself
   it('treats a missing number as NaN rather than an error', () => {
     expect(numeric(undefined)).toBeNaN();
   });
@@ -78,7 +78,7 @@ describe('formatted parts', () => {
     expect(part.type).toBe(type);
     expect(part.locale).toBe('en-US');
     // The direction is a lazy getter off the resolved locale, and bidi
-    // isolation is what asks for it.
+    // isolation is what asks for it
     expect(part.dir).toBe('ltr');
     expect(part.parts.length).toBeGreaterThan(0);
   });
@@ -104,7 +104,7 @@ describe('formatted parts', () => {
 
 describe('selectors', () => {
   // Two selects asking the same question of the same argument are one selector.
-  // Were they two, the variants would square rather than merge.
+  // Were they two, the variants would square rather than merge
   it('merges repeated selects on the same argument', () => {
     const message =
       '{n, plural, one {{g, select, f {her} other {their}} item}' +
@@ -114,7 +114,7 @@ describe('selectors', () => {
   });
 
   // Same argument, different offset, is a different question and so stays a
-  // separate selector.
+  // separate selector
   it('keeps selects with different offsets apart', () => {
     const message = '{n, plural, offset:1 one {A#} other {{n, plural, one {B#} other {C#}}}}';
     expect(format(message, { n: 2 })).toBe('A1');
@@ -144,19 +144,19 @@ describe('selectors', () => {
     expect(format('{g, select, f {her} other {their}}', { g: 'nope' })).toBe('their');
   });
 
-  // A `#` inside a nested `select` still counts the plural enclosing it.
+  // A `#` inside a nested `select` still counts the plural enclosing it
   it('resolves a hash inside a select to the enclosing plural', () => {
     const message = '{n, plural, other {{g, select, other {# of them}}}}';
     expect(format(message, { n: 4, g: 'x' })).toBe('4 of them');
   });
 
-  // Outside a plural there is nothing to substitute.
+  // Outside a plural there is nothing to substitute
   it('writes a hash outside a plural as text', () => {
     expect(format('a # b')).toBe('a # b');
     expect(format('{g, select, other {#}}', { g: 'x' })).toBe('#');
   });
 
-  // Two placeholders running together leave no text between them to merge into.
+  // Two placeholders running together leave no text between them to merge into
   it('keeps adjacent placeholders separate within a variant', () => {
     expect(format('{n, plural, other {{a}{b}}}', { n: 1, a: 'x', b: 'y' })).toBe('xy');
   });
@@ -165,16 +165,16 @@ describe('selectors', () => {
 describe('styles', () => {
   it('rejects a style containing a placeholder', () => {
     // Nothing can resolve `{x}` while the message is being compiled, and MF2
-    // has no way to defer it.
+    // has no way to defer it
     expect(() => compile('en-US', '{d, date, {x}}')).toThrow('Unsupported style part: argument');
   });
 
   // `XXX` is ISO 4217's "no currency", which is what a pattern naming a
   // currency it has no code for should format as. `Intl` gives it the two
-  // fraction digits a currency carries.
+  // fraction digits a currency carries
   it('reads a currency out of a literal pattern', () => {
     // `Intl` separates a currency code from its amount with a non-breaking
-    // space, which is a detail of the locale rather than of the conversion.
+    // space, which is a detail of the locale rather than of the conversion
     expect(format('{n, number, ¤¤#0}', { n: 12 }).replace(' ', ' ')).toBe('XXX 12.00');
   });
 
@@ -183,21 +183,21 @@ describe('styles', () => {
   });
 
   // Every token parsed, there were simply none of them. There is no error to
-  // report, so the skeleton is described rather than quoted back.
+  // report, so the skeleton is described rather than quoted back
   it('falls back for an empty skeleton', () => {
     expect(format('{d, date, ::}', { d: when })).toBe('Jan 2, 2020');
   });
 
-  // `qqqq` is valid ICU — a stand-alone quarter — that `Intl` cannot show.
+  // `qqqq` is valid ICU, a stand-alone quarter, that `Intl` cannot show.
   // Keeping the fields that did resolve would render a date the message never
-  // asked for, so one unshowable field fails the whole skeleton.
+  // asked for, so one unshowable field fails the whole skeleton
   it('falls back rather than dropping a field it cannot show', () => {
     expect(format('{d, date, ::yMMMdqqqq}', { d: when })).toBe('Jan 2, 2020');
     expect(format("{d, date, ::yMMMd'x'}", { d: when })).toBe('Jan 2, 2020');
   });
 
   // The styles come from a plain object, so a key every object inherits must
-  // not pass for one an author asked for.
+  // not pass for one an author asked for
   it('rejects an inherited property name as a style', () => {
     expect(format('{d, date, toString}', { d: when })).toBe('Jan 2, 2020');
     expect(format('{d, date, constructor}', { d: when })).toBe('Jan 2, 2020');
@@ -206,7 +206,7 @@ describe('styles', () => {
 
 /**
  * A value's `valueOf` is only read when it becomes the operand of another
- * function, which no MF1 message can ask for — a duration or a string is always
+ * function, which no MF1 message can ask for, a duration or a string is always
  * the end of the line. They are called here directly so the contract they
  * publish is the one they keep.
  */
@@ -219,7 +219,7 @@ describe('message values', () => {
 
   it('reports a number as the number it formatted', () => {
     expect(functions['say:number'](ctx, {}, 1234.5).valueOf!()).toBe(1234.5);
-    // The scale is part of the value, not of the way it is written.
+    // The scale is part of the value, not of the way it is written
     expect(functions['say:number'](ctx, { options: { scale: 1000 } }, 1.5).valueOf!()).toBe(1500);
   });
 
@@ -228,7 +228,7 @@ describe('message values', () => {
   });
 
   // A plural reports the number the message was given, not the offset one it
-  // prints — which is what lets a second selector offset from the right place.
+  // prints, which is what lets a second selector offset from the right place
   it('reports a plural as the number before its offset', () => {
     const value = functions['say:plural'](ctx, { options: { offset: 1 } }, 3);
     expect(value.valueOf!()).toBe(3);
@@ -240,7 +240,7 @@ describe('message values', () => {
   });
 
   // A `select` on a value the caller never passed still has to choose a branch,
-  // and `other` is the branch that takes it.
+  // and `other` is the branch that takes it
   it('reads a missing string as empty', () => {
     const value = functions['say:string'](ctx, {}, undefined);
     expect(value.toString()).toBe('');
@@ -260,7 +260,7 @@ describe('duration', () => {
   });
 
   // Seconds are rounded to the millisecond, and a value that rounds up to a
-  // whole minute has to carry rather than be written as `:60`.
+  // whole minute has to carry rather than be written as `:60`
   it.each([
     [59.9999, '1:00'],
     [119.9999, '2:00'],
@@ -274,7 +274,7 @@ describe('duration', () => {
 
 describe('options', () => {
   // A placeholder with no style carries no bag, and the functions read one
-  // either way.
+  // either way
   it('reads an absent bag as empty', () => {
     expect(options(undefined)).toEqual({});
     expect(options(null)).toEqual({});

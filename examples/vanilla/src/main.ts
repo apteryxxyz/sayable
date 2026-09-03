@@ -11,15 +11,8 @@ import {
   totalFineInCents,
 } from './library.js';
 
-/**
- * Pick a starting locale from what the browser advertises. `match` walks the
- * guesses in order, accepts an exact hit, then falls back to a language-prefix
- * hit (`fr-CA` → `fr`), and finally to the first configured locale.
- */
 const initial = catalogue.match(navigator.languages as string[]);
 
-// A view is immutable, so switching locale means holding a different one
-// rather than mutating the one in hand.
 let say = catalogue.locale(initial);
 
 const app = document.querySelector<HTMLElement>('#app')!;
@@ -106,11 +99,6 @@ function renderSummary() {
     other: `${holdPosition}th`,
   })} in the hold queue`;
 
-  // `offset` subtracts from the selector before `#` is formatted, so a queue of
-  // four reads as "you and 3 others". The exact branch is `1`, not `0`: ICU
-  // tests an exact value against the original number, before the offset, so a
-  // queue of one is the member and nobody else. Writing `0` here would leave
-  // that case to `other` and render "You and 0 others".
   const queue = document.createElement('p');
   queue.textContent = say.plural(
     { queue: holdQueueLength },
@@ -122,14 +110,9 @@ function renderSummary() {
     },
   );
 
-  // `say.number` is a fragment rather than a whole message, so it is written
-  // inside one, extracting as `{ready, number, percent}`. The formatting stays
-  // in the catalogue, where a translator can move it around the sentence.
   const ready = document.createElement('p');
   ready.textContent = say`${say.number({ ready: holdsReadyRatio }, { style: 'percent' })} of your holds are ready to collect`;
 
-  // `say.date` and `say.time` format only the portion they name, in the shape
-  // the active locale writes it — no `Intl` call at the callsite.
   const reserved = document.createElement('p');
   reserved.textContent = say`Reserved on ${say.date({ reservedOn }, { style: 'long' })}`;
 
@@ -139,9 +122,6 @@ function renderSummary() {
   const fines = totalFineInCents(loans);
   const balance = document.createElement('p');
   balance.className = 'summary__balance';
-  // Currency stays an `Intl` call at the callsite rather than a `say.number`
-  // style: MF1 has nowhere to write the currency code, so `{n, number,
-  // currency}` would format as a literal `{$n}` rather than an amount.
   balance.textContent = fines
     ? say`Outstanding fines: ${new Intl.NumberFormat(say.locale, {
         style: 'currency',
@@ -165,8 +145,6 @@ function renderLocalePicker() {
   for (const locale of locales) {
     const option = document.createElement('option');
     option.value = locale;
-    // Ask the browser for each language's endonym, so "Français" is spelled
-    // the way its own speakers spell it rather than translated four times.
     option.textContent = new Intl.DisplayNames([locale], { type: 'language' }).of(locale) ?? locale;
     option.selected = locale === say.locale;
     select.append(option);
@@ -190,8 +168,6 @@ function render() {
 
   const subtitle = document.createElement('p');
   subtitle.className = 'subtitle';
-  // `say({ context })` disambiguates identical source text that needs different
-  // translations. "Loans" as a page heading is not "Loans" as a verb elsewhere.
   subtitle.textContent = say({ context: 'page heading' })`My loans`;
 
   const list = document.createElement('div');

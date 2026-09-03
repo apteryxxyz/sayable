@@ -8,7 +8,6 @@ import { withSay } from '@saykit/carbon';
 import type { Catalogue } from 'saykit';
 import { findMember, leaderboard, members } from '../club.js';
 
-/** `/leaderboard books` — who has finished the most this year. */
 class BooksCommand extends withSay(Command) {
   constructor(catalogue: Catalogue) {
     super(catalogue, (say) => ({
@@ -43,7 +42,6 @@ class BooksCommand extends withSay(Command) {
   }
 }
 
-/** `/leaderboard pages` — a weekly view, with an optional per-member lookup. */
 class PagesCommand extends withSay(Command) {
   constructor(catalogue: Catalogue) {
     super(catalogue, (say) => ({
@@ -51,8 +49,6 @@ class PagesCommand extends withSay(Command) {
       description: say`See pages read this week.`,
       options: [
         {
-          // Option names and descriptions are localised the same way the
-          // command itself is — `properties` runs once per locale.
           name: say`member`,
           description: say`Look up one person instead of everyone.`,
           type: ApplicationCommandOptionType.String,

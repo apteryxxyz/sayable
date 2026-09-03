@@ -8,11 +8,6 @@ export type Locale = (typeof locales)[number];
 
 const catalogue = createCatalogue({ en, fr, de });
 
-/**
- * A CLI's locale comes from the environment, not a browser. `LC_ALL` wins over
- * `LC_MESSAGES`, which wins over `LANG` — the usual POSIX order — and each may
- * carry an encoding suffix (`fr_FR.UTF-8`) that has to come off first.
- */
 export function environmentLocale() {
   const raw = process.env.LC_ALL ?? process.env.LC_MESSAGES ?? process.env.LANG ?? '';
   const tag = raw.split('.')[0]?.replace('_', '-');

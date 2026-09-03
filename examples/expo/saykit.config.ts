@@ -10,8 +10,6 @@ export default defineConfig({
       include: ['src/**/*.{ts,tsx}', 'App.tsx'],
       exclude: ['src/**/*.d.*.ts'],
       output: 'src/locales/{locale}.{extension}',
-      // Plain flat JSON. No PO parser has to reach a phone, and Metro treats
-      // `.json` as a first-class module type.
       formatter: json(),
       transformer: [js(), jsx()],
     },

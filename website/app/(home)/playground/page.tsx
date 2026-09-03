@@ -34,7 +34,7 @@ export default async function PlaygroundPage() {
   const versions = await getVersions();
 
   return (
-    // Matches the nav bar's content width (fumadocs' HomeLayout sets the var to 1400px).
+    // Matches the nav bar's content width (fumadocs' HomeLayout sets the var to 1400px)
     <main className="mx-auto w-full max-w-(--fd-layout-width) px-4 py-10">
       <div className="mb-6 max-w-2xl space-y-3">
         <h1 className="text-3xl font-semibold tracking-tight text-fd-foreground">Playground</h1>

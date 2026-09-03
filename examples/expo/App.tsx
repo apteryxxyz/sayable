@@ -9,8 +9,6 @@ import { completedToday, type Habit, habits as seed } from './src/habits';
 import { locales, store } from './src/i18n';
 
 function Home() {
-  // Subscribed to the store, so tapping a language re-renders every message
-  // below without a prop being threaded through.
   const { locale } = useSay();
   const [habits, setHabits] = useState<Habit[]>(seed);
   const done = completedToday(habits);
