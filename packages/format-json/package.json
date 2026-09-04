@@ -1,6 +1,6 @@
 {
   "name": "@saykit/format-json",
-  "version": "0.9.1",
+  "version": "0.10.0",
   "description": "JSON file formatter for saykit",
   "keywords": [
     "formatter",

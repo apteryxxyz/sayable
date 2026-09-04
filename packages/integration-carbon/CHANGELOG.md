@@ -1,5 +1,11 @@
 # @saykit/carbon
 
+## 0.10.0
+
+### Minor Changes
+
+- e1509d9: Replace the `Say` class with a catalogue that owns the locales and immutable per-locale views that format
+
 ## 0.9.1
 
 ## 0.9.0
