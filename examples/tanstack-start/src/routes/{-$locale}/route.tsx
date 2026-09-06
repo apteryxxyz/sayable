@@ -4,7 +4,7 @@ import { createServerFn } from '@tanstack/react-start';
 import { getCookie, getRequestHeader } from '@tanstack/react-start/server';
 import { LocaleSwitcher } from '../../components/locale-switcher';
 import { defaultLocale, isLocale, LOCALE_COOKIE, type Locale } from '../../config';
-import catalogue from '../../i18n';
+import { catalogue } from '../../i18n';
 
 const detectLocale = createServerFn({ method: 'GET' }).handler(() => {
   const stored = getCookie(LOCALE_COOKIE);

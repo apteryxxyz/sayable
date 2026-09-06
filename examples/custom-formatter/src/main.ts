@@ -1,5 +1,5 @@
 import { lastDeployment } from './deploy.js';
-import catalogue, { environmentLocale } from './i18n.js';
+import { catalogue, environmentLocale } from './i18n.js';
 import summary from './templates/summary.email';
 
 const say = catalogue.locale(environmentLocale());

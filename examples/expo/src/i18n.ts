@@ -7,7 +7,7 @@ import ja from './locales/ja.json';
 export const locales = ['en', 'fr', 'ja'] as const;
 export type Locale = (typeof locales)[number];
 
-const catalogue = createCatalogue({ en, fr, ja });
+export const catalogue = createCatalogue({ en, fr, ja });
 
 export function deviceLocale() {
   const tags = getLocales()
@@ -18,5 +18,3 @@ export function deviceLocale() {
 }
 
 export const store = createStore(catalogue, deviceLocale());
-
-export default catalogue;

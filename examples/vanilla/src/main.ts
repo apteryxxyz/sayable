@@ -1,4 +1,4 @@
-import catalogue, { type Locale, locales } from './i18n.js';
+import { catalogue, type Locale, locales } from './i18n.js';
 import {
   closingTime,
   holdPosition,

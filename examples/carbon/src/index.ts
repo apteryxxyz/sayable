@@ -6,7 +6,7 @@ import { AnnounceCommand } from './commands/announce.js';
 import { JoinCommand, JoinModal } from './commands/join.js';
 import { LeaderboardCommand } from './commands/leaderboard.js';
 import { PickCommand, RemindMeButton } from './commands/pick.js';
-import catalogue from './i18n.js';
+import { catalogue } from './i18n.js';
 
 const say = catalogue.locale(catalogue.locales[0]);
 

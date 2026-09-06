@@ -1,7 +1,7 @@
 import { Say } from '@saykit/react';
 import { SayProvider } from '@saykit/react/client';
 import { getSay } from '@saykit/react/server';
-import catalogue, { withSay } from '../../i18n';
+import { catalogue, withSay } from '../../i18n';
 import './styles.css';
 import { LocaleSwitcher } from './locale-switcher';
 

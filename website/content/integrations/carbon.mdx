@@ -63,12 +63,10 @@ Eagerly load locales so the bot can answer immediately on cold start:
 ```ts title="src/i18n.ts"
 import { createCatalogue } from 'saykit';
 
-const catalogue = createCatalogue({
+export const catalogue = createCatalogue({
   en: await import('./locales/en.po').then((m) => m.default),
   fr: await import('./locales/fr.po').then((m) => m.default),
 });
-
-export default catalogue;
 ```
 
 ### Register `SayPlugin`
@@ -77,7 +75,7 @@ export default catalogue;
 import { Client } from '@buape/carbon';
 import { SayPlugin } from '@saykit/carbon';
 import { PingCommand } from './commands/ping.js';
-import catalogue from './i18n.js';
+import { catalogue } from './i18n.js';
 
 const client = new Client({/* options */}, { commands: [new PingCommand(catalogue)] }, [
   new SayPlugin(catalogue),

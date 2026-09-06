@@ -4,11 +4,9 @@ import enNZ from './locales/en-NZ.json';
 import en from './locales/en.json';
 import fr from './locales/fr.json';
 
-const catalogue = createCatalogue({
+export const catalogue = createCatalogue({
   en: en,
   'en-GB': enGB,
   'en-NZ': enNZ,
   fr: fr,
 });
-
-export default catalogue;

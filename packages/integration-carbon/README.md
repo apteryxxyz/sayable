@@ -18,7 +18,7 @@ pnpm add @saykit/carbon saykit @buape/carbon
 import { Client, Command, type CommandInteraction } from '@buape/carbon';
 import { SayPlugin, withSay } from '@saykit/carbon';
 import { type Catalogue } from 'saykit';
-import catalogue from './i18n.js';
+import { catalogue } from './i18n.js';
 
 class PingCommand extends withSay(Command) {
   constructor(catalogue: Catalogue) {
