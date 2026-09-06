@@ -1,4 +1,4 @@
-import { createElement } from 'react';
+import { createElement, type ReactElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { createCatalogue } from 'saykit';
 import { describe, expect, it, vi } from 'vitest';
@@ -24,7 +24,7 @@ vi.mock('react', async (importOriginal) => {
   };
 });
 
-const { getSay, SayScope } = await import('~/runtime/server.js');
+const { createWithSay, getSay, setSay } = await import('~/runtime/server.js');
 const { SayProvider } = await import('~/runtime/client.server.js');
 
 const make = () =>
@@ -33,34 +33,44 @@ const make = () =>
     fr: () => Promise.resolve({ default: { greeting: 'Salut' } }),
   });
 
-// Kept for the whole file: the scopes below share one request cell, so the
+// Kept for the whole file: the views below share one request cell, so the
 // warning a second locale produces belongs to the file rather than to a test
 const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
 describe('server runtime', () => {
-  // Runs first, before any scope, so the request cell is still empty
-  it('throws before a scope has been established', () => {
-    expect(() => getSay()).toThrow("'getSay' must be called below a 'SayScope'");
+  // Runs first, before anything established a view, so the request cell is
+  // still empty
+  it('throws before a view has been established', () => {
+    expect(() => getSay()).toThrow("'getSay' must be called below a 'withSay'");
   });
 
-  it('SayScope negotiates the locale, loads it, and returns its children', async () => {
-    const children = createElement('span', null, 'inside');
-    const rendered = await SayScope({ catalogue: make(), locale: 'fr-CA', children });
+  it('withSay negotiates the locale, loads it, and renders the component', async () => {
+    const Component = vi.fn((props: { params: Promise<{ locale: string }> }) => {
+      void props;
+      return createElement('span', null, getSay().messages.greeting);
+    });
+    const Wrapped = createWithSay(make())(Component, (props) =>
+      props.params.then((params) => params.locale),
+    );
 
-    expect(rendered).toBe(children);
+    const params = Promise.resolve({ locale: 'fr-CA' });
+    const element = (await Wrapped({ params })) as ReactElement;
+
+    expect(element.type).toBe(Component);
+    expect(element.props).toEqual({ params });
     expect(getSay().locale).toBe('fr');
-    expect(getSay().messages.greeting).toBe('Salut');
+    expect(renderToStaticMarkup(element)).toBe('<span>Salut</span>');
   });
 
-  it('takes a view as it is, instead of a catalogue and a locale', async () => {
+  it('setSay takes a view as it is, instead of a catalogue and a locale', async () => {
     const view = await make().load('fr');
-    await SayScope({ view, children: null });
+    setSay(view);
 
     expect(getSay() === (view as unknown)).toBe(true);
   });
 
-  it('the server build of SayProvider fills its props from the scope', async () => {
-    await SayScope({ catalogue: make(), locale: 'en' });
+  it('the server build of SayProvider fills its props from the established view', async () => {
+    setSay(await make().load('en'));
 
     const html = renderToStaticMarkup(
       createElement(SayProvider, null, createElement('span', null, 'child')),
@@ -73,17 +83,17 @@ describe('server runtime', () => {
     expect(props.messages.greeting).toBe('Hi');
   });
 
-  // The cell above is one request for the whole file, and the scopes already
+  // The cell above is one request for the whole file, and the views already
   // established have changed its locale, so this counts the warnings the file
   // produced rather than establishing more of its own
-  it('warns once when a second scope establishes another locale in one request', async () => {
+  it('warns once when a second view changes the locale in one request', async () => {
     expect(warn).toHaveBeenCalledTimes(1);
-    expect(warn.mock.calls[0]?.[0]).toContain("A 'SayScope' established");
+    expect(warn.mock.calls[0]?.[0]).toContain("A view for 'en' was established");
 
     // The same locale again is not a change, and a change has already been
     // reported
-    await SayScope({ catalogue: make(), locale: 'en' });
-    await SayScope({ catalogue: make(), locale: 'fr' });
+    setSay(await make().load('en'));
+    setSay(await make().load('fr'));
     expect(warn).toHaveBeenCalledTimes(1);
     expect(getSay().locale).toBe('fr');
   });

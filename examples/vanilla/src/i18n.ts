@@ -7,6 +7,4 @@ import pl from './locales/pl.po';
 export const locales = ['en', 'fr', 'pl', 'ja'] as const;
 export type Locale = (typeof locales)[number];
 
-const catalogue = createCatalogue({ en, fr, pl, ja });
-
-export default catalogue;
+export const catalogue = createCatalogue({ en, fr, pl, ja });

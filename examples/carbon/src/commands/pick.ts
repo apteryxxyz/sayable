@@ -5,13 +5,13 @@ import {
   type CommandInteraction,
   Row,
 } from '@buape/carbon';
-import { withSay } from '@saykit/carbon';
-import type { Catalogue, View } from 'saykit';
+import type { View } from 'saykit';
 import { currentPick } from '../club.js';
+import { withSay } from '../i18n.js';
 
 export class PickCommand extends withSay(Command) {
-  constructor(catalogue: Catalogue) {
-    super(catalogue, (say) => ({
+  constructor() {
+    super((say) => ({
       name: say`pick`,
       description: say`See what the club is reading right now.`,
     }));

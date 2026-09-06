@@ -28,7 +28,7 @@ SayContext.displayName = 'SayContext';
 export type SayProviderProps =
   | { store: Store; locale?: never; messages?: never }
   | { store?: never; locale: string; messages: View.Messages }
-  // Nothing at all, which is what `<SayProvider>` inside a `SayScope` is: the
+  // Nothing at all, which is what `<SayProvider>` on the server is: the
   // server build of this module reads the scope and fills the props in
   | { store?: never; locale?: never; messages?: never };
 

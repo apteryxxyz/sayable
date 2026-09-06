@@ -1,11 +1,10 @@
 import { Command, type CommandInteraction } from '@buape/carbon';
-import { withSay } from '@saykit/carbon';
-import type { Catalogue } from 'saykit';
 import { currentPick, members } from '../club.js';
+import { withSay } from '../i18n.js';
 
 export class AnnounceCommand extends withSay(Command) {
-  constructor(catalogue: Catalogue) {
-    super(catalogue, (say) => ({
+  constructor() {
+    super((say) => ({
       name: say`announce`,
       description: say`Post the next meeting in the server's language.`,
     }));

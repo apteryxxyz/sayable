@@ -63,12 +63,10 @@ Eagerly load locales so the bot can answer immediately on cold start:
 ```ts title="src/i18n.ts"
 import { createCatalogue } from 'saykit';
 
-const catalogue = createCatalogue({
+export const catalogue = createCatalogue({
   en: await import('./locales/en.po').then((m) => m.default),
   fr: await import('./locales/fr.po').then((m) => m.default),
 });
-
-export default catalogue;
 ```
 
 ### Register `SayPlugin`
@@ -77,9 +75,9 @@ export default catalogue;
 import { Client } from '@buape/carbon';
 import { SayPlugin } from '@saykit/carbon';
 import { PingCommand } from './commands/ping.js';
-import catalogue from './i18n.js';
+import { catalogue } from './i18n.js';
 
-const client = new Client({/* options */}, { commands: [new PingCommand(catalogue)] }, [
+const client = new Client({/* options */}, { commands: [new PingCommand()] }, [
   new SayPlugin(catalogue),
 ]);
 ```
@@ -88,16 +86,23 @@ const client = new Client({/* options */}, { commands: [new PingCommand(catalogu
 
 ## Localising commands
 
-`withSay()` wraps a Carbon class with a constructor that accepts a `Catalogue` and a mapping function. The mapping function runs **once per locale**; SayKit uses the results to populate Carbon's per-locale command metadata.
+`createWithSay(catalogue)` binds a `withSay` to your catalogue, normally once beside the catalogue itself:
+
+```ts title="src/i18n.ts"
+import { createWithSay } from '@saykit/carbon';
+
+export const withSay = createWithSay(catalogue);
+```
+
+`withSay()` then wraps a Carbon class with a constructor that accepts a mapping function. The mapping function runs **once per locale**; SayKit uses the results to populate Carbon's per-locale command metadata.
 
 ```ts title="src/commands/ping.ts"
 import { Command, type CommandInteraction } from '@buape/carbon';
-import { withSay } from '@saykit/carbon';
-import type { Catalogue } from 'saykit';
+import { withSay } from '../i18n.js';
 
 export class PingCommand extends withSay(Command) {
-  constructor(catalogue: Catalogue) {
-    super(catalogue, (say) => ({
+  constructor() {
+    super((say) => ({
       name: say`ping`,
       description: say`Ping the bot!`,
     }));
@@ -119,11 +124,11 @@ When you register `PingCommand`, Carbon receives every translation of `name` and
 
 ```ts
 export class MathsCommand extends withSay(CommandWithSubcommands) {
-  constructor(catalogue: Catalogue) {
-    super(catalogue, (say) => ({
+  constructor() {
+    super((say) => ({
       name: say`maths`,
       description: say`Maths commands!`,
-      subcommands: [new AddCommand(catalogue), new SubtractCommand(catalogue)],
+      subcommands: [new AddCommand(), new SubtractCommand()],
     }));
   }
 }
@@ -132,7 +137,7 @@ export class MathsCommand extends withSay(CommandWithSubcommands) {
 Options work too, everything visible in the Discord UI is localisable:
 
 ```ts
-super(say, (say) => ({
+super((say) => ({
   name: say`add`,
   description: say`Add two numbers!`,
   options: [

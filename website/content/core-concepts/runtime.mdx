@@ -231,9 +231,7 @@ import { createCatalogue, createStore } from 'saykit';
 import en from './locales/en.po';
 import fr from './locales/fr.po';
 
-const catalogue = createCatalogue({ en, fr });
-
-export default catalogue;
+export const catalogue = createCatalogue({ en, fr });
 
 // A store rather than a view, so the app can switch locale later. Read
 // `store.say` at the point you format, not once into a module binding.
@@ -262,4 +260,4 @@ export function getSayFor(headers: Headers) {
 
 - [Locale detection](/guides/locale-detection), matching browser, header, cookie, and URL inputs
 - [Dynamic loading](/guides/dynamic-loading), lazy locale loading patterns
-- [React integration](/integrations/react), `SayProvider`, `useSay`, `<SayScope>`
+- [React integration](/integrations/react), `SayProvider`, `useSay`, `withSay`

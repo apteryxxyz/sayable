@@ -9,22 +9,23 @@ This example shows both halves.
 
 ## What it demonstrates
 
-| Concern                                                      | Where                         |
-| ------------------------------------------------------------ | ----------------------------- |
-| `SayPlugin`, installs `interaction.say` / `guild.say`        | `src/index.ts`                |
-| `withSay(Command)`: `(say, properties)`, run once per locale | `src/commands/pick.ts`        |
-| `withSay(CommandWithSubcommands)` + localised options        | `src/commands/leaderboard.ts` |
-| `withSay(Button)` / `withSay(Modal)`: `(properties)` only    | `pick.ts`, `join.ts`          |
-| `interaction.say`: the invoking user's locale                | everywhere                    |
-| `guild.say`: the **server's** `preferred_locale`             | `src/commands/announce.ts`    |
-| `say.plural` / `say.ordinal` / `say.select` outside React    | `leaderboard.ts`              |
+| Concern                                                     | Where                         |
+| ----------------------------------------------------------- | ----------------------------- |
+| `SayPlugin`, installs `interaction.say` / `guild.say`       | `src/index.ts`                |
+| `createWithSay(catalogue)`, bound once beside the catalogue | `src/i18n.ts`                 |
+| `withSay(Command)`: `(properties)`, run once per locale     | `src/commands/pick.ts`        |
+| `withSay(CommandWithSubcommands)` + localised options       | `src/commands/leaderboard.ts` |
+| `withSay(Button)` / `withSay(Modal)`: `(properties)` only   | `pick.ts`, `join.ts`          |
+| `interaction.say`: the invoking user's locale               | everywhere                    |
+| `guild.say`: the **server's** `preferred_locale`            | `src/commands/announce.ts`    |
+| `say.plural` / `say.ordinal` / `say.select` outside React   | `leaderboard.ts`              |
 
 ## Two overloads, because there are two kinds of object
 
 ```ts
 class PickCommand extends withSay(Command) {
-  constructor(catalogue: Catalogue) {
-    super(catalogue, (say) => ({ name: say`pick`, description: say`…` }));
+  constructor() {
+    super((say) => ({ name: say`pick`, description: say`…` }));
   }
 }
 

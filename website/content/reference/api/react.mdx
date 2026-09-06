@@ -8,7 +8,7 @@ description: API reference for the React integration
 ```ts
 import { Say } from '@saykit/react'; // shared (server + client)
 import { SayProvider, useSay } from '@saykit/react/client'; // client only
-import { SayScope, getSay } from '@saykit/react/server'; // server only
+import { createWithSay, getSay, setSay } from '@saykit/react/server'; // server only
 ```
 
 The default `@saykit/react` import uses the `react-server` export condition to swap between the server and client implementations of `<Say>` automatically.
@@ -145,7 +145,7 @@ Props:
   }}
 />
 
-Throws if given neither a store nor a locale and its messages. In a server component the props are filled in from the enclosing [`<SayScope>`](#sayscope), so it is written `<SayProvider>` with none.
+Throws if given neither a store nor a locale and its messages. In a server component the props are filled in from the view established for the request, so it is written `<SayProvider>` with none.
 
 ### `useSay()`
 
@@ -164,44 +164,50 @@ There is no hook for the store behind it. A store is a module-scope value you al
 
 ## `@saykit/react/server`
 
-### `<SayScope>`
+### `createWithSay()`
 
-Establishes the `View` for everything rendered inside it. Given a catalogue and a locale, it negotiates with `match()` and loads the messages; given a `view`, it establishes that one as it is. Either way the view goes into React's per-request `cache()`, so a concurrent request rendering another locale reads its own.
+Binds a `withSay` to a catalogue. `withSay(Component, getLocale)` wraps a server component so its view is negotiated with `match()`, loaded, and put into React's per-request `cache()` before the component renders, so a concurrent request rendering another locale reads its own.
+
+Wrap every route segment that renders messages: a framework may render a page before the layout above it, and a parent that has not run yet has established nothing.
 
 ```tsx
-<SayScope catalogue={catalogue} locale={locale}>
-  <SayProvider>{children}</SayProvider>
-</SayScope>
+export const withSay = createWithSay(catalogue);
+
+export default withSay(Page, (props) => props.params.then((params) => params.locale));
 ```
 
-Props:
+Arguments:
 
 <TypeTable
   type={{
     catalogue: {
-      description: 'The catalogue to take the view from. Use with `locale`, instead of `view`.',
+      description: 'The catalogue to take views from.',
       type: 'Catalogue',
     },
-    locale: {
-      description:
-        'The locale to negotiate against the catalogue. Use with `catalogue`, instead of `view`.',
-      type: 'Catalogue.Guess',
+    Component: {
+      description: 'The server component to wrap. Its props are passed through untouched.',
+      type: '(props: P) => ReactNode',
     },
-    view: {
-      description:
-        'A view to establish as it is, for a caller that resolved one already. Use instead of `catalogue` and `locale`.',
-      type: 'View',
-    },
-    children: {
-      description: 'The tree to establish the view for.',
-      type: 'ReactNode',
+    getLocale: {
+      description: 'Reads the locale to negotiate out of the props. May be async.',
+      type: '(props: P) => Catalogue.Guess | Promise<Catalogue.Guess>',
     },
   }}
 />
 
+### `setSay()`
+
+Establishes a `View` for the request, for a caller that resolved one already. This is what `withSay` does once it has loaded the view.
+
+```ts
+setSay(await catalogue.load('fr'));
+```
+
+One view per request: a second view for another locale takes over for everything rendered after it, including the messages `<SayProvider>` serialises. Development warns when it happens.
+
 ### `getSay()`
 
-Returns the `View` the enclosing `<SayScope>` established. Throws if none is above the caller. The server counterpart of `useSay()`.
+Returns the `View` established for the request. Throws if nothing established one. The server counterpart of `useSay()`.
 
 ```ts
 const say = getSay();

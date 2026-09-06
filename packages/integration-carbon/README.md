@@ -16,13 +16,12 @@ pnpm add @saykit/carbon saykit @buape/carbon
 
 ```ts
 import { Client, Command, type CommandInteraction } from '@buape/carbon';
-import { SayPlugin, withSay } from '@saykit/carbon';
-import { type Catalogue } from 'saykit';
-import catalogue from './i18n.js';
+import { SayPlugin } from '@saykit/carbon';
+import { catalogue, withSay } from './i18n.js';
 
 class PingCommand extends withSay(Command) {
-  constructor(catalogue: Catalogue) {
-    super(catalogue, (say) => ({
+  constructor() {
+    super((say) => ({
       name: say`ping`,
       description: say`Ping the bot!`,
     }));
@@ -33,7 +32,7 @@ class PingCommand extends withSay(Command) {
   }
 }
 
-const client = new Client({/* options */}, { commands: [new PingCommand(catalogue)] }, [
+const client = new Client({/* options */}, { commands: [new PingCommand()] }, [
   new SayPlugin(catalogue),
 ]);
 ```

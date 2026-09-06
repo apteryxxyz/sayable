@@ -53,7 +53,7 @@ a README explaining which parts of SayKit it exercises and why.
 | --------------------------------------------------- | ---------------------------------------- | ---------------------------------------------------------------- |
 | [`vanilla`](./examples/vanilla)                     | TypeScript + Vite                        | The whole picture end to end, start here                         |
 | [`react`](./examples/react)                         | React 19 SPA + Vite                      | Stores, rich-text messages, code-split catalogues                |
-| [`nextjs`](./examples/nextjs)                       | Next.js App Router + Babel               | Server Components, `<SayScope>`, middleware locale detection     |
+| [`nextjs`](./examples/nextjs)                       | Next.js App Router + Babel               | Server Components, `withSay`, middleware locale detection        |
 | [`tanstack-start`](./examples/tanstack-start)       | TanStack Start + Vite                    | Fallback chains (`en-NZ → en-GB → en`), SSR locale negotiation   |
 | [`expo`](./examples/expo)                           | Expo / React Native + Metro              | The `whitespace` prop, device locale                             |
 | [`carbon`](./examples/carbon)                       | Carbon Discord bot on Cloudflare Workers | Per-locale command registration, `interaction.say` / `guild.say` |

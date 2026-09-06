@@ -7,7 +7,7 @@ description: Use SayKit with React, components, hooks, and server runtime
 
 1. Provides a `<Say>` component for rendering translated content, with sub-components for plurals, ordinals, and select.
 2. Provides a `<SayProvider>` and `useSay()` for client components.
-3. Provides a small server runtime (`<SayScope>` and `getSay()`) for server-rendered apps.
+3. Provides a small server runtime (`withSay` and `getSay()`) for server-rendered apps.
 
 The package uses the `react-server` export condition, so `<Say>` works in both server and client components without two different imports.
 
@@ -151,11 +151,9 @@ import { createCatalogue, createStore } from 'saykit';
 import en from './locales/en.po';
 import fr from './locales/fr.po';
 
-const catalogue = createCatalogue({ en, fr });
+export const catalogue = createCatalogue({ en, fr });
 
 export const store = createStore(catalogue, catalogue.match(navigator.languages));
-
-export default catalogue;
 ```
 
 ```tsx title="src/main.tsx"
@@ -175,7 +173,7 @@ A store is a live object and cannot cross the server/client boundary, so a serve
 </SayProvider>
 ```
 
-That form has only the one locale the server sent, so it cannot switch: `set` rejects anything else. Switch by navigating, and let the server render the new locale. See [`<SayScope>`](#sayscope), which fills these props in for you.
+That form has only the one locale the server sent, so it cannot switch: `set` rejects anything else. Switch by navigating, and let the server render the new locale. See [`createWithSay`](#createwithsay), which fills these props in for you.
 
 Anything beneath the provider, `<Say>`, `<Say.Plural>`, `useSay()`, resolves against the current locale.
 
@@ -221,61 +219,76 @@ function LocalePicker() {
 ## Server runtime
 
 ```ts
-import { SayScope, getSay } from '@saykit/react/server';
+import { createWithSay, getSay, setSay } from '@saykit/react/server';
 ```
 
-The two halves mirror each other: `<SayScope>` is to `getSay()` what `<SayProvider>` is to `useSay()`. Each establishes a view for its subtree, and each hands the same kind of value back.
+The two halves mirror each other: `withSay` is to `getSay()` what `<SayProvider>` is to `useSay()`. Each establishes a view, and each hands the same kind of value back.
 
-### `<SayScope>`
+### `createWithSay`
 
-`<SayScope>` establishes the view for everything rendered inside it. It negotiates the locale against your catalogue, loads its messages, and publishes the view into React's per-request `cache()`, so a concurrent request rendering another locale reads its own.
+`createWithSay(catalogue)` binds a `withSay` to your catalogue, normally once beside the catalogue itself:
+
+```ts title="src/i18n.ts"
+import { createWithSay } from '@saykit/react/server';
+
+export const withSay = createWithSay(catalogue);
+```
+
+`withSay(Component, getLocale)` wraps a server component so its view is negotiated, loaded and published into React's per-request `cache()` before the component renders. A concurrent request rendering another locale reads its own.
 
 ```tsx title="src/app/[locale]/layout.tsx"
 import { SayProvider } from '@saykit/react/client';
-import { SayScope } from '@saykit/react/server';
-import catalogue from '../../i18n';
+import { catalogue, withSay } from '../../i18n';
 
-export default async function RootLayout({ params, children }) {
+async function RootLayout({ params, children }) {
   const { locale } = await params;
 
   return (
-    <SayScope catalogue={catalogue} locale={locale}>
-      <html lang={catalogue.match(locale)}>
-        <body>
-          <SayProvider>{children}</SayProvider>
-        </body>
-      </html>
-    </SayScope>
+    <html lang={catalogue.match(locale)}>
+      <body>
+        <SayProvider>{children}</SayProvider>
+      </body>
+    </html>
   );
 }
+
+export default withSay(RootLayout, (props) => props.params.then((params) => params.locale));
 ```
 
-`<SayProvider>` takes no props here. In a server component it resolves to the `react-server` build of `@saykit/react/client`, which reads the enclosing scope and serialises that locale and its messages across the boundary, which is all a client component can be given.
+`<SayProvider>` takes no props here. In a server component it resolves to the `react-server` build of `@saykit/react/client`, which reads the established view and serialises that locale and its messages across the boundary, which is all a client component can be given.
 
-If you have already resolved the view yourself, hand it over instead of the catalogue and locale:
+<Callout type="warn">
+  Wrap every segment that renders messages, not just the outermost one. A framework is free to
+  render a page before the layout above it - Next.js does - so a layout's view is not established
+  yet when its page runs, and `getSay()` there would throw.
+</Callout>
 
-```tsx
-<SayScope view={await catalogue.load('fr')}>{children}</SayScope>
+### `setSay`
+
+If you have already resolved the view yourself, establish it directly:
+
+```ts
+import { setSay } from '@saykit/react/server';
+
+setSay(await catalogue.load('fr'));
 ```
 
 <Callout type="warn">
-  One scope per request. A scope does not end where its children do: React renders a server
-  component's children after it returns, so there is nowhere to put the previous view back. A second
-  `<SayScope>` establishing another locale in the same request takes over for everything rendered
-  after it, including components outside it and the messages `<SayProvider>` serialises to the
-  client. Development warns when it happens. To render a second locale, give it its own request, or
-  resolve its view yourself with `catalogue.load(locale)` and pass it to the components that need
-  it.
+  One view per request. React renders a server component's children after it returns, so a view does
+  not end where a subtree does: a second view established for another locale in the same request
+  takes over for everything rendered after it, including the messages `<SayProvider>` serialises to
+  the client. Development warns when it happens. To render a second locale, give it its own request,
+  or resolve its view with `catalogue.load(locale)` and pass it to the components that need it.
 </Callout>
 
 ### `getSay`
 
-`getSay()` returns the view the enclosing `<SayScope>` established. It is the server counterpart of `useSay()`:
+`getSay()` returns the view established for the request. It is the server counterpart of `useSay()`:
 
 ```tsx
 import { getSay } from '@saykit/react/server';
 
-export default async function Page() {
+function Page() {
   const say = getSay();
   return <h1>{say`Welcome back!`}</h1>;
 }
@@ -290,14 +303,14 @@ const price = new Intl.NumberFormat(say.locale, { style: 'currency', currency: '
 );
 ```
 
-It throws if no `<SayScope>` is above the component calling it. The view is per request, so a concurrent request rendering another locale gets its own.
+It throws if nothing established a view for the request.
 
 ## Mental model
 
 A simple way to think about the integration:
 
 - render translated content with `<Say>` in any component, server or client
-- on the server, `<SayScope>` binds one view per request, and `getSay()` reads it
+- on the server, `withSay` binds one view per request, and `getSay()` reads it
 - on the client, `SayProvider` supplies a store to follow, or the single locale the server sent, so the tree hydrates consistently
 
 ## Next

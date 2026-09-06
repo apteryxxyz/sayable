@@ -1,7 +1,7 @@
-import { uiSay } from './i18n.js';
+import { catalogue } from './i18n.js';
 import { minutesFor, type PageStats } from './reading.js';
 
-const say = uiSay();
+const say = catalogue.locale(catalogue.match(chrome.i18n.getUILanguage()));
 const root = document.querySelector<HTMLElement>('#popup')!;
 
 function line(text: string, className?: string) {

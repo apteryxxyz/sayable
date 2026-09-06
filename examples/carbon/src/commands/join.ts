@@ -7,13 +7,13 @@ import {
   TextInput,
   TextInputStyle,
 } from '@buape/carbon';
-import { withSay } from '@saykit/carbon';
-import type { Catalogue, View } from 'saykit';
+import type { View } from 'saykit';
 import { currentPick } from '../club.js';
+import { withSay } from '../i18n.js';
 
 export class JoinCommand extends withSay(Command) {
-  constructor(catalogue: Catalogue) {
-    super(catalogue, (say) => ({
+  constructor() {
+    super((say) => ({
       name: say`join`,
       description: say`Sign up for this month's book.`,
     }));
