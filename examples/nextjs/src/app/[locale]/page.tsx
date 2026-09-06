@@ -1,16 +1,10 @@
 import { Say } from '@saykit/react';
-import { getSay } from '@saykit/react/server';
-import { currency, freeShippingThresholdInCents, products } from '../../catalogue';
+import { freeShippingThresholdInCents, products } from '../../catalogue';
+import { withSay } from '../../i18n';
 import { ProductCard } from './product-card';
 
-type StorefrontPageProps = { params: Promise<{ locale: string }> };
-
-function StorefrontPage(_: StorefrontPageProps) {
-  const say = getSay();
-
-  const threshold = new Intl.NumberFormat(say.locale, { style: 'currency', currency }).format(
-    freeShippingThresholdInCents / 100,
-  );
+function StorefrontPage(_: PageProps<'/[locale]'>) {
+  const threshold = freeShippingThresholdInCents / 100;
 
   return (
     <>
@@ -19,7 +13,9 @@ function StorefrontPage(_: StorefrontPageProps) {
           <Say>Freshly roasted, shipped Thursdays</Say>
         </h1>
         <p>
-          <Say>Free delivery on orders over {threshold}.</Say>
+          <Say>
+            Free delivery on orders over <Say.Number _={{ threshold }} style="::currency/EUR" />.
+          </Say>
         </p>
       </section>
 
@@ -32,4 +28,4 @@ function StorefrontPage(_: StorefrontPageProps) {
   );
 }
 
-export default StorefrontPage;
+export default withSay(StorefrontPage, (props) => props.params.then((params) => params.locale));

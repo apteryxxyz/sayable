@@ -9,7 +9,7 @@ import { getSay } from './server.js';
  * A store is a live object and cannot cross the server/client boundary, and a
  * server component cannot hand its own scope to a client one either. What can
  * cross is the locale and its messages, so this reads them off the view the
- * enclosing {@link import('./server.js').SayScope} established and passes them
+ * the enclosing segment established with {@link import('./server.js').setSay}, and passes them
  * to the real provider, which is why `<SayProvider>` written on the server
  * takes no props.
  */

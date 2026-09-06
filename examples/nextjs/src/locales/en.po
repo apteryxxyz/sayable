@@ -50,7 +50,7 @@ msgstr ""
 "  other {Check back soon}\n"
 "}"
 
-#: src/app/[locale]/add-to-cart.tsx:32
+#: src/app/[locale]/add-to-cart.tsx:27
 msgid ""
 "{quantity, plural,\n"
 "  one {# bag in basket}\n"
@@ -62,7 +62,7 @@ msgstr ""
 "  other {# bags in basket}\n"
 "}"
 
-#: src/app/[locale]/product-card.tsx:72
+#: src/app/[locale]/product-card.tsx:67
 msgid ""
 "{rating} out of 5 · {0, plural,\n"
 "  one {# review}\n"
@@ -74,38 +74,38 @@ msgstr ""
 "  other {# reviews}\n"
 "}"
 
-#: src/app/[locale]/add-to-cart.tsx:30
+#: src/app/[locale]/add-to-cart.tsx:25
 msgid "Add to basket"
 msgstr "Add to basket"
 
-#: src/app/[locale]/page.tsx:25
-msgid "Free delivery on orders over {threshold}."
-msgstr "Free delivery on orders over {threshold}."
+#: src/app/[locale]/page.tsx:16
+msgid "Free delivery on orders over {threshold, number, ::currency/EUR}."
+msgstr "Free delivery on orders over {threshold, number, ::currency/EUR}."
 
-#: src/app/[locale]/page.tsx:22
+#: src/app/[locale]/page.tsx:13
 msgid "Freshly roasted, shipped Thursdays"
 msgstr "Freshly roasted, shipped Thursdays"
 
-#: src/app/[locale]/layout.tsx:45
+#: src/app/[locale]/layout.tsx:21
 msgid "Harbour Coffee"
 msgstr "Harbour Coffee"
 
-#: src/app/[locale]/locale-switcher.tsx:18
+#: src/app/[locale]/locale-switcher.tsx:13
 msgid "Language"
 msgstr "Language"
 
-#: src/app/[locale]/product-card.tsx:70
+#: src/app/[locale]/product-card.tsx:65
 msgid "No reviews yet"
 msgstr "No reviews yet"
 
-#: src/app/[locale]/layout.tsx:53
+#: src/app/[locale]/layout.tsx:29
 msgid "Prices include VAT. See our <0>returns policy</0>."
 msgstr "Prices include VAT. See our <0>returns policy</0>."
 
-#: src/app/[locale]/product-card.tsx:57
+#: src/app/[locale]/product-card.tsx:52
 msgid "Roasted by <0>{1}</0>"
 msgstr "Roasted by <0>{1}</0>"
 
-#: src/app/[locale]/add-to-cart.tsx:17
+#: src/app/[locale]/add-to-cart.tsx:12
 msgid "Unavailable"
 msgstr "Unavailable"

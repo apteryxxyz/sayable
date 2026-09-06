@@ -4,7 +4,7 @@
 
 [![Coverage](https://codecov.io/gh/k0d13/saykit/graph/badge.svg?flag=integration-react)](https://codecov.io/gh/k0d13/saykit?flags%5B0%5D=integration-react)
 
-A `<Say>` component for rendering translated content in server and client components, a `<SayProvider>` and `useSay()` for client trees, and a `<SayScope>` and `getSay()` that mirror them on the server.
+A `<Say>` component for rendering translated content in server and client components, a `<SayProvider>` and `useSay()` for client trees, and a `withSay` and `getSay()` that mirror them on the server.
 
 ## Install
 

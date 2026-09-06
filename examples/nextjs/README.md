@@ -12,7 +12,7 @@ once.
 
 | Concern                                                                                    | Where                                    |
 | ------------------------------------------------------------------------------------------ | ---------------------------------------- |
-| `<SayScope>`, resolving the view for the request                                           | `src/app/[locale]/layout.tsx`            |
+| `withSay`, establishing the view for a route segment                                       | `layout.tsx`, `page.tsx`                 |
 | `getSay()` inside a plain server component                                                 | `src/app/[locale]/product-card.tsx`      |
 | `SayProvider` at the root, taking its props from the scope                                 | `src/app/[locale]/layout.tsx`            |
 | `<Say>` in a **client** component                                                          | `add-to-cart.tsx`, `locale-switcher.tsx` |
@@ -25,7 +25,7 @@ once.
 `@saykit/react` publishes its `.` entry twice and lets the bundler pick:
 
 - In a **server** environment the `react-server` export condition resolves to a build where `<Say>`
-  reads from `getSay()`, the view the enclosing `<SayScope>` put in React's request cache.
+  reads from `getSay()`, the view `withSay` put in React's request cache.
 - In a **client** environment it resolves to the `"use client"` build, where `<Say>` reads from
   `useSay()`, the nearest `SayProvider`.
 
@@ -37,7 +37,7 @@ The component you write is identical in both cases:
 </Say>
 ```
 
-Because both halves are fed from the same `<SayScope>` in the root layout, with the client provider
+Because both halves are fed from the same view, with the client provider
 reading its locale and messages straight off it, server output and client hydration cannot disagree
 about which locale is active.
 

@@ -43,7 +43,7 @@ handles, and safely so: it has no current locale, so there is nothing for one re
 from under another. The route loader calls `catalogue.locale(locale)` to get that request's view,
 which is immutable and memoised, so no copy is made and none is needed.
 
-The Next.js example solves the same problem differently, with `<SayScope>`, which publishes the
+The Next.js example solves the same problem differently, with `withSay`, which publishes the
 request's view into React's request-scoped `cache()` for `getSay()` to read. That option only exists
 where there are Server Components; this is the general answer.
 

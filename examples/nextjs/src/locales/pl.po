@@ -73,8 +73,8 @@ msgstr ""
 msgid "Add to basket"
 msgstr "Dodaj do koszyka"
 
-msgid "Free delivery on orders over {threshold}."
-msgstr "Darmowa dostawa od {threshold}."
+msgid "Free delivery on orders over {threshold, number, ::currency/EUR}."
+msgstr "Darmowa dostawa od {threshold, number, ::currency/EUR}."
 
 msgid "Freshly roasted, shipped Thursdays"
 msgstr "Świeżo wypalona, wysyłka w czwartki"
