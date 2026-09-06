@@ -413,6 +413,9 @@ importers:
       '@messageformat/number-skeleton':
         specifier: 2.0.0-0
         version: 2.0.0-0
+      '@messageformat/parser':
+        specifier: ^5.1.1
+        version: 5.1.1
       commander:
         specifier: ^15.0.0
         version: 15.0.0
@@ -429,6 +432,9 @@ importers:
       '@types/picomatch':
         specifier: ^4.0.3
         version: 4.0.3
+      saykit:
+        specifier: workspace:*
+        version: link:../integration
 
   packages/format-json:
     devDependencies:
@@ -446,20 +452,7 @@ importers:
         specifier: workspace:^
         version: link:../config
 
-  packages/integration:
-    dependencies:
-      '@messageformat/date-skeleton':
-        specifier: 2.0.0-0
-        version: 2.0.0-0
-      '@messageformat/number-skeleton':
-        specifier: 2.0.0-0
-        version: 2.0.0-0
-      '@messageformat/parser':
-        specifier: ^5.1.1
-        version: 5.1.1
-      messageformat:
-        specifier: ^4.0.0
-        version: 4.0.0
+  packages/integration: {}
 
   packages/integration-carbon:
     devDependencies:
@@ -4439,10 +4432,12 @@ packages:
   '@xmldom/xmldom@0.8.13':
     resolution: {integrity: sha512-KRYzxepc14G/CEpEGc3Yn+JKaAeT63smlDr+vjB8jRfgTBBI9wRj/nkQEO+ucV8p8I9bfKLWp37uHgFrbntPvw==}
     engines: {node: '>=10.0.0'}
+    deprecated: this version has critical issues, please update to the latest version
 
   '@xmldom/xmldom@0.9.10':
     resolution: {integrity: sha512-A9gOqLdi6cV4ibazAjcQufGj0B1y/vDqYrcuP6d/6x8P27gRS8643Dj9o1dEKtB6O7fwxb2FgBmJS2mX7gpvdw==}
     engines: {node: '>=14.6'}
+    deprecated: this version has critical issues, please update to the latest version
 
   '@yuku-codegen/binding-darwin-arm64@0.8.0':
     resolution: {integrity: sha512-7cSJH6PaKLRBdCfiB4pM6EukvgOk5xV4tyuLOIOEqrHsbnV7brtyff7CjhZbeGozdIHoOnKOi5R7rrmCWN3QSw==}
@@ -6435,10 +6430,6 @@ packages:
 
   mermaid@11.16.0:
     resolution: {integrity: sha512-Zvm3kbstgdpvIJPPItlL7fppIZ3kibvc1oZIGxdvk9t6UFz6flv+Jw7FtRGKwfcI8OckmH04LqG6LlS6X4B1pA==}
-
-  messageformat@4.0.0:
-    resolution: {integrity: sha512-XKmJ/ffTWToWOlHJzt85ZChQgVGC0LHzNWuNK8zuYpNySsB0nIEmytOdSAOW9ETKtkajAUJf520m5gFHHnrTYg==}
-    engines: {node: ^20.19 || ^22.12 || >=24}
 
   metro-babel-transformer@0.84.4:
     resolution: {integrity: sha512-rvCfz8snl9h20VcvpOHxZuHP1SlAkv4HXbzw7nyyVwu6Eqo5PRerbakQ9XmUCOsRy70spJ37O+G1TK8oMzo48g==}
@@ -14183,8 +14174,6 @@ snapshots:
       stylis: 4.4.0
       ts-dedent: 2.3.0
       uuid: 14.0.1
-
-  messageformat@4.0.0: {}
 
   metro-babel-transformer@0.84.4(supports-color@10.2.2):
     dependencies:
