@@ -1,4 +1,4 @@
-import { compile } from './messageformat/index.js';
+import { compileMessage, type Message } from './message.js';
 import type {
   DateTimeOptions,
   Disallow,
@@ -8,29 +8,19 @@ import type {
   SelectOptions,
 } from './types.js';
 
-/**
- * Map a descriptor's keys back to the placeholders the message names. The
- * transform prefixes every value with one underscore, so stripping exactly one
- * is the inverse: `_0` is `0`, `__total` is `_total`. Keys without one pass
- * through, so a hand-written `call({ id, name })` still formats `{name}`.
- *
- * Built from own entries, so a value named `__proto__` stays a placeholder.
- */
-function resolveDescriptorValues(descriptor: { id: string; [match: string | number]: unknown }) {
-  return Object.fromEntries(
-    Object.entries(descriptor)
-      // The id names the message, it is not one of its values
-      .filter(([key]) => key !== 'id')
-      .map(([key, value]) => [key.startsWith('_') ? key.slice(1) : key, value]),
-  );
-}
-
 function macro(name: string): never {
   throw new Error(`'say.${name}' is a macro and must be used with the relevant saykit plugin`);
 }
 
 export namespace View {
-  export type Messages = { [key: string]: string };
+  /**
+   * One locale's messages, compiled.
+   *
+   * Each is a {@link Message} the CLI compiled from the catalogue, with every
+   * style already resolved. Being data rather than code, a locale's messages
+   * serialise, which is what lets a server hand them to a client tree.
+   */
+  export type Messages = { [key: string]: Message };
 }
 
 /**
@@ -223,9 +213,7 @@ export interface View<Locale extends string = string> {
  * Create a view over one locale and the messages it formats against.
  *
  * A catalogue memoises one per locale, which is how application code usually
- * reaches one; a single-locale app can build one directly. The format cache
- * belongs to the view, so a view built over one set of messages can never be
- * served a format compiled from another.
+ * reaches one; a single-locale app can build one directly.
  *
  * @param locale The locale to bind to
  * @param messages The messages this view formats against
@@ -235,26 +223,30 @@ export function createView<Locale extends string>(
   locale: Locale,
   messages: View.Messages,
 ): View<Locale> {
-  // Copied and frozen: formats are compiled once and kept, so a record that
-  // could change afterwards would leave `call` formatting from the old string
-  // while `view.messages` shows the new one
+  // Copied and frozen, so nothing can swap a message out from under the view
+  // that is already handing its result to callers
   const own: View.Messages = Object.freeze({ ...messages });
-
-  const formats = new Map<string, ReturnType<typeof compile>>();
 
   const say = (() => {
     throw new Error("'say' is a macro and must be used with the relevant saykit plugin");
   }) as unknown as View<Locale>;
 
+  // One compile per message, on the first call that needs it. A message nobody
+  // renders is never walked, and one rendered a thousand times is walked once
+  const compiled = new Map<string, (values: Message.Values) => string>();
+
   function call(descriptor: { id: string; [match: string | number]: unknown }) {
-    const message = own[descriptor.id];
-    if (typeof message !== 'string')
-      throw new Error(`Message for ${descriptor.id} is not a string`);
+    let format = compiled.get(descriptor.id);
 
-    let format = formats.get(descriptor.id);
-    if (!format) formats.set(descriptor.id, (format = compile(locale, message)));
+    if (!format) {
+      const message = own[descriptor.id];
+      if (message === undefined)
+        throw new Error(`No message for ${descriptor.id} in locale '${locale}'`);
 
-    return String(format.format(resolveDescriptorValues(descriptor)));
+      compiled.set(descriptor.id, (format = compileMessage(message, locale)));
+    }
+
+    return format(descriptor);
   }
 
   return Object.freeze(

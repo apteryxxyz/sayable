@@ -9,7 +9,7 @@ import { SayProvider, useSay } from '~/runtime/client.js';
 
 function Consumer() {
   const say = useSay();
-  return createElement('span', null, `${say.locale}:${say.messages.greeting}`);
+  return createElement('span', null, `${say.locale}:${say.call({ id: 'greeting' })}`);
 }
 
 const catalogue = () => createCatalogue({ en: { greeting: 'Hello' }, fr: { greeting: 'Bonjour' } });
