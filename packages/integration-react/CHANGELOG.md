@@ -1,5 +1,11 @@
 # @saykit/react
 
+## 0.11.0
+
+### Minor Changes
+
+- b873167: Replace `<SayScope>` with `createWithSay` and `setSay` on the server, so a route segment establishes its own view instead of inheriting one from a parent that may not have rendered yet
+
 ## 0.10.0
 
 ### Minor Changes
