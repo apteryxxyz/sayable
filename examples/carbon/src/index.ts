@@ -8,7 +8,7 @@ import { LeaderboardCommand } from './commands/leaderboard.js';
 import { PickCommand, RemindMeButton } from './commands/pick.js';
 import { catalogue } from './i18n.js';
 
-const say = catalogue.locale(catalogue.locales[0]);
+const view = catalogue.locale(catalogue.locales[0]);
 
 const client = new Client(
   {
@@ -20,17 +20,17 @@ const client = new Client(
   },
   {
     commands: [
-      new PickCommand(catalogue),
-      new JoinCommand(catalogue),
-      new LeaderboardCommand(catalogue),
-      new AnnounceCommand(catalogue),
+      new PickCommand(),
+      new JoinCommand(),
+      new LeaderboardCommand(),
+      new AnnounceCommand(),
     ],
-    components: [new RemindMeButton(say)],
+    components: [new RemindMeButton(view)],
   },
   [new SayPlugin(catalogue), new CommandDataPlugin()],
 );
 
-for (const modal of [new JoinModal(say)]) client.modalHandler.registerModal(modal);
+for (const modal of [new JoinModal(view)]) client.modalHandler.registerModal(modal);
 
 const handler = createHandler(client);
 export default { fetch: handler };

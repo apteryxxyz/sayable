@@ -1,11 +1,11 @@
 import { BaseCommand, BaseComponent, Modal } from '@buape/carbon';
-import { type Catalogue, createCatalogue, type View } from 'saykit';
+import { createCatalogue, type View } from 'saykit';
 import { describe, expect, it } from 'vitest';
-import { withSay } from './with-say.js';
+import { createWithSay } from './with-say.js';
 
-const catalogue = () => createCatalogue({ en: {}, fr: {} });
+const withSay = createWithSay(createCatalogue({ en: {}, fr: {} }));
 
-describe('withSay', () => {
+describe('createWithSay', () => {
   it('throws for a base class that is neither a command nor a component', () => {
     class Plain {}
     expect(() => withSay(Plain as never)).toThrow('Invalid base class');
@@ -37,11 +37,10 @@ describe('withSay', () => {
       async run() {}
     }
     const SayCommand = withSay(Cmd) as unknown as new (
-      catalogue: Catalogue,
       props: (s: View) => { name: string; description: string },
     ) => { name: string; description: string } & Record<string, unknown>;
 
-    const command = new SayCommand(catalogue(), (s) => ({
+    const command = new SayCommand((s) => ({
       name: `name-${s.locale}`,
       description: `desc-${s.locale}`,
     }));
